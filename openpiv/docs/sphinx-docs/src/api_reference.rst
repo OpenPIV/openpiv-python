@@ -28,6 +28,7 @@ The ``openpiv.pyprocess`` module
 .. autosummary:: 
     :toctree: generated/
     
+    normalize_intensity
     correlate_windows
     get_coordinates
     get_field_shape
@@ -37,6 +38,19 @@ The ``openpiv.pyprocess`` module
     find_pixel_peak_position
     find_subpixel_peak_position
     piv
+
+
+The ``openpiv.process`` module
+--------------------------------
+.. automodule:: openpiv.process
+
+.. currentmodule:: openpiv.process
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    extended_search_area_piv
+    
     
     
 The ``openpiv.filters`` module
@@ -62,6 +76,9 @@ The ``openpiv.validation`` module
 
 .. autosummary:: 
     :toctree: generated/
+    
+    global_val
+    sig2noise_val
 
 The ``openpiv.scaling`` module
 ------------------------------
