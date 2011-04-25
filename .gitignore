@@ -1,0 +1,6 @@
+*.m
+*.jvc
+*.pyc
+build/
+*.txt
+/setup.cfg

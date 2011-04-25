@@ -1,0 +1,76 @@
+.. _api_reference:
+
+API reference
+=============
+
+This is a complete api reference to the openpiv python module.
+
+The ``openpiv.tools`` module
+----------------------------
+.. automodule:: openpiv.tools
+
+.. currentmodule:: openpiv.tools
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    imread
+    save
+    display
+
+
+The ``openpiv.pyprocess`` module
+--------------------------------
+.. automodule:: openpiv.pyprocess
+
+.. currentmodule:: openpiv.pyprocess
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    correlate_windows
+    get_coordinates
+    get_field_shape
+    moving_window_array
+    find_first_peak
+    find_second_peak
+    find_pixel_peak_position
+    find_subpixel_peak_position
+    piv
+    
+    
+The ``openpiv.filters`` module
+------------------------------
+
+.. automodule:: openpiv.filters
+
+.. currentmodule:: openpiv.filters
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    gaussian
+    _gaussian_kernel
+    
+    
+The ``openpiv.validation`` module
+---------------------------------
+
+.. automodule:: openpiv.validation
+
+.. currentmodule:: openpiv.validation
+
+.. autosummary:: 
+    :toctree: generated/
+
+The ``openpiv.scaling`` module
+------------------------------
+
+.. automodule:: openpiv.scaling
+
+.. currentmodule:: openpiv.scaling
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    uniform

@@ -1,0 +1,6 @@
+# things todo for openpiv
+
++ documentation / tutorial / web site
++ flow field validation algorithms
++ iterative image deformation algorithms
++ hdf5 file save (it is a hassle in case of multiple processes)

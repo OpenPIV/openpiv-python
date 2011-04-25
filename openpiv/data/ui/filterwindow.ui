@@ -1,0 +1,376 @@
+<ui version="4.0" >
+ <class>FilterWindow</class>
+ <widget class="QDialog" name="FilterWindow" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>639</width>
+    <height>419</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Data Filter</string>
+  </property>
+  <property name="windowIcon" >
+   <iconset resource="../share/images/images.qrc" >:/urapiv_icon.png</iconset>
+  </property>
+  <widget class="QLineEdit" name="stdEdit" >
+   <property name="geometry" >
+    <rect>
+     <x>179</x>
+     <y>100</y>
+     <width>207</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="medianEdit" >
+   <property name="geometry" >
+    <rect>
+     <x>179</x>
+     <y>160</y>
+     <width>207</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="meanEdit" >
+   <property name="geometry" >
+    <rect>
+     <x>179</x>
+     <y>190</y>
+     <width>207</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="gaussianEdit" >
+   <property name="geometry" >
+    <rect>
+     <x>179</x>
+     <y>310</y>
+     <width>207</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="medianCombo" >
+   <property name="geometry" >
+    <rect>
+     <x>393</x>
+     <y>160</y>
+     <width>207</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="meanCombo" >
+   <property name="geometry" >
+    <rect>
+     <x>393</x>
+     <y>190</y>
+     <width>207</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="gaussianCombo" >
+   <property name="geometry" >
+    <rect>
+     <x>393</x>
+     <y>310</y>
+     <width>207</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_8" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>40</y>
+     <width>56</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font" >
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text" >
+    <string>Global</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_9" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>136</y>
+     <width>56</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font" >
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text" >
+    <string>Local</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_10" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>290</y>
+     <width>81</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font" >
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text" >
+    <string>Smoothing</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="gaussianBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>310</y>
+     <width>131</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Gaussian Kernel</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>393</x>
+     <y>70</y>
+     <width>207</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" >
+    <item>
+     <widget class="QLabel" name="maxLabel" >
+      <property name="text" >
+       <string>Max</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="maxEdit" />
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>152</x>
+     <y>70</y>
+     <width>234</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" >
+    <item>
+     <widget class="QLabel" name="minLabel" >
+      <property name="text" >
+       <string>Min</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="minEdit" />
+    </item>
+   </layout>
+  </widget>
+  <widget class="QCheckBox" name="meanBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>190</y>
+     <width>131</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Mean</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="medianBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>160</y>
+     <width>131</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Median</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="stdBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>100</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Standard Deviation</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="rangeBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>70</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Range</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="bilinearCombo" >
+   <property name="geometry" >
+    <rect>
+     <x>180</x>
+     <y>250</y>
+     <width>207</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_11" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>230</y>
+     <width>91</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="font" >
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text" >
+    <string>Interpolation</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="bilinearBox" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>250</y>
+     <width>131</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text" >
+    <string>Bilinear</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>20</x>
+     <y>360</y>
+     <width>601</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" >
+    <item>
+     <widget class="QRadioButton" name="userRadio" >
+      <property name="text" >
+       <string>User applied</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QRadioButton" name="processRadio" >
+      <property name="text" >
+       <string>Applied to processing step</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <spacer>
+      <property name="orientation" >
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" >
+       <size>
+        <width>429</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <widget class="QPushButton" name="okButton" >
+      <property name="text" >
+       <string>OK</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="cancelButton" >
+      <property name="text" >
+       <string>Cancel</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>rangeBox</tabstop>
+  <tabstop>minEdit</tabstop>
+  <tabstop>maxEdit</tabstop>
+  <tabstop>stdBox</tabstop>
+  <tabstop>stdEdit</tabstop>
+  <tabstop>medianBox</tabstop>
+  <tabstop>medianEdit</tabstop>
+  <tabstop>medianCombo</tabstop>
+  <tabstop>meanBox</tabstop>
+  <tabstop>meanEdit</tabstop>
+  <tabstop>meanCombo</tabstop>
+  <tabstop>bilinearBox</tabstop>
+  <tabstop>bilinearCombo</tabstop>
+  <tabstop>gaussianBox</tabstop>
+  <tabstop>gaussianEdit</tabstop>
+  <tabstop>gaussianCombo</tabstop>
+  <tabstop>userRadio</tabstop>
+  <tabstop>processRadio</tabstop>
+  <tabstop>okButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../share/images/images.qrc" />
+ </resources>
+ <connections/>
+</ui>
