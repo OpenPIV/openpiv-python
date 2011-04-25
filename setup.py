@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 import glob
 
 # Build extensions 
-module1 = Extension(    name         = "openpiv.lib",
+module1 = Extension(    name         = "openpiv.process",
                         sources      = ["openpiv/src/process.c"],
                     )
 
