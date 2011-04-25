@@ -53,7 +53,7 @@ http://help.github.com/ which provide extensive help for how to set up git.
 
 To follow the development of OpenPiv, clone our repository with the command::
 
-    git clone http://github.com/alexlib/OpenPiv.git
+    git clone http://github.com/alexlib/openpiv-python.git
 
 and update from time to  time. You can also download a tarball containing everything.
 
