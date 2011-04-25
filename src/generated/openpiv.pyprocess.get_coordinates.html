@@ -1,0 +1,165 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.pyprocess.get_coordinates &mdash; OpenPiv v1 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.pyprocess.get_field_shape" href="openpiv.pyprocess.get_field_shape.html" />
+    <link rel="prev" title="openpiv.pyprocess.correlate_windows" href="openpiv.pyprocess.correlate_windows.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.get_field_shape.html" title="openpiv.pyprocess.get_field_shape"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.correlate_windows.html" title="openpiv.pyprocess.correlate_windows"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-pyprocess-get-coordinates">
+<h1>openpiv.pyprocess.get_coordinates<a class="headerlink" href="#openpiv-pyprocess-get-coordinates" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.pyprocess.get_coordinates">
+<tt class="descclassname">openpiv.pyprocess.</tt><tt class="descname">get_coordinates</tt><big>(</big><em>image_size</em>, <em>window_size</em>, <em>overlap</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.get_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the x, y coordinates of the centers of the interrogation windows.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>image_size: two elements tuple</strong> :</p>
+<blockquote>
+<div><p>a two dimensional tuple for the pixel size of the image
+first element is number of rows, second element is 
+the number of columns</p>
+</div></blockquote>
+<p><strong>window_size: int</strong> :</p>
+<blockquote>
+<div><p>the final size of the interrogation window</p>
+</div></blockquote>
+<p><strong>overlap: int</strong> :</p>
+<blockquote>
+<div><p>the number of pixel by which two adjacent interrogation
+window overlap.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>x</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the x coordinates of the 
+interrogation window centers, in pixels.</p>
+</div></blockquote>
+<p><strong>y</strong> : 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a two dimensional array containing the y coordinates of the 
+interrogation window centers, in pixels.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.correlate_windows.html"
+                        title="previous chapter">openpiv.pyprocess.correlate_windows</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.get_field_shape.html"
+                        title="next chapter">openpiv.pyprocess.get_field_shape</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.pyprocess.get_coordinates.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.get_field_shape.html" title="openpiv.pyprocess.get_field_shape"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.correlate_windows.html" title="openpiv.pyprocess.correlate_windows"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPiv Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Information for developers and contributors &mdash; OpenPiv v1 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="OpenPiv v1 documentation" href="../index.html" />
+    <link rel="next" title="Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Installation instruction" href="installation_instruction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation_instruction.html" title="Installation instruction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="information-for-developers-and-contributors">
+<h1>Information for developers and contributors<a class="headerlink" href="#information-for-developers-and-contributors" title="Permalink to this headline">¶</a></h1>
+<p>OpenPiv need developers to improve further. Your support, code and contribution is very welcome and
+we are grateful you can provide some. Please send us an email to <a class="reference external" href="mailto:openpiv-develop&#37;&#52;&#48;lists&#46;sourceforge&#46;net">openpiv-develop<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a>
+to get started, or for any kind of information.</p>
+<p>We use <a class="reference external" href="http://git-scm.com/">git</a> for development version control, and we have a main repository on <a class="reference external" href="https://github.com/">github</a>.</p>
+<div class="section" id="development-workflow">
+<h2>Development workflow<a class="headerlink" href="#development-workflow" title="Permalink to this headline">¶</a></h2>
+<p>This is absolutely not a comprehensive guide of git development, and it is only an indication of our workflow.</p>
+<ol class="arabic">
+<li><p class="first">Download and install git. Instruction can be found <a class="reference external" href="http://help.github.com/">here</a>.</p>
+</li>
+<li><p class="first">Set up a github account.</p>
+</li>
+<li><p class="first">Clone OpenPiv repository using:</p>
+<div class="highlight-python"><pre>git clone http://github.com/gasagna/OpenPiv.git</pre>
+</div>
+</li>
+<li><p class="first">create a branch <cite>new_feature</cite> where you implement your new feature.</p>
+</li>
+<li><p class="first">Fix, change, implement, document code, ...</p>
+</li>
+<li><p class="first">From time to time fetch and merge your master branch with that of the main repository.</p>
+</li>
+<li><p class="first">Be sure that everything is ok and works in your branch.</p>
+</li>
+<li><p class="first">Merge your master branch with your <cite>new_feature</cite> branch.</p>
+</li>
+<li><p class="first">Be sure that everything is now ok and works in you master branch.</p>
+</li>
+<li><p class="first">Send a <a class="reference external" href="http://help.github.com/pull-requests/">pull request</a>.</p>
+</li>
+<li><p class="first">Create another branch for a new feature.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="which-language-can-i-use">
+<h2>Which language can i use?<a class="headerlink" href="#which-language-can-i-use" title="Permalink to this headline">¶</a></h2>
+<p>As a general rule, we use Python where it does not make any difference with code speed. In those situations where Python speed is
+the bottleneck, we have some possibilities, depending on your skills and background. If something has to be written from scratch
+use the first language from the following which you are confortable with: cython, c, c++, fortran. If you have existing, debugged, tested code that
+you would like to share, then no problem. We accept it, whichever language may be written in!</p>
+</div>
+<div class="section" id="things-openpiv-currently-needs-in-order-of-importance">
+<h2>Things OpenPiv currently needs, (in order of importance)<a class="headerlink" href="#things-openpiv-currently-needs-in-order-of-importance" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The implementation of advanced processing algorithms</li>
+<li>Good documentations</li>
+<li>Flow field filtering and validation functions</li>
+<li>Cython wrappers for c/c++ codes.</li>
+<li>a good graphical user interface</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Information for developers and contributors</a><ul>
+<li><a class="reference internal" href="#development-workflow">Development workflow</a></li>
+<li><a class="reference internal" href="#which-language-can-i-use">Which language can i use?</a></li>
+<li><a class="reference internal" href="#things-openpiv-currently-needs-in-order-of-importance">Things OpenPiv currently needs, (in order of importance)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation_instruction.html"
+                        title="previous chapter">Installation instruction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="next chapter">Tutorial</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/src/developers.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation_instruction.html" title="Installation instruction"
+             >previous</a> |</li>
+        <li><a href="../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPiv Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

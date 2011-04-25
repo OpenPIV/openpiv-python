@@ -1,0 +1,161 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.filters.gaussian &mdash; OpenPiv v1 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.filters._gaussian_kernel" href="openpiv.filters._gaussian_kernel.html" />
+    <link rel="prev" title="openpiv.pyprocess.piv" href="openpiv.pyprocess.piv.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.filters._gaussian_kernel.html" title="openpiv.filters._gaussian_kernel"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-filters-gaussian">
+<h1>openpiv.filters.gaussian<a class="headerlink" href="#openpiv-filters-gaussian" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.filters.gaussian">
+<tt class="descclassname">openpiv.filters.</tt><tt class="descname">gaussian</tt><big>(</big><em>u</em>, <em>v</em>, <em>size</em><big>)</big><a class="headerlink" href="#openpiv.filters.gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooths the velocity field with a Gaussian kernel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>the u velocity component field</p>
+</div></blockquote>
+<p><strong>v</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>the v velocity component field</p>
+</div></blockquote>
+<p><strong>size</strong> : int</p>
+<blockquote>
+<div><p>the half width of the kernel. Kernel
+has shape 2*size+1</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>uf</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>the smoothed u velocity component field</p>
+</div></blockquote>
+<p><strong>vf</strong> : 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>the smoothed v velocity component field</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.piv.html"
+                        title="previous chapter">openpiv.pyprocess.piv</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.filters._gaussian_kernel.html"
+                        title="next chapter">openpiv.filters._gaussian_kernel</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.filters.gaussian.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.filters._gaussian_kernel.html" title="openpiv.filters._gaussian_kernel"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPiv Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

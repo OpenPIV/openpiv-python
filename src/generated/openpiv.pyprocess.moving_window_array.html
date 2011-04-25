@@ -1,0 +1,189 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.pyprocess.moving_window_array &mdash; OpenPiv v1 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.pyprocess.find_first_peak" href="openpiv.pyprocess.find_first_peak.html" />
+    <link rel="prev" title="openpiv.pyprocess.get_field_shape" href="openpiv.pyprocess.get_field_shape.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.find_first_peak.html" title="openpiv.pyprocess.find_first_peak"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.get_field_shape.html" title="openpiv.pyprocess.get_field_shape"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-pyprocess-moving-window-array">
+<h1>openpiv.pyprocess.moving_window_array<a class="headerlink" href="#openpiv-pyprocess-moving-window-array" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.pyprocess.moving_window_array">
+<tt class="descclassname">openpiv.pyprocess.</tt><tt class="descname">moving_window_array</tt><big>(</big><em>array</em>, <em>window_size</em>, <em>overlap</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.moving_window_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a nice numpy trick. The concept of numpy strides should be 
+clear to understand this code.</p>
+<p>Basically, we have a 2d array and we want to perform cross-correlation
+over the interrogation windows. An approach could be to loop over the array
+but loops are expensive in python. So we create from the array a new array
+with three dimension, of size (n_windows, window_size, window_size), in which 
+each slice, (along the first axis) is an interrogation window.</p>
+<p>To understand what i mean run this code in ipython:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span>
+<span class="go">     array([[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9],</span>
+<span class="go">            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],</span>
+<span class="go">            [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],</span>
+<span class="go">            [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],</span>
+<span class="go">            [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],</span>
+<span class="go">            [50, 51, 52, 53, 54, 55, 56, 57, 58, 59],</span>
+<span class="go">            [60, 61, 62, 63, 64, 65, 66, 67, 68, 69],</span>
+<span class="go">            [70, 71, 72, 73, 74, 75, 76, 77, 78, 79],</span>
+<span class="go">            [80, 81, 82, 83, 84, 85, 86, 87, 88, 89],</span>
+<span class="go">            [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]])</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">moving_window_array</span><span class="p">(</span> <span class="n">a</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span> <span class="n">moving_window_array</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>array([[[ 0,  1,  2,  3,  4,  5],</dt>
+<dd><blockquote class="first">
+<div>[10, 11, 12, 13, 14, 15],
+[20, 21, 22, 23, 24, 25],
+[30, 31, 32, 33, 34, 35],
+[40, 41, 42, 43, 44, 45],
+[50, 51, 52, 53, 54, 55]],</div></blockquote>
+<dl class="last docutils">
+<dt>[[ 4,  5,  6,  7,  8,  9],</dt>
+<dd>[14, 15, 16, 17, 18, 19],
+[24, 25, 26, 27, 28, 29],
+[34, 35, 36, 37, 38, 39],
+[44, 45, 46, 47, 48, 49],
+[54, 55, 56, 57, 58, 59]],</dd>
+<dt>[[40, 41, 42, 43, 44, 45],</dt>
+<dd>[50, 51, 52, 53, 54, 55],
+[60, 61, 62, 63, 64, 65],
+[70, 71, 72, 73, 74, 75],
+[80, 81, 82, 83, 84, 85],
+[90, 91, 92, 93, 94, 95]],</dd>
+<dt>[[44, 45, 46, 47, 48, 49],</dt>
+<dd>[54, 55, 56, 57, 58, 59],
+[64, 65, 66, 67, 68, 69],
+[74, 75, 76, 77, 78, 79],
+[84, 85, 86, 87, 88, 89],
+[94, 95, 96, 97, 98, 99]]])</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.get_field_shape.html"
+                        title="previous chapter">openpiv.pyprocess.get_field_shape</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.find_first_peak.html"
+                        title="next chapter">openpiv.pyprocess.find_first_peak</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.pyprocess.moving_window_array.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.find_first_peak.html" title="openpiv.pyprocess.find_first_peak"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.get_field_shape.html" title="openpiv.pyprocess.get_field_shape"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPiv Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
