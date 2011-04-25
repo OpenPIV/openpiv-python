@@ -34,12 +34,6 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
           <a href="api_reference.html" title="API reference"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -98,17 +92,17 @@ and plate calibration stuff.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">sig2noise_lim</span><span class="o">=</span><span class="mf">1.5</span> <span class="p">)</span>
 </pre></div>
 </div>
-<p>The function <a class="reference internal" href="generated/openpiv.pyprocess.piv.html#openpiv.pyprocess.piv" title="openpiv.pyprocess.piv"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.piv()</span></tt></a> is a python implementation of the standard cross-correlation
+<p>The function <tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.piv()</span></tt> is a python implementation of the standard cross-correlation
 algorithm. We also provide some options to the function, namely the <tt class="docutils literal"><span class="pre">window_size</span></tt>, i.e. the size of the
 interrogation windows, the <tt class="docutils literal"><span class="pre">overlap</span></tt> between the windows in pixels and the time delay in seconds <tt class="docutils literal"><span class="pre">dt</span></tt> between
 the two image frames. <tt class="docutils literal"><span class="pre">sig2noise_lim</span></tt> is the lower limit for the signal to noise ratio accepted before a vector is considered
 an outlier.</p>
-<p>We then compute the coordinates of the centers of the interrogation windows using <a class="reference internal" href="generated/openpiv.pyprocess.get_coordinates.html#openpiv.pyprocess.get_coordinates" title="openpiv.pyprocess.get_coordinates"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.get_coordinates()</span></tt></a>.:</p>
+<p>We then compute the coordinates of the centers of the interrogation windows using <tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.get_coordinates()</span></tt>.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span> <span class="n">image_size</span><span class="o">=</span><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span> <span class="p">)</span>
 </pre></div>
 </div>
 <p>Note that we have provided some the same options we have given in the previuos command.</p>
-<p>Then we apply an uniform scaling with the function <a class="reference internal" href="generated/openpiv.scaling.uniform.html#openpiv.scaling.uniform" title="openpiv.scaling.uniform"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt></a> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters
+<p>Then we apply an uniform scaling with the function <tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters
 if we want position and velocities in meters and meters/seconds or in pixels per millimeters if we want positions and velocities in millimeters and millimeters/seconds, respectively.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">1236.6</span> <span class="p">)</span>
 </pre></div>
@@ -243,12 +237,6 @@ core your machine has, becasue you don&#8217;t get any speed up.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="../np-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
         <li class="right" >
           <a href="api_reference.html" title="API reference"
              >next</a> |</li>
