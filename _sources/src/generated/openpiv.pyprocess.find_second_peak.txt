@@ -1,6 +1,6 @@
 openpiv.pyprocess.find_second_peak
 ==================================
 
-.. currentmodule:: openpiv.pyprocess
+.. currentmodule:: openpiv
 
-.. autofunction:: find_second_peak
+.. automethod:: pyprocess.find_second_peak

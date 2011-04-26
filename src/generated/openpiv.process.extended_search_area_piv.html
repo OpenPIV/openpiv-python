@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openpiv.pyprocess.piv &mdash; OpenPiv v1 documentation</title>
+    <title>openpiv.process.extended_search_area_piv &mdash; OpenPiv v1 documentation</title>
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.process.extended_search_area_piv" href="openpiv.process.extended_search_area_piv.html" />
-    <link rel="prev" title="openpiv.pyprocess.find_subpixel_peak_position" href="openpiv.pyprocess.find_subpixel_peak_position.html" /> 
+    <link rel="next" title="openpiv.filters.gaussian" href="openpiv.filters.gaussian.html" />
+    <link rel="prev" title="openpiv.pyprocess.piv" href="openpiv.pyprocess.piv.html" /> 
   </head>
   <body>
     <div class="related">
@@ -41,10 +41,10 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.process.extended_search_area_piv.html" title="openpiv.process.extended_search_area_piv"
+          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.find_subpixel_peak_position.html" title="openpiv.pyprocess.find_subpixel_peak_position"
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
              accesskey="P">previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
@@ -56,13 +56,21 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="openpiv-pyprocess-piv">
-<h1>openpiv.pyprocess.piv<a class="headerlink" href="#openpiv-pyprocess-piv" title="Permalink to this headline">¶</a></h1>
-<dl class="staticmethod">
-<dt id="openpiv.pyprocess.piv">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=32</em>, <em>overlap=16</em>, <em>dt=1.0</em>, <em>sig2noise_method='peak2peak'</em>, <em>sig2noise_lim=1.0</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Basic python implementation of the PIV cross-correlation
-algorithm.</p>
+  <div class="section" id="openpiv-process-extended-search-area-piv">
+<h1>openpiv.process.extended_search_area_piv<a class="headerlink" href="#openpiv-process-extended-search-area-piv" title="Permalink to this headline">¶</a></h1>
+<dl class="method">
+<dt id="openpiv.process.extended_search_area_piv">
+<tt class="descclassname">process.</tt><tt class="descname">extended_search_area_piv</tt><big>(</big><big>)</big><a class="headerlink" href="#openpiv.process.extended_search_area_piv" title="Permalink to this definition">¶</a></dt>
+<dd><p>The implementation of the one-step direct correlation with different 
+size of the interrogation window and the search area. The increased
+size of the search areas cope with the problem of loss of pairs due
+to in-plane motion, allowing for a smaller interrogation window size,
+without increasing the number of outlier vectors.</p>
+<p>See:</p>
+<p>Particle-Imaging Techniques for Experimental Fluid Mechanics</p>
+<p>Annual Review of Fluid Mechanics
+Vol. 23: 261-304 (Volume publication date January 1991)
+DOI: 10.1146/annurev.fl.23.010191.001401</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -79,36 +87,29 @@ the second frame.</p>
 </div></blockquote>
 <p><strong>window_size</strong> : int</p>
 <blockquote>
-<div><p>the size of the (square) interrogation window 
-[default: 32 pix]</p>
+<div><p>the size of the (square) interrogation window.</p>
 </div></blockquote>
 <p><strong>overlap</strong> : int</p>
 <blockquote>
-<div><p>the number of pixels by which two adjacent windows overlap
-[default: 16 pix]</p>
+<div><p>the number of pixels by which two adjacent windows overlap.</p>
 </div></blockquote>
 <p><strong>dt</strong> : float</p>
 <blockquote>
-<div><p>the time delay separating the two frames [default: 1.0]</p>
+<div><p>the time delay separating the two frames.</p>
 </div></blockquote>
-<p><strong>sig2noise_method</strong> : string</p>
+<p><strong>search_area_size</strong> : int</p>
 <blockquote>
-<div><p>defines the method of signal-to-noise-ratio measure, &#8216;peak2peak&#8217; (default) or &#8216;peak2mean&#8217;</p>
-</div></blockquote>
-<p><strong>sig2noise_lim: float</strong> :</p>
-<blockquote>
-<div><p>the limit of the signal to noise ratio, 1.0 [default] to 
-ignore this limit</p>
+<div><p>the size of the (square) interrogation window from the second frame</p>
 </div></blockquote>
 <p><strong>nfftx</strong> : int</p>
 <blockquote>
 <div><p>the size of the 2D FFT in x-direction, 
-[default: 2 x windows_a.shape[0] is recommended]</p>
+[default: 2 x search_area_size is recommended].</p>
 </div></blockquote>
 <p><strong>nffty</strong> : int</p>
 <blockquote>
 <div><p>the size of the 2D FFT in y-direction, 
-[default: 2 x windows_a.shape[1] is recommended]</p>
+[default: 2 x search_area_size is recommended].</p>
 </div></blockquote>
 </td>
 </tr>
@@ -118,14 +119,23 @@ ignore this limit</p>
 in pixels/seconds.</p>
 </div></blockquote>
 <p><strong>v</strong> : 2d np.ndarray</p>
-<blockquote class="last">
+<blockquote>
 <div><p>a two dimensional array containing the v velocity component,
 in pixels/seconds.</p>
+</div></blockquote>
+<p><strong>sig2noise</strong> : 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a two dimensional array containing the signal to noise ratio
+from the cross correlation function.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sn</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>
@@ -137,14 +147,14 @@ in pixels/seconds.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.find_subpixel_peak_position.html"
-                        title="previous chapter">openpiv.pyprocess.find_subpixel_peak_position</a></p>
+  <p class="topless"><a href="openpiv.pyprocess.piv.html"
+                        title="previous chapter">openpiv.pyprocess.piv</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.process.extended_search_area_piv.html"
-                        title="next chapter">openpiv.process.extended_search_area_piv</a></p>
+  <p class="topless"><a href="openpiv.filters.gaussian.html"
+                        title="next chapter">openpiv.filters.gaussian</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../../_sources/src/generated/openpiv.pyprocess.piv.txt"
+    <li><a href="../../_sources/src/generated/openpiv.process.extended_search_area_piv.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -177,10 +187,10 @@ in pixels/seconds.</p>
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.process.extended_search_area_piv.html" title="openpiv.process.extended_search_area_piv"
+          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
              >next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.find_subpixel_peak_position.html" title="openpiv.pyprocess.find_subpixel_peak_position"
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
              >previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 

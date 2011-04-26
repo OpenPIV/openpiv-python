@@ -22,7 +22,10 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" /> 
+    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.tools.display" href="openpiv.tools.display.html" />
+    <link rel="prev" title="openpiv.tools.imread" href="openpiv.tools.imread.html" /> 
   </head>
   <body>
     <div class="related">
@@ -31,7 +34,20 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.tools.display.html" title="openpiv.tools.display"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.tools.imread.html" title="openpiv.tools.imread"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -42,6 +58,57 @@
             
   <div class="section" id="openpiv-tools-save">
 <h1>openpiv.tools.save<a class="headerlink" href="#openpiv-tools-save" title="Permalink to this headline">¶</a></h1>
+<dl class="staticmethod">
+<dt id="openpiv.tools.save">
+<em class="property">static </em><tt class="descclassname">tools.</tt><tt class="descname">save</tt><big>(</big><em>x</em>, <em>y</em>, <em>u</em>, <em>v</em>, <em>filename</em>, <em>fmt='%8.4f'</em>, <em>delimiter='t'</em><big>)</big><a class="headerlink" href="#openpiv.tools.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save flow field to an ascii file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>x</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the x coordinates of the 
+interrogation window centers, in pixels.</p>
+</div></blockquote>
+<p><strong>y</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the y coordinates of the 
+interrogation window centers, in pixels.</p>
+</div></blockquote>
+<p><strong>u</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the u velocity components,
+in pixels/seconds.</p>
+</div></blockquote>
+<p><strong>v</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the v velocity components,
+in pixels/seconds.</p>
+</div></blockquote>
+<p><strong>filename</strong> : string</p>
+<blockquote>
+<div><p>the path of the file where to save the flow field</p>
+</div></blockquote>
+<p><strong>fmt</strong> : string</p>
+<blockquote>
+<div><p>a format string. See documentation of numpy.savetxt
+for more details.</p>
+</div></blockquote>
+<p><strong>delimiter</strong> : string</p>
+<blockquote class="last">
+<div><p>character separating columns</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">save</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;field_001.txt&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%6.3f</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39;       &#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </div>
 
 
@@ -50,6 +117,12 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.tools.imread.html"
+                        title="previous chapter">openpiv.tools.imread</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.tools.display.html"
+                        title="next chapter">openpiv.tools.display</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/src/generated/openpiv.tools.save.txt"
@@ -78,7 +151,20 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.tools.display.html" title="openpiv.tools.display"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.tools.imread.html" title="openpiv.tools.imread"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

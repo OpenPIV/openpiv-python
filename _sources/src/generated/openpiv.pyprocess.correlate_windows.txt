@@ -1,6 +1,6 @@
 openpiv.pyprocess.correlate_windows
 ===================================
 
-.. currentmodule:: openpiv.pyprocess
+.. currentmodule:: openpiv
 
-.. autofunction:: correlate_windows
+.. automethod:: pyprocess.correlate_windows

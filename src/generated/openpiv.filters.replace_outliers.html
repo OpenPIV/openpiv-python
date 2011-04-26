@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openpiv.pyprocess.correlate_windows &mdash; OpenPiv v1 documentation</title>
+    <title>openpiv.filters.replace_outliers &mdash; OpenPiv v1 documentation</title>
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.pyprocess.get_coordinates" href="openpiv.pyprocess.get_coordinates.html" />
-    <link rel="prev" title="openpiv.pyprocess.normalize_intensity" href="openpiv.pyprocess.normalize_intensity.html" /> 
+    <link rel="next" title="openpiv.validation.global_val" href="openpiv.validation.global_val.html" />
+    <link rel="prev" title="openpiv.filters._gaussian_kernel" href="openpiv.filters._gaussian_kernel.html" /> 
   </head>
   <body>
     <div class="related">
@@ -41,10 +41,10 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.get_coordinates.html" title="openpiv.pyprocess.get_coordinates"
+          <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.normalize_intensity.html" title="openpiv.pyprocess.normalize_intensity"
+          <a href="openpiv.filters._gaussian_kernel.html" title="openpiv.filters._gaussian_kernel"
              accesskey="P">previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
@@ -56,41 +56,55 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="openpiv-pyprocess-correlate-windows">
-<h1>openpiv.pyprocess.correlate_windows<a class="headerlink" href="#openpiv-pyprocess-correlate-windows" title="Permalink to this headline">¶</a></h1>
-<dl class="staticmethod">
-<dt id="openpiv.pyprocess.correlate_windows">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">correlate_windows</tt><big>(</big><em>window_a</em>, <em>window_b</em>, <em>nfftx=None</em>, <em>nffty=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.correlate_windows" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute correlation function between two interrogation windows.</p>
-<p>Use the correlation theorem to speed up the computation of the 
-correlation function.</p>
+  <div class="section" id="openpiv-filters-replace-outliers">
+<h1>openpiv.filters.replace_outliers<a class="headerlink" href="#openpiv-filters-replace-outliers" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.filters.replace_outliers">
+<tt class="descclassname">openpiv.filters.</tt><tt class="descname">replace_outliers</tt><big>(</big><em>u</em>, <em>v</em>, <em>method='localmean'</em>, <em>n_iter=5</em>, <em>kernel_size=1</em><big>)</big><a class="headerlink" href="#openpiv.filters.replace_outliers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace nans in an velocity field using an iterative image inpainting algorithm.</p>
+<p>The algorithm is the following:</p>
+<ol class="arabic simple">
+<li>For each element in the arrays of the <tt class="docutils literal"><span class="pre">u</span></tt> and <tt class="docutils literal"><span class="pre">v</span></tt> components, replace it by a weighted average
+of the neighbouring elements which are not nan. The weights depends
+of the method type. If <tt class="docutils literal"><span class="pre">method=localmean</span></tt> weight are equal to 1/( (2*kernel_size+1)**2 -1 )</li>
+<li>Several iterations are needed if there are adjacent nan elements.
+If this is the case, inforation is &#8220;spread&#8221; from the edges of the missing
+regions iteratively, until the variation is below a certain threshold.</li>
+</ol>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>window_a</strong> : 2d np.ndarray</p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the first interrogation window</p>
+<div><p>the u velocity component field</p>
 </div></blockquote>
-<p><strong>window_b</strong> : 2d np.ndarray</p>
+<p><strong>v</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the second interrogation window</p>
+<div><p>the v velocity component field</p>
 </div></blockquote>
-<p><strong>nfftx</strong> : int</p>
+<p><strong>n_iter</strong> : int</p>
 <blockquote>
-<div><p>a size of the 2D FFT in x-direction, 
-[default: 2 x windows_a.shape[0] is recommended]</p>
+<div><p>the number of iterations</p>
 </div></blockquote>
-<p><strong>nffty</strong> : int</p>
+<p><strong>kernel_size</strong> : int</p>
 <blockquote>
-<div><p>a size of the 2D FFT in y-direction, 
-[default: 2 x windows_a.shape[1] is recommended]</p>
+<div><p>the size of the kernel, default is 1</p>
+</div></blockquote>
+<p><strong>method</strong> : str</p>
+<blockquote>
+<div><p>the method used to replace nans. Valid options are
+<cite>localmean</cite>.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>corr</strong> : 2d np.ndarray</p>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>uf</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>the smoothed u velocity component field, where nans have been replaced</p>
+</div></blockquote>
+<p><strong>vf</strong> : 2d np.ndarray</p>
 <blockquote class="last">
-<div><p>a two dimensions array with the correlation function</p>
+<div><p>the smoothed v velocity component field, where nans have been replaced</p>
 </div></blockquote>
 </td>
 </tr>
@@ -107,14 +121,14 @@ correlation function.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.normalize_intensity.html"
-                        title="previous chapter">openpiv.pyprocess.normalize_intensity</a></p>
+  <p class="topless"><a href="openpiv.filters._gaussian_kernel.html"
+                        title="previous chapter">openpiv.filters._gaussian_kernel</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.get_coordinates.html"
-                        title="next chapter">openpiv.pyprocess.get_coordinates</a></p>
+  <p class="topless"><a href="openpiv.validation.global_val.html"
+                        title="next chapter">openpiv.validation.global_val</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../../_sources/src/generated/openpiv.pyprocess.correlate_windows.txt"
+    <li><a href="../../_sources/src/generated/openpiv.filters.replace_outliers.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -147,10 +161,10 @@ correlation function.</p>
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.get_coordinates.html" title="openpiv.pyprocess.get_coordinates"
+          <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"
              >next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.normalize_intensity.html" title="openpiv.pyprocess.normalize_intensity"
+          <a href="openpiv.filters._gaussian_kernel.html" title="openpiv.filters._gaussian_kernel"
              >previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 

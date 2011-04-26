@@ -1,6 +1,6 @@
 openpiv.scaling.uniform
 =======================
 
-.. currentmodule:: openpiv.scaling
+.. currentmodule:: openpiv
 
-.. autofunction:: uniform
+.. automethod:: scaling.uniform

@@ -22,7 +22,10 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" /> 
+    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.pyprocess.piv" href="openpiv.pyprocess.piv.html" />
+    <link rel="prev" title="openpiv.pyprocess.find_pixel_peak_position" href="openpiv.pyprocess.find_pixel_peak_position.html" /> 
   </head>
   <body>
     <div class="related">
@@ -31,7 +34,20 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.find_pixel_peak_position.html" title="openpiv.pyprocess.find_pixel_peak_position"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -42,6 +58,44 @@
             
   <div class="section" id="openpiv-pyprocess-find-subpixel-peak-position">
 <h1>openpiv.pyprocess.find_subpixel_peak_position<a class="headerlink" href="#openpiv-pyprocess-find-subpixel-peak-position" title="Permalink to this headline">¶</a></h1>
+<dl class="staticmethod">
+<dt id="openpiv.pyprocess.find_subpixel_peak_position">
+<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">find_subpixel_peak_position</tt><big>(</big><em>corr</em>, <em>peak_indices</em>, <em>subpixel_method='gaussian'</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.find_subpixel_peak_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find subpixel approximation of the correlation peak.</p>
+<p>This function returns a subpixels approximation of the correlation
+peak by fitting a two dimensional Gaussian curve in a 3x3 square region
+around the correlation peak.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>corr</strong> : np.ndarray</p>
+<blockquote>
+<div><p>the correlation map</p>
+</div></blockquote>
+<p><strong>peak_indices: two elements tuple</strong> :</p>
+<blockquote>
+<div><p>the row and column indices of the first correlation peak</p>
+</div></blockquote>
+<p><strong>subpixel_method</strong> : string</p>
+<blockquote>
+<div><p>one of the following methods to estimate subpixel location of the peak: 
+&#8216;centroid&#8217; [replaces default if correlation map is negative], 
+&#8216;gaussian&#8217; [default if correlation map is positive], 
+&#8216;parabolic&#8217;</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>subp_peak_position</strong> : two elements tuple</p>
+<blockquote class="last">
+<div><p>the sub-pixel approximation of the correlation peak</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -50,6 +104,12 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.find_pixel_peak_position.html"
+                        title="previous chapter">openpiv.pyprocess.find_pixel_peak_position</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.pyprocess.piv.html"
+                        title="next chapter">openpiv.pyprocess.piv</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/src/generated/openpiv.pyprocess.find_subpixel_peak_position.txt"
@@ -78,7 +138,20 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.pyprocess.find_pixel_peak_position.html" title="openpiv.pyprocess.find_pixel_peak_position"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

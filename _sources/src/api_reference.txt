@@ -65,6 +65,7 @@ The ``openpiv.filters`` module
     
     gaussian
     _gaussian_kernel
+    replace_outliers
     
     
 The ``openpiv.validation`` module

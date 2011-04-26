@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openpiv.pyprocess.correlate_windows &mdash; OpenPiv v1 documentation</title>
+    <title>openpiv.validation.sig2noise_val &mdash; OpenPiv v1 documentation</title>
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.pyprocess.get_coordinates" href="openpiv.pyprocess.get_coordinates.html" />
-    <link rel="prev" title="openpiv.pyprocess.normalize_intensity" href="openpiv.pyprocess.normalize_intensity.html" /> 
+    <link rel="next" title="openpiv.scaling.uniform" href="openpiv.scaling.uniform.html" />
+    <link rel="prev" title="openpiv.validation.global_val" href="openpiv.validation.global_val.html" /> 
   </head>
   <body>
     <div class="related">
@@ -41,10 +41,10 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.get_coordinates.html" title="openpiv.pyprocess.get_coordinates"
+          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.normalize_intensity.html" title="openpiv.pyprocess.normalize_intensity"
+          <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"
              accesskey="P">previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
@@ -56,46 +56,58 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="openpiv-pyprocess-correlate-windows">
-<h1>openpiv.pyprocess.correlate_windows<a class="headerlink" href="#openpiv-pyprocess-correlate-windows" title="Permalink to this headline">¶</a></h1>
-<dl class="staticmethod">
-<dt id="openpiv.pyprocess.correlate_windows">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">correlate_windows</tt><big>(</big><em>window_a</em>, <em>window_b</em>, <em>nfftx=None</em>, <em>nffty=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.correlate_windows" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute correlation function between two interrogation windows.</p>
-<p>Use the correlation theorem to speed up the computation of the 
-correlation function.</p>
+  <div class="section" id="openpiv-validation-sig2noise-val">
+<h1>openpiv.validation.sig2noise_val<a class="headerlink" href="#openpiv-validation-sig2noise-val" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.validation.sig2noise_val">
+<tt class="descclassname">openpiv.validation.</tt><tt class="descname">sig2noise_val</tt><big>(</big><em>u</em>, <em>v</em>, <em>sig2noise</em>, <em>threshold=1.3</em><big>)</big><a class="headerlink" href="#openpiv.validation.sig2noise_val" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eliminate spurious vectors from cross-correlation signal to noise ratio.</p>
+<p>Replace spurious vectors with np.nan if signal to noise ratio
+is below a specified threshold.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>window_a</strong> : 2d np.ndarray</p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the first interrogation window</p>
+<div><p>a two dimensional array containing the u velocity component.</p>
 </div></blockquote>
-<p><strong>window_b</strong> : 2d np.ndarray</p>
+<p><strong>v</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the second interrogation window</p>
+<div><p>a two dimensional array containing the v velocity component.</p>
 </div></blockquote>
-<p><strong>nfftx</strong> : int</p>
+<p><strong>sig2noise</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a size of the 2D FFT in x-direction, 
-[default: 2 x windows_a.shape[0] is recommended]</p>
+<div><p>a two dimensional array containing the value  of the signal to 
+noise ratio from cross-correlation function.</p>
 </div></blockquote>
-<p><strong>nffty</strong> : int</p>
+<p><strong>threshold: float</strong> :</p>
 <blockquote>
-<div><p>a size of the 2D FFT in y-direction, 
-[default: 2 x windows_a.shape[1] is recommended]</p>
+<div><p>the signal to noise ratio threshold value.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>corr</strong> : 2d np.ndarray</p>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the u velocity component, 
+where spurious vectors have been replaced by np.nan</p>
+</div></blockquote>
+<p><strong>v</strong> : 2d np.ndarray</p>
 <blockquote class="last">
-<div><p>a two dimensions array with the correlation function</p>
+<div><p>a two dimensional array containing the v velocity component, 
+where spurious vectors have been replaced by np.nan</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">References</p>
+<ol class="upperalpha simple" start="18">
+<li><ol class="first upperalpha" start="4">
+<li>Keane and R. J. Adrian, Measurement Science &amp; Technology,1990, 1, 1202-1215.</li>
+</ol>
+</li>
+</ol>
 </dd></dl>
 
 </div>
@@ -107,14 +119,14 @@ correlation function.</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.normalize_intensity.html"
-                        title="previous chapter">openpiv.pyprocess.normalize_intensity</a></p>
+  <p class="topless"><a href="openpiv.validation.global_val.html"
+                        title="previous chapter">openpiv.validation.global_val</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.get_coordinates.html"
-                        title="next chapter">openpiv.pyprocess.get_coordinates</a></p>
+  <p class="topless"><a href="openpiv.scaling.uniform.html"
+                        title="next chapter">openpiv.scaling.uniform</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../../_sources/src/generated/openpiv.pyprocess.correlate_windows.txt"
+    <li><a href="../../_sources/src/generated/openpiv.validation.sig2noise_val.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
@@ -147,10 +159,10 @@ correlation function.</p>
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.get_coordinates.html" title="openpiv.pyprocess.get_coordinates"
+          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
              >next</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.normalize_intensity.html" title="openpiv.pyprocess.normalize_intensity"
+          <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"
              >previous</a> |</li>
         <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
