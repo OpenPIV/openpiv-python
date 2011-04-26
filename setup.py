@@ -7,7 +7,7 @@ module1 = Extension(    name         = "openpiv.process",
                     )
 
 # a list of the extension modules that we want to distribute
-ext_modules = []
+ext_modules = [module1]
 
 
 # Package data are those filed 'strictly' needed by the program
