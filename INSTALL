@@ -1,5 +1,3 @@
-.. _installation_instruction:
-
 ========================
 Installation instruction
 ========================
@@ -18,7 +16,7 @@ The dependencies are:
 * `numpy <http://www.scipy.org/>`_
 * `cython <http://cython.org/>`_
 
-On all platforms, the binary Enthought Python Distribution (EPD) is recommended. 
+On all the platforms, the binary Enthought Python Distribution (EPD) is recommended. 
 Visit http://www.enthought.com
 
 How to install the dependencies on Linux
@@ -75,24 +73,3 @@ with ::
 .. where ``$DIR`` is the folder you want ot install OpenPIV in. If you want to install it system
 .. wide omit the ``--prefix`` option, but you should have root priviles to do so. Remember to 
 .. update the PYTHONPATH environment variable if you used a custom installation directory.
-
-
-.. Download pre-built binary distributions
-.. =======================================
-
-.. For Windows we provide pre-built distributions which can be used without the hassles
-.. of compilation and other boring things you may not want to dig into. This is currently a work
-.. in progress. Check back soon!
-
-
-
-Having problems?
-================
-If you encountered some issues, found difficult to install OpenPIV following these instructions
-please drop us an email to openpiv-develop@lists.sourceforge.net , so that we can help you and 
-improve this page!
-
-
-
-
-
