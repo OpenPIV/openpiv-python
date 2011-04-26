@@ -10,6 +10,7 @@ module1 = Extension(    name         = "openpiv.process",
                     
 module2 = Extension(    name         = "openpiv.lib",
                         sources      = ["openpiv/src/lib.c"],
+                        include_dirs = [numpy.get_include()],
                     )
 
 # a list of the extension modules that we want to distribute
