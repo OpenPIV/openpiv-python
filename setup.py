@@ -5,9 +5,13 @@ import glob
 module1 = Extension(    name         = "openpiv.process",
                         sources      = ["openpiv/src/process.c"],
                     )
+                    
+module2 = Extension(    name         = "openpiv.lib",
+                        sources      = ["openpiv/src/lib.c"],
+                    )
 
 # a list of the extension modules that we want to distribute
-ext_modules = [module1]
+ext_modules = [module1, module2]
 
 
 # Package data are those filed 'strictly' needed by the program
