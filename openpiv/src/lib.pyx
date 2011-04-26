@@ -12,7 +12,42 @@ ctypedef np.int64_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
-def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int n_iter, int kernel_size, str method='localmean'):
+def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int n_iter, int kernel_size=1, str method='localmean'):
+    """Replace nans in an array using an iterative image inpainting algorithm.
+    
+    The algorithm is the following:
+    
+    1) For each element in the input array replace it by a weighted average
+       of the neighbouring elements which are not nan. The weights depends
+       of the method type. If ``method=localmean`` weight are equal to 1/( (2*kernel_size+1)**2 -1 )
+       
+    2) Several iterations are needed if there are adjacent nan elements.
+       If this is the case, inforation is "spread" from the edges of the missing
+       regions iteratively, until the variation is below a certain threshold. 
+    
+    Parameters
+    ----------
+    
+    array : 2d np.ndarray
+        an array containing  nan that have to be replaced
+        
+    n_iter : int
+        the number of iterations
+    
+    kernel_size : int
+        the size of the kernel, default is 1
+        
+    method : str
+        the method used to replace nans. Valid options are
+        `localmean`.
+        
+    Returns
+    -------
+    
+    filled : 2d np.ndarray
+        a copy of the input array, where nans have been replaced
+        
+    """
     
     cdef int i, j, I, J, it, n, k
     
