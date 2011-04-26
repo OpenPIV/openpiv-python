@@ -81,11 +81,11 @@ def gaussian( u, v, size) :
     return uf, vf
     
 def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
-    """Replace nans in an array using an iterative image inpainting algorithm.
+    """Replace nans in an velocity field using an iterative image inpainting algorithm.
     
     The algorithm is the following:
     
-    1) For each element in the input array replace it by a weighted average
+    1) For each element in the arrays of the ``u`` and ``v`` components, replace it by a weighted average
        of the neighbouring elements which are not nan. The weights depends
        of the method type. If ``method=localmean`` weight are equal to 1/( (2*kernel_size+1)**2 -1 )
        
@@ -96,8 +96,11 @@ def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
     Parameters
     ----------
     
-    array : 2d np.ndarray
-        an array containing  nan that have to be replaced
+    u : 2d np.ndarray
+        the u velocity component field
+        
+    v : 2d np.ndarray
+        the v velocity component field
         
     n_iter : int
         the number of iterations
@@ -111,17 +114,20 @@ def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
         
     Returns
     -------
-    
-    filled : 2d np.ndarray
-        a copy of the input array, where nans have been replaced
+    uf : 2d np.ndarray
+        the smoothed u velocity component field, where nans have been replaced
+        
+    vf : 2d np.ndarray
+        the smoothed v velocity component field, where nans have been replaced    
+        
     """
     if method == 'localmean':
-        u = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
-        v = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        uf = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        vf = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`.')
     
-    return u, v
+    return uf, vf
     
     
     
