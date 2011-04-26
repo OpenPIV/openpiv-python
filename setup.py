@@ -1,9 +1,11 @@
 from distutils.core import setup, Extension
 import glob
+import numpy
 
 # Build extensions 
 module1 = Extension(    name         = "openpiv.process",
                         sources      = ["openpiv/src/process.c"],
+                        include_dirs = [numpy.get_include()],
                     )
 
 # a list of the extension modules that we want to distribute
@@ -56,7 +58,7 @@ setup(  name = "OpenPiv",
         packages = packages,
         
         scripts = scripts,
-        
+                
         package_data = {'': package_data},
         
         data_files = data_files
