@@ -1,6 +1,6 @@
 openpiv.pyprocess.normalize_intensity
 =====================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.normalize_intensity
+.. autofunction:: normalize_intensity
