@@ -67,7 +67,7 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int n_iter, int kernel_siz
             for j in range(2*kernel_size+1):
                 kernel[i,j] = 1.0
     
-    # fill new array with 
+    # fill new array with input elements
     for i in range(array.shape[0]):
         for j in range(array.shape[1]):
             filled[i,j] = array[i,j]
