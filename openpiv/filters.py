@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import scipy.signal
+from openpiv.lib import replace_nans
   
     
 def _gaussian_kernel( size ):
@@ -78,4 +79,49 @@ def gaussian( u, v, size) :
     uf = scipy.signal.convolve( u, g, mode='same')
     vf = scipy.signal.convolve( v, g, mode='same')
     return uf, vf
+    
+def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
+    """Replace nans in an array using an iterative image inpainting algorithm.
+    
+    The algorithm is the following:
+    
+    1) For each element in the input array replace it by a weighted average
+       of the neighbouring elements which are not nan. The weights depends
+       of the method type. If ``method=localmean`` weight are equal to 1/( (2*kernel_size+1)**2 -1 )
+       
+    2) Several iterations are needed if there are adjacent nan elements.
+       If this is the case, inforation is "spread" from the edges of the missing
+       regions iteratively, until the variation is below a certain threshold. 
+    
+    Parameters
+    ----------
+    
+    array : 2d np.ndarray
+        an array containing  nan that have to be replaced
+        
+    n_iter : int
+        the number of iterations
+    
+    kernel_size : int
+        the size of the kernel, default is 1
+        
+    method : str
+        the method used to replace nans. Valid options are
+        `localmean`.
+        
+    Returns
+    -------
+    
+    filled : 2d np.ndarray
+        a copy of the input array, where nans have been replaced
+    """
+    if method == 'localmean':
+        u = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        v = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+    else:
+        raise ValueError( 'method not valid. Should be one of `localmean`.')
+    
+    return u, v
+    
+    
     
