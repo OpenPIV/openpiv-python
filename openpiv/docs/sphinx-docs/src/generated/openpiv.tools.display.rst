@@ -1,6 +1,6 @@
 openpiv.tools.display
 =====================
 
-.. currentmodule:: openpiv.tools
+.. currentmodule:: openpiv
 
-.. autofunction:: display
+.. automethod:: tools.display

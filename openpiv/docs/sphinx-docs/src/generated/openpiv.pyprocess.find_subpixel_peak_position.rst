@@ -1,6 +1,6 @@
 openpiv.pyprocess.find_subpixel_peak_position
 =============================================
 
-.. currentmodule:: openpiv.pyprocess
+.. currentmodule:: openpiv
 
-.. autofunction:: find_subpixel_peak_position
+.. automethod:: pyprocess.find_subpixel_peak_position
