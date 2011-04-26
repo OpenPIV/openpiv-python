@@ -16,7 +16,7 @@ This is absolutely not a comprehensive guide of git development, and it is only 
 2) Set up a github account.
 3) Clone OpenPiv repository using::
 
-    git clone http://github.com/gasagna/OpenPiv.git
+    git clone http://github.com/alexlib/openpiv-python.git
     
 4) create a branch `new_feature` where you implement your new feature.
 5) Fix, change, implement, document code, ...
