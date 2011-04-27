@@ -12,7 +12,7 @@ frame_a  = openpiv.tools.imread( basename+'_a.bmp' )
 frame_b  = openpiv.tools.imread( basename+'_b.bmp' )
 
 # process image pair with the purepython implementation
-u, v = openpiv.pyprocess.piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, corr_method = 'direct', sig2noise_method = 'peak2peak', sig2noise_lim = 1.0  )
+u, v = openpiv.pyprocess.piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, corr_method = 'fft', sig2noise_method = 'peak2peak', sig2noise_lim = 1.0  )
     
 # get window centers coordinates
 x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=16 )
