@@ -3,21 +3,23 @@
 + documentation / tutorials / web site
     
     This is always needed to improve. New users 
-    should rapidly understand for OpenPiv is. They
+    should rapidly understand what OpenPiv is capable of. They
     should feel as comfortable as possible on the first `impact`.
     
-    A downloads section should be added.
+    A downloads section should be added. This will contain the releases
+    example code and example images.
     
-    Prepare source distributions for various platform, and 
-    include examples, so that people can follow the tutorials 
-    processing our images.
+    Prepare source distributions for various platform.
     
     Decide where to store OpenPiv-Python website,
     wheter on openpiv.net/python or on Alex github page. 
-    Maybe it is better on the former, for grater flexibility for 
-    downloads, et cetera.
+    Maybe it is better on the former, for gerater flexibility. 
     
+    However it seems that the openpiv python documentation
+    page is growing fast. Maybe it is better to put clear links
+    on openpiv.net to point to three pages for python, matlab, c++.
     
++ merge validation and filters submodule into one. Alex, please choose the name.
     
 + flow field validation algorithms
     - local median validation
