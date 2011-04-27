@@ -2,19 +2,22 @@
 Tutorial
 ========
 
-This tutorial focuses on the use of the openpiv python module for scripting. This tutorial only shows some of the most commonly used features of
-OpenPiv. Check the complete API reference at :ref:`api_reference`
+This is a series of examples and tutorials which focuses on showing features and capabilities of OpenPiv, so that after reading you should be able to set up scripts for 
+your own analyses. If you are looking for a complete reference to the OpenPiv api, please look at :ref:`api_reference`. It is assumed that you have Openpiv installed on your system
+along with a working python environment as well as the necessary :ref:`OpenPiv dependencies <dependencies>`. For installation details on various platforms see :ref:`installation_instruction`.
 
-First step is to install OpenPiv. For installation details
-on various platforms see :ref:`installation_instruction`.
 
-This tutorial uses some of the example data provided with the source distribution
-of OpenPiv that you can find in our `GitHub repository <https://github.com/alexlib/OpenPiv>`_.
+
+In this tutorial we are going to use some example data provided with the source distribution of OpenPiv. Altough it is not necessary, you may find helpful to actually run 
+the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory openpiv/docs/examples. Similarly if you cloned the git repository.
+If you cannot find them, dowload example images as well as the python source code from the :ref:`downloads <downloads>` page.
+
 
 First example: how to process an image pair
 ===========================================
 
-Here is a complete working example showing how to process an image pair.  ::
+The first example shows how to process a single image pair. This is a common task and may be useful if you are studying how does a certain
+algorithm behaves. We assume that the current working directory is where the two image of the first example are located. Here is the code::
 
 
     import openpiv.tools
@@ -24,9 +27,15 @@ Here is a complete working example showing how to process an image pair.  ::
     frame_a  = openpiv.tools.imread( 'exp1_001_a.bmp' )
     frame_b  = openpiv.tools.imread( 'exp1_001_b.bmp' )
     
-    u, v = openpiv.pyprocess.piv( frame_a, frame_b, window_size=48, overlap=32, dt=0.02, sig2noise_lim=1.5 )
+    u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
+    
+    u, v = opepiv.validate.sig2noise_val( u, v, sig2noise, threshold = 1.2 )
+    
+    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2)
+    
     x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=48, overlap=32 )
-    x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 1236.6 )
+    
+    x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
     
     openpiv.tools.save(x, y, u, v, 'exp1_001.txt')
     
