@@ -6,8 +6,8 @@ import openpiv.pyprocess
 cimport numpy as np
 cimport cython
 
-DTYPEi = np.int64
-ctypedef np.int64_t DTYPEi_t
+DTYPEi = np.int32
+ctypedef np.int32_t DTYPEi_t
 
 DTYPEf = np.float64
 ctypedef np.float64_t DTYPEf_t
