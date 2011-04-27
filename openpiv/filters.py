@@ -122,12 +122,12 @@ def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
         
     """
     if method == 'localmean':
-        uf = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
-        vf = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        u = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        v = replace_nans( v, method=method, n_iter=n_iter, kernel_size=kernel_size )
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`.')
     
-    return uf, vf
+    return u, v
     
     
     

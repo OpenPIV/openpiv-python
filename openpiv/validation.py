@@ -57,8 +57,11 @@ def global_val( u, v, u_thresholds, v_thresholds ):
         where spurious vectors have been replaced by np.nan
         
     """
-    u = np.where( u < u_thresholds[0] or u > u_thresholds[1], np.nan, u )
-    v = np.where( v < v_thresholds[0] or v > v_thresholds[1], np.nan, v )
+    u = np.where( u < u_thresholds[0] , np.nan, u )
+    u = np.where( u > u_thresholds[1] , np.nan, u )
+    v = np.where( v < v_thresholds[0] , np.nan, v )
+    v = np.where( v > v_thresholds[1] , np.nan, v )
+
 
     return u, v 
 
