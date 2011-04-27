@@ -394,7 +394,7 @@ def xcorrf2(a,b,nfftx,nffty):
     return 
     
 
-def correlate_windows( window_a, window_b, nfftx = None, nffty = None ):
+def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nffty = None ):
     """Compute correlation function between two interrogation windows.
     
     Use the correlation theorem to speed up the computation of the 
@@ -407,6 +407,9 @@ def correlate_windows( window_a, window_b, nfftx = None, nffty = None ):
         
     window_b : 2d np.ndarray
         a two dimensions array for the second interrogation window
+        
+    corr_method   : string
+        one of the two methods currently implemented: 'fft' or 'direct'
         
     nfftx   : int
         a size of the 2D FFT in x-direction, 
@@ -423,20 +426,27 @@ def correlate_windows( window_a, window_b, nfftx = None, nffty = None ):
         a two dimensions array with the correlation function
     
     """
-    if nfftx is None:
-        nfftx = 2*window_a.shape[0]
-    if nffty is None:
-        nffty = 2*window_a.shape[1]
     
-    # return signal.correlate2d(window_a,window_b,'full')    
-    return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
+    if corr_method == 'fft':
+        if nfftx is None:
+            nfftx = 2*window_a.shape[0]
+        if nffty is None:
+            nffty = 2*window_a.shape[1]
+        
+        # return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
+        return signal.fftconvolve( normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')   
+    elif corr_method == 'direct':
+        return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
+    else:
+        raise ValueError('method is not implemented')
+    
     
 def normalize_intensity( window ):
     """Remove mean value from window and masks negative, dark pixels """
      
     return window - window.mean()
 
-def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, sig2noise_method = 'peak2peak', sig2noise_lim=1.0):
+def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', sig2noise_method = 'peak2peak', sig2noise_lim=1.0):
     """Basic python implementation of the PIV cross-correlation
     algorithm.
         
@@ -460,6 +470,9 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, sig2noise_method
         
     dt : float
         the time delay separating the two frames [default: 1.0]
+    
+    corr_method : string
+        one of the two methods implemented: 'fft' or 'direct'
     
     sig2noise_method : string 
         defines the method of signal-to-noise-ratio measure, 'peak2peak' (default) or 'peak2mean'
@@ -501,8 +514,9 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, sig2noise_method
     
     # for each interrogation window
     for i in range(windows_a.shape[0]):
+        print i
         # get correlation window
-        corr = correlate_windows( windows_a[i], windows_b[i], nfftx=window_size*2, nffty=window_size*2 )
+        corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=window_size*2, nffty=window_size*2 )
         
         # get pixel approximation for peak position row and column index
         row, col, sig2noise = find_pixel_peak_position( corr, sig2noise_method = sig2noise_method, sig2noise_lim = sig2noise_lim)
