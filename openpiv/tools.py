@@ -85,7 +85,7 @@ def imread( filename ):
     
     """
     
-    return scipy.misc.imread( filename, flatten=0)
+    return scipy.misc.imread( filename, flatten=0).astype(np.int32)
 
 def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
