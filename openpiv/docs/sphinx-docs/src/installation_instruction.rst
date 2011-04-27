@@ -4,6 +4,8 @@
 Installation instruction
 ========================
 
+.. _dependencies:
+
 Dependencies
 ============
 
