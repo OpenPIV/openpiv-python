@@ -21,7 +21,7 @@ algorithm behaves. We assume that the current working directory is where the two
 
 
     import openpiv.tools
-    import openpiv.pyprocess
+    import openpiv.process
     import openpiv.scaling
     
     frame_a  = openpiv.tools.imread( 'exp1_001_a.bmp' )
@@ -29,16 +29,17 @@ algorithm behaves. We assume that the current working directory is where the two
     
     u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
     
-    u, v = opepiv.validate.sig2noise_val( u, v, sig2noise, threshold = 1.2 )
+    u, v = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
     u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2)
     
-    x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=48, overlap=32 )
+    x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
     
     x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
     
-    openpiv.tools.save(x, y, u, v, 'exp1_001.txt')
+    openpiv.tools.save(x, y, u, v, 'exp1_001.txt' )
     
+    openpiv.tools.display_vector_field( 'exp1_001.txt' )    
     
 We first import some of the openpiv modules.::
 
@@ -47,9 +48,11 @@ We first import some of the openpiv modules.::
     import openpiv.scaling
     
 Module ``openpiv.tools`` contains mostly contains utilities and tools, such as file I/O and multiprocessing
-facilities. Module ``openpi.pyprocess`` contains a pure Python implementation of the PIV cross-correlation
-algorithm and several helper functions. Last, module ``openpiv.scaling`` contains function for field scaling
-and plate calibration stuff.
+facilities. Module ``openpiv.pyprocess`` contains a pure Python implementation of the PIV cross-correlation
+algorithm and several helper functions. Module ``openpiv.process`` contains advanced processing algorithm
+such as the one we are using in this example. The function :py:func:`openpiv.process.extended_search_area_piv` is a zero order displacement
+predictor cross-correlation algorithm, which cope with the problem of loss of pairs when the interrogation window is small, by increasing
+the search area on the second image. Last, module ``openpiv.scaling`` contains functions for field scaling.
 
 We then load the two image files into numpy arrays::
 
