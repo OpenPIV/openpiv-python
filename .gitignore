@@ -1,4 +1,6 @@
 *.m
+openpiv/src/process.c
+openpiv/src/lib.c
 *.jvc
 *.pyc
 build/
