@@ -5,10 +5,9 @@ Download OpenPIV Example
 
 
 
+Tutorial files
+--------------
 
+Part 1: how to process an image pair. :download:`source code and sample images <../downloads/tutorial-part1.zip>`
 
-
-Examples and tutorial files
----------------------------
-
-:download:`Example One <../../examples/example1/openpiv-example1.zip>`
+Part 2: how to process in batch a list of image pairs. :download:`source code and sample images <../downloads/tutorial-part2.zip>`
