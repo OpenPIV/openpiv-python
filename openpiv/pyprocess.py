@@ -411,8 +411,7 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
         if nffty is None:
             nffty = 2*window_a.shape[1]
         
-        # return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
-        return signal.fftconvolve( normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')   
+        return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
     elif corr_method == 'direct':
         return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
     else:
