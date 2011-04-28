@@ -1,7 +1,7 @@
 .. _downloads:
 
-Download OpenPiv
-================
+Download OpenPIV Example
+------------------------
 
 
 
