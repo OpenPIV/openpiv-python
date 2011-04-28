@@ -1,15 +1,17 @@
 from distutils.core import setup, Extension
+from Cython.Distutils import build_ext
+
 import glob
 import numpy
 
 # Build extensions 
 module1 = Extension(    name         = "openpiv.process",
-                        sources      = ["openpiv/src/process.c"],
+                        sources      = ["openpiv/src/process.pyx"],
                         include_dirs = [numpy.get_include()],
                     )
                     
 module2 = Extension(    name         = "openpiv.lib",
-                        sources      = ["openpiv/src/lib.c"],
+                        sources      = ["openpiv/src/lib.pyx"],
                         include_dirs = [numpy.get_include()],
                     )
 
@@ -59,14 +61,10 @@ setup(  name = "OpenPiv",
                             are free, open source, and easy to operate.""",
                             
         ext_modules = ext_modules, 
-        
         packages = packages,
-        
+        cmdclass = {'build_ext': build_ext},
         scripts = scripts,
-                
         package_data = {'': package_data},
-        
         data_files = data_files
-        
         )
 
