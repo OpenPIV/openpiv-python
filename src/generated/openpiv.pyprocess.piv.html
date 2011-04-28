@@ -60,7 +60,7 @@
 <h1>openpiv.pyprocess.piv<a class="headerlink" href="#openpiv-pyprocess-piv" title="Permalink to this headline">¶</a></h1>
 <dl class="staticmethod">
 <dt id="openpiv.pyprocess.piv">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=32</em>, <em>overlap=16</em>, <em>dt=1.0</em>, <em>sig2noise_method='peak2peak'</em>, <em>sig2noise_lim=1.0</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=32</em>, <em>overlap=16</em>, <em>dt=1.0</em>, <em>corr_method='fft'</em>, <em>sig2noise_method='peak2peak'</em>, <em>sig2noise_lim=1.0</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Basic python implementation of the PIV cross-correlation
 algorithm.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -90,6 +90,10 @@ the second frame.</p>
 <p><strong>dt</strong> : float</p>
 <blockquote>
 <div><p>the time delay separating the two frames [default: 1.0]</p>
+</div></blockquote>
+<p><strong>corr_method</strong> : string</p>
+<blockquote>
+<div><p>one of the two methods implemented: &#8216;fft&#8217; or &#8216;direct&#8217;</p>
 </div></blockquote>
 <p><strong>sig2noise_method</strong> : string</p>
 <blockquote>

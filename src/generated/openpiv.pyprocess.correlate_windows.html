@@ -60,7 +60,7 @@
 <h1>openpiv.pyprocess.correlate_windows<a class="headerlink" href="#openpiv-pyprocess-correlate-windows" title="Permalink to this headline">¶</a></h1>
 <dl class="staticmethod">
 <dt id="openpiv.pyprocess.correlate_windows">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">correlate_windows</tt><big>(</big><em>window_a</em>, <em>window_b</em>, <em>nfftx=None</em>, <em>nffty=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.correlate_windows" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">correlate_windows</tt><big>(</big><em>window_a</em>, <em>window_b</em>, <em>corr_method='fft'</em>, <em>nfftx=None</em>, <em>nffty=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.correlate_windows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute correlation function between two interrogation windows.</p>
 <p>Use the correlation theorem to speed up the computation of the 
 correlation function.</p>
@@ -75,6 +75,10 @@ correlation function.</p>
 <p><strong>window_b</strong> : 2d np.ndarray</p>
 <blockquote>
 <div><p>a two dimensions array for the second interrogation window</p>
+</div></blockquote>
+<p><strong>corr_method</strong> : string</p>
+<blockquote>
+<div><p>one of the two methods currently implemented: &#8216;fft&#8217; or &#8216;direct&#8217;</p>
 </div></blockquote>
 <p><strong>nfftx</strong> : int</p>
 <blockquote>

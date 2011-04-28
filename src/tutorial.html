@@ -56,29 +56,39 @@
             
   <div class="section" id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>This tutorial focuses on the use of the openpiv python module for scripting. This tutorial only shows some of the most commonly used features of
-OpenPiv. Check the complete API reference at <a class="reference internal" href="api_reference.html#api-reference"><em>API reference</em></a></p>
-<p>First step is to install OpenPiv. For installation details
-on various platforms see <a class="reference internal" href="installation_instruction.html#installation-instruction"><em>Installation instruction</em></a>.</p>
-<p>This tutorial uses some of the example data provided with the source distribution
-of OpenPiv that you can find in our <a class="reference external" href="https://github.com/alexlib/OpenPiv">GitHub repository</a>.</p>
+<p>This is a series of examples and tutorials which focuses on showing features and capabilities of OpenPiv, so that after reading you should be able to set up scripts for
+your own analyses. If you are looking for a complete reference to the OpenPiv api, please look at <a class="reference internal" href="api_reference.html#api-reference"><em>API reference</em></a>. It is assumed that you have Openpiv installed on your system
+along with a working python environment as well as the necessary <a class="reference internal" href="installation_instruction.html#dependencies"><em>OpenPiv dependencies</em></a>. For installation details on various platforms see <a class="reference internal" href="installation_instruction.html#installation-instruction"><em>Installation instruction</em></a>.</p>
+<p>In this tutorial we are going to use some example data provided with the source distribution of OpenPiv. Altough it is not necessary, you may find helpful to actually run
+the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory openpiv/docs/examples. Similarly if you cloned the git repository.
+If you cannot find them, dowload example images as well as the python source code from the <a class="reference internal" href="downloads_page.html#downloads"><em>downloads</em></a> page.</p>
 <div class="section" id="first-example-how-to-process-an-image-pair">
 <h2>First example: how to process an image pair<a class="headerlink" href="#first-example-how-to-process-an-image-pair" title="Permalink to this headline">¶</a></h2>
-<p>Here is a complete working example showing how to process an image pair.</p>
+<p>The first example shows how to process a single image pair. This is a common task and may be useful if you are studying how does a certain
+algorithm behaves. We assume that the current working directory is where the two image of the first example are located. Here is the code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">openpiv.tools</span>
-<span class="kn">import</span> <span class="nn">openpiv.pyprocess</span>
+<span class="kn">import</span> <span class="nn">openpiv.process</span>
 <span class="kn">import</span> <span class="nn">openpiv.scaling</span>
 
 <span class="n">frame_a</span>  <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span> <span class="s">&#39;exp1_001_a.bmp&#39;</span> <span class="p">)</span>
 <span class="n">frame_b</span>  <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span> <span class="s">&#39;exp1_001_b.bmp&#39;</span> <span class="p">)</span>
 
-<span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">sig2noise_lim</span><span class="o">=</span><span class="mf">1.5</span> <span class="p">)</span>
-<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span> <span class="n">image_size</span><span class="o">=</span><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span> <span class="p">)</span>
-<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">1236.6</span> <span class="p">)</span>
+<span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">64</span> <span class="p">)</span>
 
-<span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;exp1_001.txt&#39;</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span> <span class="n">image_size</span><span class="o">=</span><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">12</span> <span class="p">)</span>
+
+<span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">validation</span><span class="o">.</span><span class="n">sig2noise_val</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">1.3</span> <span class="p">)</span>
+
+<span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">replace_outliers</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;localmean&#39;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">96.52</span> <span class="p">)</span>
+
+<span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="s">&#39;exp1_001.txt&#39;</span> <span class="p">)</span>
 </pre></div>
 </div>
+<p>This code can be executed as a script, or you can type each command in an <a class="reference external" href="http://ipython.scipy.org/moin/">Ipython</a> console
+with pylab mode set, so that you can visualize result as they are available.  I will follow the second option and i will present the results
+of each command.</p>
 <p>We first import some of the openpiv modules.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">openpiv.tools</span>
 <span class="kn">import</span> <span class="nn">openpiv.pyprocess</span>
@@ -86,31 +96,80 @@ of OpenPiv that you can find in our <a class="reference external" href="https://
 </pre></div>
 </div>
 <p>Module <tt class="docutils literal"><span class="pre">openpiv.tools</span></tt> contains mostly contains utilities and tools, such as file I/O and multiprocessing
-facilities. Module <tt class="docutils literal"><span class="pre">openpi.pyprocess</span></tt> contains a pure Python implementation of the PIV cross-correlation
-algorithm and several helper functions. Last, module <tt class="docutils literal"><span class="pre">openpiv.scaling</span></tt> contains function for field scaling
-and plate calibration stuff.</p>
+facilities. Module <tt class="docutils literal"><span class="pre">openpiv.pyprocess</span></tt> contains a pure Python implementation of the PIV cross-correlation
+algorithm and several helper functions. Module <tt class="docutils literal"><span class="pre">openpiv.process</span></tt> contains advanced processing algorithm
+such as the one we are using in this example. Last, module <tt class="docutils literal"><span class="pre">openpiv.scaling</span></tt> contains functions for field scaling.</p>
 <p>We then load the two image files into numpy arrays:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">frame_a</span>  <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span> <span class="s">&#39;exp1_001_a.bmp&#39;</span> <span class="p">)</span>
 <span class="n">frame_b</span>  <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span> <span class="s">&#39;exp1_001_b.bmp&#39;</span> <span class="p">)</span>
 </pre></div>
 </div>
-<p>In this example we use the pure python implementation to get the velocity field from the image pair.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">sig2noise_lim</span><span class="o">=</span><span class="mf">1.5</span> <span class="p">)</span>
+<p>Inspecting the attributes of one of the two images we can see that:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">369</span><span class="p">,</span> <span class="mi">511</span><span class="p">)</span>
+
+<span class="n">frame_a</span><span class="o">.</span><span class="n">dtype</span>
+<span class="n">dtype</span><span class="p">(</span><span class="s">&#39;int32&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The function <a class="reference internal" href="generated/openpiv.pyprocess.piv.html#openpiv.pyprocess.piv" title="openpiv.pyprocess.piv"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.piv()</span></tt></a> is a python implementation of the standard cross-correlation
-algorithm. We also provide some options to the function, namely the <tt class="docutils literal"><span class="pre">window_size</span></tt>, i.e. the size of the
-interrogation windows, the <tt class="docutils literal"><span class="pre">overlap</span></tt> between the windows in pixels and the time delay in seconds <tt class="docutils literal"><span class="pre">dt</span></tt> between
-the two image frames. <tt class="docutils literal"><span class="pre">sig2noise_lim</span></tt> is the lower limit for the signal to noise ratio accepted before a vector is considered
-an outlier.</p>
+<p>image have a size of 369x511 pixels and are contained in 32 bit integer arrays. Using pylab graphical capabilities it is easy
+to visualize  one of the two frames::</p>
+<div class="highlight-python"><pre>matshow ( frame_a, cmap=cm.Greys _r )</pre>
+</div>
+<p>which results in this figure.</p>
+<img alt="../_images/image1.png" class="align-center" src="../_images/image1.png" style="height: 500px;" />
+<p>In this example we are going to use the function <a class="reference internal" href="generated/openpiv.process.extended_search_area_piv.html#openpiv.process.extended_search_area_piv" title="openpiv.process.extended_search_area_piv"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.extended_search_area_piv()</span></tt></a> to process the image pair.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">64</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>This method  is a zero order displacement predictor cross-correlation algorithm, which cope with the problem of loss of pairs when the interrogation window is small, by increasing
+the search area on the second image. We also provide some options to the function, namely the <tt class="docutils literal"><span class="pre">window_size</span></tt>, i.e. the size of the
+interrogation window  on <tt class="docutils literal"><span class="pre">frame_a</span></tt>, the <tt class="docutils literal"><span class="pre">overlap</span></tt> in pixels between adjacent windows, the time delay in seconds <tt class="docutils literal"><span class="pre">dt</span></tt> between
+the two image frames an te size in pixels of the extended search area on <tt class="docutils literal"><span class="pre">frame_b</span></tt>. The function also returns a third array, <tt class="docutils literal"><span class="pre">sig2noise</span></tt>
+which contains the signal to noise ratio obtained from each cross-correlation function, intended as the ratio between the heigth of the
+first and second peaks.</p>
 <p>We then compute the coordinates of the centers of the interrogation windows using <a class="reference internal" href="generated/openpiv.pyprocess.get_coordinates.html#openpiv.pyprocess.get_coordinates" title="openpiv.pyprocess.get_coordinates"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.pyprocess.get_coordinates()</span></tt></a>.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">pyprocess</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span> <span class="n">image_size</span><span class="o">=</span><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span> <span class="p">)</span>
 </pre></div>
 </div>
-<p>Note that we have provided some the same options we have given in the previuos command.</p>
-<p>Then we apply an uniform scaling with the function <a class="reference internal" href="generated/openpiv.scaling.uniform.html#openpiv.scaling.uniform" title="openpiv.scaling.uniform"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt></a> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters
-if we want position and velocities in meters and meters/seconds or in pixels per millimeters if we want positions and velocities in millimeters and millimeters/seconds, respectively.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">1236.6</span> <span class="p">)</span>
+<p>Note that we have provided some the same options we have given in the previous command to the processing function.</p>
+<p>We can now plot the vector plot on a new figure to inspect the result of the analysis, using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">close</span><span class="p">()</span>
+<span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>and we obtain:</p>
+<img alt="../_images/image2.png" class="align-center" src="../_images/image2.png" style="height: 500px;" />
+<p>Several outliers vectors can be observed as a result of the small interrogation window size and we need to apply a validation scheme. Since we have information about the
+signal to noise ration of the cross-correlation function we can apply a well know filtering scheme, classifing a vector as an outlier
+if its signal to noise ratio exceeds a certain threshold. To accomplish this task we use the function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">validation</span><span class="o">.</span><span class="n">sig2noise_val</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">1.3</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>with a threshold value set to <tt class="docutils literal"><span class="pre">1.3</span></tt>. This function actually sets to NaN all those vector for which the signal to noise ratio is below 1.3. Therefore, the
+arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt class="docutils literal"><span class="pre">v</span></tt> contains some np.nan elements. The result of the filtering is shown in the following image, which we obtain with the two commands:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">figure</span><span class="p">()</span>
+<span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/image3.png" class="align-center" src="../_images/image3.png" style="height: 500px;" />
+<p>The final step is to replace the missing vector. This is done which the function <a class="reference internal" href="generated/openpiv.filters.replace_outliers.html#openpiv.filters.replace_outliers" title="openpiv.filters.replace_outliers"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.filters.replace_outliers()</span></tt></a>, which implements an iterative
+image inpainting algorithm with a specified kernel. We pass to this function the two velocity components arrays,  a method type <tt class="docutils literal"><span class="pre">localmean</span></tt>, the number of passes and
+the size of the kernel.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">replace_outliers</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;localmean&#39;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The flow field now appears much more smooth and the outlier vectors have been correctly replaced.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">figure</span><span class="p">()</span>
+<span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/image4.png" class="align-center" src="../_images/image4.png" style="height: 500px;" />
+<p>The last step is to apply an uniform scaling to the flow field to get dimensional units. We use the function
+<a class="reference internal" href="generated/openpiv.scaling.uniform.html#openpiv.scaling.uniform" title="openpiv.scaling.uniform"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt></a> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters if we want
+position and velocities in meters and meters/seconds or in pixels per millimeters if we want
+positions and velocities in millimeters and millimeters/seconds, respectively.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">96.52</span> <span class="p">)</span>
 </pre></div>
 </div>
 <p>Finally we save the data to an ascii file, for later processing, using::</p>

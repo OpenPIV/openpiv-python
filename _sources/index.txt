@@ -24,6 +24,7 @@ Contents:
    :maxdepth: 1
    :titlesonly:
    
+   src/downloads_page
    src/installation_instruction
    src/developers
    src/tutorial
