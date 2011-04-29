@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import scipy.signal
-from openpiv.lib import replace_invalid
+from openpiv.lib import replace_invalids
   
     
 def _gaussian_kernel( size ):
@@ -122,8 +122,8 @@ def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
         
     """
     if method == 'localmean':
-        u = replace_invalid( u, invalid_value=np.nan, method=method, n_iter=n_iter, kernel_size=kernel_size )
-        v = replace_invalis( v, invalid_value=np.nan, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        u = replace_invalids( u, invalid_value=np.nan, method=method, n_iter=n_iter, kernel_size=kernel_size )
+        v = replace_invalids( v, invalid_value=np.nan, method=method, n_iter=n_iter, kernel_size=kernel_size )
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`.')
     
