@@ -27,8 +27,8 @@ def global_val( u, v, u_thresholds, v_thresholds ):
     """Eliminate spurious vectors with a global threshold.
     
     This validation method tests for the spatial consistency of the data
-    and outliers vector are replaced with np.nan (Not A Number) if at least
-    one of the two velocity components is out of a specified global range.
+    and outliers vector are replaced with zero if at least one of the 
+    two velocity components is out of a specified global range.
     
     Parameters
     ----------
@@ -50,35 +50,32 @@ def global_val( u, v, u_thresholds, v_thresholds ):
     -------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component, 
-        where spurious vectors have been replaced by np.nan
+        where spurious vectors have been replaced by zero
         
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component, 
-        where spurious vectors have been replaced by np.nan
+        where spurious vectors have been replaced by zero
+        
+    mask : boolean 2d np.ndarray 
+        a boolean array. True elements corresponds to outliers.
         
     """
     
     ind = u < u_thresholds[0] or u > u_thresholds[1] or v < v_thresholds[0] or v > v_thresholds[1]
-    u[ind] = np.nan
-    v[ind] = np.nan
+    u[ind] = 0.0
+    v[ind] = 0.0
     
     mask = np.zeros(u.shape, dtype=bool)
     mask[ind] = True
     
-#     u = np.where( u < u_thresholds[0] , np.nan, u )
-#     u = np.where( u > u_thresholds[1] , np.nan, u )
-#     v = np.where( v < v_thresholds[0] , np.nan, v )
-#     v = np.where( v > v_thresholds[1] , np.nan, v )
-
-
     return u, v, mask
     
 def global_std( u, v, std_threshold=3 ):
     """Eliminate spurious vectors with a global threshold defined by the standard deviation
     
     This validation method tests for the spatial consistency of the data
-    and outliers vector are replaced with np.nan (Not A Number) if at least
-    one of the two velocity components is out of a specified global range.
+    and outliers vector are replaced with zero if at least one of the 
+    two velocity components is out of a specified global range.
     
     Parameters
     ----------
@@ -88,7 +85,7 @@ def global_std( u, v, std_threshold=3 ):
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component.
         
-    std_threshold: int
+    std_threshold: float
         If the length of the vector (actually the sum of squared components) is 
         larger than std_threshold times standard deviation of the flow field, 
         then the vector is treated as an outlier. [default = 3]
@@ -98,19 +95,22 @@ def global_std( u, v, std_threshold=3 ):
     -------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component, 
-        where spurious vectors have been replaced by NaN (numpy.nan)
+        where spurious vectors have been replaced by zero
         
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component, 
-        where spurious vectors have been replaced by NaN
+        where spurious vectors have been replaced by zero
+        
+    mask : boolean 2d np.ndarray 
+        a boolean array. True elements corresponds to outliers.
         
     """
     
     vel_magnitude = u**2 + v**2
     ind = vel_magnitude > std_threshold*np.std(vel_magnitude)
     
-    u[ind] = np.nan
-    v[ind] = np.nan
+    u[ind] = 0.0
+    v[ind] = 0.0
     
     mask = np.zeros(u.shape, dtype=bool)
     mask[ind] = True
@@ -120,7 +120,7 @@ def global_std( u, v, std_threshold=3 ):
 def sig2noise_val( u, v, sig2noise, threshold=1.3):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
     
-    Replace spurious vectors with np.nan if signal to noise ratio
+    Replace spurious vectors with zero if signal to noise ratio
     is below a specified threshold.
     
     Parameters
@@ -142,22 +142,27 @@ def sig2noise_val( u, v, sig2noise, threshold=1.3):
     -------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component, 
-        where spurious vectors have been replaced by np.nan
+        where spurious vectors have been replaced by zero
         
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component, 
-        where spurious vectors have been replaced by np.nan
+        where spurious vectors have been replaced by zero
+        
+    mask : boolean 2d np.ndarray 
+        a boolean array. True elements corresponds to outliers.
     
     References
     ----------
     R. D. Keane and R. J. Adrian, Measurement Science & Technology,1990, 1, 1202-1215.
     
     """
-    u = np.where( sig2noise < threshold, np.nan, u )
-    v = np.where( sig2noise < threshold, np.nan, v )
+    
+    ind = sig2noise < threshold
+    u[ind] = 0.0
+    v[ind] = 0.0
     
     mask = np.zeros(u.shape, dtype=bool)
     mask[ind] = True
     
-    return u, v 
+    return u, v, mask
     
