@@ -80,7 +80,7 @@ def gaussian( u, v, size) :
     vf = scipy.signal.convolve( v, g, mode='same')
     return uf, vf
     
-def replace_outliers( u, v, method='localmean', max_iter=5, kernel_size=1):
+def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_size=1):
     """Replace invalid vectors in an velocity field using an iterative image inpainting algorithm.
     
     The algorithm is the following:
@@ -121,8 +121,8 @@ def replace_outliers( u, v, method='localmean', max_iter=5, kernel_size=1):
         
     """
     if method == 'localmean':
-        u = replace_invalids( u, invalid_value=0.0, method=method, max_iter=max_iter, kernel_size=kernel_size )
-        v = replace_invalids( v, invalid_value=0.0, method=method, max_iter=max_iter, kernel_size=kernel_size )
+        u = replace_invalids( u, invalid_value=0.0, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
+        v = replace_invalids( v, invalid_value=0.0, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`.')
     

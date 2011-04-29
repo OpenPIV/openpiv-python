@@ -158,6 +158,7 @@ def sig2noise_val( u, v, sig2noise, threshold=1.3):
     """
     
     ind = sig2noise < threshold
+    
     u[ind] = 0.0
     v[ind] = 0.0
     

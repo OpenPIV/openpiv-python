@@ -1,4 +1,3 @@
-#cython: profile=True
 """A cython module for common operations requiring speed."""
 
 import numpy as np
