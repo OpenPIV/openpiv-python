@@ -62,13 +62,16 @@ def global_val( u, v, u_thresholds, v_thresholds ):
     u[ind] = np.nan
     v[ind] = np.nan
     
+    mask = np.zeros(u.shape, dtype=bool)
+    mask[ind] = True
+    
 #     u = np.where( u < u_thresholds[0] , np.nan, u )
 #     u = np.where( u > u_thresholds[1] , np.nan, u )
 #     v = np.where( v < v_thresholds[0] , np.nan, v )
 #     v = np.where( v > v_thresholds[1] , np.nan, v )
 
 
-    return u, v 
+    return u, v, mask
     
 def global_std( u, v, std_threshold=3 ):
     """Eliminate spurious vectors with a global threshold defined by the standard deviation
@@ -109,7 +112,10 @@ def global_std( u, v, std_threshold=3 ):
     u[ind] = np.nan
     v[ind] = np.nan
     
-    return u, v 
+    mask = np.zeros(u.shape, dtype=bool)
+    mask[ind] = True
+    
+    return u, v, mask
 
 def sig2noise_val( u, v, sig2noise, threshold=1.3):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
@@ -149,6 +155,9 @@ def sig2noise_val( u, v, sig2noise, threshold=1.3):
     """
     u = np.where( sig2noise < threshold, np.nan, u )
     v = np.where( sig2noise < threshold, np.nan, v )
+    
+    mask = np.zeros(u.shape, dtype=bool)
+    mask[ind] = True
     
     return u, v 
     
