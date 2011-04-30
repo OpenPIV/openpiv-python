@@ -1,6 +1,6 @@
 openpiv.validation.global_std
 =============================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.validation
 
-.. automethod:: validation.global_std
+.. autofunction:: global_std
