@@ -70,6 +70,8 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
         for i in range(2*kernel_size+1):
             for j in range(2*kernel_size+1):
                 kernel[i,j] = 1.0
+    else:
+        raise ValueError( 'method not valid. Should be one of `localmean`.')
     
     # fill new array with input elements
     for i in range(array.shape[0]):
