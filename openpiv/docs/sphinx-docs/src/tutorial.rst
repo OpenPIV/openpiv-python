@@ -25,7 +25,7 @@ The first example shows how to process a single image pair. This is a common tas
     
     x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
     
-    u, v = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
+    u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
     u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2)
     
@@ -89,12 +89,12 @@ and we obtain:
    :height: 500px
    :align: center
 
-Several outliers vectors can be observed as a result of the small interrogation window size and we need to apply a validation scheme. Since we have information about the signal to noise ration of the cross-correlation function we can apply a well know filtering scheme, classifing a vector as an outlier if its signal to noise ratio exceeds a certain threshold. To accomplish this task we use the function::
+Several outliers vectors can be observed as a result of the small interrogation window size and we need to apply a validation scheme. Since we have information about the signal to noise ratio of the cross-correlation function we can apply a well know filtering scheme, classifing a vector as an outlier if its signal to noise ratio exceeds a certain threshold. To accomplish this task we use the function::
 
-    u, v = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
+    u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
 with a threshold value set to ``1.3``. This function actually sets to NaN all those vector for which the signal to noise ratio is below 1.3. Therefore, the
-arrays ``u`` and ``v`` contains some np.nan elements. The result of the filtering is shown in the following image, which we obtain with the two commands::
+arrays ``u`` and ``v`` contains some np.nan elements. Furthermore, we get in output a third variable ``mask``, which is a boolean array where elements corresponding to invalid vectors have been replace by Nan. The result of the filtering is shown in the following image, which we obtain with the two commands::
 
     figure()
     quiver( x, y, u, v ) 

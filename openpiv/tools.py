@@ -87,7 +87,7 @@ def imread( filename ):
     
     return scipy.misc.imread( filename, flatten=0).astype(np.int32)
 
-def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
+def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
     
     Parameters
@@ -108,6 +108,10 @@ def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
         
+    mask : 2d np.ndarray
+        a two dimensional boolen array where elements corresponding to
+        invalid vectors are True.
+        
     filename : string
         the path of the file where to save the flow field
         
@@ -125,7 +129,7 @@ def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
     
     """
     # build output array
-    out = np.vstack( [m.ravel() for m in [x, y, u, v] ] )
+    out = np.vstack( [m.ravel() for m in [x, y, u, v, mask] ] )
             
     # save data to file.
     np.savetxt( filename, out.T, fmt=fmt, delimiter=delimiter )
