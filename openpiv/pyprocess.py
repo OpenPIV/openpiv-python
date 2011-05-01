@@ -400,10 +400,9 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
 
 def normalize_intensity( window ):
     """Remove mean value from window and masks negative, dark pixels """
-     
     return window - window.mean()
 
-def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', sig2noise_method = 'peak2peak', sig2noise_lim=1.0):
+def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', nfftx=None, nffty=None):
     """Basic python implementation of the PIV cross-correlation
     algorithm.
         
@@ -431,13 +430,6 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     corr_method : string
         one of the two methods implemented: 'fft' or 'direct'
     
-    sig2noise_method : string 
-        defines the method of signal-to-noise-ratio measure, 'peak2peak' (default) or 'peak2mean'
-    
-    sig2noise_lim: float 
-        the limit of the signal to noise ratio, 1.0 [default] to 
-        ignore this limit
-        
     nfftx   : int
         the size of the 2D FFT in x-direction, 
         [default: 2 x windows_a.shape[0] is recommended]
@@ -456,13 +448,19 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component,
         in pixels/seconds.
+    
+    sig2noise : 2d np.ndarray
+        a two dimensional array the signal to noise ratio for each 
+        window pair
+        
     """
     
     # transform the arrray into a more covenient form for looping
     windows_a = moving_window_array( frame_a, window_size, overlap )
     windows_b = moving_window_array( frame_b, window_size, overlap )
     
-    # get shape of the output so that we can preallocate memory
+    # get shape of the output so that we can preallocate 
+    # memory for velocity array
     n_rows, n_cols = get_field_shape( image_size=frame_a.shape, window_size=window_size, overlap=overlap )
     
     u = np.empty(n_rows*n_cols)
@@ -471,16 +469,13 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     # for each interrogation window
     for i in range(windows_a.shape[0]):
         # get correlation window
-        corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=window_size*2, nffty=window_size*2 )
+        corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=nfftx, nffty=nffty )
         
         # get pixel approximation for peak position row and column index
         row, col, sig2noise = find_pixel_peak_position( corr, sig2noise_method = sig2noise_method, sig2noise_lim = sig2noise_lim)
         
         # get subpixel approximation for peak position row and column index
-        if sig2noise < sig2noise_lim:
-            u[i], v[i] = 0.0, 0.0
-        else:
-            row, col = find_subpixel_peak_position( corr, (row, col) )
-            u[i], v[i] = -(col - corr.shape[1]/2), (row - corr.shape[0]/2)
+        row, col = find_subpixel_peak_position( corr, (row, col) )
+        u[i], v[i] = -(col - corr.shape[1]/2), (row - corr.shape[0]/2)
     
-    return (u.reshape(n_rows, n_cols)/dt, v.reshape(n_rows, n_cols)/dt)
+    return (u.reshape(n_rows, n_cols)/dt, v.reshape(n_rows, n_cols)/dt), sig2noise
