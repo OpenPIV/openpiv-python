@@ -26,14 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import numpy.ma as ma
-# from numpy.fft import fft2,ifft2,fftshift
-from scipy.fftpack import fft2, ifft2, fftshift
+from numpy.fft import fft2,ifft2,fftshift
 import numpy.lib.stride_tricks
 from scipy import signal
 from math import log
-import pdb
-
-
 
 
 def get_coordinates( image_size, window_size, overlap ):
@@ -193,7 +189,7 @@ def find_first_peak ( corr ):
     j = corr.argmax() %  corr.shape[1]
     
     return i, j, corr.max()
-    
+
 def find_second_peak ( corr, i=None, j=None ):
     """
     Find the value of the second largest peak
@@ -217,8 +213,7 @@ def find_second_peak ( corr, i=None, j=None ):
     i,j,corr_max2 = find_first_peak( tmp )
     
     return i,j,corr_max2
-    
-    
+
 def find_pixel_peak_position( corr, sig2noise_method = 'peak2peak', sig2noise_lim = 1.0 ):
     """
     Find pixel approximation of the correlation peak.
@@ -291,7 +286,6 @@ def find_pixel_peak_position( corr, sig2noise_method = 'peak2peak', sig2noise_li
 
 
     return peak_position[0], peak_position[1], sig2noise
-    
 
 def find_subpixel_peak_position( corr, peak_indices, subpixel_method = 'gaussian' ):
     """
@@ -358,19 +352,6 @@ def find_subpixel_peak_position( corr, peak_indices, subpixel_method = 'gaussian
         subp_peak_position = default_peak_position
 
     return subp_peak_position[0], subp_peak_position[1]
-    
-def xcorrf2(a,b,nfftx,nffty):
-    """ XCORRF2 computes 2D cross correlation using FFT method 
-    
-    Parameters
-    ----------
-    a,b : 2D np.ndarrays of the same size
-    
-    nfftx, nffty : size of the output correlation map
-    """
-    # return signal.correlate2d(a,b,'full')
-    return 
-    
 
 def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nffty = None ):
     """Compute correlation function between two interrogation windows.
@@ -411,13 +392,12 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
         if nffty is None:
             nffty = 2*window_a.shape[1]
         
-        return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
+        return np.fft.fftshift(np.fft.irfft2(np.rfft2(normalize_intensity(window_a),s=(nfftx,nffty))*np.conj(np.fft.rfft2(normalize_intensity(window_b),s=(nfftx,nffty)))).real, axes=(0,1)  )
     elif corr_method == 'direct':
         return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
     else:
         raise ValueError('method is not implemented')
-    
-    
+
 def normalize_intensity( window ):
     """Remove mean value from window and masks negative, dark pixels """
      
@@ -488,10 +468,8 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     u = np.empty(n_rows*n_cols)
     v = np.empty(n_rows*n_cols)
     
-    
     # for each interrogation window
     for i in range(windows_a.shape[0]):
-        print i
         # get correlation window
         corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=window_size*2, nffty=window_size*2 )
         
