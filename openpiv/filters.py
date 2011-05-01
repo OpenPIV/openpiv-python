@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import scipy.signal
-from openpiv.lib import replace_invalids
+from openpiv.lib import replace_nans
   
     
 def _gaussian_kernel( size ):
@@ -120,11 +120,9 @@ def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_siz
         the smoothed v velocity component field, where invalid vectors have been replaced    
         
     """
-    if method == 'localmean':
-        u = replace_invalids( u, invalid_value=0.0, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
-        v = replace_invalids( v, invalid_value=0.0, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
-    else:
-        raise ValueError( 'method not valid. Should be one of `localmean`.')
+    
+    u = replace_nans( u, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
+    v = replace_nans( v, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
     
     return u, v
     
