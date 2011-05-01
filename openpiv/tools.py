@@ -129,7 +129,7 @@ def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     
     """
     # build output array
-    out = np.vstack( [m.ravel() for m in [x, y, u, v] ] )
+    out = np.vstack( [m.ravel() for m in [x, y, u, v, mask] ] )
             
     # save data to file.
     np.savetxt( filename, out.T, fmt=fmt, delimiter=delimiter )
