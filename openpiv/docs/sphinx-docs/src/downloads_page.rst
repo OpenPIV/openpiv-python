@@ -1,12 +1,12 @@
 .. _downloads:
 
 Download OpenPIV Example
-------------------------
-
-
+========================
 
 Tutorial files
 --------------
+
+These are zip files containing sample images and python scripts for analysing them with OpenPiv.
 
 Part 1: how to process an image pair. :download:`source code and sample images <../downloads/tutorial-part1.zip>`
 
