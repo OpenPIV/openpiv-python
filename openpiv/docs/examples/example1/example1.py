@@ -27,4 +27,4 @@ x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 
 openpiv.tools.save(x, y, u, v, mask, 'exp1_001.txt' )
     
-openpiv.tools.display_vector_field( 'exp1_001.txt' )    
+openpiv.tools.display_vector_field( 'exp1_001.txt', scale = 100, width = 0.0025)    
