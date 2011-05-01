@@ -104,7 +104,7 @@ def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_siz
         
     max_iter : int
         the number of iterations
-    
+    fil
     kernel_size : int
         the size of the kernel, default is 1
         
@@ -125,6 +125,3 @@ def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_siz
     v = replace_nans( v, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
     
     return u, v
-    
-    
-    
