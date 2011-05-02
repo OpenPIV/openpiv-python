@@ -19,7 +19,6 @@
     page is growing fast. Maybe it is better to put clear links
     on openpiv.net to point to three pages for python, matlab, c++.
     
-+ merge validation and filters submodule into one. Alex, please choose the name.
     
 + flow field validation algorithms
     - local median validation
@@ -27,6 +26,8 @@
     - others?
     
 + iterative image deformation algorithms
+
++ image-preprocessing, ( filters, masking )
 
 + hdf5 output
 
