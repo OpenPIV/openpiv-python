@@ -12,7 +12,17 @@ ctypedef np.int32_t DTYPEi_t
 DTYPEf = np.float64
 ctypedef np.float64_t DTYPEf_t
 
-def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, np.ndarray[DTYPEi_t, ndim=2] frame_b, int window_size, int overlap, float dt, int search_area_size, int nfftx=0, int nffty=0):
+def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, 
+                              np.ndarray[DTYPEi_t, ndim=2] frame_b,
+                              int window_size,
+                              int overlap,
+                              float dt,
+                              int search_area_size,
+                              str subpixel_method='gaussian',
+                              str sig2noise_method='peak2peak',
+                              int nfftx=0,
+                              int nffty=0,
+                              int width=2):
     """
     The implementation of the one-step direct correlation with different 
     size of the interrogation window and the search area. The increased
@@ -50,13 +60,28 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, np.ndarray[D
     search_area_size : int
         the size of the (square) interrogation window from the second frame
     
+    subpixel_method : string
+         one of the following methods to estimate subpixel location of the peak: 
+         'centroid' [replaces default if correlation map is negative], 
+         'gaussian' [default if correlation map is positive], 
+         'parabolic'.
+    
+    sig2noise_method : string 
+        defines the method of signal-to-noise-ratio measure,
+        ('peak2peak' or 'peak2mean'. If None, no measure is performed.)
+        
     nfftx   : int
         the size of the 2D FFT in x-direction, 
-        [default: 2 x search_area_size is recommended].
+        [default: 2 x windows_a.shape[0] is recommended]
         
     nffty   : int
         the size of the 2D FFT in y-direction, 
-        [default: 2 x search_area_size is recommended].
+        [default: 2 x windows_a.shape[1] is recommended]
+        
+    width : int
+        the half size of the region around the first
+        correlation peak to ignore for finding the second
+        peak. [default: 2]. Only used if ``sig2noise_method==peak2peak``.
     
     
     Returns
@@ -76,7 +101,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, np.ndarray[D
     Examples
     --------
     
-    >>> u, v, sn = openpiv.lib.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
+    >>> u, v, sn = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
         
         
     """
@@ -125,24 +150,27 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, np.ndarray[D
                         
             
             # compute correlation map 
-            corr = openpiv.pyprocess.correlate_windows( search_area, window_a )
+            corr = openpiv.pyprocess.correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
             
             # find subpixel approximation of the peak center
-            i_peak, j_peak, s2n = openpiv.pyprocess.find_pixel_peak_position( corr )
-            i_peak, j_peak = openpiv.pyprocess.find_subpixel_peak_position( corr, (i_peak, j_peak) )
+            i_peak, j_peak = openpiv.pyprocess.find_subpixel_peak_position( corr, subpixel_method=subpixel_method )
             
             # velocities
             v[I,J] = -( (i_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
             u[I,J] =  ( (j_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
             
             # compute signal to noise ratio
-            sig2noise[I,J] = s2n
+            if sig2noise_method:
+                sig2noise[I,J] = openpiv.pyprocess.sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
             
             # go to next vector
             J = J + 1
                 
         # go to next vector
         I = I + 1
-            
-    return u, v, sig2noise
+    
+    if sig2noise_method:
+        return u, v, sig2noise
+    else:
+        return u, v
     
