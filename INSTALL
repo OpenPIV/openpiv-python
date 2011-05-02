@@ -61,15 +61,3 @@ that OpenPIV module can be imported and used in your programs. Remeber to build 
 with :: 
 
     python setup.py build 
-
-.. Stable source distribution
-.. ^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. If you do not want to follow the development of OpenPIV and you prefer a more stable
-.. version, download the source distributions available at http://www.openpiv.sourceforge.net,
-.. in the downloads page. Then unpack it and execute the following command::
-
-..    python setupy.py install --prefix=$DIR
-    
-.. where ``$DIR`` is the folder you want ot install OpenPIV in. If you want to install it system
-.. wide omit the ``--prefix`` option, but you should have root priviles to do so. Remember to 
-.. update the PYTHONPATH environment variable if you used a custom installation directory.
