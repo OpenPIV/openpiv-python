@@ -80,16 +80,16 @@ def gaussian( u, v, size) :
     vf = scipy.signal.convolve( v, g, mode='same')
     return uf, vf
     
-def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
-    """Replace nans in an velocity field using an iterative image inpainting algorithm.
+def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_size=1):
+    """Replace invalid vectors in an velocity field using an iterative image inpainting algorithm.
     
     The algorithm is the following:
     
     1) For each element in the arrays of the ``u`` and ``v`` components, replace it by a weighted average
-       of the neighbouring elements which are not nan. The weights depends
+       of the neighbouring elements which are not invalid themselves. The weights depends
        of the method type. If ``method=localmean`` weight are equal to 1/( (2*kernel_size+1)**2 -1 )
        
-    2) Several iterations are needed if there are adjacent nan elements.
+    2) Several iterations are needed if there are adjacent invalid elements.
        If this is the case, inforation is "spread" from the edges of the missing
        regions iteratively, until the variation is below a certain threshold. 
     
@@ -102,32 +102,26 @@ def replace_outliers( u, v, method='localmean', n_iter=5, kernel_size=1):
     v : 2d np.ndarray
         the v velocity component field
         
-    n_iter : int
+    max_iter : int
         the number of iterations
-    
+    fil
     kernel_size : int
         the size of the kernel, default is 1
         
     method : str
-        the method used to replace nans. Valid options are
-        `localmean`.
+        the type of kernel used for repairing missing vectors
         
     Returns
     -------
     uf : 2d np.ndarray
-        the smoothed u velocity component field, where nans have been replaced
+        the smoothed u velocity component field, where invalid vectors have been replaced
         
     vf : 2d np.ndarray
-        the smoothed v velocity component field, where nans have been replaced    
+        the smoothed v velocity component field, where invalid vectors have been replaced    
         
     """
-    if method == 'localmean':
-        u = replace_nans( u, method=method, n_iter=n_iter, kernel_size=kernel_size )
-        v = replace_nans( v, method=method, n_iter=n_iter, kernel_size=kernel_size )
-    else:
-        raise ValueError( 'method not valid. Should be one of `localmean`.')
+    
+    u = replace_nans( u, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
+    v = replace_nans( v, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
     
     return u, v
-    
-    
-    

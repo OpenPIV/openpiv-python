@@ -1,2 +1,2 @@
-include openpiv/lib/process.pyx
-include openpiv/lib/processFFT.cpp
+include openpiv/src/process.pyx
+include openpiv/src/lib.pyx

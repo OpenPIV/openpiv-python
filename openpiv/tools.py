@@ -30,7 +30,7 @@ import matplotlib.pyplot as pl
 
 
 
-def display_vector_field( filename,scale=None):
+def display_vector_field( filename,**kw):
     """ Displays quiver plot of the data stored in the file 
     
     
@@ -39,20 +39,32 @@ def display_vector_field( filename,scale=None):
     filename :  string
         the absolute path of the text file
     
-    scale    : float 
-        scales the vector plots [default: 0.25]
+    Key arguments   : (additional parameters, optional)
+        *scale*: [None | float]
+        *width*: [None | float]
+    
+    
+    See also:
+    ---------
+    matplotlib.pyplot.quiver
+    
         
     Examples
     --------
     
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=0.25) 
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, width=0.0025) 
 
     
     """
     
     a = np.loadtxt(filename)
     pl.figure()
-    pl.quiver(a[:,0],a[:,1],a[:,2],a[:,3],scale=scale)
+    pl.hold(True)
+    invalid = a[:,4].astype('bool')
+    
+    valid = ~invalid
+    pl.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',**kw)
+    pl.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
     pl.draw()
     pl.show()
     
@@ -87,7 +99,7 @@ def imread( filename ):
     
     return scipy.misc.imread( filename, flatten=0).astype(np.int32)
 
-def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
+def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
     
     Parameters
@@ -108,6 +120,10 @@ def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
         
+    mask : 2d np.ndarray
+        a two dimensional boolen array where elements corresponding to
+        invalid vectors are True.
+        
     filename : string
         the path of the file where to save the flow field
         
@@ -125,7 +141,7 @@ def save( x, y, u, v, filename, fmt='%8.4f', delimiter='\t' ):
     
     """
     # build output array
-    out = np.vstack( [m.ravel() for m in [x, y, u, v] ] )
+    out = np.vstack( [m.ravel() for m in [x, y, u, v, mask] ] )
             
     # save data to file.
     np.savetxt( filename, out.T, fmt=fmt, delimiter=delimiter )
