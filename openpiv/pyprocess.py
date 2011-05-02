@@ -190,8 +190,13 @@ def find_second_peak ( corr, i=None, j=None, width=2 ):
     # create a masked view of the corr
     tmp = corr.view(ma.MaskedArray)
     
-    # set 3x3 square submatrix around the first correlation peak as masked 
-    tmp[ i-width:i+width+1,j-width:j+width+1 ] = ma.masked
+    # set width x width square submatrix around the first correlation peak as masked.
+    # Before check if we are not too close to the boundaries, otherwise we have negative indices
+    iini = max(0, i-width)
+    ifin = min(i+width+1, corr.shape[0])
+    jini = max(0, j-width)
+    jfin = min(j+width+1, corr.shape[1])
+    tmp[ iini:ifin, jini:jfin ] = ma.masked
     i, j, corr_max2 = find_first_peak( tmp )
     
     return i, j, corr_max2  
