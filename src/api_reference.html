@@ -69,7 +69,7 @@
 <tr><td><a class="reference internal" href="generated/openpiv.tools.imread.html#openpiv.tools.imread" title="openpiv.tools.imread"><tt class="xref py py-obj docutils literal"><span class="pre">imread</span></tt></a>(filename)</td>
 <td>Read an image file into a numpy array</td>
 </tr>
-<tr><td><a class="reference internal" href="generated/openpiv.tools.save.html#openpiv.tools.save" title="openpiv.tools.save"><tt class="xref py py-obj docutils literal"><span class="pre">save</span></tt></a>(x,&nbsp;y,&nbsp;u,&nbsp;v,&nbsp;filename[,&nbsp;fmt,&nbsp;delimiter])</td>
+<tr><td><a class="reference internal" href="generated/openpiv.tools.save.html#openpiv.tools.save" title="openpiv.tools.save"><tt class="xref py py-obj docutils literal"><span class="pre">save</span></tt></a>(x,&nbsp;y,&nbsp;u,&nbsp;v,&nbsp;mask,&nbsp;filename[,&nbsp;fmt,&nbsp;...])</td>
 <td>Save flow field to an ascii file.</td>
 </tr>
 <tr><td><a class="reference internal" href="generated/openpiv.tools.display.html#openpiv.tools.display" title="openpiv.tools.display"><tt class="xref py py-obj docutils literal"><span class="pre">display</span></tt></a>(message)</td>
@@ -151,8 +151,8 @@ algorithm for PIV image processing. It also contains some useful helper function
 <tr><td><a class="reference internal" href="generated/openpiv.filters._gaussian_kernel.html#openpiv.filters._gaussian_kernel" title="openpiv.filters._gaussian_kernel"><tt class="xref py py-obj docutils literal"><span class="pre">_gaussian_kernel</span></tt></a>(size)</td>
 <td>A normalized 2D Gaussian kernel array</td>
 </tr>
-<tr><td><a class="reference internal" href="generated/openpiv.filters.replace_outliers.html#openpiv.filters.replace_outliers" title="openpiv.filters.replace_outliers"><tt class="xref py py-obj docutils literal"><span class="pre">replace_outliers</span></tt></a>(u,&nbsp;v[,&nbsp;method,&nbsp;n_iter,&nbsp;...])</td>
-<td>Replace nans in an velocity field using an iterative image inpainting algorithm.</td>
+<tr><td><a class="reference internal" href="generated/openpiv.filters.replace_outliers.html#openpiv.filters.replace_outliers" title="openpiv.filters.replace_outliers"><tt class="xref py py-obj docutils literal"><span class="pre">replace_outliers</span></tt></a>(u,&nbsp;v[,&nbsp;method,&nbsp;max_iter,&nbsp;...])</td>
+<td>Replace invalid vectors in an velocity field using an iterative image inpainting algorithm.</td>
 </tr>
 </tbody>
 </table>

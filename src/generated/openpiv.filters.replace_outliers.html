@@ -60,14 +60,14 @@
 <h1>openpiv.filters.replace_outliers<a class="headerlink" href="#openpiv-filters-replace-outliers" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="openpiv.filters.replace_outliers">
-<tt class="descclassname">openpiv.filters.</tt><tt class="descname">replace_outliers</tt><big>(</big><em>u</em>, <em>v</em>, <em>method='localmean'</em>, <em>n_iter=5</em>, <em>kernel_size=1</em><big>)</big><a class="headerlink" href="#openpiv.filters.replace_outliers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Replace nans in an velocity field using an iterative image inpainting algorithm.</p>
+<tt class="descclassname">openpiv.filters.</tt><tt class="descname">replace_outliers</tt><big>(</big><em>u</em>, <em>v</em>, <em>method='localmean'</em>, <em>max_iter=5</em>, <em>tol=0.001</em>, <em>kernel_size=1</em><big>)</big><a class="headerlink" href="#openpiv.filters.replace_outliers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace invalid vectors in an velocity field using an iterative image inpainting algorithm.</p>
 <p>The algorithm is the following:</p>
 <ol class="arabic simple">
 <li>For each element in the arrays of the <tt class="docutils literal"><span class="pre">u</span></tt> and <tt class="docutils literal"><span class="pre">v</span></tt> components, replace it by a weighted average
-of the neighbouring elements which are not nan. The weights depends
+of the neighbouring elements which are not invalid themselves. The weights depends
 of the method type. If <tt class="docutils literal"><span class="pre">method=localmean</span></tt> weight are equal to 1/( (2*kernel_size+1)**2 -1 )</li>
-<li>Several iterations are needed if there are adjacent nan elements.
+<li>Several iterations are needed if there are adjacent invalid elements.
 If this is the case, inforation is &#8220;spread&#8221; from the edges of the missing
 regions iteratively, until the variation is below a certain threshold.</li>
 </ol>
@@ -83,28 +83,28 @@ regions iteratively, until the variation is below a certain threshold.</li>
 <blockquote>
 <div><p>the v velocity component field</p>
 </div></blockquote>
-<p><strong>n_iter</strong> : int</p>
+<p><strong>max_iter</strong> : int</p>
 <blockquote>
 <div><p>the number of iterations</p>
 </div></blockquote>
+<p><strong>fil</strong> :</p>
 <p><strong>kernel_size</strong> : int</p>
 <blockquote>
 <div><p>the size of the kernel, default is 1</p>
 </div></blockquote>
 <p><strong>method</strong> : str</p>
 <blockquote>
-<div><p>the method used to replace nans. Valid options are
-<cite>localmean</cite>.</p>
+<div><p>the type of kernel used for repairing missing vectors</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>uf</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>the smoothed u velocity component field, where nans have been replaced</p>
+<div><p>the smoothed u velocity component field, where invalid vectors have been replaced</p>
 </div></blockquote>
 <p><strong>vf</strong> : 2d np.ndarray</p>
 <blockquote class="last">
-<div><p>the smoothed v velocity component field, where nans have been replaced</p>
+<div><p>the smoothed v velocity component field, where invalid vectors have been replaced</p>
 </div></blockquote>
 </td>
 </tr>

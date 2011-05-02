@@ -63,8 +63,8 @@
 <tt class="descclassname">openpiv.validation.</tt><tt class="descname">global_val</tt><big>(</big><em>u</em>, <em>v</em>, <em>u_thresholds</em>, <em>v_thresholds</em><big>)</big><a class="headerlink" href="#openpiv.validation.global_val" title="Permalink to this definition">¶</a></dt>
 <dd><p>Eliminate spurious vectors with a global threshold.</p>
 <p>This validation method tests for the spatial consistency of the data
-and outliers vector are replaced with np.nan (Not A Number) if at least
-one of the two velocity components is out of a specified global range.</p>
+and outliers vector are replaced with Nan (Not a Number) if at 
+least one of the two velocity components is out of a specified global range.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -92,12 +92,16 @@ the vector is treated as an outlier.</p>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
 <blockquote>
 <div><p>a two dimensional array containing the u velocity component, 
-where spurious vectors have been replaced by np.nan</p>
+where spurious vectors have been replaced by NaN.</p>
 </div></blockquote>
 <p><strong>v</strong> : 2d np.ndarray</p>
-<blockquote class="last">
+<blockquote>
 <div><p>a two dimensional array containing the v velocity component, 
-where spurious vectors have been replaced by np.nan</p>
+where spurious vectors have been replaced by NaN.</p>
+</div></blockquote>
+<p><strong>mask</strong> : boolean 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a boolean array. True elements corresponds to outliers.</p>
 </div></blockquote>
 </td>
 </tr>

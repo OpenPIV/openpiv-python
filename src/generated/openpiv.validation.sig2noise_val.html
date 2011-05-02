@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.scaling.uniform" href="openpiv.scaling.uniform.html" />
+    <link rel="next" title="openpiv.validation.global_std" href="openpiv.validation.global_std.html" />
     <link rel="prev" title="openpiv.validation.global_val" href="openpiv.validation.global_val.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
+          <a href="openpiv.validation.global_std.html" title="openpiv.validation.global_std"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"
@@ -62,7 +62,7 @@
 <dt id="openpiv.validation.sig2noise_val">
 <tt class="descclassname">openpiv.validation.</tt><tt class="descname">sig2noise_val</tt><big>(</big><em>u</em>, <em>v</em>, <em>sig2noise</em>, <em>threshold=1.3</em><big>)</big><a class="headerlink" href="#openpiv.validation.sig2noise_val" title="Permalink to this definition">¶</a></dt>
 <dd><p>Eliminate spurious vectors from cross-correlation signal to noise ratio.</p>
-<p>Replace spurious vectors with np.nan if signal to noise ratio
+<p>Replace spurious vectors with zero if signal to noise ratio
 is below a specified threshold.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -90,12 +90,16 @@ noise ratio from cross-correlation function.</p>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
 <blockquote>
 <div><p>a two dimensional array containing the u velocity component, 
-where spurious vectors have been replaced by np.nan</p>
+where spurious vectors have been replaced by NaN.</p>
 </div></blockquote>
 <p><strong>v</strong> : 2d np.ndarray</p>
-<blockquote class="last">
+<blockquote>
 <div><p>a two dimensional array containing the v velocity component, 
-where spurious vectors have been replaced by np.nan</p>
+where spurious vectors have been replaced by NaN.</p>
+</div></blockquote>
+<p><strong>mask</strong> : boolean 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a boolean array. True elements corresponds to outliers.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -122,8 +126,8 @@ where spurious vectors have been replaced by np.nan</p>
   <p class="topless"><a href="openpiv.validation.global_val.html"
                         title="previous chapter">openpiv.validation.global_val</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.scaling.uniform.html"
-                        title="next chapter">openpiv.scaling.uniform</a></p>
+  <p class="topless"><a href="openpiv.validation.global_std.html"
+                        title="next chapter">openpiv.validation.global_std</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/src/generated/openpiv.validation.sig2noise_val.txt"
@@ -159,7 +163,7 @@ where spurious vectors have been replaced by np.nan</p>
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
+          <a href="openpiv.validation.global_std.html" title="openpiv.validation.global_std"
              >next</a> |</li>
         <li class="right" >
           <a href="openpiv.validation.global_val.html" title="openpiv.validation.global_val"

@@ -60,7 +60,7 @@
 <h1>openpiv.tools.save<a class="headerlink" href="#openpiv-tools-save" title="Permalink to this headline">¶</a></h1>
 <dl class="staticmethod">
 <dt id="openpiv.tools.save">
-<em class="property">static </em><tt class="descclassname">tools.</tt><tt class="descname">save</tt><big>(</big><em>x</em>, <em>y</em>, <em>u</em>, <em>v</em>, <em>filename</em>, <em>fmt='%8.4f'</em>, <em>delimiter='t'</em><big>)</big><a class="headerlink" href="#openpiv.tools.save" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><tt class="descclassname">tools.</tt><tt class="descname">save</tt><big>(</big><em>x</em>, <em>y</em>, <em>u</em>, <em>v</em>, <em>mask</em>, <em>filename</em>, <em>fmt='%8.4f'</em>, <em>delimiter='t'</em><big>)</big><a class="headerlink" href="#openpiv.tools.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save flow field to an ascii file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -85,6 +85,11 @@ in pixels/seconds.</p>
 <blockquote>
 <div><p>a two dimensional array containing the v velocity components,
 in pixels/seconds.</p>
+</div></blockquote>
+<p><strong>mask</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional boolen array where elements corresponding to
+invalid vectors are True.</p>
 </div></blockquote>
 <p><strong>filename</strong> : string</p>
 <blockquote>
