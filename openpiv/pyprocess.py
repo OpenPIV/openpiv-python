@@ -26,8 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import numpy.ma as ma
-# from numpy.fft import fft2,ifft2,fftshift
-from scipy.fftpack import fft2, ifft2, fftshift
+from numpy.fft import rfft2,irfft2,fftshift
 import numpy.lib.stride_tricks
 from scipy import signal
 from math import log
@@ -411,7 +410,7 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
         if nffty is None:
             nffty = 2*window_a.shape[1]
         
-        return fftshift(ifft2(fft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(fft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
+        return fftshift(irfft2(rfft2(normalize_intensity(window_a),shape=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),shape=(nfftx,nffty)))).real, axes=(0,1)  )
     elif corr_method == 'direct':
         return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
     else:
