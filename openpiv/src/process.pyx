@@ -19,10 +19,10 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                               float dt,
                               int search_area_size,
                               str subpixel_method='gaussian',
-                              str sig2noise_method='peak2peak',
-                              int nfftx=0,
-                              int nffty=0,
-                              int width=2):
+                              sig2noise_method=None,
+                              int width=2,
+                              nfftx=None,
+                              nffty=None):
     """
     The implementation of the one-step direct correlation with different 
     size of the interrogation window and the search area. The increased
@@ -94,14 +94,15 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         a two dimensional array containing the v velocity component,
         in pixels/seconds.
         
-    sig2noise : 2d np.ndarray
+    sig2noise : 2d np.ndarray, optional
         a two dimensional array containing the signal to noise ratio
-        from the cross correlation function.
+        from the cross correlation function. This array is returned if
+        sig2noise_method is not None.
         
     Examples
     --------
     
-    >>> u, v, sn = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
+    >>> u, v = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
         
         
     """
