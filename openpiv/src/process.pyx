@@ -183,8 +183,18 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     
 class CorrelationFunction( ):
     def __init__ ( self, corr ):
-        self.data = corr
+        """A class representing a cross correlation function.
         
+        Parameters
+        ----------
+        corr : 2d np.ndarray
+            the correlation function array
+        
+        """
+        self.data = corr
+        self.shape = self.data.shape
+        
+        # get first peak
         self.peak1, self.corr_max1 = self._find_peak( self.data )
         
     def _find_peak ( self, array ):
@@ -202,8 +212,8 @@ class CorrelationFunction( ):
         Find the value of the second largest peak.
         
         The second largest peak is the height of the peak in 
-        the region outside a widthxwidth submatrix around the first 
-        correlation peak.
+        the region outside a ``width * width`` submatrix around 
+        the first correlation peak.
         
         Parameters
         ----------
@@ -239,9 +249,7 @@ class CorrelationFunction( ):
         Find subpixel approximation of the correlation peak.
         
         This function returns a subpixels approximation of the correlation
-        peak by using one of the several methods available. If requested, 
-        the function also returns the signal to noise ratio level evaluated 
-        from the correlation map.
+        peak by using one of the several methods available. 
         
         Parameters
         ----------            
@@ -293,18 +301,14 @@ class CorrelationFunction( ):
         return subp_peak_position
         
     def sig2noise_ratio( self, method='peak2peak', width=2 ):
-        """
-        Computes the signal to noise ratio from the correlation map.
+        """Computes the signal to noise ratio.
         
         The signal to noise ratio is computed from the correlation map with
         one of two available method. It is a measure of the quality of the 
-        matching between to interogation windows.
+        matching between two interogation windows.
         
         Parameters
         ----------
-        corr : 2d np.ndarray
-        the correlation map.
-        
         sig2noise_method: string
             the method for evaluating the signal to noise ratio value from 
             the correlation map. Can be `peak2peak`, `peak2mean` or None
