@@ -2,8 +2,9 @@
 
 import numpy as np
 import numpy.ma as ma
-import openpiv.pyprocess
 from math import log
+from numpy.fft import rfft2,irfft2,fftshift
+from scipy import signal
 
 cimport numpy as np
 cimport cython
@@ -21,10 +22,10 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                               float dt,
                               int search_area_size,
                               str subpixel_method='gaussian',
-                              str sig2noise_method='peak2peak',
-                              int nfftx=0,
-                              int nffty=0,
-                              int width=2):
+                              sig2noise_method=None,
+                              int width=2,
+                              nfftx=None,
+                              nffty=None):
     """
     The implementation of the one-step direct correlation with different 
     size of the interrogation window and the search area. The increased
@@ -109,12 +110,13 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     """
     
     cdef int i, j, k, l, I, J
+    
     cdef float i_peak, j_peak
     cdef float s2n
     
     cdef int n_cols, n_rows
     
-    n_rows, n_cols = openpiv.pyprocess.get_field_shape( (frame_a.shape[0], frame_a.shape[1]), window_size, overlap )
+    n_rows, n_cols = get_field_shape( (frame_a.shape[0], frame_a.shape[1]), window_size, overlap )
     
     cdef np.ndarray[DTYPEi_t, ndim=2] window_a = np.zeros([window_size, window_size], dtype=DTYPEi)
     cdef np.ndarray[DTYPEi_t, ndim=2] search_area = np.zeros([search_area_size, search_area_size], dtype=DTYPEi)
@@ -137,7 +139,6 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 for l in range( window_size ):
                     window_a[k,l] = frame_a[i+k, j+l]
                     
-                    
             # get search area using frame b
             for k in range( search_area_size ):
                 for l in range( search_area_size ):
@@ -150,12 +151,12 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                     else:
                         search_area[k,l] = frame_b[ i+window_size/2-search_area_size/2+k, j+window_size/2-search_area_size/2+l ]
                         
-            
             # compute correlation map 
-            corr = openpiv.pyprocess.correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
+            corr = correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
+            c = CorrelationFunction( corr )
             
             # find subpixel approximation of the peak center
-            i_peak, j_peak = openpiv.pyprocess.find_subpixel_peak_position( corr, subpixel_method=subpixel_method )
+            i_peak, j_peak = c.subpixel_peak_position( subpixel_method )
             
             # velocities
             v[I,J] = -( (i_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
@@ -163,7 +164,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
             
             # compute signal to noise ratio
             if sig2noise_method:
-                sig2noise[I,J] = openpiv.pyprocess.sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
+                sig2noise[I,J] = c.sig2noise_ratio( sig2noise_method, width )
             
             # go to next vector
             J = J + 1
@@ -175,7 +176,6 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         return u, v, sig2noise
     else:
         return u, v
-    
     
 class CorrelationFunction( ):
     def __init__ ( self, corr ):
@@ -347,5 +347,135 @@ class CorrelationFunction( ):
             sig2noise = np.inf    
             
         return sig2noise
+
+def get_coordinates( image_size, window_size, overlap ):
+    """Compute the x, y coordinates of the centers of the interrogation windows.
     
+    Parameters
+    ----------
+    image_size: two elements tuple
+        a two dimensional tuple for the pixel size of the image
+        first element is number of rows, second element is 
+        the number of columns.
+        
+    window_size: int
+        the size of the interrogation windows.
+        
+    overlap: int
+        the number of pixel by which two adjacent interrogation
+        windows overlap.
+        
+        
+    Returns
+    -------
+    x : 2d np.ndarray
+        a two dimensional array containing the x coordinates of the 
+        interrogation window centers, in pixels.
+        
+    y : 2d np.ndarray
+        a two dimensional array containing the y coordinates of the 
+        interrogation window centers, in pixels.
+        
+    """
+
+    # get shape of the resulting flow field
+    field_shape = get_field_shape( image_size, window_size, overlap )
+
+    # compute grid coordinates of the interrogation window centers
+    x = np.arange( field_shape[1] )*(window_size-overlap) + (window_size-1)/2.0
+    y = np.arange( field_shape[0] )*(window_size-overlap) + (window_size-1)/2.0
     
+    return np.meshgrid(x,y[::-1])
+
+def get_field_shape ( image_size, window_size, overlap ):
+    """Compute the shape of the resulting flow field.
+    
+    Given the image size, the interrogation window size and
+    the overlap size, it is possible to calculate the number 
+    of rows and columns of the resulting flow field.
+    
+    Parameters
+    ----------
+    image_size: two elements tuple
+        a two dimensional tuple for the pixel size of the image
+        first element is number of rows, second element is 
+        the number of columns.
+        
+    window_size: int
+        the size of the interrogation window.
+        
+    overlap: int
+        the number of pixel by which two adjacent interrogation
+        windows overlap.
+        
+        
+    Returns
+    -------
+    field_shape : two elements tuple
+        the shape of the resulting flow field
+    """
+    
+    return ( (image_size[0] - window_size)//(window_size-overlap)+1, 
+             (image_size[1] - window_size)//(window_size-overlap)+1 )
+
+def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nffty = None ):
+    """Compute correlation function between two interrogation windows.
+    
+    The correlation function can be computed by using the correlation 
+    theorem to speed up the computation.
+    
+    Parameters
+    ----------
+    window_a : 2d np.ndarray
+        a two dimensions array for the first interrogation window.
+        
+    window_b : 2d np.ndarray
+        a two dimensions array for the second interrogation window.
+        
+    corr_method   : string
+        one of the two methods currently implemented: 'fft' or 'direct'.
+        Default is 'fft', which is much faster.
+        
+    nfftx   : int
+        the size of the 2D FFT in x-direction, 
+        [default: 2 x windows_a.shape[0] is recommended].
+        
+    nffty   : int
+        the size of the 2D FFT in y-direction, 
+        [default: 2 x windows_a.shape[1] is recommended].
+        
+        
+    Returns
+    -------
+    corr : 2d np.ndarray
+        a two dimensions array for the correlation function.
+    
+    """
+    
+    if corr_method == 'fft':
+        if nfftx is None:
+            nfftx = 2*window_a.shape[0]
+        if nffty is None:
+            nffty = 2*window_a.shape[1]
+        return fftshift(irfft2(rfft2(normalize_intensity(window_a),s=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),s=(nfftx,nffty)))).real, axes=(0,1)  )
+    elif corr_method == 'direct':
+        return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
+    else:
+        raise ValueError('method is not implemented')
+
+def normalize_intensity( window ):
+    """Normalize interrogation window by removing the mean value.
+    
+    Parameters
+    ----------
+    window :  2d np.ndarray
+        the interrogation window array
+        
+    Returns
+    -------
+    window :  2d np.ndarray
+        the interrogation window array, with mean value equal to zero.
+    
+    """
+    return window - window.mean()
+
