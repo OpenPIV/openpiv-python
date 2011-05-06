@@ -43,11 +43,11 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     
     Parameters
     ----------
-    frame_a : 2d np.ndarray
+    frame_a : 2d np.ndarray, dtype=np.int32
         an two dimensions array of integers containing grey levels of 
         the first frame.
         
-    frame_b : 2d np.ndarray
+    frame_b : 2d np.ndarray, dtype=np.int32
         an two dimensions array of integers containing grey levels of 
         the second frame.
         
@@ -73,6 +73,11 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         defines the method of signal-to-noise-ratio measure,
         ('peak2peak' or 'peak2mean'. If None, no measure is performed.)
         
+    width : int
+        the half size of the region around the first
+        correlation peak to ignore for finding the second
+        peak. [default: 2]. Only used if ``sig2noise_method==peak2peak``.
+        
     nfftx   : int
         the size of the 2D FFT in x-direction, 
         [default: 2 x windows_a.shape[0] is recommended]
@@ -80,12 +85,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     nffty   : int
         the size of the 2D FFT in y-direction, 
         [default: 2 x windows_a.shape[1] is recommended]
-        
-    width : int
-        the half size of the region around the first
-        correlation peak to ignore for finding the second
-        peak. [default: 2]. Only used if ``sig2noise_method==peak2peak``.
-    
+
     
     Returns
     -------
@@ -97,27 +97,32 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         a two dimensional array containing the v velocity component,
         in pixels/seconds.
         
-    sig2noise : 2d np.ndarray
+    sig2noise : 2d np.ndarray, optional
         a two dimensional array containing the signal to noise ratio
-        from the cross correlation function.
+        from the cross correlation function. This array is returned 
+        only if ``sig2noise_method`` is not None.
         
     Examples
     --------
     
-    >>> u, v, sn = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
-        
+    >>> u, v = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
         
     """
-    
     cdef int i, j, k, l, I, J
     
+    # subpixel peak location
     cdef float i_peak, j_peak
+    
+    # signal to noise ratio
     cdef float s2n
     
+    # shape of the resulting flow field
     cdef int n_cols, n_rows
     
+    # get field shape
     n_rows, n_cols = get_field_shape( (frame_a.shape[0], frame_a.shape[1]), window_size, overlap )
     
+    # define arrays
     cdef np.ndarray[DTYPEi_t, ndim=2] window_a = np.zeros([window_size, window_size], dtype=DTYPEi)
     cdef np.ndarray[DTYPEi_t, ndim=2] search_area = np.zeros([search_area_size, search_area_size], dtype=DTYPEi)
     cdef np.ndarray[DTYPEf_t, ndim=2] corr = np.zeros([search_area_size, search_area_size], dtype=DTYPEf)
@@ -132,7 +137,6 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     for i in range( 0, frame_a.shape[0]-window_size, window_size-overlap ):
         J = 0
         for j in range( 0, frame_a.shape[1]-window_size, window_size-overlap ):
-            
           
             # get interrogation window matrix from frame a
             for k in range( window_size ):
