@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import numpy as np
+from scipy.ndimage import median_filter
 
 
 def global_val( u, v, u_thresholds, v_thresholds ):
@@ -166,4 +167,46 @@ def sig2noise_val( u, v, sig2noise, threshold=1.3):
     mask[ind] = True
     
     return u, v, mask
+
+def local_median_val( u, v, threshold, size=1 ):
+    """Eliminate spurious vectors with a global threshold.
     
+    This validation method tests for the spatial consistency of the data
+    and outliers vector are replaced with Nan (Not a Number) if at 
+    least one of the two velocity components is out of a specified global range.
+    
+    Parameters
+    ----------
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component.
+        
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component.
+        
+    Returns
+    -------
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component, 
+        where spurious vectors have been replaced by NaN.
+        
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component, 
+        where spurious vectors have been replaced by NaN.
+        
+    mask : boolean 2d np.ndarray 
+        a boolean array. True elements corresponds to outliers.
+        
+    """
+    
+    um = median_filter( u, size=2*size+1 )
+    vm = median_filter( v, size=2*size+1 )
+    
+    ind = (np.abs( (u-um) ) > threshold) | (np.abs( (v-vm) ) > threshold)
+    
+    u[ind] = np.nan
+    v[ind] = np.nan
+    
+    mask = np.zeros(u.shape, dtype=bool)
+    mask[ind] = True
+    
+    return u, v, mask
