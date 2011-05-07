@@ -243,7 +243,7 @@ def find_subpixel_peak_position( corr, subpixel_method = 'gaussian'):
         cu = corr[peak1_i,   peak1_j+1]
         
         # gaussian fit
-        if np.any ( [c,cl,cr,cd,cu] < 0 ) and subpixel_method == 'gaussian':
+        if np.any ( np.arrray([c,cl,cr,cd,cu]) < 0 ) and subpixel_method == 'gaussian':
             subpixel_method = 'centroid'
         
         try: 
