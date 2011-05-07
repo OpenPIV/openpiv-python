@@ -62,39 +62,40 @@
 <dt id="openpiv.pyprocess.correlate_windows">
 <em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">correlate_windows</tt><big>(</big><em>window_a</em>, <em>window_b</em>, <em>corr_method='fft'</em>, <em>nfftx=None</em>, <em>nffty=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.correlate_windows" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute correlation function between two interrogation windows.</p>
-<p>Use the correlation theorem to speed up the computation of the 
-correlation function.</p>
+<p>The correlation function can be computed by using the correlation 
+theorem to speed up the computation.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>window_a</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the first interrogation window</p>
+<div><p>a two dimensions array for the first interrogation window.</p>
 </div></blockquote>
 <p><strong>window_b</strong> : 2d np.ndarray</p>
 <blockquote>
-<div><p>a two dimensions array for the second interrogation window</p>
+<div><p>a two dimensions array for the second interrogation window.</p>
 </div></blockquote>
 <p><strong>corr_method</strong> : string</p>
 <blockquote>
-<div><p>one of the two methods currently implemented: &#8216;fft&#8217; or &#8216;direct&#8217;</p>
+<div><p>one of the two methods currently implemented: &#8216;fft&#8217; or &#8216;direct&#8217;.
+Default is &#8216;fft&#8217;, which is much faster.</p>
 </div></blockquote>
 <p><strong>nfftx</strong> : int</p>
 <blockquote>
-<div><p>a size of the 2D FFT in x-direction, 
-[default: 2 x windows_a.shape[0] is recommended]</p>
+<div><p>the size of the 2D FFT in x-direction, 
+[default: 2 x windows_a.shape[0] is recommended].</p>
 </div></blockquote>
 <p><strong>nffty</strong> : int</p>
 <blockquote>
-<div><p>a size of the 2D FFT in y-direction, 
-[default: 2 x windows_a.shape[1] is recommended]</p>
+<div><p>the size of the 2D FFT in y-direction, 
+[default: 2 x windows_a.shape[1] is recommended].</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>corr</strong> : 2d np.ndarray</p>
 <blockquote class="last">
-<div><p>a two dimensions array with the correlation function</p>
+<div><p>a two dimensions array for the correlation function.</p>
 </div></blockquote>
 </td>
 </tr>

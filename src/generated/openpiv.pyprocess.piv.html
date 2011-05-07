@@ -60,9 +60,11 @@
 <h1>openpiv.pyprocess.piv<a class="headerlink" href="#openpiv-pyprocess-piv" title="Permalink to this headline">¶</a></h1>
 <dl class="staticmethod">
 <dt id="openpiv.pyprocess.piv">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=32</em>, <em>overlap=16</em>, <em>dt=1.0</em>, <em>corr_method='fft'</em>, <em>sig2noise_method='peak2peak'</em>, <em>sig2noise_lim=1.0</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Basic python implementation of the PIV cross-correlation
-algorithm.</p>
+<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=32</em>, <em>overlap=16</em>, <em>dt=1.0</em>, <em>corr_method='fft'</em>, <em>subpixel_method='gaussian'</em>, <em>sig2noise_method=None</em>, <em>nfftx=None</em>, <em>nffty=None</em>, <em>width=2</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standard PIV cross-correlation algorithm.</p>
+<p>This is a pure python implementation of the standard PIV cross-correlation
+algorithm. It is a zero order displacement predictor, and no iterative process
+is performed.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -79,30 +81,33 @@ the second frame.</p>
 </div></blockquote>
 <p><strong>window_size</strong> : int</p>
 <blockquote>
-<div><p>the size of the (square) interrogation window 
-[default: 32 pix]</p>
+<div><p>the size of the (square) interrogation window, [default: 32 pix].</p>
 </div></blockquote>
 <p><strong>overlap</strong> : int</p>
 <blockquote>
 <div><p>the number of pixels by which two adjacent windows overlap
-[default: 16 pix]</p>
+[default: 16 pix].</p>
 </div></blockquote>
 <p><strong>dt</strong> : float</p>
 <blockquote>
-<div><p>the time delay separating the two frames [default: 1.0]</p>
+<div><p>the time delay separating the two frames [default: 1.0].</p>
 </div></blockquote>
 <p><strong>corr_method</strong> : string</p>
 <blockquote>
-<div><p>one of the two methods implemented: &#8216;fft&#8217; or &#8216;direct&#8217;</p>
+<div><p>one of the two methods implemented: &#8216;fft&#8217; or &#8216;direct&#8217;,
+[default: &#8216;fft&#8217;].</p>
+</div></blockquote>
+<p><strong>subpixel_method</strong> : string</p>
+<blockquote>
+<div><p>one of the following methods to estimate subpixel location of the peak: 
+&#8216;centroid&#8217; [replaces default if correlation map is negative], 
+&#8216;gaussian&#8217; [default if correlation map is positive], 
+&#8216;parabolic&#8217;.</p>
 </div></blockquote>
 <p><strong>sig2noise_method</strong> : string</p>
 <blockquote>
-<div><p>defines the method of signal-to-noise-ratio measure, &#8216;peak2peak&#8217; (default) or &#8216;peak2mean&#8217;</p>
-</div></blockquote>
-<p><strong>sig2noise_lim: float</strong> :</p>
-<blockquote>
-<div><p>the limit of the signal to noise ratio, 1.0 [default] to 
-ignore this limit</p>
+<div><p>defines the method of signal-to-noise-ratio measure,
+(&#8216;peak2peak&#8217; or &#8216;peak2mean&#8217;. If None, no measure is performed.)</p>
 </div></blockquote>
 <p><strong>nfftx</strong> : int</p>
 <blockquote>
@@ -114,6 +119,12 @@ ignore this limit</p>
 <div><p>the size of the 2D FFT in y-direction, 
 [default: 2 x windows_a.shape[1] is recommended]</p>
 </div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>the half size of the region around the first
+correlation peak to ignore for finding the second
+peak. [default: 2]. Only used if <tt class="docutils literal"><span class="pre">sig2noise_method==peak2peak</span></tt>.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
@@ -122,9 +133,14 @@ ignore this limit</p>
 in pixels/seconds.</p>
 </div></blockquote>
 <p><strong>v</strong> : 2d np.ndarray</p>
-<blockquote class="last">
+<blockquote>
 <div><p>a two dimensional array containing the v velocity component,
 in pixels/seconds.</p>
+</div></blockquote>
+<p><strong>sig2noise</strong> : 2d np.ndarray, ( optional: only if sig2noise_method is not None )</p>
+<blockquote class="last">
+<div><p>a two dimensional array the signal to noise ratio for each 
+window pair.</p>
 </div></blockquote>
 </td>
 </tr>

@@ -68,59 +68,6 @@ over the interrogation windows. An approach could be to loop over the array
 but loops are expensive in python. So we create from the array a new array
 with three dimension, of size (n_windows, window_size, window_size), in which 
 each slice, (along the first axis) is an interrogation window.</p>
-<p>To understand what i mean run this code in ipython:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span>
-<span class="go">     array([[ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9],</span>
-<span class="go">            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],</span>
-<span class="go">            [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],</span>
-<span class="go">            [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],</span>
-<span class="go">            [40, 41, 42, 43, 44, 45, 46, 47, 48, 49],</span>
-<span class="go">            [50, 51, 52, 53, 54, 55, 56, 57, 58, 59],</span>
-<span class="go">            [60, 61, 62, 63, 64, 65, 66, 67, 68, 69],</span>
-<span class="go">            [70, 71, 72, 73, 74, 75, 76, 77, 78, 79],</span>
-<span class="go">            [80, 81, 82, 83, 84, 85, 86, 87, 88, 89],</span>
-<span class="go">            [90, 91, 92, 93, 94, 95, 96, 97, 98, 99]])</span>
-</pre></div>
-</div>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">moving_window_array</span><span class="p">(</span> <span class="n">a</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span> <span class="n">moving_window_array</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="docutils">
-<dt>array([[[ 0,  1,  2,  3,  4,  5],</dt>
-<dd><blockquote class="first">
-<div>[10, 11, 12, 13, 14, 15],
-[20, 21, 22, 23, 24, 25],
-[30, 31, 32, 33, 34, 35],
-[40, 41, 42, 43, 44, 45],
-[50, 51, 52, 53, 54, 55]],</div></blockquote>
-<dl class="last docutils">
-<dt>[[ 4,  5,  6,  7,  8,  9],</dt>
-<dd>[14, 15, 16, 17, 18, 19],
-[24, 25, 26, 27, 28, 29],
-[34, 35, 36, 37, 38, 39],
-[44, 45, 46, 47, 48, 49],
-[54, 55, 56, 57, 58, 59]],</dd>
-<dt>[[40, 41, 42, 43, 44, 45],</dt>
-<dd>[50, 51, 52, 53, 54, 55],
-[60, 61, 62, 63, 64, 65],
-[70, 71, 72, 73, 74, 75],
-[80, 81, 82, 83, 84, 85],
-[90, 91, 92, 93, 94, 95]],</dd>
-<dt>[[44, 45, 46, 47, 48, 49],</dt>
-<dd>[54, 55, 56, 57, 58, 59],
-[64, 65, 66, 67, 68, 69],
-[74, 75, 76, 77, 78, 79],
-[84, 85, 86, 87, 88, 89],
-[94, 95, 96, 97, 98, 99]]])</dd>
-</dl>
-</dd>
-</dl>
 </dd></dl>
 
 </div>

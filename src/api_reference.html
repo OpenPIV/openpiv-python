@@ -59,7 +59,7 @@
 <p>This is a complete api reference to the openpiv python module.</p>
 <div class="section" id="module-openpiv.tools">
 <span id="the-openpiv-tools-module"></span><h2>The <tt class="docutils literal"><span class="pre">openpiv.tools</span></tt> module<a class="headerlink" href="#module-openpiv.tools" title="Permalink to this headline">¶</a></h2>
-<p>The openpiv.tools module is a collection of utilities and tools often used.</p>
+<p>The openpiv.tools module is a collection of utilities and tools.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="10%" />
@@ -75,13 +75,19 @@
 <tr><td><a class="reference internal" href="generated/openpiv.tools.display.html#openpiv.tools.display" title="openpiv.tools.display"><tt class="xref py py-obj docutils literal"><span class="pre">display</span></tt></a>(message)</td>
 <td>Display a message to standard output.</td>
 </tr>
+<tr><td><a class="reference internal" href="generated/openpiv.tools.display_vector_field.html#openpiv.tools.display_vector_field" title="openpiv.tools.display_vector_field"><tt class="xref py py-obj docutils literal"><span class="pre">display_vector_field</span></tt></a>(filename,&nbsp;**kw)</td>
+<td>Displays quiver plot of the data stored in the file</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.tools.Multiprocesser.html#openpiv.tools.Multiprocesser" title="openpiv.tools.Multiprocesser"><tt class="xref py py-obj docutils literal"><span class="pre">Multiprocesser</span></tt></a>(data_dir,&nbsp;pattern_a,&nbsp;pattern_b)</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="module-openpiv.pyprocess">
 <span id="the-openpiv-pyprocess-module"></span><h2>The <tt class="docutils literal"><span class="pre">openpiv.pyprocess</span></tt> module<a class="headerlink" href="#module-openpiv.pyprocess" title="Permalink to this headline">¶</a></h2>
-<p>This module contains a pure python implementation of the cross-correlation
-algorithm for PIV image processing. It also contains some useful helper functions.</p>
+<p>This module contains a pure python implementation of the basic 
+cross-correlation algorithm for PIV image processing.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="10%" />
@@ -89,7 +95,7 @@ algorithm for PIV image processing. It also contains some useful helper function
 </colgroup>
 <tbody valign="top">
 <tr><td><a class="reference internal" href="generated/openpiv.pyprocess.normalize_intensity.html#openpiv.pyprocess.normalize_intensity" title="openpiv.pyprocess.normalize_intensity"><tt class="xref py py-obj docutils literal"><span class="pre">normalize_intensity</span></tt></a>(window)</td>
-<td>Remove mean value from window and masks negative, dark pixels</td>
+<td>Normalize interrogation window by removing the mean value.</td>
 </tr>
 <tr><td><a class="reference internal" href="generated/openpiv.pyprocess.correlate_windows.html#openpiv.pyprocess.correlate_windows" title="openpiv.pyprocess.correlate_windows"><tt class="xref py py-obj docutils literal"><span class="pre">correlate_windows</span></tt></a>(window_a,&nbsp;window_b[,&nbsp;...])</td>
 <td>Compute correlation function between two interrogation windows.</td>
@@ -106,24 +112,21 @@ algorithm for PIV image processing. It also contains some useful helper function
 <tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_first_peak.html#openpiv.pyprocess.find_first_peak" title="openpiv.pyprocess.find_first_peak"><tt class="xref py py-obj docutils literal"><span class="pre">find_first_peak</span></tt></a>(corr)</td>
 <td>Find row and column indices of the first correlation peak.</td>
 </tr>
-<tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_second_peak.html#openpiv.pyprocess.find_second_peak" title="openpiv.pyprocess.find_second_peak"><tt class="xref py py-obj docutils literal"><span class="pre">find_second_peak</span></tt></a>(corr[,&nbsp;i,&nbsp;j])</td>
-<td>Find the value of the second largest peak</td>
+<tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_second_peak.html#openpiv.pyprocess.find_second_peak" title="openpiv.pyprocess.find_second_peak"><tt class="xref py py-obj docutils literal"><span class="pre">find_second_peak</span></tt></a>(corr[,&nbsp;i,&nbsp;j,&nbsp;width])</td>
+<td>Find the value of the second largest peak.</td>
 </tr>
-<tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_pixel_peak_position.html#openpiv.pyprocess.find_pixel_peak_position" title="openpiv.pyprocess.find_pixel_peak_position"><tt class="xref py py-obj docutils literal"><span class="pre">find_pixel_peak_position</span></tt></a>(corr[,&nbsp;...])</td>
-<td>Find pixel approximation of the correlation peak.</td>
-</tr>
-<tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_subpixel_peak_position.html#openpiv.pyprocess.find_subpixel_peak_position" title="openpiv.pyprocess.find_subpixel_peak_position"><tt class="xref py py-obj docutils literal"><span class="pre">find_subpixel_peak_position</span></tt></a>(corr,&nbsp;peak_indices)</td>
+<tr><td><a class="reference internal" href="generated/openpiv.pyprocess.find_subpixel_peak_position.html#openpiv.pyprocess.find_subpixel_peak_position" title="openpiv.pyprocess.find_subpixel_peak_position"><tt class="xref py py-obj docutils literal"><span class="pre">find_subpixel_peak_position</span></tt></a>(corr[,&nbsp;...])</td>
 <td>Find subpixel approximation of the correlation peak.</td>
 </tr>
 <tr><td><a class="reference internal" href="generated/openpiv.pyprocess.piv.html#openpiv.pyprocess.piv" title="openpiv.pyprocess.piv"><tt class="xref py py-obj docutils literal"><span class="pre">piv</span></tt></a>(frame_a,&nbsp;frame_b[,&nbsp;window_size,&nbsp;...])</td>
-<td>Basic python implementation of the PIV cross-correlation</td>
+<td>Standard PIV cross-correlation algorithm.</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="module-openpiv.process">
 <span id="the-openpiv-process-module"></span><h2>The <tt class="docutils literal"><span class="pre">openpiv.process</span></tt> module<a class="headerlink" href="#module-openpiv.process" title="Permalink to this headline">¶</a></h2>
-<p>A cython module for fast advanced algorithms for PIV image analysis.</p>
+<p>This module is dedicated to advanced algorithms for PIV image analysis.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="10%" />
@@ -132,6 +135,21 @@ algorithm for PIV image processing. It also contains some useful helper function
 <tbody valign="top">
 <tr><td><a class="reference internal" href="generated/openpiv.process.extended_search_area_piv.html#openpiv.process.extended_search_area_piv" title="openpiv.process.extended_search_area_piv"><tt class="xref py py-obj docutils literal"><span class="pre">extended_search_area_piv</span></tt></a></td>
 <td>The implementation of the one-step direct correlation with different  size of the interrogation window and the search area.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.process.CorrelationFunction.html#openpiv.process.CorrelationFunction" title="openpiv.process.CorrelationFunction"><tt class="xref py py-obj docutils literal"><span class="pre">CorrelationFunction</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.process.get_coordinates.html#openpiv.process.get_coordinates" title="openpiv.process.get_coordinates"><tt class="xref py py-obj docutils literal"><span class="pre">get_coordinates</span></tt></a></td>
+<td>Compute the x, y coordinates of the centers of the interrogation windows.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.process.get_field_shape.html#openpiv.process.get_field_shape" title="openpiv.process.get_field_shape"><tt class="xref py py-obj docutils literal"><span class="pre">get_field_shape</span></tt></a></td>
+<td>Compute the shape of the resulting flow field.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.process.correlate_windows.html#openpiv.process.correlate_windows" title="openpiv.process.correlate_windows"><tt class="xref py py-obj docutils literal"><span class="pre">correlate_windows</span></tt></a></td>
+<td>Compute correlation function between two interrogation windows.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/openpiv.process.normalize_intensity.html#openpiv.process.normalize_intensity" title="openpiv.process.normalize_intensity"><tt class="xref py py-obj docutils literal"><span class="pre">normalize_intensity</span></tt></a></td>
+<td>Normalize interrogation window by removing the mean value.</td>
 </tr>
 </tbody>
 </table>

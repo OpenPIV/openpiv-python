@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.pyprocess.find_pixel_peak_position" href="openpiv.pyprocess.find_pixel_peak_position.html" />
+    <link rel="next" title="openpiv.pyprocess.find_subpixel_peak_position" href="openpiv.pyprocess.find_subpixel_peak_position.html" />
     <link rel="prev" title="openpiv.pyprocess.find_first_peak" href="openpiv.pyprocess.find_first_peak.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.find_pixel_peak_position.html" title="openpiv.pyprocess.find_pixel_peak_position"
+          <a href="openpiv.pyprocess.find_subpixel_peak_position.html" title="openpiv.pyprocess.find_subpixel_peak_position"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="openpiv.pyprocess.find_first_peak.html" title="openpiv.pyprocess.find_first_peak"
@@ -60,19 +60,41 @@
 <h1>openpiv.pyprocess.find_second_peak<a class="headerlink" href="#openpiv-pyprocess-find-second-peak" title="Permalink to this headline">¶</a></h1>
 <dl class="staticmethod">
 <dt id="openpiv.pyprocess.find_second_peak">
-<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">find_second_peak</tt><big>(</big><em>corr</em>, <em>i=None</em>, <em>j=None</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.find_second_peak" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find the value of the second largest peak</p>
+<em class="property">static </em><tt class="descclassname">pyprocess.</tt><tt class="descname">find_second_peak</tt><big>(</big><em>corr</em>, <em>i=None</em>, <em>j=None</em>, <em>width=2</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.find_second_peak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the value of the second largest peak.</p>
+<p>The second largest peak is the height of the peak in 
+the region outside a 3x3 submatrxi around the first 
+correlation peak.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>corr: np.ndarray</strong> :</p>
 <blockquote>
-<div><p>the correlation map</p>
+<div><p>the correlation map.</p>
 </div></blockquote>
 <p><strong>i,j</strong> : ints</p>
+<blockquote>
+<div><p>row and column location of the first peak.</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>the half size of the region around the first correlation 
+peak to ignore for finding the second peak.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>i</strong> : int</p>
+<blockquote>
+<div><p>the row index of the second correlation peak.</p>
+</div></blockquote>
+<p><strong>j</strong> : int</p>
+<blockquote>
+<div><p>the column index of the second correlation peak.</p>
+</div></blockquote>
+<p><strong>corr_max2</strong> : int</p>
 <blockquote class="last">
-<div><p>row and column location of the first peak [optional]</p>
+<div><p>the value of the second correlation peak.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -92,8 +114,8 @@
   <p class="topless"><a href="openpiv.pyprocess.find_first_peak.html"
                         title="previous chapter">openpiv.pyprocess.find_first_peak</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.pyprocess.find_pixel_peak_position.html"
-                        title="next chapter">openpiv.pyprocess.find_pixel_peak_position</a></p>
+  <p class="topless"><a href="openpiv.pyprocess.find_subpixel_peak_position.html"
+                        title="next chapter">openpiv.pyprocess.find_subpixel_peak_position</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/src/generated/openpiv.pyprocess.find_second_peak.txt"
@@ -129,7 +151,7 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.pyprocess.find_pixel_peak_position.html" title="openpiv.pyprocess.find_pixel_peak_position"
+          <a href="openpiv.pyprocess.find_subpixel_peak_position.html" title="openpiv.pyprocess.find_subpixel_peak_position"
              >next</a> |</li>
         <li class="right" >
           <a href="openpiv.pyprocess.find_first_peak.html" title="openpiv.pyprocess.find_first_peak"
