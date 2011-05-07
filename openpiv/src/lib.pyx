@@ -1,4 +1,4 @@
-"""A cython module for common operations requiring speed."""
+"""A module for various utilities and helper functions"""
 
 import numpy as np
 cimport numpy as np
