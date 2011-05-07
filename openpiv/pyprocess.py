@@ -3,7 +3,6 @@
 """This module contains a pure python implementation of the basic 
 cross-correlation algorithm for PIV image processing."""
 
-
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
 
@@ -22,83 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import numpy as np
-import numpy.ma as ma
-from numpy.fft import rfft2,irfft2,fftshift
 import numpy.lib.stride_tricks
-from scipy import signal
-from math import log
-
-
-def get_coordinates( image_size, window_size, overlap ):
-    """Compute the x, y coordinates of the centers of the interrogation windows.
-    
-    Parameters
-    ----------
-    image_size: two elements tuple
-        a two dimensional tuple for the pixel size of the image
-        first element is number of rows, second element is 
-        the number of columns.
-        
-    window_size: int
-        the size of the interrogation windows.
-        
-    overlap: int
-        the number of pixel by which two adjacent interrogation
-        windows overlap.
-        
-        
-    Returns
-    -------
-    x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the 
-        interrogation window centers, in pixels.
-        
-    y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the 
-        interrogation window centers, in pixels.
-        
-    """
-
-    # get shape of the resulting flow field
-    field_shape = get_field_shape( image_size, window_size, overlap )
-
-    # compute grid coordinates of the interrogation window centers
-    x = np.arange( field_shape[1] )*(window_size-overlap) + (window_size-1)/2.0
-    y = np.arange( field_shape[0] )*(window_size-overlap) + (window_size-1)/2.0
-    
-    return np.meshgrid(x,y[::-1])
-
-def get_field_shape ( image_size, window_size, overlap ):
-    """Compute the shape of the resulting flow field.
-    
-    Given the image size, the interrogation window size and
-    the overlap size, it is possible to calculate the number 
-    of rows and columns of the resulting flow field.
-    
-    Parameters
-    ----------
-    image_size: two elements tuple
-        a two dimensional tuple for the pixel size of the image
-        first element is number of rows, second element is 
-        the number of columns.
-        
-    window_size: int
-        the size of the interrogation window.
-        
-    overlap: int
-        the number of pixel by which two adjacent interrogation
-        windows overlap.
-        
-        
-    Returns
-    -------
-    field_shape : two elements tuple
-        the shape of the resulting flow field
-    """
-    
-    return ( (image_size[0] - window_size)//(window_size-overlap)+1, 
-             (image_size[1] - window_size)//(window_size-overlap)+1 )
+import numpy as np
+import openpiv.process
 
 def moving_window_array( array, window_size, overlap ):
     """
@@ -388,7 +313,7 @@ def normalize_intensity( window ):
     """
     return window - window.mean()
 
-def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', subpixel_method='gaussian', sig2noise_method='peak2peak', nfftx=None, nffty=None, width=2):
+def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', subpixel_method='gaussian', sig2noise_method=None, nfftx=None, nffty=None, width=2):
     """Standard PIV cross-correlation algorithm.
     
     This is a pure python implementation of the standard PIV cross-correlation
@@ -465,7 +390,7 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     
     # get shape of the output so that we can preallocate 
     # memory for velocity array
-    n_rows, n_cols = get_field_shape( image_size=frame_a.shape, window_size=window_size, overlap=overlap )
+    n_rows, n_cols = openpiv.process.get_field_shape( image_size=frame_a.shape, window_size=window_size, overlap=overlap )
     
     u = np.empty(n_rows*n_cols)
     v = np.empty(n_rows*n_cols)
@@ -477,17 +402,17 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     # for each interrogation window
     for i in range(windows_a.shape[0]):
         # get correlation window
-        corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=nfftx, nffty=nffty )
+        corr = openpiv.process.correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=nfftx, nffty=nffty )
         
         # get subpixel approximation for peak position row and column index
-        row, col = find_subpixel_peak_position( corr, subpixel_method=subpixel_method)
+        row, col = openpiv.process.find_subpixel_peak_position( corr, subpixel_method=subpixel_method)
         
         # get displacements
         u[i], v[i] = -(col - corr.shape[1]/2), (row - corr.shape[0]/2)
         
         # get signal to noise ratio
         if sig2noise_method:
-            sig2noise[i] = sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
+            sig2noise[i] = openpiv.process.sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
     
     # return output depending if user wanted sig2noise information
     if sig2noise_method:
