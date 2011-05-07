@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-"""
-This module contains a pure python implementation of the cross-correlation
-algorithm for PIV image processing. It also contains some useful helper functions.
-"""
+"""This module contains a pure python implementation of the basic 
+cross-correlation algorithm for PIV image processing."""
 
 
 __licence_ = """

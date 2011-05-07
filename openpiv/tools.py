@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""The openpiv.tools module is a collection of utilities and tools often used.
+"""The openpiv.tools module is a collection of utilities and tools.
 """
 
 __licence__ = """
@@ -67,10 +67,6 @@ def display_vector_field( filename,**kw):
     pl.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
     pl.draw()
     pl.show()
-    
-  
-    	  
-
 
 def imread( filename ):
     """Read an image file into a numpy array
@@ -162,15 +158,34 @@ def display( message ):
 class Multiprocesser():
     def __init__ ( self, data_dir, pattern_a, pattern_b  ):
         """A class to handle and process large sets of images.
-        html
+
         This class is responsible of loading image datasets
         and processing them. It has parallelization facilities
         to speed up the computation on multicore machines.
         
+        It currently support only image pair obtained from 
+        conventional double pulse piv acquisition. Support 
+        for continuos time resolved piv acquistion is in the 
+        future.
+        
+        
         Parameters
         ----------
-           
-       
+        data_dir : str
+            the path where image files are located 
+            
+        pattern_a : str
+            a shell glob patter to match the first 
+            frames.
+            
+        pattern_b : str
+            a shell glob patter to match the second
+            frames.
+
+        Examples
+        --------
+        >>> multi = openpiv.tools.Multiprocesser( '/home/user/images', 'image_*_a.bmp', 'image_*_b.bmp')
+    
         """
         # load lists of images 
         self.files_a = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_a ) ) )
@@ -192,10 +207,11 @@ class Multiprocesser():
         Parameters
         ----------
         
-        func : python function
+        func : python function which will be executed for each 
+            image pair. See tutorial for more details.
         
         n_cpus : int
-            the number of processes to launch in parallel
+            the number of processes to launch in parallel.
             For debugging purposes use n_cpus=1
         
         """

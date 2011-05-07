@@ -1,4 +1,4 @@
-"""A cython module for fast advanced algorithms for PIV image analysis."""
+"""This module is dedicated to advanced algorithms for PIV image analysis."""
 
 import numpy as np
 import numpy.ma as ma

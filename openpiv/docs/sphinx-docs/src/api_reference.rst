@@ -17,7 +17,8 @@ The ``openpiv.tools`` module
     imread
     save
     display
-
+    display_vector_field
+    Multiprocesser
 
 The ``openpiv.pyprocess`` module
 --------------------------------
@@ -35,7 +36,6 @@ The ``openpiv.pyprocess`` module
     moving_window_array
     find_first_peak
     find_second_peak
-    find_pixel_peak_position
     find_subpixel_peak_position
     piv
 
