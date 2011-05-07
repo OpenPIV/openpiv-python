@@ -25,6 +25,77 @@ import numpy.lib.stride_tricks
 import numpy as np
 import openpiv.process
 
+
+def get_coordinates( image_size, window_size, overlap ):
+    """Compute the x, y coordinates of the centers of the interrogation windows.
+    
+    Parameters
+    ----------
+    image_size: two elements tuple
+        a two dimensional tuple for the pixel size of the image
+        first element is number of rows, second element is 
+        the number of columns.
+        
+    window_size: int
+        the size of the interrogation windows.
+        
+    overlap: int
+        the number of pixel by which two adjacent interrogation
+        windows overlap.
+        
+        
+    Returns
+    -------
+    x : 2d np.ndarray
+        a two dimensional array containing the x coordinates of the 
+        interrogation window centers, in pixels.
+        
+    y : 2d np.ndarray
+        a two dimensional array containing the y coordinates of the 
+        interrogation window centers, in pixels.
+        
+    """
+
+    # get shape of the resulting flow field
+    field_shape = get_field_shape( image_size, window_size, overlap )
+
+    # compute grid coordinates of the interrogation window centers
+    x = np.arange( field_shape[1] )*(window_size-overlap) + (window_size-1)/2.0
+    y = np.arange( field_shape[0] )*(window_size-overlap) + (window_size-1)/2.0
+    
+    return np.meshgrid(x,y[::-1])
+
+def get_field_shape ( image_size, window_size, overlap ):
+    """Compute the shape of the resulting flow field.
+    
+    Given the image size, the interrogation window size and
+    the overlap size, it is possible to calculate the number 
+    of rows and columns of the resulting flow field.
+    
+    Parameters
+    ----------
+    image_size: two elements tuple
+        a two dimensional tuple for the pixel size of the image
+        first element is number of rows, second element is 
+        the number of columns.
+        
+    window_size: int
+        the size of the interrogation window.
+        
+    overlap: int
+        the number of pixel by which two adjacent interrogation
+        windows overlap.
+        
+        
+    Returns
+    -------
+    field_shape : two elements tuple
+        the shape of the resulting flow field
+    """
+    
+    return ( (image_size[0] - window_size)//(window_size-overlap)+1, 
+             (image_size[1] - window_size)//(window_size-overlap)+1 )
+
 def moving_window_array( array, window_size, overlap ):
     """
     This is a nice numpy trick. The concept of numpy strides should be 
