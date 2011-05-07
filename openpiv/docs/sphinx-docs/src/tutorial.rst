@@ -21,9 +21,9 @@ The first example shows how to process a single image pair. This is a common tas
     frame_a  = openpiv.tools.imread( 'exp1_001_a.bmp' )
     frame_b  = openpiv.tools.imread( 'exp1_001_b.bmp' )
     
-    u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
+    u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64, sig2noise_method='peak2peak' )
     
-    x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
+    x, y = openpiv.process.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
     
     u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
@@ -38,10 +38,10 @@ This code can be executed as a script, or you can type each command in an `Ipyth
 We first import some of the openpiv modules.::
 
     import openpiv.tools
-    import openpiv.pyprocess
+    import openpiv.process
     import openpiv.scaling
     
-Module ``openpiv.tools`` contains mostly contains utilities and tools, such as file I/O and multiprocessingvfacilities. Module ``openpiv.pyprocess`` contains a pure Python implementation of the PIV cross-correlation algorithm and several helper functions. Module ``openpiv.process`` contains advanced processing algorithm such as the one we are using in this example. Last, module ``openpiv.scaling`` contains functions for field scaling.
+Module ``openpiv.tools`` contains mostly contains utilities and tools, such as file I/O and multiprocessingvfacilities. Module ``openpiv.process`` contains advanced algorithms for PIV analysis and several helper functions. Last, module ``openpiv.scaling`` contains functions for field scaling.
 
 We then load the two image files into numpy arrays::
 
@@ -68,13 +68,14 @@ which results in this figure.
     
 In this example we are going to use the function :py:func:`openpiv.process.extended_search_area_piv` to process the image pair.::
 
-    u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
+        u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64, sig2noise_method='peak2peak' )
+
       
-This method  is a zero order displacement predictor cross-correlation algorithm, which cope with the problem of loss of pairs when the interrogation window is small, by increasing the search area on the second image. We also provide some options to the function, namely the ``window_size``, i.e. the size of the interrogation window  on ``frame_a``, the ``overlap`` in pixels between adjacent windows, the time delay in seconds ``dt`` between  the two image frames an te size in pixels of the extended search area on ``frame_b``. The function also returns a third array, ``sig2noise`` which contains the signal to noise ratio obtained from each cross-correlation function, intended as the ratio between the heigth of the first and second peaks.
+This method  is a zero order displacement predictor cross-correlation algorithm, which cope with the problem of loss of pairs when the interrogation window is small, by increasing the search area on the second image. We also provide some options to the function, namely the ``window_size``, i.e. the size of the interrogation window  on ``frame_a``, the ``overlap`` in pixels between adjacent windows, the time delay in seconds ``dt`` between  the two image frames an te size in pixels of the extended search area on ``frame_b``. ``sig2noise_method`` specifies which method to use for the evalutaion of the signal/noise ratio. The function also returns a third array, ``sig2noise`` which contains the signal to noise ratio obtained from each cross-correlation function, intended as the ratio between the heigth of the first and second peaks.
 
-We then compute the coordinates of the centers of the interrogation windows using :py:func:`openpiv.pyprocess.get_coordinates`.::
+We then compute the coordinates of the centers of the interrogation windows using :py:func:`openpiv.process.get_coordinates`.::
 
-    x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=48, overlap=32 )
+    x, y = openpiv.process.get_coordinates( image_size=frame_a.shape, window_size=48, overlap=32 )
     
 Note that we have provided some the same options we have given in the previous command to the processing function.
 
@@ -165,7 +166,7 @@ Here is an example of valid python function:::
         u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, search_area_size=64 )
         
         # get window centers coordinates
-        x, y = openpiv.pyprocess.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=16 )
+        x, y = openpiv.process.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=16 )
         
         # save to a file
         openpiv.tools.save(x, y, u, v, 'exp1_%03d.txt' % counter, fmt='%8.7f', delimiter='\t' )

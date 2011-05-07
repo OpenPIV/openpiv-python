@@ -50,6 +50,11 @@ The ``openpiv.process`` module
     :toctree: generated/
     
     extended_search_area_piv
+    CorrelationFunction
+    get_coordinates
+    get_field_shape
+    correlate_windows
+    normalize_intensity
     
     
     
