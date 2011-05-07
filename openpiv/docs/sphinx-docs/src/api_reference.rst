@@ -86,6 +86,7 @@ The ``openpiv.validation`` module
     global_val
     sig2noise_val
     global_std
+    local_median_val
 
 The ``openpiv.scaling`` module
 ------------------------------
