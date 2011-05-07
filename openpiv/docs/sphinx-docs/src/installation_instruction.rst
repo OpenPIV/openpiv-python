@@ -32,14 +32,16 @@ manager.
 How to install the dependencies on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 On Windows all these dependencies, as well as several other useful packages, can be installed
-using the Python(x,y) distribution, available at http://www.pythonxy.com/
+using the Python(x,y) distribution, available at http://www.pythonxy.com/. Note: Install it in Custom Directories, 
+without spaces in the directory names (i.e. Program Files are prohibited), e.g. C:\Pythonxy\
+
 
 How to install the dependencies on a Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com 
 
 
-Get Openpiv source code!
+Get OpenPIV source code!
 ========================
 
 At this moment the only way to get OpenPIV's source code is using git. 
@@ -50,7 +52,7 @@ Bleeding edge development version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are interested in the source code you are welcome to browse out git repository
-stored at https://github.com/gasagna/OpenPIV. If you want to download the source code
+stored at https://github.com/alexlib/openpiv-python. If you want to download the source code
 on your machine, for testing, you need to set up git on your computer. Please look at 
 http://help.github.com/ which provide extensive help for how to set up git.
 

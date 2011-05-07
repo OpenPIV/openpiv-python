@@ -8,7 +8,7 @@ frame_a  = openpiv.tools.imread( 'exp1_001_a.bmp' )
 frame_b  = openpiv.tools.imread( 'exp1_001_b.bmp' )
 
 # process it with Cython implementation
-u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
+u, v = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=24, overlap=12, dt=0.02, search_area_size=64 )
 
 
 # or process image pair with the purepython implementation
