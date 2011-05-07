@@ -1,4 +1,4 @@
-========
+﻿========
 Tutorial
 ========
 
@@ -163,7 +163,7 @@ Here is an example of valid python function:::
         frame_b  = openpiv.tools.imread( file_b )
             
         # process image pair with extended search area piv algorithm.
-        u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, search_area_size=64 )
+        u, v = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, search_area_size=64 )
         
         # get window centers coordinates
         x, y = openpiv.process.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=16 )
@@ -177,12 +177,12 @@ The function we have specified *must* accept in input a single argument. This ar
 
 The tuple contains the two filenames of the image pair and a counter, which is needed to remember which image pair we are currently processing, (basically just for the output filename). After that you have unpacked the tuple into its three elements, you can use them to load the images and do the rest.
 
-The processing funtion we wrote is just half of the job. We still need to specify which image pairs to process and where they are located. Therefore, in the same script we add the following two lines of code.::
+The *simple* processing function we wrote is just half of the job. We still need to specify which image pairs to process and where they are located. Therefore, in the same script we add the following two lines of code.::
 
     task = openpiv.tools.Multiprocesser( data_dir = '.', pattern_a='2image_*0.tif', pattern_b='2image_*1.tif' )
     task.run( func = func, n_cpus=8 )
     
-where we have set datadir to ``.`` because the script and the images are in the same folder. The first line creates an instance of the :py:func:`Openpiv.tools.Multiprocesser` class. This class is responsible of sharing the processing work to multiple processes, so that the analysis can be executed in parallell. To construct the class you have to pass it three arguments: 
+where we have set datadir to ``.`` because the script and the images are in the same folder. The first line creates an instance of the :py:func:`openpiv.tools.Multiprocesser` class. This class is responsible of sharing the processing work to multiple processes, so that the analysis can be executed in parallell. To construct the class you have to pass it three arguments: 
 
 * ``data_dir``: the directory where image files are located
 * ``pattern_a`` and ``pattern_b``: the patterns for matching image files for frames `a` and `b`.
