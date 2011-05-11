@@ -3,9 +3,13 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from scipy.ndimage import map_coordinates
 
 DTYPEf = np.float64
 ctypedef np.float64_t DTYPEf_t
+
+DTYPEi = np.int32
+ctypedef np.int32_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
@@ -125,3 +129,33 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
                 replaced_old[l] = replaced_new[l]
     
     return filled
+
+
+def particle_image_subpixel_interpolation( np.ndarray[DTYPEi_t, ndim=2] array, float ic, float jc, int window_size=32, int kernel_size=3 ):
+    
+    
+    cdef int i, j, I, J
+   
+    cdef np.ndarray[DTYPEf_t, ndim=2] r = np.zeros( [window_size, window_size], dtype=DTYPEf)
+    
+    cdef np.ndarray[DTYPEf_t, ndim=1] x = np.zeros( [window_size], dtype=DTYPEf)
+    cdef np.ndarray[DTYPEf_t, ndim=1] y = np.zeros( [window_size], dtype=DTYPEf)
+    
+    for i in range(window_size):
+        x[i] = ic-window_size/2+i
+        y[i] = jc-window_size/2+i
+        
+    cdef float pi = 3.1419
+        
+    for I in range(window_size):
+        for J in range(window_size):
+            
+            for i in range( int(x[I])-kernel_size, int(x[I])+kernel_size+1 ):
+                for j in range( int(y[J])-kernel_size, int(y[J])+kernel_size+1 ):
+                    
+                    r[I,J] = r[I,J] + array[i,j] * sin( pi*(i-x[I]) )*sin( pi*(j-y[J]) )/( pi*pi*(i-x[I])*(j-y[J]))
+            
+    return np.flipud(r)
+    
+cdef extern from "math.h":
+    double sin(double)
