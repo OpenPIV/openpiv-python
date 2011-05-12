@@ -3,7 +3,6 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from scipy.ndimage import map_coordinates
 
 DTYPEf = np.float64
 ctypedef np.float64_t DTYPEf_t
@@ -131,31 +130,83 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     return filled
 
 
-def particle_image_subpixel_interpolation( np.ndarray[DTYPEi_t, ndim=2] array, float ic, float jc, int window_size=32, int kernel_size=3 ):
+def sincinterp( np.ndarray[DTYPEi_t, ndim=2] image, np.ndarray[DTYPEf_t, ndim=2] x, np.ndarray[DTYPEf_t, ndim=2] y, int kernel_size=3 ):
+    """Re-sample an image at intermediate positions between pixels.
+    
+    This function uses a cardinal interpolation formula which limits 
+    the loss of information in the resampling process. It uses a limited
+    number of neighbouring pixels.
     
     
+    The new image :math:`im^+` at fractional locations :math:`x` and :math:`y` is computed as:
+    
+    .. math:: 
+    
+       im^+(x,y) = \sum_{i=-\mathtt{kernel\_size}}^{i=\mathtt{kernel\_size}} \sum_{j=-\mathtt{kernel\_size}}^{j=\mathtt{kernel\_size}} \mathtt{image}(i,j)  sin[\pi(i-\mathtt{x})]  sin[\pi(j-\mathtt{y})]  / \pi(i-\mathtt{x}) / \pi(j-\mathtt{y}) 
+     
+    
+    Parameters
+    ----------
+    image : np.ndarray, dtype np.int32
+        the image array.
+        
+    x : two dimensions np.ndarray of floats
+        an array containing fractional pixel row
+        positions at which to interpolate the image
+        
+    y : two dimensions np.ndarray of floats
+        an array containing fractional pixel column 
+        positions at which to interpolate the image
+    
+    kernel_size : int
+        interpolation is performed over a ``(2*kernel_size+1)*(2*kernel_size+1)`` 
+        submatrix  in the neighbourhood of each interpolation point.
+        
+    Returns
+    -------
+    
+    im : np.ndarray, dtype np.float64
+        the interpolated value of ``image`` at the points specified 
+        by ``x`` and ``y``
+    
+    """
+    
+    # indices
     cdef int i, j, I, J
    
-    cdef np.ndarray[DTYPEf_t, ndim=2] r = np.zeros( [window_size, window_size], dtype=DTYPEf)
+    # the output array
+    cdef np.ndarray[DTYPEf_t, ndim=2] r = np.zeros( [x.shape[0], x.shape[1]], dtype=DTYPEf)
     
-    cdef np.ndarray[DTYPEf_t, ndim=1] x = np.zeros( [window_size], dtype=DTYPEf)
-    cdef np.ndarray[DTYPEf_t, ndim=1] y = np.zeros( [window_size], dtype=DTYPEf)
+    # fractional coordinates of the point where we wish to evaluate the particle image
+    #cdef np.ndarray[DTYPEf_t, ndim=1] x = np.zeros( [window_size], dtype=DTYPEf)
+    #cdef np.ndarray[DTYPEf_t, ndim=1] y = np.zeros( [window_size], dtype=DTYPEf)
     
-    for i in range(window_size):
-        x[i] = ic-window_size/2+i
-        y[i] = jc-window_size/2+i
+    # create points
+    #for i in range(window_size):
+    #   x[i] = ic-window_size/2+i
+    #   y[i] = jc-window_size/2+i
         
+    # fast pi
     cdef float pi = 3.1419
         
-    for I in range(window_size):
-        for J in range(window_size):
+    # for each point of the output array
+    for I in range(x.shape[0]):
+        for J in range(x.shape[1]):
             
-            for i in range( int(x[I])-kernel_size, int(x[I])+kernel_size+1 ):
-                for j in range( int(y[J])-kernel_size, int(y[J])+kernel_size+1 ):
-                    
-                    r[I,J] = r[I,J] + array[i,j] * sin( pi*(i-x[I]) )*sin( pi*(j-y[J]) )/( pi*pi*(i-x[I])*(j-y[J]))
-            
-    return np.flipud(r)
+            #loop over all neighbouring grid points 
+            for i in range( int(x[I,J])-kernel_size, int(x[I,J])+kernel_size+1 ):
+                for j in range( int(y[I,J])-kernel_size, int(y[I,J])+kernel_size+1 ):
+                    if i >= 0 and i <= image.shape[0] and j >= 0 and j <= image.shape[1]:
+                        if (i-x[I,J]) == 0.0 and (j-y[I,J]) == 0.0:
+                            r[I,J] = r[I,J] + image[i,j]
+                        elif (i-x[I,J]) == 0.0:
+                            r[I,J] = r[I,J] + image[i,j] * sin( pi*(j-y[I,J]) )/( pi*(j-y[I,J]) )
+                        elif (j-y[I,J]) == 0.0:
+                            r[I,J] = r[I,J] + image[i,j] * sin( pi*(i-x[I,J]) )/( pi*(i-x[I,J]) )
+                        else:
+                            r[I,J] = r[I,J] + image[i,j] * sin( pi*(i-x[I,J]) )*sin( pi*(j-y[I,J]) )/( pi*pi*(i-x[I,J])*(j-y[I,J]))
+    return r
+    
     
 cdef extern from "math.h":
     double sin(double)

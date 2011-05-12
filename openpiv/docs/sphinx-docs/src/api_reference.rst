@@ -56,9 +56,20 @@ The ``openpiv.process`` module
     correlate_windows
     normalize_intensity
     
+The ``openpiv.lib`` module
+--------------------------------
+.. automodule:: openpiv.lib
+
+.. currentmodule:: openpiv.lib
+
+.. autosummary:: 
+    :toctree: generated/
+    
+    sincinterp    
+    replace_nans
     
     
-The ``openpiv.filters`` module
+The ``openpiv.filters`` module  
 ------------------------------
 
 .. automodule:: openpiv.filters
