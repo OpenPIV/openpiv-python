@@ -176,16 +176,7 @@ def sincinterp( np.ndarray[DTYPEi_t, ndim=2] image, np.ndarray[DTYPEf_t, ndim=2]
    
     # the output array
     cdef np.ndarray[DTYPEf_t, ndim=2] r = np.zeros( [x.shape[0], x.shape[1]], dtype=DTYPEf)
-    
-    # fractional coordinates of the point where we wish to evaluate the particle image
-    #cdef np.ndarray[DTYPEf_t, ndim=1] x = np.zeros( [window_size], dtype=DTYPEf)
-    #cdef np.ndarray[DTYPEf_t, ndim=1] y = np.zeros( [window_size], dtype=DTYPEf)
-    
-    # create points
-    #for i in range(window_size):
-    #   x[i] = ic-window_size/2+i
-    #   y[i] = jc-window_size/2+i
-        
+          
     # fast pi
     cdef float pi = 3.1419
         
@@ -196,6 +187,7 @@ def sincinterp( np.ndarray[DTYPEi_t, ndim=2] image, np.ndarray[DTYPEf_t, ndim=2]
             #loop over all neighbouring grid points 
             for i in range( int(x[I,J])-kernel_size, int(x[I,J])+kernel_size+1 ):
                 for j in range( int(y[I,J])-kernel_size, int(y[I,J])+kernel_size+1 ):
+                    # check that we are in the boundaries
                     if i >= 0 and i <= image.shape[0] and j >= 0 and j <= image.shape[1]:
                         if (i-x[I,J]) == 0.0 and (j-y[I,J]) == 0.0:
                             r[I,J] = r[I,J] + image[i,j]
