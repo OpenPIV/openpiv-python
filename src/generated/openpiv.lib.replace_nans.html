@@ -1,0 +1,160 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.lib.replace_nans &mdash; OpenPIV v1 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OpenPIV v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.filters.gaussian" href="openpiv.filters.gaussian.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
+             accesskey="N">next</a> |</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-lib-replace-nans">
+<h1>openpiv.lib.replace_nans<a class="headerlink" href="#openpiv-lib-replace-nans" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.lib.replace_nans">
+<tt class="descclassname">openpiv.lib.</tt><tt class="descname">replace_nans</tt><big>(</big><big>)</big><a class="headerlink" href="#openpiv.lib.replace_nans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace NaN elements in an array using an iterative image inpainting algorithm.</p>
+<p>The algorithm is the following:</p>
+<ol class="arabic simple">
+<li>For each element in the input array, replace it by a weighted average
+of the neighbouring elements which are not NaN themselves. The weights depends
+of the method type. If <tt class="docutils literal"><span class="pre">method=localmean</span></tt> weight are equal to 1/( (2*kernel_size+1)**2 -1 )</li>
+<li>Several iterations are needed if there are adjacent NaN elements.
+If this is the case, information is &#8220;spread&#8221; from the edges of the missing
+regions iteratively, until the variation is below a certain threshold.</li>
+</ol>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>array</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>an array containing NaN elements that have to be replaced</p>
+</div></blockquote>
+<p><strong>max_iter</strong> : int</p>
+<blockquote>
+<div><p>the number of iterations</p>
+</div></blockquote>
+<p><strong>kernel_size</strong> : int</p>
+<blockquote>
+<div><p>the size of the kernel, default is 1</p>
+</div></blockquote>
+<p><strong>method</strong> : str</p>
+<blockquote>
+<div><p>the method used to replace invalid values. Valid options are
+<cite>localmean</cite>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>filled</strong> : 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a copy of the input array, where NaN elements have been replaced.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.filters.gaussian.html"
+                        title="next chapter">openpiv.filters.gaussian</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.lib.replace_nans.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
+             >next</a> |</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPIV Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

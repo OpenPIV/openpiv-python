@@ -1,0 +1,174 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.validation.local_median_val &mdash; OpenPIV v1 documentation</title>
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OpenPIV v1 documentation" href="../../index.html" />
+    <link rel="up" title="API reference" href="../api_reference.html" />
+    <link rel="next" title="openpiv.scaling.uniform" href="openpiv.scaling.uniform.html" />
+    <link rel="prev" title="openpiv.validation.global_std" href="openpiv.validation.global_std.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.validation.global_std.html" title="openpiv.validation.global_std"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-validation-local-median-val">
+<h1>openpiv.validation.local_median_val<a class="headerlink" href="#openpiv-validation-local-median-val" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.validation.local_median_val">
+<tt class="descclassname">openpiv.validation.</tt><tt class="descname">local_median_val</tt><big>(</big><em>u</em>, <em>v</em>, <em>u_threshold</em>, <em>v_threshold</em>, <em>size=1</em><big>)</big><a class="headerlink" href="#openpiv.validation.local_median_val" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eliminate spurious vectors with a local median threshold.</p>
+<p>This validation method tests for the spatial consistency of the data.
+Vectors are classified as outliers and replaced with Nan (Not a Number) if
+the absolute difference with the local median is greater than a user 
+specified threshold. The median is computed for both velocity components.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the u velocity component.</p>
+</div></blockquote>
+<p><strong>v</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the v velocity component.</p>
+</div></blockquote>
+<p><strong>u_threshold</strong> : float</p>
+<blockquote>
+<div><p>the threshold value for component u</p>
+</div></blockquote>
+<p><strong>v_threshold</strong> : float</p>
+<blockquote>
+<div><p>the threshold value for component v</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>u</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the u velocity component, 
+where spurious vectors have been replaced by NaN.</p>
+</div></blockquote>
+<p><strong>v</strong> : 2d np.ndarray</p>
+<blockquote>
+<div><p>a two dimensional array containing the v velocity component, 
+where spurious vectors have been replaced by NaN.</p>
+</div></blockquote>
+<p><strong>mask</strong> : boolean 2d np.ndarray</p>
+<blockquote class="last">
+<div><p>a boolean array. True elements corresponds to outliers.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="openpiv.validation.global_std.html"
+                        title="previous chapter">openpiv.validation.global_std</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="openpiv.scaling.uniform.html"
+                        title="next chapter">openpiv.scaling.uniform</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.validation.local_median_val.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="openpiv.scaling.uniform.html" title="openpiv.scaling.uniform"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="openpiv.validation.global_std.html" title="openpiv.validation.global_std"
+             >previous</a> |</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
+          <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The OpenPIV Contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

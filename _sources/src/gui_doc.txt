@@ -1,5 +1,5 @@
 .. _gui:
 
 ====================================
-The OpenPiv graphical user interface
+The OpenPIV graphical user interface
 ====================================

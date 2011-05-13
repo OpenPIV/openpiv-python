@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>openpiv.process.extended_search_area_piv &mdash; OpenPiv v1 documentation</title>
+    <title>openpiv.process.extended_search_area_piv &mdash; OpenPIV v1 documentation</title>
     <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -22,9 +22,9 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="OpenPiv v1 documentation" href="../../index.html" />
+    <link rel="top" title="OpenPIV v1 documentation" href="../../index.html" />
     <link rel="up" title="API reference" href="../api_reference.html" />
-    <link rel="next" title="openpiv.filters.gaussian" href="openpiv.filters.gaussian.html" />
+    <link rel="next" title="openpiv.process.CorrelationFunction" href="openpiv.process.CorrelationFunction.html" />
     <link rel="prev" title="openpiv.pyprocess.piv" href="openpiv.pyprocess.piv.html" /> 
   </head>
   <body>
@@ -41,12 +41,12 @@
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
+          <a href="openpiv.process.CorrelationFunction.html" title="openpiv.process.CorrelationFunction"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
              accesskey="P">previous</a> |</li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" accesskey="U">API reference</a> &raquo;</li> 
       </ul>
     </div>  
@@ -75,12 +75,12 @@ DOI: 10.1146/annurev.fl.23.010191.001401</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>frame_a</strong> : 2d np.ndarray</p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>frame_a</strong> : 2d np.ndarray, dtype=np.int32</p>
 <blockquote>
 <div><p>an two dimensions array of integers containing grey levels of 
 the first frame.</p>
 </div></blockquote>
-<p><strong>frame_b</strong> : 2d np.ndarray</p>
+<p><strong>frame_b</strong> : 2d np.ndarray, dtype=np.int32</p>
 <blockquote>
 <div><p>an two dimensions array of integers containing grey levels of 
 the second frame.</p>
@@ -101,15 +101,33 @@ the second frame.</p>
 <blockquote>
 <div><p>the size of the (square) interrogation window from the second frame</p>
 </div></blockquote>
+<p><strong>subpixel_method</strong> : string</p>
+<blockquote>
+<div><p>one of the following methods to estimate subpixel location of the peak: 
+&#8216;centroid&#8217; [replaces default if correlation map is negative], 
+&#8216;gaussian&#8217; [default if correlation map is positive], 
+&#8216;parabolic&#8217;.</p>
+</div></blockquote>
+<p><strong>sig2noise_method</strong> : string</p>
+<blockquote>
+<div><p>defines the method of signal-to-noise-ratio measure,
+(&#8216;peak2peak&#8217; or &#8216;peak2mean&#8217;. If None, no measure is performed.)</p>
+</div></blockquote>
+<p><strong>width</strong> : int</p>
+<blockquote>
+<div><p>the half size of the region around the first
+correlation peak to ignore for finding the second
+peak. [default: 2]. Only used if <tt class="docutils literal"><span class="pre">sig2noise_method==peak2peak</span></tt>.</p>
+</div></blockquote>
 <p><strong>nfftx</strong> : int</p>
 <blockquote>
 <div><p>the size of the 2D FFT in x-direction, 
-[default: 2 x search_area_size is recommended].</p>
+[default: 2 x windows_a.shape[0] is recommended]</p>
 </div></blockquote>
 <p><strong>nffty</strong> : int</p>
 <blockquote>
 <div><p>the size of the 2D FFT in y-direction, 
-[default: 2 x search_area_size is recommended].</p>
+[default: 2 x windows_a.shape[1] is recommended]</p>
 </div></blockquote>
 </td>
 </tr>
@@ -123,17 +141,18 @@ in pixels/seconds.</p>
 <div><p>a two dimensional array containing the v velocity component,
 in pixels/seconds.</p>
 </div></blockquote>
-<p><strong>sig2noise</strong> : 2d np.ndarray</p>
+<p><strong>sig2noise</strong> : 2d np.ndarray, optional</p>
 <blockquote class="last">
 <div><p>a two dimensional array containing the signal to noise ratio
-from the cross correlation function.</p>
+from the cross correlation function. This array is returned if
+sig2noise_method is not None.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sn</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -150,8 +169,8 @@ from the cross correlation function.</p>
   <p class="topless"><a href="openpiv.pyprocess.piv.html"
                         title="previous chapter">openpiv.pyprocess.piv</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="openpiv.filters.gaussian.html"
-                        title="next chapter">openpiv.filters.gaussian</a></p>
+  <p class="topless"><a href="openpiv.process.CorrelationFunction.html"
+                        title="next chapter">openpiv.process.CorrelationFunction</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../../_sources/src/generated/openpiv.process.extended_search_area_piv.txt"
@@ -187,17 +206,17 @@ from the cross correlation function.</p>
           <a href="../../np-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="openpiv.filters.gaussian.html" title="openpiv.filters.gaussian"
+          <a href="openpiv.process.CorrelationFunction.html" title="openpiv.process.CorrelationFunction"
              >next</a> |</li>
         <li class="right" >
           <a href="openpiv.pyprocess.piv.html" title="openpiv.pyprocess.piv"
              >previous</a> |</li>
-        <li><a href="../../index.html">OpenPiv v1 documentation</a> &raquo;</li>
+        <li><a href="../../index.html">OpenPIV v1 documentation</a> &raquo;</li>
           <li><a href="../api_reference.html" >API reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2011, The OpenPiv Contributors.
+        &copy; Copyright 2011, The OpenPIV Contributors.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>

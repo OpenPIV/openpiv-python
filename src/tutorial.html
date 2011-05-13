@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tutorial &mdash; OpenPiv v1 documentation</title>
+    <title>Tutorial &mdash; OpenPIV v1 documentation</title>
     <link rel="stylesheet" href="../_static/default.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="OpenPiv v1 documentation" href="../index.html" />
+    <link rel="top" title="OpenPIV v1 documentation" href="../index.html" />
     <link rel="next" title="API reference" href="api_reference.html" />
     <link rel="prev" title="Information for developers and contributors" href="developers.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="developers.html" title="Information for developers and contributors"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">OpenPIV v1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,8 +56,8 @@
             
   <div class="section" id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>This is a series of examples and tutorials which focuses on showing features and capabilities of OpenPiv, so that after reading you should be able to set up scripts for your own analyses. If you are looking for a complete reference to the OpenPiv api, please look at <a class="reference internal" href="api_reference.html#api-reference"><em>API reference</em></a>. It is assumed that you have Openpiv installed on your system along with a working python environment as well as the necessary <a class="reference internal" href="installation_instruction.html#dependencies"><em>OpenPiv dependencies</em></a>. For installation details on various platforms see <a class="reference internal" href="installation_instruction.html#installation-instruction"><em>Installation instruction</em></a>.</p>
-<p>In this tutorial we are going to use some example data provided with the source distribution of OpenPiv. Altough it is not necessary, you may find helpful to actually run the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory openpiv/docs/examples. Similarly if you cloned the git repository. If you cannot find them, dowload example images as well as the python source code from the <a class="reference internal" href="downloads_page.html#downloads"><em>downloads</em></a> page.</p>
+<p>This is a series of examples and tutorials which focuses on showing features and capabilities of OpenPIV, so that after reading you should be able to set up scripts for your own analyses. If you are looking for a complete reference to the OpenPiv api, please look at <a class="reference internal" href="api_reference.html#api-reference"><em>API reference</em></a>. It is assumed that you have Openpiv installed on your system along with a working python environment as well as the necessary <a class="reference internal" href="installation_instruction.html#dependencies"><em>OpenPiv dependencies</em></a>. For installation details on various platforms see <a class="reference internal" href="installation_instruction.html#installation-instruction"><em>Installation instruction</em></a>.</p>
+<p>In this tutorial we are going to use some example data provided with the source distribution of OpenPIV. Altough it is not necessary, you may find helpful to actually run the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory openpiv/docs/examples. Similarly if you cloned the git repository. If you cannot find them, dowload example images as well as the python source code from the <a class="reference internal" href="downloads_page.html#downloads"><em>downloads</em></a> page.</p>
 <div class="section" id="first-example-how-to-process-an-image-pair">
 <h2>First example: how to process an image pair<a class="headerlink" href="#first-example-how-to-process-an-image-pair" title="Permalink to this headline">¶</a></h2>
 <p>The first example shows how to process a single image pair. This is a common task and may be useful if you are studying how does a certain algorithm behaves. We assume that the current working directory is where the two image of the first example are located. Here is the code:</p>
@@ -106,7 +106,7 @@
 <div class="highlight-python"><pre>matshow ( frame_a, cmap=cm.Greys _r )</pre>
 </div>
 <p>which results in this figure.</p>
-<img alt="../_images/image13.png" class="align-center" src="../_images/image13.png" style="height: 500px;" />
+<img alt="../_images/image14.png" class="align-center" src="../_images/image14.png" style="height: 500px;" />
 <p>In this example we are going to use the function <a class="reference internal" href="generated/openpiv.process.extended_search_area_piv.html#openpiv.process.extended_search_area_piv" title="openpiv.process.extended_search_area_piv"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.extended_search_area_piv()</span></tt></a> to process the image pair.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">sig2noise_method</span><span class="o">=</span><span class="s">&#39;peak2peak&#39;</span> <span class="p">)</span>
 </pre></div>
@@ -123,7 +123,7 @@
 </pre></div>
 </div>
 <p>and we obtain:</p>
-<img alt="../_images/image23.png" class="align-center" src="../_images/image23.png" style="height: 500px;" />
+<img alt="../_images/image24.png" class="align-center" src="../_images/image24.png" style="height: 500px;" />
 <p>Several outliers vectors can be observed as a result of the small interrogation window size and we need to apply a validation scheme. Since we have information about the signal to noise ratio of the cross-correlation function we can apply a well know filtering scheme, classifing a vector as an outlier if its signal to noise ratio exceeds a certain threshold. To accomplish this task we use the function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">validation</span><span class="o">.</span><span class="n">sig2noise_val</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">1.3</span> <span class="p">)</span>
 </pre></div>
@@ -134,7 +134,7 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
 <span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image33.png" class="align-center" src="../_images/image33.png" style="height: 500px;" />
+<img alt="../_images/image34.png" class="align-center" src="../_images/image34.png" style="height: 500px;" />
 <p>The final step is to replace the missing vector. This is done which the function <a class="reference internal" href="generated/openpiv.filters.replace_outliers.html#openpiv.filters.replace_outliers" title="openpiv.filters.replace_outliers"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.filters.replace_outliers()</span></tt></a>, which implements an iterative image inpainting algorithm with a specified kernel. We pass to this function the two velocity components arrays,  a method type <tt class="docutils literal"><span class="pre">localmean</span></tt>, the number of passes and the size of the kernel.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">replace_outliers</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;localmean&#39;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span> <span class="p">)</span>
 </pre></div>
@@ -144,7 +144,7 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
 <span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image43.png" class="align-center" src="../_images/image43.png" style="height: 500px;" />
+<img alt="../_images/image44.png" class="align-center" src="../_images/image44.png" style="height: 500px;" />
 <p>The last step is to apply an uniform scaling to the flow field to get dimensional units. We use the function <a class="reference internal" href="generated/openpiv.scaling.uniform.html#openpiv.scaling.uniform" title="openpiv.scaling.uniform"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt></a> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters if we want position and velocities in meters and meters/seconds or in pixels per millimeters if we want positions and velocities in millimeters and millimeters/seconds, respectively.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">96.52</span> <span class="p">)</span>
 </pre></div>
@@ -277,11 +277,11 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
         <li class="right" >
           <a href="developers.html" title="Information for developers and contributors"
              >previous</a> |</li>
-        <li><a href="../index.html">OpenPiv v1 documentation</a> &raquo;</li> 
+        <li><a href="../index.html">OpenPIV v1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2011, The OpenPiv Contributors.
+        &copy; Copyright 2011, The OpenPIV Contributors.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
