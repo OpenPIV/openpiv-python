@@ -42,8 +42,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'OpenPiv'
-copyright = u'2011, The OpenPiv Contributors'
+project = u'OpenPIV'
+copyright = u'2011, The OpenPIV Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -166,7 +166,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'OpenPivdoc'
+htmlhelp_basename = 'OpenPIVdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -180,8 +180,8 @@ htmlhelp_basename = 'OpenPivdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenPiv.tex', u'OpenPiv Documentation',
-   u'The OpenPiv Contributors', 'manual'),
+  ('index', 'OpenPIV.tex', u'OpenPIV Documentation',
+   u'The OpenPIV Contributors', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,6 +213,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openpiv', u'OpenPiv Documentation',
-     [u'The OpenPiv Contributors'], 1)
+    ('index', 'openpiv', u'OpenPIV Documentation',
+     [u'The OpenPIV Contributors'], 1)
 ]
