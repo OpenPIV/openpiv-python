@@ -62,7 +62,7 @@ def global_val( u, v, u_thresholds, v_thresholds ):
         
     """
     
-    ind = u < u_thresholds[0] or u > u_thresholds[1] or v < v_thresholds[0] or v > v_thresholds[1]
+    ind = np.logical_or(np.logical_or(u < u_thresholds[0], u > u_thresholds[1]),np.logical_or(v < v_thresholds[0], v > v_thresholds[1]))
     u[ind] = np.nan
     v[ind] = np.nan
     
