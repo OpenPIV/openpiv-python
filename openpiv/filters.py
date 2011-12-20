@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """The openpiv.filters module contains some filtering/smoothing routines."""
 
 __licence_ = """
@@ -19,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import numpy as np
-import scipy.signal
 from openpiv.lib import replace_nans
+import numpy as np
+from scipy.signal import convolve
   
     
 def _gaussian_kernel( size ):
@@ -76,8 +74,8 @@ def gaussian( u, v, size) :
         
     """
     g = _gaussian_kernel( size=size )
-    uf = scipy.signal.convolve( u, g, mode='same')
-    vf = scipy.signal.convolve( v, g, mode='same')
+    uf = convolve( u, g, mode='same')
+    vf = convolve( v, g, mode='same')
     return uf, vf
     
 def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_size=1):

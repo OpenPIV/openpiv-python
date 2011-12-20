@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """This module contains a pure python implementation of the basic 
 cross-correlation algorithm for PIV image processing."""
 
@@ -23,7 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy.lib.stride_tricks
 import numpy as np
-import openpiv.process
+from numpy.fft import fftshift, rfft2, irfft2
+from numpy import ma
+from scipy.signal import convolve
+from numpy import log
+
 
 
 def get_coordinates( image_size, window_size, overlap ):
@@ -237,7 +239,7 @@ def find_subpixel_peak_position( corr, subpixel_method = 'gaussian'):
         cu = corr[peak1_i,   peak1_j+1]
         
         # gaussian fit
-        if np.any ( np.arrray([c,cl,cr,cd,cu]) < 0 ) and subpixel_method == 'gaussian':
+        if np.any ( np.array([c,cl,cr,cd,cu]) < 0 ) and subpixel_method == 'gaussian':
             subpixel_method = 'centroid'
         
         try: 
@@ -364,7 +366,7 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
             nffty = 2*window_a.shape[1]
         return fftshift(irfft2(rfft2(normalize_intensity(window_a),s=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),s=(nfftx,nffty)))).real, axes=(0,1)  )
     elif corr_method == 'direct':
-        return signal.convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
+        return convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
     else:
         raise ValueError('method is not implemented')
 
@@ -384,7 +386,7 @@ def normalize_intensity( window ):
     """
     return window - window.mean()
 
-def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'fft', subpixel_method='gaussian', sig2noise_method=None, nfftx=None, nffty=None, width=2):
+def piv (frame_a, frame_b, window_size=64, overlap=32, dt=1.0, corr_method = 'fft', subpixel_method='gaussian', sig2noise_method=None, nfftx=None, nffty=None, width=2):
     """Standard PIV cross-correlation algorithm.
     
     This is a pure python implementation of the standard PIV cross-correlation
@@ -454,14 +456,15 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
         window pair.
         
     """
-    
+            
+                
     # transform the arrray into a more covenient form for looping
     windows_a = moving_window_array( frame_a, window_size, overlap )
     windows_b = moving_window_array( frame_b, window_size, overlap )
-    
+        
     # get shape of the output so that we can preallocate 
     # memory for velocity array
-    n_rows, n_cols = openpiv.process.get_field_shape( image_size=frame_a.shape, window_size=window_size, overlap=overlap )
+    n_rows, n_cols = get_field_shape( image_size=frame_a.shape, window_size=window_size, overlap=overlap )
     
     u = np.empty(n_rows*n_cols)
     v = np.empty(n_rows*n_cols)
@@ -473,17 +476,18 @@ def piv ( frame_a, frame_b, window_size=32, overlap=16, dt=1.0, corr_method = 'f
     # for each interrogation window
     for i in range(windows_a.shape[0]):
         # get correlation window
-        corr = openpiv.process.correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=nfftx, nffty=nffty )
+        corr = correlate_windows( windows_a[i], windows_b[i], corr_method = corr_method, nfftx=nfftx, nffty=nffty )        
         
         # get subpixel approximation for peak position row and column index
-        row, col = openpiv.process.find_subpixel_peak_position( corr, subpixel_method=subpixel_method)
+        row, col = find_subpixel_peak_position( corr, subpixel_method=subpixel_method)
+        
         
         # get displacements
         u[i], v[i] = -(col - corr.shape[1]/2), (row - corr.shape[0]/2)
         
         # get signal to noise ratio
         if sig2noise_method:
-            sig2noise[i] = openpiv.process.sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
+            sig2noise[i] = sig2noise_ratio( corr, sig2noise_method=sig2noise_method, width=width )
     
     # return output depending if user wanted sig2noise information
     if sig2noise_method:

@@ -288,8 +288,8 @@ class CorrelationFunction( ):
                                 ((self.peak1[1]-1)*cd+self.peak1[1]*c+(self.peak1[1]+1)*cu)/(cd+c+cu))
     
         elif method == 'gaussian':
-            subp_peak_position = (self.peak1[0] + ( (log(cl)-log(cr) )/( 2*log(cl) - 4*log(c) + 2*log(cr) )),
-                                self.peak1[1] + ( (log(cd)-log(cu) )/( 2*log(cd) - 4*log(c) + 2*log(cu) ))) 
+            subp_peak_position = (self.peak1[0] + ( (np.log(cl)-np.log(cr) )/( 2*np.log(cl) - 4*np.log(c) + 2*np.log(cr) )),
+                                self.peak1[1] + ( (np.log(cd)-np.log(cu) )/( 2*np.log(cd) - 4*np.log(c) + 2*np.log(cu) ))) 
     
         elif method == 'parabolic':
             subp_peak_position = (self.peak1[0] +  (cl-cr)/(2*cl-4*c+2*cr),

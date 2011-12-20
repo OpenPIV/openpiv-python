@@ -37,7 +37,7 @@ data_files = [ ('share/docs/openpiv/examples/example1', glob.glob('openpiv/docs/
              ]
 
 
-# packages that we want ot distribute. THis is how
+# packages that we want to distribute. THis is how
 # we have divided the openpiv package.
 packages = ['openpiv', 'openpiv.ui']
 
@@ -49,7 +49,7 @@ scripts = ['openpiv/openpiv']
 
 setup(  name = "OpenPiv",
         version = "0.1",
-        author = "The OpenPiv contributors",
+        author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",
         license = "GPL v3",

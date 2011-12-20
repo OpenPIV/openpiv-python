@@ -68,14 +68,16 @@ def display_vector_field( filename,**kw):
     pl.draw()
     pl.show()
 
-def imread( filename ):
+def imread( filename, flatten=0 ):
     """Read an image file into a numpy array
     using scipy.misc.imread
     
     Parameters
     ----------
     filename :  string
-        the absolute path of the image file 
+        the absolute path of the image file
+    flatten :   bool
+        True if the image is RGB color or False (default) if greyscale
         
     Returns
     -------
@@ -93,7 +95,7 @@ def imread( filename ):
     
     """
     
-    return scipy.misc.imread( filename, flatten=0).astype(np.int32)
+    return scipy.misc.imread( filename, flatten=flatten).astype(np.int32)
 
 def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
