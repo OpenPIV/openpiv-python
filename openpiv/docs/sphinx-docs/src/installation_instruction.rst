@@ -38,7 +38,9 @@ without spaces in the directory names (i.e. Program Files are prohibited), e.g. 
 
 How to install the dependencies on a Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com 
+The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com. However, if you use EPD Free distribution, you need to install Cython from http://www.cython.org
+
+
 
 
 Get OpenPIV source code!
