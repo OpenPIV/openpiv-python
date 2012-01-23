@@ -27,7 +27,7 @@ The first example shows how to process a single image pair. This is a common tas
     
     u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
-    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2)
+    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
     
     x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
     
@@ -58,7 +58,7 @@ Inspecting the attributes of one of the two images we can see that::
     
 image has a size of 369x511 pixels and are contained in 32 bit integer arrays. Using pylab graphical capabilities it is easy to visualize  one of the two frames:::
 
-    matshow ( frame_a, cmap=cm.Greys _r ) 
+    matshow ( frame_a, cmap=cm.Greys_r ) 
     
 which results in this figure.
 
@@ -106,7 +106,7 @@ arrays ``u`` and ``v`` contains some np.nan elements. Furthermore, we get in out
 
 The final step is to replace the missing vector. This is done which the function :py:func:`openpiv.filters.replace_outliers`, which implements an iterative image inpainting algorithm with a specified kernel. We pass to this function the two velocity components arrays,  a method type ``localmean``, the number of passes and the size of the kernel.::
 
-    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2 )
+    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2 )
     
 The flow field now appears much more smooth and the outlier vectors have been correctly replaced. ::
 
