@@ -21,9 +21,10 @@ Contents:
 =========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :titlesonly:
    
+   includeme
    src/downloads_page
    src/installation_instruction
    src/developers
