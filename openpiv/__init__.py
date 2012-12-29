@@ -12,6 +12,7 @@ __default_config_file__ = _osp.join( __root__, 'data/defaults-processing-paramet
 
 
 # import default modules
+import openpiv.preprocess
 import openpiv.tools
 import openpiv.pyprocess
 import openpiv.scaling
