@@ -1,6 +1,6 @@
 openpiv.pyprocess.get_coordinates
 =================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.get_coordinates
+.. autofunction:: get_coordinates

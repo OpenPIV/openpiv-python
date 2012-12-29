@@ -1,6 +1,6 @@
 openpiv.process.extended_search_area_piv
 ========================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.process
 
-.. automethod:: process.extended_search_area_piv
+.. autofunction:: extended_search_area_piv

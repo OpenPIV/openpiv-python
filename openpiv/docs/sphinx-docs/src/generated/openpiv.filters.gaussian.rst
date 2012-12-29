@@ -1,6 +1,6 @@
 openpiv.filters.gaussian
 ========================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.filters
 
-.. automethod:: filters.gaussian
+.. autofunction:: gaussian

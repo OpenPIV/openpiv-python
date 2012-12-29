@@ -1,6 +1,6 @@
 openpiv.pyprocess.moving_window_array
 =====================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.moving_window_array
+.. autofunction:: moving_window_array

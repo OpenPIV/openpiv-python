@@ -48,7 +48,7 @@ scripts = ['openpiv/openpiv']
 
 
 setup(  name = "OpenPiv",
-        version = "0.1",
+        version = "0.11",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",

@@ -1,6 +1,6 @@
 openpiv.pyprocess.piv
 =====================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.piv
+.. autofunction:: piv

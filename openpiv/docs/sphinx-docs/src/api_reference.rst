@@ -6,7 +6,7 @@ API reference
 This is a complete api reference to the openpiv python module.
 
 The ``openpiv.preprocess`` module
----------------------------------
+----------------------------------
 .. automodule:: openpiv.preprocess
 
 .. currentmodule:: openpiv.preprocess

@@ -1,6 +1,6 @@
 openpiv.pyprocess.get_field_shape
 =================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.get_field_shape
+.. autofunction:: get_field_shape

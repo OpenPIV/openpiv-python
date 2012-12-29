@@ -1,6 +1,6 @@
 openpiv.pyprocess.find_first_peak
 =================================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.pyprocess
 
-.. automethod:: pyprocess.find_first_peak
+.. autofunction:: find_first_peak

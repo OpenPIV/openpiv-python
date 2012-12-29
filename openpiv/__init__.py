@@ -20,4 +20,4 @@ import openpiv.filters
 import openpiv.ui
 import openpiv.process
 import openpiv.lib
-import openpiv.process
+import openpiv.preprocess

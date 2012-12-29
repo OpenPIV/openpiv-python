@@ -1,6 +1,6 @@
 openpiv.tools.save
 ==================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.tools
 
-.. automethod:: tools.save
+.. autofunction:: save

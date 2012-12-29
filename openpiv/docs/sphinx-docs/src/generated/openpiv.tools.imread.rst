@@ -1,6 +1,6 @@
 openpiv.tools.imread
 ====================
 
-.. currentmodule:: openpiv
+.. currentmodule:: openpiv.tools
 
-.. automethod:: tools.imread
+.. autofunction:: imread

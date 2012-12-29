@@ -15,6 +15,7 @@ The dependencies are:
 * `scipy <http://numpy.scipy.org/>`_
 * `numpy <http://www.scipy.org/>`_
 * `cython <http://cython.org/>`_
+* `scikit-image <http://scikit-image.org/>`_
 
 On all the platforms, the binary Enthought Python Distribution (EPD) is recommended. 
 Visit http://www.enthought.com
