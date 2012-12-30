@@ -19,9 +19,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from skimage import io, img_as_float, img_as_int, exposure, data
-from skimage.util.dtype import dtype_range
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
+from skimage import img_as_float
+from scipy.ndimage import median_filter, gaussian_filter
+from skimage.filter import threshold_otsu
 
 
 
@@ -38,15 +38,9 @@ def dynamic_masking(image):
     image : 2d np.ndarray of floats
         
     """
-    image = exposure.rescale_intensity(image, in_range=(0, 1))
-    blurback = gaussian_filter(median_filter(image,size=3),sigma=3)
-    # create the boolean mask 
-    bw = (blurback > .3).astype('bool')
-    bw = binary_fill_holes(bw)
-    image[bw] = 0.0    # mask out the white regions
-    image -= blurback  # subtrack the blurred background
-    # subtraction causes negative values, we need to rescale it back to 0-1 interval
-    image = img_as_int(exposure.rescale_intensity(image,in_range=(0,1)))
+	image = img_as_float(image)
+	background = gaussian_filter(median_filter(image,3),1)
+	image[background > threshold_otsu(background)/5.0] = 0.0
     
     return image
 
