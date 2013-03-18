@@ -38,9 +38,9 @@ def dynamic_masking(image):
     image : 2d np.ndarray of floats
         
     """
-	image = img_as_float(image)
-	background = gaussian_filter(median_filter(image,3),1)
-	image[background > threshold_otsu(background)/5.0] = 0.0
+    image = img_as_float(image)
+    background = gaussian_filter(median_filter(image,3),1)
+    image[background > threshold_otsu(background)/5.0] = 0.0
     
     return image
 
