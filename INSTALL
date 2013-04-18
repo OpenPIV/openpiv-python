@@ -25,6 +25,30 @@ How to install the dependencies on Linux
 On a Linux platform installing these dependencies should be trick. Often, if not always, 
 python is installed by default, while the other dependencies should appear in your package
 manager.
+/**
+For example if you are using Ubuntu:
+	*open a terminal
+sudo apt-get install python-pip
+sudo apt-get install python-dev
+sudo pip install numpy
+sudo pip install
+sudo apt-get install libatlas-base-dev gfortran
+sudo pip install scipy
+sudo pip install cython
+sudo apt-get install python-matplotlib
+pip install -U scikit-image
+	*you need version 1.6 or later of the numpy module. If pip cannot find the right version, easyinstall should work:
+         sudo apt-get install python-setuptools python-dev build-essential
+         sudo easyinstall numpy
+	*download openpiv source code and move to the openpiv directory
+sudo python setup.py install
+	*open a new terminal
+openpiv
+	*if you get an error such as "unknown module lib" try to logout or try to modify the PYTHONPATH variable by adding
+	      export PYTHONPATH=$PYTHONPATH:[path-to-openpiv-directory]  
+	to your n /.bashrc file and then logout or:
+	 source ~/.bashrc
+**/
 
 How to install the dependencies on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
