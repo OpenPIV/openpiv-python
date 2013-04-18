@@ -32,7 +32,7 @@ package_data =  [ 'data/defaults-processing-parameters.cfg',
 # we want to ditribute as well, for example documentation.
 data_files = [ ('share/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
                ('share/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('share/docs/openpiv', ['README'] ),
+               ('share/docs/openpiv', ['README.rst'] ),
                ('share/openpiv/ui', glob.glob('openpiv/data/ui/*.ui') ),
              ]
 
