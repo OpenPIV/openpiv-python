@@ -97,6 +97,31 @@ def imread( filename, flatten=0 ):
     
     return scipy.misc.imread( filename, flatten=flatten).astype(np.int32)
 
+def imsave( filename, arr ):
+    """Write an image file from a numpy array
+    using scipy.misc.imread
+    
+    Parameters
+    ----------
+    filename :  string
+        the absolute path of the image file that will be created
+    arr : 2d np.ndarray
+        a 2d numpy array with grey levels
+        
+    Example
+    --------
+    
+    >>> image = openpiv.tools.imread( 'image.bmp' )
+    >>> image2 = 255 - image 
+    >>> imsave( 'negative-image.tif', image2)
+    
+    """
+    
+    if np.amax(arr) < 256 and np.amin(arr) > 0:
+        scipy.misc.imsave( filename, arr )
+    else:
+        raise ValueError('please provide a 2d array of grey levels (value in [0, 255])')
+
 def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
     
