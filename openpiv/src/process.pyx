@@ -128,15 +128,6 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     # get field shape
     n_rows, n_cols = get_field_shape( (frame_a.shape[0], frame_a.shape[1]), window_size, overlap )
     
-    print 'settings----------------------------'
-    print 'Time interval = '+str(dt)
-    print 'Number of Rows = '+str(n_rows)
-    print 'Number of Columns = '+str(n_cols)
-    print 'Window size = '+str(window_size)
-    print 'Overlap = '+str(overlap)
-    print 'Search Area Size = '+str(search_area_size)
-
-    print 'processing piv with advanced method: extended search area ...'
     # define arrays
     cdef np.ndarray[DTYPEi_t, ndim=2] window_a = np.zeros([window_size, window_size], dtype=DTYPEi)
     cdef np.ndarray[DTYPEi_t, ndim=2] search_area = np.zeros([search_area_size, search_area_size], dtype=DTYPEi)
@@ -543,7 +534,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                             dpx_k+1 = dx_k
 
     Reference:
-
+        F. Scarano & M. L. Riethmuller, Iterative multigrid approach in PIV image processing with discrete window offset, Experiments in Fluids 26 (1999) 513-523
     
     Parameters
     ----------
