@@ -29,7 +29,8 @@ import scipy.misc
 import matplotlib.pyplot as pl
 import matplotlib.patches as pt
 import matplotlib.image as mpltimg
-
+from scipy import ndimage
+from skimage import filter
 
 
 def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1, **kw):
@@ -79,8 +80,8 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     if on_img: # plot a background image
         im = imread(image_name)
         im = negative(im) #plot negative of the image for more clarity
-        imsave('neg.jpg', im)
-        im = mpltimg.imread('neg.jpg')
+        imsave('neg.tif', im)
+        im = mpltimg.imread('neg.tif')
         xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
         ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
         implot = pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
@@ -145,6 +146,118 @@ def imsave( filename, arr ):
         scipy.misc.imsave( filename, arr )
     else:
         raise ValueError('please provide a 2d array of grey levels (value in [0, 255])')
+
+
+def convert16bitsTIF( filename, save_name):
+    img = pl.imread( filename )
+    img2 = np.zeros([img.shape[0],img.shape[1]], dtype = np.int32)
+    for I in range(img.shape[0]):
+        for J in range(img.shape[1]):
+            img2[I,J]=img[I,J,0]
+    imsave( save_name, img2)
+    print "converted"
+
+
+def mark_background(threshold, list_img, filename):
+    list_frame = []
+    for I in range(len(list_img)):
+        list_frame.append(imread(list_img[I]))
+    mark = np.zeros(list_frame[0].shape, dtype=np.int32)
+    background = np.zeros(list_frame[0].shape, dtype=np.int32)
+    for I in range(mark.shape[0]):
+        print " row ", I , " / " , mark.shape[0]
+        for J in range(mark.shape[1]):
+            sum1 = 0
+            for K in range(len(list_frame)):
+                sum1 = sum1 + list_frame[K][I, J]
+            if sum1 < threshold*len(list_img):
+                mark[I,J] = 0
+            else:
+                mark[I,J]=1
+            background[I,J]=mark[I,J]*255
+    imsave(filename, background)
+    print "done with background"
+    return background
+
+
+
+def mark_background2(list_img, filename):
+    list_frame = []
+    for I in range(len(list_img)):
+        list_frame.append(imread(list_img[I]))
+    background = np.zeros(list_frame[0].shape, dtype=np.int32)
+    for I in range(background.shape[0]):
+        print " row ", I , " / " , background.shape[0]
+        for J in range(background.shape[1]):
+            min_1 = 255
+            for K in range(len(list_frame)):
+                if min_1 > list_frame[K][I,J]:
+                    min_1 = list_frame[K][I,J]
+            background[I,J]=min_1
+    imsave(filename, background)
+    print "done with background"
+    return background
+
+def edges(list_img, filename):
+    back = mark_background(30, list_img, filename)
+    edges = filter.canny(back, sigma=3)
+    imsave(filename, edges)
+
+def find_reflexions(list_img, filename):
+    background = mark_background2(list_img, filename)
+    reflexion = np.zeros(background.shape, dtype=np.int32)
+    for I in range(background.shape[0]):
+        print " row ", I , " / " , background.shape[0]
+        for J in range(background.shape[1]):
+            if background[I,J] > 253:
+                reflexion[I,J] = 255
+    imsave(filename, reflexion)
+    print "done with reflexions"
+    return reflexion
+            
+
+
+
+
+
+
+def find_boundaries(threshold, list_img1, list_img2, filename, picname):
+    f = open(filename, 'w')
+    print "mark1.."
+    mark1 = mark_background(threshold, list_img1, "mark1.bmp")
+    print "[DONE]"
+    print mark1.shape
+    print "mark2.."
+    mark2 = mark_background(threshold, list_img2, "mark2.bmp")
+    print "[DONE]"
+    print "computing boundary"
+    print mark2.shape
+    list_bound = np.zeros(mark1.shape, dtype=np.int32)
+    for I in range(list_bound.shape[0]):
+        print  "bound row ", I , " / " , mark1.shape[0]
+        for J in range(list_bound.shape[1]):
+            list_bound[I,J]=0
+            if mark1[I,J]==0:
+                list_bound[I,J]=125
+            if I>1 and J>1 and I<list_bound.shape[0]-2 and J< list_bound.shape[1]-2:
+                for K in range(5):
+                    for L in range(5):
+                        if mark1[I-2+K,J-2+L] != mark2[I-2+K,J-2+L]:
+                            list_bound[I,J]=255
+            else:
+                list_bound[I,J]=255
+            f.write(str(I)+'\t'+str(J)+'\t'+str(list_bound[I,J])+'\n')
+    print '[DONE]'
+    f.close()
+    imsave(picname, list_bound)
+    return list_bound
+
+
+
+
+
+
+
 
 def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
