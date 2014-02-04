@@ -10,23 +10,23 @@
     
     <title>Tutorial &mdash; OpenPIV 0.0.1 documentation</title>
     
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
+        URL_ROOT:    '',
         VERSION:     '0.0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
     </script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="OpenPIV 0.0.1 documentation" href="../index.html" />
+    <link rel="top" title="OpenPIV 0.0.1 documentation" href="index.html" />
     <link rel="next" title="Download OpenPIV Example" href="downloads_page.html" />
     <link rel="prev" title="Information for developers and contributors" href="developers.html" /> 
   </head>
@@ -35,10 +35,10 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
+          <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
+          <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
           <a href="downloads_page.html" title="Download OpenPIV Example"
@@ -46,7 +46,7 @@
         <li class="right" >
           <a href="developers.html" title="Information for developers and contributors"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -58,7 +58,7 @@
   <div class="section" id="tutorial">
 <h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
 <p>This is a series of examples and tutorials which focuses on showing features and capabilities of OpenPIV, so that after reading you should be able to set up scripts for your own analyses. If you are looking for a complete reference to the OpenPiv api, please look at <a class="reference internal" href="api_reference.html#api-reference"><em>API reference</em></a>. It is assumed that you have Openpiv installed on your system along with a working python environment as well as the necessary <a class="reference internal" href="installation_instruction.html#dependencies"><em>OpenPiv dependencies</em></a>. For installation details on various platforms see <a class="reference internal" href="installation_instruction.html#installation-instruction"><em>Installation instruction</em></a>.</p>
-<p>In this tutorial we are going to use some example data provided with the source distribution of OpenPIV. Altough it is not necessary, you may find helpful to actually run the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory openpiv/docs/examples. Similarly if you cloned the git repository. If you cannot find them, dowload example images as well as the python source code from the <a class="reference internal" href="downloads_page.html#downloads"><em>downloads</em></a> page.</p>
+<p>In this tutorial we are going to use some example data provided with the source distribution of OpenPIV. Altough it is not necessary, you may find helpful to actually run the code examples as the tutorial progresses. If you downloaded a tarball file, you should find these examples under the directory <tt class="docutils literal"><span class="pre">openpiv/docs/examples</span></tt>. Similarly if you cloned the git repository. If you cannot find them, dowload example images as well as the python source code from the <a class="reference internal" href="downloads_page.html#downloads"><em>downloads</em></a> page.</p>
 <div class="section" id="first-example-how-to-process-an-image-pair">
 <h2>First example: how to process an image pair<a class="headerlink" href="#first-example-how-to-process-an-image-pair" title="Permalink to this headline">¶</a></h2>
 <p>The first example shows how to process a single image pair. This is a common task and may be useful if you are studying how does a certain algorithm behaves. We assume that the current working directory is where the two image of the first example are located. Here is the code:</p>
@@ -107,13 +107,13 @@
 <div class="highlight-python"><pre>matshow ( frame_a, cmap=cm.Greys _r )</pre>
 </div>
 <p>which results in this figure.</p>
-<img alt="../_images/image1.png" class="align-center" src="../_images/image1.png" style="height: 500px;" />
-<p>In this example we are going to use the function <a class="reference internal" href="generated/openpiv.process.extended_search_area_piv.html#openpiv.process.extended_search_area_piv" title="openpiv.process.extended_search_area_piv"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.extended_search_area_piv()</span></tt></a> to process the image pair.:</p>
+<img alt="_images/image1.png" class="align-center" src="_images/image1.png" style="height: 500px;" />
+<p>In this example we are going to use the function <tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.extended_search_area_piv()</span></tt> to process the image pair.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">extended_search_area_piv</span><span class="p">(</span> <span class="n">frame_a</span><span class="p">,</span> <span class="n">frame_b</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">search_area_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">sig2noise_method</span><span class="o">=</span><span class="s">&#39;peak2peak&#39;</span> <span class="p">)</span>
 </pre></div>
 </div>
 <p>This method  is a zero order displacement predictor cross-correlation algorithm, which cope with the problem of loss of pairs when the interrogation window is small, by increasing the search area on the second image. We also provide some options to the function, namely the <tt class="docutils literal"><span class="pre">window_size</span></tt>, i.e. the size of the interrogation window  on <tt class="docutils literal"><span class="pre">frame_a</span></tt>, the <tt class="docutils literal"><span class="pre">overlap</span></tt> in pixels between adjacent windows, the time delay in seconds <tt class="docutils literal"><span class="pre">dt</span></tt> between  the two image frames an te size in pixels of the extended search area on <tt class="docutils literal"><span class="pre">frame_b</span></tt>. <tt class="docutils literal"><span class="pre">sig2noise_method</span></tt> specifies which method to use for the evalutaion of the signal/noise ratio. The function also returns a third array, <tt class="docutils literal"><span class="pre">sig2noise</span></tt> which contains the signal to noise ratio obtained from each cross-correlation function, intended as the ratio between the heigth of the first and second peaks.</p>
-<p>We then compute the coordinates of the centers of the interrogation windows using <a class="reference internal" href="generated/openpiv.process.get_coordinates.html#openpiv.process.get_coordinates" title="openpiv.process.get_coordinates"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.get_coordinates()</span></tt></a>.:</p>
+<p>We then compute the coordinates of the centers of the interrogation windows using <tt class="xref py py-func docutils literal"><span class="pre">openpiv.process.get_coordinates()</span></tt>.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span> <span class="n">image_size</span><span class="o">=</span><span class="n">frame_a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">32</span> <span class="p">)</span>
 </pre></div>
 </div>
@@ -124,7 +124,7 @@
 </pre></div>
 </div>
 <p>and we obtain:</p>
-<img alt="../_images/image2.png" class="align-center" src="../_images/image2.png" style="height: 500px;" />
+<img alt="_images/image2.png" class="align-center" src="_images/image2.png" style="height: 500px;" />
 <p>Several outliers vectors can be observed as a result of the small interrogation window size and we need to apply a validation scheme. Since we have information about the signal to noise ratio of the cross-correlation function we can apply a well know filtering scheme, classifing a vector as an outlier if its signal to noise ratio exceeds a certain threshold. To accomplish this task we use the function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">validation</span><span class="o">.</span><span class="n">sig2noise_val</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">sig2noise</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">1.3</span> <span class="p">)</span>
 </pre></div>
@@ -135,8 +135,8 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
 <span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image3.png" class="align-center" src="../_images/image3.png" style="height: 500px;" />
-<p>The final step is to replace the missing vector. This is done which the function <a class="reference internal" href="generated/openpiv.filters.replace_outliers.html#openpiv.filters.replace_outliers" title="openpiv.filters.replace_outliers"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.filters.replace_outliers()</span></tt></a>, which implements an iterative image inpainting algorithm with a specified kernel. We pass to this function the two velocity components arrays,  a method type <tt class="docutils literal"><span class="pre">localmean</span></tt>, the number of passes and the size of the kernel.:</p>
+<img alt="_images/image3.png" class="align-center" src="_images/image3.png" style="height: 500px;" />
+<p>The final step is to replace the missing vector. This is done which the function <tt class="xref py py-func docutils literal"><span class="pre">openpiv.filters.replace_outliers()</span></tt>, which implements an iterative image inpainting algorithm with a specified kernel. We pass to this function the two velocity components arrays,  a method type <tt class="docutils literal"><span class="pre">localmean</span></tt>, the number of passes and the size of the kernel.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">replace_outliers</span><span class="p">(</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;localmean&#39;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span> <span class="p">)</span>
 </pre></div>
 </div>
@@ -145,8 +145,8 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
 <span class="n">quiver</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/image4.png" class="align-center" src="../_images/image4.png" style="height: 500px;" />
-<p>The last step is to apply an uniform scaling to the flow field to get dimensional units. We use the function <a class="reference internal" href="generated/openpiv.scaling.uniform.html#openpiv.scaling.uniform" title="openpiv.scaling.uniform"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt></a> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters if we want position and velocities in meters and meters/seconds or in pixels per millimeters if we want positions and velocities in millimeters and millimeters/seconds, respectively.</p>
+<img alt="_images/image4.png" class="align-center" src="_images/image4.png" style="height: 500px;" />
+<p>The last step is to apply an uniform scaling to the flow field to get dimensional units. We use the function <tt class="xref py py-func docutils literal"><span class="pre">openpiv.scaling.uniform()</span></tt> providing the <tt class="docutils literal"><span class="pre">scaling_factor</span></tt> value, in pixels per meters if we want position and velocities in meters and meters/seconds or in pixels per millimeters if we want positions and velocities in millimeters and millimeters/seconds, respectively.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">openpiv</span><span class="o">.</span><span class="n">scaling</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">scaling_factor</span> <span class="o">=</span> <span class="mf">96.52</span> <span class="p">)</span>
 </pre></div>
 </div>
@@ -204,7 +204,7 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
 <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">(</span> <span class="n">func</span> <span class="o">=</span> <span class="n">func</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">8</span> <span class="p">)</span>
 </pre></div>
 </div>
-<p>where we have set datadir to <tt class="docutils literal"><span class="pre">.</span></tt> because the script and the images are in the same folder. The first line creates an instance of the <a class="reference internal" href="generated/openpiv.tools.Multiprocesser.html#openpiv.tools.Multiprocesser" title="openpiv.tools.Multiprocesser"><tt class="xref py py-func docutils literal"><span class="pre">openpiv.tools.Multiprocesser()</span></tt></a> class. This class is responsible of sharing the processing work to multiple processes, so that the analysis can be executed in parallell. To construct the class you have to pass it three arguments:</p>
+<p>where we have set datadir to <tt class="docutils literal"><span class="pre">.</span></tt> because the script and the images are in the same folder. The first line creates an instance of the <tt class="xref py py-func docutils literal"><span class="pre">openpiv.tools.Multiprocesser()</span></tt> class. This class is responsible of sharing the processing work to multiple processes, so that the analysis can be executed in parallell. To construct the class you have to pass it three arguments:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">data_dir</span></tt>: the directory where image files are located</li>
 <li><tt class="docutils literal"><span class="pre">pattern_a</span></tt> and <tt class="docutils literal"><span class="pre">pattern_b</span></tt>: the patterns for matching image files for frames <cite>a</cite> and <cite>b</cite>.</li>
@@ -223,7 +223,7 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Tutorial</a><ul>
 <li><a class="reference internal" href="#first-example-how-to-process-an-image-pair">First example: how to process an image pair</a></li>
@@ -240,12 +240,12 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
                         title="next chapter">Download OpenPIV Example</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
-    <li><a href="../_sources/src/tutorial.txt"
+    <li><a href="_sources/tutorial.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
-    <form class="search" action="../search.html" method="get">
+    <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
       <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
@@ -264,10 +264,10 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
+          <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
+          <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
           <a href="downloads_page.html" title="Download OpenPIV Example"
@@ -275,7 +275,7 @@ arrays <tt class="docutils literal"><span class="pre">u</span></tt> and <tt clas
         <li class="right" >
           <a href="developers.html" title="Information for developers and contributors"
              >previous</a> |</li>
-        <li><a href="../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

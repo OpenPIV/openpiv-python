@@ -24,13 +24,16 @@ Contents:
    :maxdepth: 2
    :titlesonly:
    
-
-   src/installation_instruction
-   src/developers
-   src/tutorial
-   src/downloads_page
-   src/api_reference
-
+   introduction
+   installation_instruction
+   developers
+   tutorial
+   downloads_page
+   api_reference
+   gui_doc
+   
+    
+    
 Indices and tables
 ==================
 
