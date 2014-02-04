@@ -25,6 +25,7 @@ Contents:
    :titlesonly:
    
    introduction
+   faq
    installation_instruction
    developers
    tutorial

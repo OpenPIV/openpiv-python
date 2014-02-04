@@ -18,4 +18,3 @@ Where this project is going?
 
 Our plans are to create a crowd minded open source alternative to the commercial source-closed projects that promise high quality and high reproducibility of the scientific and industrial PIV-based measurements and analysis. 
 
-
