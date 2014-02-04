@@ -1,0 +1,129 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.lib.sincinterp &mdash; OpenPIV 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="OpenPIV 0.0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-lib-sincinterp">
+<h1>openpiv.lib.sincinterp<a class="headerlink" href="#openpiv-lib-sincinterp" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.lib.sincinterp">
+<tt class="descclassname">openpiv.lib.</tt><tt class="descname">sincinterp</tt><big>(</big><big>)</big><a class="headerlink" href="#openpiv.lib.sincinterp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-sample an image at intermediate positions between pixels.</p>
+<p>This function uses a cardinal interpolation formula which limits 
+the loss of information in the resampling process. It uses a limited
+number of neighbouring pixels.</p>
+<p>The new image <span class="math">\(im^+\)</span> at fractional locations <span class="math">\(x\)</span> and <span class="math">\(y\)</span> is computed as:</p>
+<div class="math">
+\[im^+(x,y) = \sum_{i=-\mathtt{kernel\_size}}^{i=\mathtt{kernel\_size}} \sum_{j=-\mathtt{kernel\_size}}^{j=\mathtt{kernel\_size}} \mathtt{image}(i,j)  sin[\pi(i-\mathtt{x})]  sin[\pi(j-\mathtt{y})]  / \pi(i-\mathtt{x}) / \pi(j-\mathtt{y}) \]</div>
+<dl class="docutils">
+<dt>image <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, dtype np.int32</span></dt>
+<dd>the image array.</dd>
+<dt>x <span class="classifier-delimiter">:</span> <span class="classifier">two dimensions np.ndarray of floats</span></dt>
+<dd>an array containing fractional pixel row
+positions at which to interpolate the image</dd>
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">two dimensions np.ndarray of floats</span></dt>
+<dd>an array containing fractional pixel column 
+positions at which to interpolate the image</dd>
+<dt>kernel_size <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>interpolation is performed over a <tt class="docutils literal"><span class="pre">(2*kernel_size+1)*(2*kernel_size+1)</span></tt> 
+submatrix  in the neighbourhood of each interpolation point.</dd>
+</dl>
+<dl class="docutils">
+<dt>im <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, dtype np.float64</span></dt>
+<dd>the interpolated value of <tt class="docutils literal"><span class="pre">image</span></tt> at the points specified 
+by <tt class="docutils literal"><span class="pre">x</span></tt> and <tt class="docutils literal"><span class="pre">y</span></tt></dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.lib.sincinterp.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, OpenPIV group.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

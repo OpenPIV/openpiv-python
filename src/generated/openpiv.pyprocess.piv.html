@@ -1,0 +1,155 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>openpiv.pyprocess.piv &mdash; OpenPIV 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="OpenPIV 0.0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="openpiv-pyprocess-piv">
+<h1>openpiv.pyprocess.piv<a class="headerlink" href="#openpiv-pyprocess-piv" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="openpiv.pyprocess.piv">
+<tt class="descclassname">openpiv.pyprocess.</tt><tt class="descname">piv</tt><big>(</big><em>frame_a</em>, <em>frame_b</em>, <em>window_size=64</em>, <em>overlap=32</em>, <em>dt=1.0</em>, <em>corr_method='fft'</em>, <em>subpixel_method='gaussian'</em>, <em>sig2noise_method=None</em>, <em>nfftx=None</em>, <em>nffty=None</em>, <em>width=2</em><big>)</big><a class="headerlink" href="#openpiv.pyprocess.piv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standard PIV cross-correlation algorithm.</p>
+<p>This is a pure python implementation of the standard PIV cross-correlation
+algorithm. It is a zero order displacement predictor, and no iterative process
+is performed.</p>
+<dl class="docutils">
+<dt>frame_a <span class="classifier-delimiter">:</span> <span class="classifier">2d np.ndarray</span></dt>
+<dd>an two dimensions array of integers containing grey levels of 
+the first frame.</dd>
+<dt>frame_b <span class="classifier-delimiter">:</span> <span class="classifier">2d np.ndarray</span></dt>
+<dd>an two dimensions array of integers containing grey levels of 
+the second frame.</dd>
+<dt>window_size <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the size of the (square) interrogation window, [default: 32 pix].</dd>
+<dt>overlap <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the number of pixels by which two adjacent windows overlap
+[default: 16 pix].</dd>
+<dt>dt <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>the time delay separating the two frames [default: 1.0].</dd>
+<dt>corr_method <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>one of the two methods implemented: &#8216;fft&#8217; or &#8216;direct&#8217;,
+[default: &#8216;fft&#8217;].</dd>
+<dt>subpixel_method <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>one of the following methods to estimate subpixel location of the peak: 
+&#8216;centroid&#8217; [replaces default if correlation map is negative], 
+&#8216;gaussian&#8217; [default if correlation map is positive], 
+&#8216;parabolic&#8217;.</dd>
+<dt>sig2noise_method <span class="classifier-delimiter">:</span> <span class="classifier">string </span></dt>
+<dd>defines the method of signal-to-noise-ratio measure,
+(&#8216;peak2peak&#8217; or &#8216;peak2mean&#8217;. If None, no measure is performed.)</dd>
+<dt>nfftx <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the size of the 2D FFT in x-direction, 
+[default: 2 x windows_a.shape[0] is recommended]</dd>
+<dt>nffty <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the size of the 2D FFT in y-direction, 
+[default: 2 x windows_a.shape[1] is recommended]</dd>
+<dt>width <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>the half size of the region around the first
+correlation peak to ignore for finding the second
+peak. [default: 2]. Only used if <tt class="docutils literal"><span class="pre">sig2noise_method==peak2peak</span></tt>.</dd>
+</dl>
+<dl class="docutils">
+<dt>u <span class="classifier-delimiter">:</span> <span class="classifier">2d np.ndarray</span></dt>
+<dd>a two dimensional array containing the u velocity component,
+in pixels/seconds.</dd>
+<dt>v <span class="classifier-delimiter">:</span> <span class="classifier">2d np.ndarray</span></dt>
+<dd>a two dimensional array containing the v velocity component,
+in pixels/seconds.</dd>
+<dt>sig2noise <span class="classifier-delimiter">:</span> <span class="classifier">2d np.ndarray, ( optional: only if sig2noise_method is not None )</span></dt>
+<dd>a two dimensional array the signal to noise ratio for each 
+window pair.</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/src/generated/openpiv.pyprocess.piv.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">OpenPIV 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, OpenPIV group.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
