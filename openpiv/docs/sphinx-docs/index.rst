@@ -28,7 +28,9 @@ Contents:
    src/installation_instruction
    src/developers
    src/tutorial
+   src/faq
    src/api_reference
+   
 
 Indices and tables
 ==================
