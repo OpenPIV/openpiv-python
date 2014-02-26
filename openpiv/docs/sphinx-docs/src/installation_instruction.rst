@@ -68,7 +68,7 @@ Then add the path where the OpenPIV source are to the PYTHONPATH environment var
 that OpenPIV module can be imported and used in your programs. Remeber to build the extension
 with :: 
 
-    python setup.py build 
+    python setup.py build_ext --inplace 
 
 .. Stable source distribution
 .. ^^^^^^^^^^^^^^^^^^^^^^^^^^
