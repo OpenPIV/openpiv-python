@@ -25,7 +25,7 @@ Installation instructions for various platforms can be found at http://www.openp
 
 Basically we use distutils:
 
->>> python setup.py build
+>>> python setup.py build_ext --inplace
 
 should work 
 
