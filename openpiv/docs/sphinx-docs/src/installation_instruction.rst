@@ -20,8 +20,11 @@ The dependencies are:
 * `numpy <http://www.scipy.org/>`_
 * `cython <http://cython.org/>`_
 
-On all platforms, the binary Enthought Python Distribution (EPD) is recommended. 
-Visit http://www.enthought.com
+On all platforms, the following Python distributions arerecommended: 
+* Canopy <http://www.enthought.com>
+* Anaconda <https://store.continuum.io/cshop/anaconda/>
+* PythonXY <https://code.google.com/p/pythonxy/>
+* WinPython <http://winpython.sourceforge.net/>
 
 How to install the dependencies on Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -39,6 +42,11 @@ without spaces in the directory names (i.e. Program Files are prohibited), e.g. 
 How to install the dependencies on a Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com. However, if you use EPD Free distribution, you need to install Cython from http://www.cython.org
+
+
+Some distributions lack `progressbar` package. Install it separately using `pip`
+
+    pip install progressbar
 
 
 Get OpenPIV source code!
@@ -139,6 +147,8 @@ the same error as above:
 .. For Windows we provide pre-built distributions which can be used without the hassles
 .. of compilation and other boring things you may not want to dig into. This is currently a work
 .. in progress. Check back soon!
+
+
 
 
 
