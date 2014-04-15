@@ -21,19 +21,23 @@ development, to ease the use for those users who don't have python skills.
 =======
 Install
 =======
-Installation instructions for various platforms can be found at http://alexlib.github.com/openpiv-python
+Installation instructions for various platforms can be found at http://openpiv.readthedocs.org
 
 Basically we use distutils:
 
->>> python setup.py build
+    >>> python setup.py build
 
-should work 
+or 
+
+    >>> python setup.py build_ext --inplace
+
+should work for the global or local (in the same directory) installation 
 
 
 =============
 Documentation
 =============
 
-The OpenPiv documentation is available on the project web page at http://alexlib.github.com/openpiv-python
+The OpenPiv documentation is available on the project web page at http://openpiv.readthedocs.org
 
 
