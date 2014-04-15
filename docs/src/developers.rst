@@ -2,7 +2,7 @@ Information for developers and contributors
 ===========================================
 
 OpenPiv need developers to improve further. Your support, code and contribution is very welcome and 
-we are grateful you can provide some. Please send us an email to openpiv-develop@lists.sourceforge.net
+we are grateful you can provide some. Please send us an email to openpiv-develop@googlegroups.com
 to get started, or for any kind of information.
 
 We use `git <http://git-scm.com/>`_ for development version control, and we have a main repository on `github <https://github.com/>`_.
