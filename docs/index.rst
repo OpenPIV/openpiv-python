@@ -14,7 +14,7 @@ and improve. Because of its permissive licence, you are welcome to download and 
 OpenPIV for whatever need you may have. Furthermore, you are encouraged to contribute
 to OpenPIV, with code, suggestions and critics.
 
-OpenPIV exists in three forms: Matlab, C++ and Python. This is the home page of the Python implementation.
+OpenPIV exists in three forms: Matlab, C++ and Python. This is the home page of the **Python** implementation.
 
 =========
 Contents:
