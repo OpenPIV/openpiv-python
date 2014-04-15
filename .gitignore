@@ -7,3 +7,5 @@ openpiv/src/lib.c
 build/
 *.txt
 /setup.cfg
+openpiv/lib.so
+openpiv/process.so
