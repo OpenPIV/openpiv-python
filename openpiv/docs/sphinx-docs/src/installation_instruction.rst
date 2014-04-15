@@ -45,6 +45,9 @@ How to install the dependencies on a Mac
 The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com. However, if you use EPD Free distribution, you need to install Cython from http://www.cython.org
 
 
+Missing package ``progressbar``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+
 Some distributions lack `progressbar` package. Install it separately using `pip`
 
     pip install progressbar
