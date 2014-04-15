@@ -15,16 +15,17 @@ you should install them before you can use OpenPIV.
 
 The dependencies are:
 
-* `python <http://python.org/>`_
-* `scipy <http://numpy.scipy.org/>`_
-* `numpy <http://www.scipy.org/>`_
-* `cython <http://cython.org/>`_
+* `Python 2.7 <http://python.org/>`_
+* `Scipy <http://numpy.scipy.org/>`_
+* `Numpy <http://www.scipy.org/>`_
+* `Cython <http://cython.org/>`_
 
-On all platforms, the following Python distributions arerecommended: 
-* Canopy <http://www.enthought.com>
-* Anaconda <https://store.continuum.io/cshop/anaconda/>
-* PythonXY <https://code.google.com/p/pythonxy/>
-* WinPython <http://winpython.sourceforge.net/>
+On all platforms, the following Python distributions arerecommended:
+
+* Canopy <http://www.enthought.com>  
+* Anaconda <https://store.continuum.io/cshop/anaconda/>  
+* PythonXY <https://code.google.com/p/pythonxy/>  
+* WinPython <http://winpython.sourceforge.net/>  
 
 How to install the dependencies on Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
