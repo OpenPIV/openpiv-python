@@ -1,3 +1,3 @@
 #!/bin/bash
-pyuic4 data/ui/mainwindow.ui -o src/ui/ui_mainwindow.py
-pyrcc4 data/ui_resources.qrc -o src/ui/ui_resources_rc.py
+pyside-uic openpiv/data/ui/mainwindow.ui -o openpiv/ui/ui_mainwindow.py
+pyrcc4 openpiv/data/ui_resources.qrc -o openpiv/ui/ui_resources_rc.py
