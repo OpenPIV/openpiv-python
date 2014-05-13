@@ -30,10 +30,10 @@ package_data =  [ 'data/defaults-processing-parameters.cfg',
 
 # data files are other files which are not required by the program but 
 # we want to ditribute as well, for example documentation.
-data_files = [ ('share/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
-               ('share/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('share/docs/openpiv', ['README.rst'] ),
-               ('share/openpiv/ui', glob.glob('openpiv/data/ui/*.ui') ),
+data_files = [ ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
+               ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
+               ('openpiv/docs/openpiv', ['README.rst'] ),
+               ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
              ]
 
 
@@ -47,7 +47,7 @@ scripts = ['openpiv/openpiv']
 
 
 
-setup(  name = "OpenPiv",
+setup(  name = "OpenPIV",
         version = "0.11",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",

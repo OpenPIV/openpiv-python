@@ -27,7 +27,7 @@ The first example shows how to process a single image pair. This is a common tas
     
     u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
     
-    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', n_iter=10, kernel_size=2)
+    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
     
     x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
     
