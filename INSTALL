@@ -63,7 +63,7 @@ How to install the dependencies on a Mac
 The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com 
 
 
-Get Openpiv source code!
+Get OpenPIV source code!
 ========================
 
 At this moment the only way to get OpenPIV's source code is using git. 

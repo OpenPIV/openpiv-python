@@ -43,7 +43,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 # script are executable files that will be run to load the gui or something else.
-scripts = ['openpiv/openpiv']
+scripts = ['tutorial/tutorial-part1.py']
 
 
 

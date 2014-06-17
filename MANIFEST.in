@@ -1,2 +1,5 @@
 include openpiv/src/process.pyx
 include openpiv/src/lib.pyx
+include tutorial/*
+include *.txt
+recursive-include docs *.rst

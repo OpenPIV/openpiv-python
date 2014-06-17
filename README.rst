@@ -1,8 +1,8 @@
 =======
 Warning
 =======
-The OpenPIV python version is currently in alpha state. This means that
-it is buggy, untested and the API may change. However testing and contributing
+The OpenPIV python version is currently in its alpha version. This means that
+it is still buggy, untested and the API may change. However testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
 Development is currently done on a Linux/Mac OSX environment, but as soon as possible 
@@ -23,21 +23,27 @@ Install
 =======
 Installation instructions for various platforms can be found at http://openpiv.readthedocs.org
 
-Basically we use distutils:
-
-    >>> python setup.py build
-
-or 
+Using distutils create a local (in the same directory) compilation of the Cython files:
 
     >>> python setup.py build_ext --inplace
 
-should work for the global or local (in the same directory) installation 
+Or for the global installation, use:
+
+	>>> python setup.py install 
 
 
 =============
 Documentation
 =============
 
-The OpenPiv documentation is available on the project web page at http://openpiv.readthedocs.org
+The OpenPIV documentation is available on the project web page at http://openpiv.readthedocs.org
 
 
+=============
+Contributors
+=============
+
+1. Alex Liberzon
+2. Roi Gurka
+3. Zachary J. Taylor
+3. David Lasagna
