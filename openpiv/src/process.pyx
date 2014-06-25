@@ -162,20 +162,27 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                         search_area[k,l] = frame_b[ i+window_size/2-search_area_size/2+k, j+window_size/2-search_area_size/2+l ]
                         
             # compute correlation map 
-            corr = correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
-            c = CorrelationFunction( corr )
+            if any(window_a.flatten()):
+                corr = correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
+                c = CorrelationFunction( corr )
             
-            # find subpixel approximation of the peak center
-            i_peak, j_peak = c.subpixel_peak_position( subpixel_method )
+                # find subpixel approximation of the peak center
+                i_peak, j_peak = c.subpixel_peak_position( subpixel_method )
             
-            # velocities
-            v[I,J] = -( (i_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
-            u[I,J] =  ( (j_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
+                # velocities
+                v[I,J] = -( (i_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
+                u[I,J] =  ( (j_peak - corr.shape[0]/2) - (search_area_size-window_size)/2 ) / dt
             
-            # compute signal to noise ratio
-            if sig2noise_method:
-                sig2noise[I,J] = c.sig2noise_ratio( sig2noise_method, width )
-            
+                # compute signal to noise ratio
+                if sig2noise_method:
+                    sig2noise[I,J] = c.sig2noise_ratio( sig2noise_method, width )
+            else:
+                v[I,J] = 0.0
+                u[I,J] = 0.0
+                # compute signal to noise ratio
+                if sig2noise_method:
+                    sig2noise[I,J] = 0.0
+                
             # go to next vector
             J = J + 1
                 
