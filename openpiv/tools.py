@@ -320,7 +320,7 @@ def display( message ):
     sys.stdout.flush()
 
 class Multiprocesser():
-    def __init__ ( self, data_dir, pattern_a, pattern_b  ):
+    def __init__ ( self, data_dir, pattern_a, pattern_b = None  ):
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets
@@ -344,16 +344,22 @@ class Multiprocesser():
             
         pattern_b : str
             a shell glob patter to match the second
-            frames.
+            frames. if None, then the list is sequential, 001.tif, 002.tif 
 
         Examples
         --------
         >>> multi = openpiv.tools.Multiprocesser( '/home/user/images', 'image_*_a.bmp', 'image_*_b.bmp')
     
         """
-        # load lists of images 
+        # load lists of images
+         
         self.files_a = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_a ) ) )
-        self.files_b = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_b ) ) )
+        
+        if pattern_b is None:
+            self.files_b = self.files_a[1:]
+            self.files_a = self.files_a[:-1]
+        else:    
+            self.files_b = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_b ) ) )
         
         # number of images
         self.n_files = len(self.files_a)
