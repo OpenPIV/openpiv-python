@@ -96,5 +96,6 @@ openpiv/ui/widgets.py
 tutorial/exp1_001.txt
 tutorial/exp1_001_a.bmp
 tutorial/exp1_001_b.bmp
+tutorial/mark_2306_multiprocessing.py
 tutorial/openpiv-python-tutorial-part1.ipynb
 tutorial/tutorial-part1.py
