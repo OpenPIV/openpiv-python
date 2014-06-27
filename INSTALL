@@ -70,6 +70,15 @@ At this moment the only way to get OpenPIV's source code is using git.
 `Git <http://en.wikipedia.org/wiki/Git_%28software%29>`_ Git is a distributed revision control system and 
 our code is hosted at `GitHub <www.github.com>`_.
 
+
+Use PyPI and pip
+================
+
+    pip install openpiv
+    
+
+Downloads the code from PyPI and runs the setup for you with installation and Cython (if preinstalled)
+
 Bleeding edge development version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

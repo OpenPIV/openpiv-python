@@ -48,7 +48,7 @@ scripts = ['tutorial/tutorial-part1.py']
 
 
 setup(  name = "OpenPIV",
-        version = "0.11",
+        version = "0.12",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",
