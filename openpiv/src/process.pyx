@@ -181,7 +181,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 u[I,J] = 0.0
                 # compute signal to noise ratio
                 if sig2noise_method:
-                    sig2noise[I,J] = np.nan
+                    sig2noise[I,J] = np.inf
                 
             # go to next vector
             J = J + 1
