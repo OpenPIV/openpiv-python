@@ -30,7 +30,7 @@ import matplotlib.pyplot as pl
 import matplotlib.patches as pt
 import matplotlib.image as mpltimg
 from scipy import ndimage
-from skimage import filter
+from skimage import filter, io
 
 
 def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1, **kw):
@@ -120,7 +120,7 @@ def imread( filename, flatten=0 ):
     
     """
     
-    return scipy.misc.imread( filename, flatten=flatten).astype(np.int32)
+    return io.imread( filename, as_grey = True)
 
 def imsave( filename, arr ):
     """Write an image file from a numpy array

@@ -181,7 +181,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 u[I,J] = 0.0
                 # compute signal to noise ratio
                 if sig2noise_method:
-                    sig2noise[I,J] = 0.0
+                    sig2noise[I,J] = np.nan
                 
             # go to next vector
             J = J + 1
@@ -291,9 +291,14 @@ class CorrelationFunction( ):
             # do subpixel approximation
             return self.peak1
             
+        # if all zero or some is NaN, don't do sub-pixel search:
+        tmp = np.array([c,cl,cr,cd,cu])
+        if np.any( np.isnan(tmp) ) or np.all ( tmp == 0 ):
+            return self.peak1
+            
         # if correlation is negative near the peak, fall back 
         # to a centroid approximation
-        if np.any ( np.array([c,cl,cr,cd,cu]) < 0 ) and method == 'gaussian':
+        if np.any ( tmp  < 0 ) and method == 'gaussian':
             method = 'centroid'
         
         # choose method
