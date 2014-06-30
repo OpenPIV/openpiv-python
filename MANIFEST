@@ -42,6 +42,7 @@ docs/src/generated/openpiv.validation.global_std.rst
 docs/src/generated/openpiv.validation.global_val.rst
 docs/src/generated/openpiv.validation.local_median_val.rst
 docs/src/generated/openpiv.validation.sig2noise_val.rst
+masking_tutorial/masking_tutorial.py
 openpiv/__init__.py
 openpiv/filters.py
 openpiv/junk.py

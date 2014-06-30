@@ -30,7 +30,10 @@ package_data =  [ 'data/defaults-processing-parameters.cfg',
 
 # data files are other files which are not required by the program but 
 # we want to ditribute as well, for example documentation.
-data_files = [ ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
+data_files = [ ('openpiv/tutorial/', glob.glob('openpiv/tutorial/*') ),
+               ('openpiv/tutorial-part1/', glob.glob('openpiv/tutorial-part1/*') ),
+               ('openpiv/masking_tutorial/', glob.glob('openpiv/masking_tutorial/*') ),
+               ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
                ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
                ('openpiv/docs/openpiv', ['README.rst'] ),
                ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
@@ -43,17 +46,17 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 # script are executable files that will be run to load the gui or something else.
-scripts = ['tutorial/tutorial-part1.py']
+scripts = ['tutorial/tutorial-part1.py', 'masking_tutorial/masking_tutorial.py']
 
 
 
 setup(  name = "OpenPIV",
-        version = "0.12",
+        version = "0.14",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",
         license = "GPL v3",
-        url = "www.openpiv.net",
+        url = "http://www.openpiv.net",
         long_description =  """OpenPIV is an initiative of scientists to
                             develop a software, algorithms and methods
                             for the state-of-the-art experimental tool
