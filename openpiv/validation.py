@@ -1,9 +1,6 @@
 #!/usr/bin/python
 
 
-import warnings
-warnings.filterwarnings('error')
-
 """A module for spurious vector detection."""
 
 __licence__ = """
