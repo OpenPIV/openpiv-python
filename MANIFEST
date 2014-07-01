@@ -42,7 +42,6 @@ docs/src/generated/openpiv.validation.global_std.rst
 docs/src/generated/openpiv.validation.global_val.rst
 docs/src/generated/openpiv.validation.local_median_val.rst
 docs/src/generated/openpiv.validation.sig2noise_val.rst
-masking_tutorial/masking_tutorial.py
 openpiv/__init__.py
 openpiv/filters.py
 openpiv/junk.py
@@ -88,10 +87,11 @@ openpiv/data/ui/mainwindow.ui
 openpiv/data/ui/mainwindow2.ui
 openpiv/data/ui/processwindow.ui
 openpiv/data/ui/setupwindow.ui
+openpiv/masking_tutorial/masking_tutorial.py
 openpiv/src/lib.pyx
 openpiv/src/process.pyx
+openpiv/tutorial-part1/tutorial-part1.py
 openpiv/ui/__init__.py
 openpiv/ui/ui_mainwindow.py
 openpiv/ui/ui_resources_rc.py
 openpiv/ui/widgets.py
-tutorial-part1/tutorial-part1.py
