@@ -22,28 +22,7 @@ The dependencies are:
 
 On all platforms, the following Python distributions arerecommended:
 
-* Canopy <http://www.enthought.com>  
 * Anaconda <https://store.continuum.io/cshop/anaconda/>  
-* PythonXY <https://code.google.com/p/pythonxy/>  
-* WinPython <http://winpython.sourceforge.net/>  
-
-How to install the dependencies on Linux
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On a Linux platform installing these dependencies should be trick. Often, if not always, 
-python is installed by default, while the other dependencies should appear in your package
-manager.
-
-How to install the dependencies on Windows
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On Windows all these dependencies, as well as several other useful packages, can be installed
-using the Python(x,y) distribution, available at http://www.pythonxy.com/. Note: Install it in Custom Directories, 
-without spaces in the directory names (i.e. Program Files are prohibited), e.g. C:\Pythonxy\
-
-
-How to install the dependencies on a Mac
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com. However, if you use EPD Free distribution, you need to install Cython from http://www.cython.org
-
 
 Missing package ``progressbar``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
@@ -56,9 +35,14 @@ Some distributions lack `progressbar` package. Install it separately using `pip`
 Get OpenPIV source code!
 ========================
 
-At this moment the only way to get OpenPIV's source code is using git. 
-`Git <http://en.wikipedia.org/wiki/Git_%28software%29>`_ Git is a distributed revision control system and 
-our code is hosted at `GitHub <www.github.com>`_.
+The easiest way to get the latest released beta version is using PyPI server:
+
+    pip install openpiv
+    
+or if you have an older version, then use
+
+    pip install openpiv --upgrade
+    
 
 Bleeding edge development version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -149,7 +133,7 @@ the same error as above:
 .. =======================================
 
 .. For Windows we provide pre-built distributions which can be used without the hassles
-.. of compilation and other boring things you may not want to dig into. This is currently a work
+.. of compilation and other boring things you may not want to dig into. This is currently  .. a work
 .. in progress. Check back soon!
 
 
