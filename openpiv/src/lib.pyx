@@ -6,6 +6,8 @@ cimport cython
 
 DTYPEf = np.float64
 ctypedef np.float64_t DTYPEf_t
+DTYPEi = np.int64
+ctypedef np.int64_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
@@ -52,8 +54,8 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     cdef np.ndarray[DTYPEf_t, ndim=2] filled = np.empty( [array.shape[0], array.shape[1]], dtype=DTYPEf)
     cdef np.ndarray[DTYPEf_t, ndim=2] kernel = np.empty( (2*kernel_size+1, 2*kernel_size+1), dtype=DTYPEf ) 
     
-    cdef np.ndarray[np.int_t, ndim=1] inans
-    cdef np.ndarray[np.int_t, ndim=1] jnans
+    cdef np.ndarray[DTYPEi_t, ndim=1] inans = np.empty([array.shape[0]*array.shape[1]], dtype=DTYPEi)
+    cdef np.ndarray[DTYPEi_t, ndim=1] jnans = np.empty([array.shape[0]*array.shape[1]], dtype=DTYPEi)
     
     # indices where array is NaN
     inans, jnans = np.nonzero( np.isnan(array) )

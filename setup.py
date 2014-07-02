@@ -50,7 +50,7 @@ scripts = ['openpiv/tutorial-part1/tutorial-part1.py', 'openpiv/masking_tutorial
 
 
 setup(  name = "OpenPIV",
-        version = "0.16",
+        version = "0.17",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",
