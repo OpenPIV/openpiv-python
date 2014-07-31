@@ -31,7 +31,7 @@ The first example shows how to process a single image pair. This is a common tas
     
     x, y, u, v = openpiv.scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
     
-    openpiv.tools.save(x, y, u, v, 'exp1_001.txt' )
+    openpiv.tools.save(x, y, u, v, mask, 'exp1_001.txt' )
     
 This code can be executed as a script, or you can type each command in an `Ipython <http://ipython.scipy.org/moin/>`_ console with pylab mode set, so that you can visualize result as they are available.  I will follow the second option and i will present the results of each command.
     
@@ -58,7 +58,7 @@ Inspecting the attributes of one of the two images we can see that::
     
 image has a size of 369x511 pixels and are contained in 32 bit integer arrays. Using pylab graphical capabilities it is easy to visualize  one of the two frames:::
 
-    matshow ( frame_a, cmap=cm.Greys _r ) 
+    matshow ( frame_a, cmap=cm.Greys_r ) 
     
 which results in this figure.
 
@@ -125,7 +125,7 @@ The last step is to apply an uniform scaling to the flow field to get dimensiona
 
 Finally we save the data to an ascii file, for later processing, using:::
 
-    openpiv.tools.save(x, y, u, v, 'exp1_001.txt')
+    openpiv.tools.save(x, y, u, v, mask, 'exp1_001.txt')
 
 
 Second example: how to process in batch a list of image pairs.
