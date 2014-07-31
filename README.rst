@@ -43,8 +43,8 @@ The OpenPIV documentation is available on the project web page at http://openpiv
 Contributors
 =============
 
-1. Alex Liberzon
-2. Roi Gurka
+1. Alex Liberzon  
+2. Roi Gurka  
 3. Zachary J. Taylor  
-3. David Lasagna  
-4. Mathias Aubert
+4. David Lasagna  
+5. Mathias Aubert
