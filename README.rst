@@ -1,7 +1,7 @@
 =======
 Warning
 =======
-The OpenPIV python version is currently in its alpha version. This means that
+The OpenPIV Python version is still in beta version. This means that
 it is still buggy, untested and the API may change. However testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
@@ -45,5 +45,6 @@ Contributors
 
 1. Alex Liberzon
 2. Roi Gurka
-3. Zachary J. Taylor
-3. David Lasagna
+3. Zachary J. Taylor  
+3. David Lasagna  
+4. Mathias Aubert
