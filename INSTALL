@@ -74,7 +74,7 @@ our code is hosted at `GitHub <www.github.com>`_.
 Use PyPI and pip
 ================
 
-    pip install openpiv
+    pip install -U openpiv
     
 
 Downloads the code from PyPI and runs the setup for you with installation and Cython (if preinstalled)

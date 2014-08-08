@@ -90,6 +90,11 @@ openpiv/data/ui/setupwindow.ui
 openpiv/masking_tutorial/masking_tutorial.py
 openpiv/src/lib.pyx
 openpiv/src/process.pyx
+openpiv/tutorial-part1/.DS_Store
+openpiv/tutorial-part1/exp1_001.txt
+openpiv/tutorial-part1/exp1_001_a.bmp
+openpiv/tutorial-part1/exp1_001_b.bmp
+openpiv/tutorial-part1/openpiv-python-tutorial-part1.ipynb
 openpiv/tutorial-part1/tutorial-part1.py
 openpiv/ui/__init__.py
 openpiv/ui/ui_mainwindow.py

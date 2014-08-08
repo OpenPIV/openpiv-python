@@ -1,7 +1,7 @@
 =======
 Warning
 =======
-The OpenPIV Python version is still in beta version. This means that
+The OpenPIV Python version is still in its beta. This means that
 it is still buggy, untested and the API may change. However testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
@@ -22,6 +22,12 @@ development, to ease the use for those users who don't have python skills.
 Install
 =======
 Installation instructions for various platforms can be found at http://openpiv.readthedocs.org
+
+The easiest way is to use pip:  
+
+   >>> pip install -U openpiv
+   
+Or to download the package from the Github: https://github.com/alexlib/openpiv-python/archive/master.zip
 
 Using distutils create a local (in the same directory) compilation of the Cython files:
 
