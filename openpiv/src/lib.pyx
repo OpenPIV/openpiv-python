@@ -4,11 +4,11 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-DTYPEf = np.float64
-ctypedef np.float64_t DTYPEf_t
+DTYPEf = np.float
+ctypedef np.float_t DTYPEf_t
 
-DTYPEi = np.int32
-ctypedef np.int32_t DTYPEi_t
+DTYPEi = np.int
+ctypedef np.int_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
