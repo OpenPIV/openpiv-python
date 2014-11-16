@@ -27,10 +27,13 @@ import multiprocessing
 import numpy as np
 import scipy.misc
 import matplotlib.pyplot as pl
+import matplotlib.patches as pt
+import matplotlib.image as mpltimg
+from scipy import ndimage
+from skimage import filter, io
 
 
-
-def display_vector_field( filename,**kw):
+def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1, **kw):
     """ Displays quiver plot of the data stored in the file 
     
     
@@ -38,6 +41,18 @@ def display_vector_field( filename,**kw):
     ----------
     filename :  string
         the absolute path of the text file
+
+    on_img : Bool, optional
+        if True, display the vector field on top of the image provided by image_name
+
+    image_name : string, optional
+        path to the image to plot the vector field onto when on_img is True
+
+    window_size : int, optional
+        when on_img is True, provide the interogation window size to fit the background image to the vector field
+
+    scaling_factor : float, optional
+        when on_img is True, provide the scaling factor to scale the background image to the vector field
     
     Key arguments   : (additional parameters, optional)
         *scale*: [None | float]
@@ -51,17 +66,27 @@ def display_vector_field( filename,**kw):
         
     Examples
     --------
-    
+    --- only vector field
     >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, width=0.0025) 
 
+    --- vector field on top of image
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True, image_name='exp1_001_a.bmp', window_size=32, scaling_factor=70, scale=100, width=0.0025)
     
     """
     
     a = np.loadtxt(filename)
-    pl.figure()
+    fig=pl.figure()
     pl.hold(True)
+    if on_img: # plot a background image
+        im = imread(image_name)
+        im = negative(im) #plot negative of the image for more clarity
+        imsave('neg.tif', im)
+        im = mpltimg.imread('neg.tif')
+        xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
+        ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
+        implot = pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
     invalid = a[:,4].astype('bool')
-    
+    fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
     pl.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',**kw)
     pl.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
@@ -95,7 +120,144 @@ def imread( filename, flatten=0 ):
     
     """
     
-    return scipy.misc.imread( filename, flatten=flatten).astype(np.int32)
+    return io.imread( filename, as_grey = True)
+
+def imsave( filename, arr ):
+    """Write an image file from a numpy array
+    using scipy.misc.imread
+    
+    Parameters
+    ----------
+    filename :  string
+        the absolute path of the image file that will be created
+    arr : 2d np.ndarray
+        a 2d numpy array with grey levels
+        
+    Example
+    --------
+    
+    >>> image = openpiv.tools.imread( 'image.bmp' )
+    >>> image2 = openpiv.tools.negative(image)
+    >>> imsave( 'negative-image.tif', image2)
+    
+    """
+    
+    if np.amax(arr) < 256 and np.amin(arr) >= 0:
+        scipy.misc.imsave( filename, arr )
+    else:
+        raise ValueError('please provide a 2d array of grey levels (value in [0, 255])')
+
+
+def convert16bitsTIF( filename, save_name):
+    img = pl.imread( filename )
+    img2 = np.zeros([img.shape[0],img.shape[1]], dtype = np.int32)
+    for I in range(img.shape[0]):
+        for J in range(img.shape[1]):
+            img2[I,J]=img[I,J,0]
+    imsave( save_name, img2)
+    print "converted"
+
+
+def mark_background(threshold, list_img, filename):
+    list_frame = []
+    for I in range(len(list_img)):
+        list_frame.append(imread(list_img[I]))
+    mark = np.zeros(list_frame[0].shape, dtype=np.int32)
+    background = np.zeros(list_frame[0].shape, dtype=np.int32)
+    for I in range(mark.shape[0]):
+        print " row ", I , " / " , mark.shape[0]
+        for J in range(mark.shape[1]):
+            sum1 = 0
+            for K in range(len(list_frame)):
+                sum1 = sum1 + list_frame[K][I, J]
+            if sum1 < threshold*len(list_img):
+                mark[I,J] = 0
+            else:
+                mark[I,J]=1
+            background[I,J]=mark[I,J]*255
+    imsave(filename, background)
+    print "done with background"
+    return background
+
+
+
+def mark_background2(list_img, filename):
+    list_frame = []
+    for I in range(len(list_img)):
+        list_frame.append(imread(list_img[I]))
+    background = np.zeros(list_frame[0].shape, dtype=np.int32)
+    for I in range(background.shape[0]):
+        print " row ", I , " / " , background.shape[0]
+        for J in range(background.shape[1]):
+            min_1 = 255
+            for K in range(len(list_frame)):
+                if min_1 > list_frame[K][I,J]:
+                    min_1 = list_frame[K][I,J]
+            background[I,J]=min_1
+    imsave(filename, background)
+    print "done with background"
+    return background
+
+def edges(list_img, filename):
+    back = mark_background(30, list_img, filename)
+    edges = filter.canny(back, sigma=3)
+    imsave(filename, edges)
+
+def find_reflexions(list_img, filename):
+    background = mark_background2(list_img, filename)
+    reflexion = np.zeros(background.shape, dtype=np.int32)
+    for I in range(background.shape[0]):
+        print " row ", I , " / " , background.shape[0]
+        for J in range(background.shape[1]):
+            if background[I,J] > 253:
+                reflexion[I,J] = 255
+    imsave(filename, reflexion)
+    print "done with reflexions"
+    return reflexion
+            
+
+
+
+
+
+
+def find_boundaries(threshold, list_img1, list_img2, filename, picname):
+    f = open(filename, 'w')
+    print "mark1.."
+    mark1 = mark_background(threshold, list_img1, "mark1.bmp")
+    print "[DONE]"
+    print mark1.shape
+    print "mark2.."
+    mark2 = mark_background(threshold, list_img2, "mark2.bmp")
+    print "[DONE]"
+    print "computing boundary"
+    print mark2.shape
+    list_bound = np.zeros(mark1.shape, dtype=np.int32)
+    for I in range(list_bound.shape[0]):
+        print  "bound row ", I , " / " , mark1.shape[0]
+        for J in range(list_bound.shape[1]):
+            list_bound[I,J]=0
+            if mark1[I,J]==0:
+                list_bound[I,J]=125
+            if I>1 and J>1 and I<list_bound.shape[0]-2 and J< list_bound.shape[1]-2:
+                for K in range(5):
+                    for L in range(5):
+                        if mark1[I-2+K,J-2+L] != mark2[I-2+K,J-2+L]:
+                            list_bound[I,J]=255
+            else:
+                list_bound[I,J]=255
+            f.write(str(I)+'\t'+str(J)+'\t'+str(list_bound[I,J])+'\n')
+    print '[DONE]'
+    f.close()
+    imsave(picname, list_bound)
+    return list_bound
+
+
+
+
+
+
+
 
 def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
     """Save flow field to an ascii file.
@@ -158,7 +320,7 @@ def display( message ):
     sys.stdout.flush()
 
 class Multiprocesser():
-    def __init__ ( self, data_dir, pattern_a, pattern_b  ):
+    def __init__ ( self, data_dir, pattern_a, pattern_b = None  ):
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets
@@ -182,16 +344,22 @@ class Multiprocesser():
             
         pattern_b : str
             a shell glob patter to match the second
-            frames.
+            frames. if None, then the list is sequential, 001.tif, 002.tif 
 
         Examples
         --------
         >>> multi = openpiv.tools.Multiprocesser( '/home/user/images', 'image_*_a.bmp', 'image_*_b.bmp')
     
         """
-        # load lists of images 
+        # load lists of images
+         
         self.files_a = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_a ) ) )
-        self.files_b = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_b ) ) )
+        
+        if pattern_b is None:
+            self.files_b = self.files_a[1:]
+            self.files_a = self.files_a[:-1]
+        else:    
+            self.files_b = sorted( glob.glob( os.path.join( os.path.abspath(data_dir), pattern_b ) ) )
         
         # number of images
         self.n_files = len(self.files_a)
@@ -230,4 +398,89 @@ class Multiprocesser():
             for image_pair in image_pairs:
                 func( image_pair )
                 
-                
+
+def negative( image):
+    """ Return the negative of an image
+    
+    Parameter
+    ----------
+    image : 2d np.ndarray of grey levels
+
+    Returns
+    -------
+    (255-image) : 2d np.ndarray of grey levels
+
+    """
+    return (255-image)
+
+
+def display_windows_sampling( x, y, window_size, skip=0,  method='standard'):
+    """ Displays a map of the interrogation points and windows
+    
+    
+    Parameters
+    ----------
+    x : 2d np.ndarray
+        a two dimensional array containing the x coordinates of the 
+        interrogation window centers, in pixels.
+        
+    y : 2d np.ndarray
+        a two dimensional array containing the y coordinates of the 
+        interrogation window centers, in pixels.
+
+    window_size : the interrogation window size, in pixels
+    
+    skip : the number of windows to skip on a row during display. 
+           Recommended value is 0 or 1 for standard method, can be more for random method
+           -1 to not show any window
+
+    method : can be only <standard> (uniform sampling and constant window size)
+                         <random> (pick randomly some windows)
+    
+    Examples
+    --------
+    
+    >>> openpiv.tools.display_windows_sampling(x, y, window_size=32, skip=0, method='standard')
+
+    
+    """
+    
+    fig=pl.figure()
+    pl.hold(True)
+    if skip < 0 or skip +1 > len(x[0])*len(y):
+        fig.canvas.set_window_title('interrogation points map')
+        pl.scatter(x, y, color='g') #plot interrogation locations
+    else:
+        nb_windows = len(x[0])*len(y)/(skip+1)
+        #standard method --> display uniformly picked windows
+        if method == 'standard':
+            pl.scatter(x, y, color='g')#plot interrogation locations (green dots)
+            fig.canvas.set_window_title('interrogation window map')
+            #plot the windows as red squares
+            for i in range(len(x[0])):
+                for j in range(len(y)):
+                    if j%2 == 0:
+                        if i%(skip+1) == 0:
+                            x1 = x[0][i] - window_size/2
+                            y1 = y[j][0] - window_size/2
+                            pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+                    else:
+                        if i%(skip+1) == 1 or skip==0:
+                            x1 = x[0][i] - window_size/2
+                            y1 = y[j][0] - window_size/2
+                            pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+        #random method --> display randomly picked windows
+        elif method == 'random':
+            pl.scatter(x, y, color='g')#plot interrogation locations
+            fig.canvas.set_window_title('interrogation window map, showing randomly '+str(nb_windows)+' windows')
+            for i in range(nb_windows):
+                k=np.random.randint(len(x[0])) #pick a row and column index
+                l=np.random.randint(len(y))
+                x1 = x[0][k] - window_size/2
+                y1 = y[l][0] - window_size/2
+                pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+        else:
+            raise ValueError('method not valid: choose between standard and random')
+    pl.draw()
+    pl.show()
+   

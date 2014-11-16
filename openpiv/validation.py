@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+
 """A module for spurious vector detection."""
 
 __licence__ = """
@@ -62,7 +63,11 @@ def global_val( u, v, u_thresholds, v_thresholds ):
         
     """
     
-    ind = np.logical_or(np.logical_or(u < u_thresholds[0], u > u_thresholds[1]),np.logical_or(v < v_thresholds[0], v > v_thresholds[1]))
+    ind = np.logical_or(\
+          np.logical_or(u < u_thresholds[0], u > u_thresholds[1]), \
+          np.logical_or(v < v_thresholds[0], v > v_thresholds[1]) \
+          )
+    
     u[ind] = np.nan
     v[ind] = np.nan
     
@@ -71,7 +76,7 @@ def global_val( u, v, u_thresholds, v_thresholds ):
     
     return u, v, mask
     
-def global_std( u, v, std_threshold=3 ):
+def global_std( u, v, std_threshold = 3 ):
     """Eliminate spurious vectors with a global threshold defined by the standard deviation
     
     This validation method tests for the spatial consistency of the data
@@ -118,7 +123,7 @@ def global_std( u, v, std_threshold=3 ):
     
     return u, v, mask
 
-def sig2noise_val( u, v, sig2noise, threshold=1.3):
+def sig2noise_val( u, v, sig2noise, threshold = 1.3):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
     
     Replace spurious vectors with zero if signal to noise ratio

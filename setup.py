@@ -30,10 +30,12 @@ package_data =  [ 'data/defaults-processing-parameters.cfg',
 
 # data files are other files which are not required by the program but 
 # we want to ditribute as well, for example documentation.
-data_files = [ ('share/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
-               ('share/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('share/docs/openpiv', ['README'] ),
-               ('share/openpiv/ui', glob.glob('openpiv/data/ui/*.ui') ),
+data_files = [ ('openpiv/openpiv/tutorial-part1', glob.glob('openpiv/openpiv/tutorial-part1/*') ),
+               ('openpiv/openpiv/masking_tutorial', glob.glob('openpiv/openpiv/masking_tutorial/*') ),
+               ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
+               ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
+               ('openpiv/docs/openpiv', ['README.rst'] ),
+               ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
              ]
 
 
@@ -43,17 +45,18 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 # script are executable files that will be run to load the gui or something else.
-scripts = ['openpiv/openpiv']
+scripts = ['openpiv/tutorial-part1/tutorial-part1.py', 'openpiv/masking_tutorial/masking_tutorial.py']
 
 
 
-setup(  name = "OpenPiv",
-        version = "0.17",
+
+setup(  name = "OpenPIV",
+        version = "0.18",
         author = "The OpenPIV contributors",
         author_email = "openpiv@openpiv.net",
         description = "A software for PIV data analysis",
         license = "GPL v3",
-        url = "www.openpiv.net",
+        url = "http://www.openpiv.net",
         long_description =  """OpenPIV is an initiative of scientists to
                             develop a software, algorithms and methods
                             for the state-of-the-art experimental tool
