@@ -6,12 +6,6 @@ cimport cython
 
 DTYPEf = np.float
 ctypedef np.float_t DTYPEf_t
-<<<<<<< HEAD
-
-=======
-# DTYPEi = np.int64
-# ctypedef np.int64_t DTYPEi_t
->>>>>>> master
 DTYPEi = np.int
 ctypedef np.int_t DTYPEi_t
 
