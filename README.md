@@ -1,6 +1,6 @@
 # OpenPIV
 
-OpenPIV consists in a python module for scripting and executing the analysis of 
+OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
 development, to ease the use for those users who don't have python skills.
 
@@ -14,30 +14,9 @@ Development is currently done on a Linux/Mac OSX environment, but as soon as pos
 Windows will be tested. If you have access to one of these platforms
 please test the code. 
 
-The most updated version is on Alex's Github repository, please follow: 
-
-https://github.com/alexlib/openpiv-python
-
 ## Installing
 
-It is recommended to use Github repository for the latest development branch: 
-
-https://github.com/alexlib/openpiv-python
-
-Installation instructions for various platforms can be found at http://www.openpiv.net/openpiv-python/
-
-Basically we use distutils:
-
-    python setup.py build_ext --inplace
-
-should work. 
-
-If you want to try one of the pre-compiled versions, you may try these:
-
-Windows: https://dl.dropboxusercontent.com/u/5266698/OpenPIV/OpenPIV-0.11.win32-py2.7.msi
-Mac OS X: https://dl.dropboxusercontent.com/u/5266698/OpenPIV/OpenPIV-0.11.macosx-10.9-intel.zip
-
-We're also listed on PyPI: https://pypi.python.org/pypi/OpenPIV, so you could just try:
+We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just try:
 
     pip install openpiv
 
@@ -45,13 +24,36 @@ or
 
     easy_install openpiv
 
-## Documentation 
+### To build from source
 
-The OpenPiv documentation is available on the project web page at http://www.openpiv.net/openpiv-python/
+Download the package from the Github: https://github.com/OpenPIV/openpiv-python/archive/master.zip
+or clone using git
 
-## Try OpenPIV online
+    git clone https://github.com/OpenPIV/openpiv-python.git
 
-No installation is required. Just use this link - open a new account on Wakari.io and you'll have the tutorial in your browser using IPython notebook, based on Numpy/SciPy/Matplotlib/ and our OpenPIV library. 
+Using distutils create a local (in the same directory) compilation of the Cython files:
 
-https://www.wakari.io/sharing/bundle/openpiv/openpiv-python_tutorial
+    python setup.py build_ext --inplace
+
+Or for the global installation, use:
+
+    python setup.py install 
+
+
+### Latest developments
+
+Latest developments go into @alexlib repository <https://github.com/alexlib/openpiv-python>
+
+## Documentation
+
+The OpenPIV documentation is available on the project web page at <http://openpiv.readthedocs.org>
+
+
+## Contributors
+
+1. Alex Liberzon  
+2. Roi Gurka  
+3. Zachary J. Taylor  
+4. David Lasagna  
+5. Mathias Aubert
 
