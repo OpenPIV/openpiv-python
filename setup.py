@@ -34,7 +34,7 @@ data_files = [ ('openpiv/openpiv/tutorial-part1', glob.glob('openpiv/openpiv/tut
                ('openpiv/openpiv/masking_tutorial', glob.glob('openpiv/openpiv/masking_tutorial/*') ),
                ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
                ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('openpiv/docs/openpiv', ['README.rst'] ),
+               ('openpiv/docs/openpiv', ['README.md'] ),
                ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
              ]
 
