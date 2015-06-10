@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
 from skimage import io, img_as_float, exposure, data, img_as_uint
-from skimage.filter import sobel, rank, threshold_otsu
+from skimage.filters import sobel, rank, threshold_otsu
 import numpy as np
 
 
