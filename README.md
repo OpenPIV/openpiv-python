@@ -57,3 +57,5 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. David Lasagna  
 5. Mathias Aubert
 
+
+[![Build Status](https://travis-ci.org/alexlib/openpiv-python.svg)](https://travis-ci.org/alexlib/openpiv-python)
