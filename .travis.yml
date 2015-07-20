@@ -6,8 +6,8 @@ python:
   - 2.7
 
 before_install: 
-    easy_install Cython  
-    pip install progressbar
-    
+  easy_install Cython  
+  pip install progressbar
+  
 install: python setup.py install
 script: python setup.py test
