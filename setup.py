@@ -1,8 +1,32 @@
-from distutils.core import setup, Extension
-from Cython.Distutils import build_ext
-
+import sys
 import glob
 import numpy
+
+try:
+    from setuptools import setup
+    from setuptools.extension import Extension
+except ImportError:
+    print("Couldn't import setuptools. Falling back to distutils.")
+    from distutils.core import setup
+
+#
+# Force `setup_requires` stuff like Cython to be installed before proceeding
+#
+from setuptools.dist import Distribution
+Distribution(dict(setup_requires='Cython'))
+
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    print("Could not import Cython.Distutils. Install `cython` and rerun.")
+    sys.exit(1)
+    
+
+
+# from distutils.core import setup, Extension
+# from Cython.Distutils import build_ext
+
+
 
 # Build extensions 
 module1 = Extension(    name         = "openpiv.process",
@@ -15,8 +39,10 @@ module2 = Extension(    name         = "openpiv.lib",
                         include_dirs = [numpy.get_include()],
                     )
 
+module_test = Extension("hello", ["hello.pyx"])
+
 # a list of the extension modules that we want to distribute
-ext_modules = [module1, module2]
+ext_modules = [module1, module2, module_test]
 
 
 # Package data are those filed 'strictly' needed by the program
@@ -51,23 +77,24 @@ scripts = ['openpiv/tutorial-part1/tutorial-part1.py', 'openpiv/masking_tutorial
 
 
 setup(  name = "OpenPIV",
-        version = "0.18",
+        version = "0.19",
         author = "The OpenPIV contributors",
-        author_email = "openpiv@openpiv.net",
-        description = "A software for PIV data analysis",
+        author_email = "openpiv2008@gmail.com",
+        description = "An open source software for PIV data analysis",
         license = "GPL v3",
         url = "http://www.openpiv.net",
-        long_description =  """OpenPIV is an initiative of scientists to
-                            develop a software, algorithms and methods
+        long_description =  """OpenPIV is a set of open source algorithms and methods
                             for the state-of-the-art experimental tool
                             of Particle Image Velocimetry (PIV) which 
-                            are free, open source, and easy to operate.""",
+                            are free, open, and easy to operate.""",
                             
         ext_modules = ext_modules, 
         packages = packages,
         cmdclass = {'build_ext': build_ext},
         scripts = scripts,
         package_data = {'': package_data},
-        data_files = data_files
+        data_files = data_files,
+        setup_requires = ['Cython'],
+        test_suite='test',
         )
 
