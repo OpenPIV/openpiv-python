@@ -1,4 +1,5 @@
 # OpenPIV
+[![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
@@ -57,5 +58,3 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. David Lasagna  
 5. Mathias Aubert
 
-
-[![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg)](https://travis-ci.org/OpenPIV/openpiv-python)
