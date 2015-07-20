@@ -39,8 +39,10 @@ module2 = Extension(    name         = "openpiv.lib",
                         include_dirs = [numpy.get_include()],
                     )
 
+module_test = Extension("hello", ["hello.pyx"])
+
 # a list of the extension modules that we want to distribute
-ext_modules = [module1, module2]
+ext_modules = [module1, module2, module_test]
 
 
 # Package data are those filed 'strictly' needed by the program
