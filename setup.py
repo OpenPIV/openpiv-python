@@ -85,7 +85,6 @@ setup(  name = "OpenPIV",
         cmdclass = {'build_ext': build_ext},
         package_data = {'': package_data},
         data_files = data_files,
-        install_requires = ['numpy','cython'],
-        test_suite='test',
-        )
+        install_requires = ['numpy','cython']
+)
 
