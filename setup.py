@@ -70,7 +70,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 setup(  name = "OpenPIV",
         version = "0.20",
-        author = "The OpenPIV contributors",
+        author = "OpenPIV contributors",
         author_email = "openpiv2008@gmail.com",
         description = "An open source software for PIV data analysis",
         license = "GPL v3",
@@ -85,7 +85,7 @@ setup(  name = "OpenPIV",
         cmdclass = {'build_ext': build_ext},
         package_data = {'': package_data},
         data_files = data_files,
-        setup_requires = ['Cython'],
+        install_requires = ['numpy','cython'],
         test_suite='test',
         )
 
