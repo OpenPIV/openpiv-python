@@ -1,25 +1,18 @@
-include openpiv/src/process.pyx
-include openpiv/src/lib.pyx
-include openpiv/tutorial-part1/*
-include openpiv/masking-tutorial/*
-include *.txt
 include *.md
-include *.py
 include *.sh
+include *.txt
 include INSTALL
 include MANIFEST
 include MILESTONES
 include TODO
-recursive-include docs *.bat
-recursive-include docs *.png
-recursive-include docs *.py
-recursive-include docs *.zip
-recursive-include docs Makefile
+recursive-include openpiv *.bat
+recursive-include openpiv *.bmp
 recursive-include openpiv *.ipynb
 recursive-include openpiv *.pdf
+recursive-include openpiv *.png
 recursive-include openpiv *.py
 recursive-include openpiv *.rst
 recursive-include openpiv *.tif
 recursive-include openpiv *.ui
-recursive-include docs *.rst
-
+recursive-include openpiv *.zip
+recursive-include openpiv Makefile
