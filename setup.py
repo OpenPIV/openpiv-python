@@ -4,11 +4,10 @@ import numpy
 
 try:
     from setuptools import setup
-    from setuptools.extension import Extension
+    from setuptools import Extension
 except ImportError:
-    print("Couldn't import setuptools. Falling back to distutils.")
     from distutils.core import setup
-
+    from distutils.extension import Extension
 #
 # Force `setup_requires` stuff like Cython to be installed before proceeding
 #
