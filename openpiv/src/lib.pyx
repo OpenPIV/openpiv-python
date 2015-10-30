@@ -58,7 +58,7 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     cdef np.ndarray[DTYPEi_t, ndim=1] jnans = np.empty([array.shape[0]*array.shape[1]], dtype=DTYPEi)
     
     # indices where array is NaN
-    inans, jnans = np.nonzero( np.isnan(array) )
+    inans, jnans = [x.astype(DTYPEi) for x in np.nonzero( np.isnan(array) )]
     
     # number of NaN elements
     n_nans = len(inans)
