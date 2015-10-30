@@ -76,7 +76,7 @@ scripts = ['openpiv/tutorial-part1/tutorial-part1.py', 'openpiv/masking_tutorial
 
 
 setup(  name = "OpenPIV",
-        version = "0.19",
+        version = "0.20.1",
         author = "The OpenPIV contributors",
         author_email = "openpiv2008@gmail.com",
         description = "An open source software for PIV data analysis",
