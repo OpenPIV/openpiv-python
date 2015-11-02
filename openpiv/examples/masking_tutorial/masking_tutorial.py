@@ -9,7 +9,7 @@ import openpiv.scaling
 import openpiv.preprocess
 from skimage import io
 
-%pylab inline
+# %pylab inline
 
 # <codecell>
 
