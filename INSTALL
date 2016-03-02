@@ -17,11 +17,11 @@ The dependencies are:
 * `cython <http://cython.org/>`_
 * `scikit-image <http://scikit-image.org/>`_
 
-On all the platforms, the binary Enthought Python Distribution (EPD) is recommended. 
-Visit http://www.enthought.com
+On all the platforms, the binary Anaconda installation is recommended. 
+Visit https://www.continuum.io/downloads
 
-How to install the dependencies on Linux
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+How to install the dependencies on Linux (detailed) 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 On a Linux platform installing these dependencies should be trick. Often, if not always, 
 python is installed by default, while the other dependencies should appear in your package
 manager.
@@ -52,15 +52,6 @@ openpiv
 	to your ~/.bashrc file and then logout or:
 	 source ~/.bashrc
 **/
-
-How to install the dependencies on Windows
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On Windows all these dependencies, as well as several other useful packages, can be installed
-using the Python(x,y) distribution, available at http://www.pythonxy.com/
-
-How to install the dependencies on a Mac
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com 
 
 
 Get OpenPIV source code!
