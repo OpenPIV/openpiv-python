@@ -58,9 +58,9 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. David Lasagna  
 5. Mathias Aubert
 
-# Example Binder with requirements.txt
+# Run tutorial on Binder with automatic installation of openpiv (and progressbar)
 
-[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/alexlib/openpiv-python)
+[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/alexlib/openpiv-python/openpiv/examples/tutorial-part1/openpiv-python-tutorial-part1.ipynb)
 
 A Binder-compatible repo with a `requirements.txt` file.
 
