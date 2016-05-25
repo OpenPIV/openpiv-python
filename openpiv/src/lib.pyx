@@ -48,7 +48,8 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
         
     """
     
-    cdef int i, j, I, J, it, n, k, l
+    cdef int i, j, I, J, it, k, l
+    cdef float n
     cdef int n_invalids
     
     cdef np.ndarray[DTYPEf_t, ndim=2] filled = np.empty( [array.shape[0], array.shape[1]], dtype=DTYPEf)
@@ -72,8 +73,21 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
         for i in range(2*kernel_size+1):
             for j in range(2*kernel_size+1):
                 kernel[i,j] = 1.0
+
+    elif method == 'disk':
+        for i in range(2*kernel_size+1):
+            for j in range(2*kernel_size+1):
+                if ((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 <= kernel_size:
+                    kernel[i,j] = 1.0
+                else:
+                    kernel[i,j] = 0.0
+
+    elif method == 'distance': 
+        for i in range(2*kernel_size+1):
+            for j in range(2*kernel_size+1):
+                kernel[i,j] = -1*(((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 - ((kernel_size)**2 + (kernel_size)**2)**0.5)
     else:
-        raise ValueError( 'method not valid. Should be one of `localmean`.')
+        raise ValueError( 'method not valid. Should be one of `localmean`, `disk` or `distance`.')
     
     # fill new array with input elements
     for i in range(array.shape[0]):
@@ -91,9 +105,11 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
             
             # initialize to zero
             filled[i,j] = 0.0
-            n = 0
+            n = 0.0
             
             # loop over the kernel
+
+
             for I in range(2*kernel_size+1):
                 for J in range(2*kernel_size+1):
                    
@@ -106,13 +122,16 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
                                 
                                 # do not sum itself
                                 if I-kernel_size != 0 and J-kernel_size != 0:
-                                    
-                                    # convolve kernel with original array
-                                    filled[i,j] = filled[i,j] + filled[i+I-kernel_size, j+J-kernel_size]*kernel[I, J]
-                                    n = n + 1
+
+                                    #do not bother with 0 kernel values
+                                    if kernel[I, J] != 0:
+
+                                        # convolve kernel with original array
+                                        filled[i,j] = filled[i,j] + filled[i+I-kernel_size, j+J-kernel_size]*kernel[I, J]
+                                        n = n + kernel[I,J]
 
             # divide value by effective number of added elements
-            if n != 0:
+            if n > 0:
                 filled[i,j] = filled[i,j] / n
                 replaced_new[k] = filled[i,j]
             else:
