@@ -17,8 +17,8 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     The algorithm is the following:
     
     1) For each element in the input array, replace it by a weighted average
-       of the neighbouring elements which are not NaN themselves. The weights depends
-       of the method type. 
+       of the neighbouring elements which are not NaN themselves. The weights
+       depend on the method type. See Methods below.
        
     2) Several iterations are needed if there are adjacent NaN elements.
        If this is the case, information is "spread" from the edges of the missing
