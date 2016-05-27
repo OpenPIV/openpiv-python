@@ -52,7 +52,11 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     
     max_iter : int
         the number of iterations
-    
+
+    tol : float 
+        On each iteration check if the mean square difference between  
+        values of replaced elements is below a certain tolerance `tol`
+
     kernel_size : int
         the size of the kernel, default is 1
         
