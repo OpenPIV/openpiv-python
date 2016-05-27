@@ -18,12 +18,32 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     
     1) For each element in the input array, replace it by a weighted average
        of the neighbouring elements which are not NaN themselves. The weights depends
-       of the method type. If ``method=localmean`` weight are equal to 1/( (2*kernel_size+1)**2 -1 )
+       of the method type. 
        
     2) Several iterations are needed if there are adjacent NaN elements.
        If this is the case, information is "spread" from the edges of the missing
        regions iteratively, until the variation is below a certain threshold. 
-    
+
+    Methods:
+
+    localmean - A square kernel where all elements have the same value,
+                weights are equal to n/( (2*kernel_size+1)**2 -1 ),
+                where n is the number of non-NaN elements.
+    disk - A circular kernel where all elements have the same value,
+           kernel is calculated by::
+               if ((S-i)**2 + (S-j)**2)**0.5 <= S:
+                   kernel[i,j] = 1.0
+               else:
+                   kernel[i,j] = 0.0
+           where S is the kernel radius.
+    distance - A circular inverse distance kernel where elements are 
+               weighted proportional to their distance away from the 
+               center of the kernel, elements farther away have less
+               weight. Weights are calculated as::
+                   maxDist = ((S)**2 + (S)**2)**0.5
+                   kernel[i,j] = -1*(((S-i)**2 + (S-j)**2)**0.5 - maxDist)
+               where S is the kernel radius.
+
     Parameters
     ----------
     
@@ -38,7 +58,7 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
         
     method : str
         the method used to replace invalid values. Valid options are
-        `localmean`.
+        `localmean`, `disk`, and `distance`.
         
     Returns
     -------
