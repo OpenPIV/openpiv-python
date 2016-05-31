@@ -12,7 +12,7 @@ ctypedef np.int_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
-def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, int kernel_size=1, str method='localmean'):
+def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, int kernel_size=2, str method='disk'):
     """Replace NaN elements in an array using an iterative image inpainting algorithm.
     
     The algorithm is the following:
@@ -40,7 +40,9 @@ def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, in
     distance - A circular inverse distance kernel where elements are 
                weighted proportional to their distance away from the 
                center of the kernel, elements farther away have less
-               weight. Weights are calculated as::
+               weight. Elements outside the specified radius are set 
+               to 0.0 as in 'disk', the remaining of the weights are 
+               calculated as::
                    maxDist = ((S)**2 + (S)**2)**0.5
                    kernel[i,j] = -1*(((S-i)**2 + (S-j)**2)**0.5 - maxDist)
                where S is the kernel radius.
@@ -75,7 +77,6 @@ def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, in
     
     cdef int i, j, I, J, it, k, l
     cdef float n
-    cdef int n_invalids
 
     cdef np.ndarray[DTYPEf_t, ndim=2] kernel = np.empty( (2*kernel_size+1, 2*kernel_size+1), dtype=DTYPEf ) 
     
@@ -111,7 +112,10 @@ def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, in
     elif method == 'distance': 
         for i in range(2*kernel_size+1):
             for j in range(2*kernel_size+1):
-                kernel[i,j] = -1*(((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 - ((kernel_size)**2 + (kernel_size)**2)**0.5)
+                if ((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 <= kernel_size:
+                    kernel[i,j] = kernel[i,j] = -1*(((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 - ((kernel_size)**2 + (kernel_size)**2)**0.5)
+                else:
+                    kernel[i,j] = 0.0
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`, `disk` or `distance`.')
         
