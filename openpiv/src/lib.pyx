@@ -3,6 +3,7 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from libc.math cimport isnan
 
 DTYPEf = np.float
 ctypedef np.float_t DTYPEf_t
@@ -11,7 +12,7 @@ ctypedef np.int_t DTYPEi_t
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
-def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, int kernel_size=1, str method='localmean'):
+def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, int kernel_size=1, str method='localmean'):
     """Replace NaN elements in an array using an iterative image inpainting algorithm.
     
     The algorithm is the following:
@@ -75,16 +76,17 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
     cdef int i, j, I, J, it, k, l
     cdef float n
     cdef int n_invalids
-    
-    cdef np.ndarray[DTYPEf_t, ndim=2] filled = np.empty( [array.shape[0], array.shape[1]], dtype=DTYPEf)
+
     cdef np.ndarray[DTYPEf_t, ndim=2] kernel = np.empty( (2*kernel_size+1, 2*kernel_size+1), dtype=DTYPEf ) 
     
     cdef np.ndarray[DTYPEi_t, ndim=1] inans = np.empty([array.shape[0]*array.shape[1]], dtype=DTYPEi)
     cdef np.ndarray[DTYPEi_t, ndim=1] jnans = np.empty([array.shape[0]*array.shape[1]], dtype=DTYPEi)
-    
+
+    cdef np.ndarray[DTYPEi_t, ndim=1] iter_seeds = np.zeros(max_iter, dtype=DTYPEi)
+
     # indices where array is NaN
-    inans, jnans = [x.astype(DTYPEi) for x in np.nonzero( np.isnan(array) )]
-    
+    inans, jnans = [x.astype(DTYPEi) for x in np.nonzero(np.isnan(array))]
+
     # number of NaN elements
     n_nans = len(inans)
     
@@ -112,28 +114,21 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
                 kernel[i,j] = -1*(((kernel_size-i)**2 + (kernel_size-j)**2)**0.5 - ((kernel_size)**2 + (kernel_size)**2)**0.5)
     else:
         raise ValueError( 'method not valid. Should be one of `localmean`, `disk` or `distance`.')
-    
-    # fill new array with input elements
-    for i in range(array.shape[0]):
-        for j in range(array.shape[1]):
-            filled[i,j] = array[i,j]
-
-    # make several passes
-    # until we reach convergence
-    for it in range(max_iter):
         
+    # make several passes
+    # until we reach convergence 
+    for it in range(max_iter):
+    
         # for each NaN element
         for k in range(n_nans):
             i = inans[k]
             j = jnans[k]
-            
-            # initialize to zero
-            filled[i,j] = 0.0
+           
+            #init to 0.0
+            replaced_new[k] = 0.0
             n = 0.0
             
             # loop over the kernel
-
-
             for I in range(2*kernel_size+1):
                 for J in range(2*kernel_size+1):
                    
@@ -142,31 +137,32 @@ def replace_nans( np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, i
                         if j+J-kernel_size < array.shape[1] and j+J-kernel_size >= 0:
                                                 
                             # if the neighbour element is not NaN itself.
-                            if filled[i+I-kernel_size, j+J-kernel_size] == filled[i+I-kernel_size, j+J-kernel_size] :
-                                
-                                # do not sum itself
-                                if I-kernel_size != 0 and J-kernel_size != 0:
+                            if not isnan(array[i+I-kernel_size, j+J-kernel_size]):
 
-                                    #do not bother with 0 kernel values
-                                    if kernel[I, J] != 0:
+                                # do not bother with 0 kernel values
+                                if kernel[I, J] != 0:
 
-                                        # convolve kernel with original array
-                                        filled[i,j] = filled[i,j] + filled[i+I-kernel_size, j+J-kernel_size]*kernel[I, J]
-                                        n = n + kernel[I,J]
+                                    # convolve kernel with original array
+                                    replaced_new[k] = replaced_new[k] + array[i+I-kernel_size, j+J-kernel_size]*kernel[I, J]
+                                    n = n + kernel[I,J]
 
+            
             # divide value by effective number of added elements
             if n > 0:
-                filled[i,j] = filled[i,j] / n
-                replaced_new[k] = filled[i,j]
+                replaced_new[k] = replaced_new[k] / n
             else:
-                filled[i,j] = np.nan
-                
+                replaced_new[k] = np.nan
+
+        # bulk replace all new values in array
+        for k in range(n_nans):
+            array[inans[k],jnans[k]] = replaced_new[k]
+
         # check if mean square difference between values of replaced 
         #elements is below a certain tolerance
-        if np.mean( (replaced_new-replaced_old)**2 ) < tol:
+        if np.mean((replaced_new-replaced_old)**2) < tol:
             break
         else:
             for l in range(n_nans):
                 replaced_old[l] = replaced_new[l]
     
-    return filled
+    return array
