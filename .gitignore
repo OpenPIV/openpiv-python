@@ -40,3 +40,4 @@ openpiv/masking_tutorial/.ipynb_checkpoints
 .eggs
 *.pyd
 OpenPIV.egg-info
+*.ipynb_checkpoints*
