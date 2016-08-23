@@ -2,6 +2,7 @@ include *.md
 include *.sh
 include *.txt
 include INSTALL
+include LICENSE.txt
 include MANIFEST
 include MILESTONES
 include TODO
