@@ -53,9 +53,10 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 
 ## Contributors
 
-1. Alex Liberzon  
-2. Roi Gurka  
-3. Zachary J. Taylor  
-4. David Lasagna  
-5. Mathias Aubert
+1. [Alex Liberzon](http://github.com/alexlib)
+2. [Roi Gurka](http://github.com/roigurka)
+3. [Zachary J. Taylor](http://github.com/zjtaylor)
+4. [David Lasagna](http://github.com/gasagna)
+5. [Mathias Aubert](http://github.com/MathiasAubert)
+6. [Pete Bachant](http://github.com/petebachant)
 
