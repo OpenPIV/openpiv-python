@@ -37,3 +37,7 @@ openpiv-python-tutorial-part1-checkpoint.ipynb
 dist
 masking_tutorial/.ipynb_checkpoints
 openpiv/masking_tutorial/.ipynb_checkpoints
+.eggs
+*.pyd
+OpenPIV.egg-info
+*.ipynb_checkpoints*
