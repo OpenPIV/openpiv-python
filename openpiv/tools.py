@@ -95,7 +95,7 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
 
 def imread( filename, flatten=0 ):
     """Read an image file into a numpy array
-    using scipy.misc.imread
+    using skimage.io.imread
     
     Parameters
     ----------
