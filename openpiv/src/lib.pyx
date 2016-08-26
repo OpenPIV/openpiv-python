@@ -3,12 +3,12 @@
 import numpy as np
 cimport numpy as np
 cimport cython
-from libc.math cimport isnan
 
 DTYPEf = np.float
 ctypedef np.float_t DTYPEf_t
 DTYPEi = np.int
 ctypedef np.int_t DTYPEi_t
+
 
 @cython.boundscheck(False) # turn of bounds-checking for entire function
 @cython.wraparound(False) # turn of bounds-checking for entire function
@@ -141,7 +141,7 @@ def replace_nans(np.ndarray[DTYPEf_t, ndim=2] array, int max_iter, float tol, in
                         if j+J-kernel_size < array.shape[1] and j+J-kernel_size >= 0:
                                                 
                             # if the neighbour element is not NaN itself.
-                            if not isnan(array[i+I-kernel_size, j+J-kernel_size]):
+                            if not np.isnan(array[i+I-kernel_size, j+J-kernel_size]):
 
                                 # do not bother with 0 kernel values
                                 if kernel[I, J] != 0:
