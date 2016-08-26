@@ -35,7 +35,6 @@ module1 = Extension(    name         = "openpiv.process",
                     
 module2 = Extension(    name         = "openpiv.lib",
                         sources      = ["openpiv/src/lib.pyx"],
-                        libraries    = ["m"],
                         include_dirs = [numpy.get_include()],
                     )
 
