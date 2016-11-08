@@ -26,7 +26,6 @@ from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
 
-from pylab import *
 
 WINSIZE = 32
 OVERLAP = 0
@@ -539,10 +538,15 @@ def piv(frame_a, frame_b,
     # i, j are the row, column indices of the center of each interrogation
     # window
     I = 0
-    for i in range(search_size/2, frame_a.shape[0] - search_size/2 + 1, window_size - overlap ):
+    for k in range(n_rows):
+        # range(range(search_size/2, frame_a.shape[0] - search_size/2, window_size - overlap ):
         J = 0
-        for j in range(search_size/2, frame_a.shape[1] - search_size/2 + 1, window_size - overlap ):
-
+        for m in range(n_cols):
+            # range(search_size/2, frame_a.shape[1] - search_size/2 , window_size - overlap ):
+            
+            i = k*(window_size-overlap) + search_size/2
+            j = m*(window_size-overlap) + search_size/2
+    
             window_a = frame_a[i - window_size/2:i + window_size/2,
                                j - window_size/2:j + window_size/2]
             
@@ -559,10 +563,6 @@ def piv(frame_a, frame_b,
                 corr = correlate_windows(window_a, window_b,
                                          corr_method=corr_method, 
                                          nfftx=nfftx, nffty=nffty)
-                
-                figure()
-                contourf(corr)
-                show()
     
                 # get subpixel approximation for peak position row and column index
                 row, col = find_subpixel_peak_position(
@@ -597,13 +597,15 @@ if __name__ == '__main__':
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
     frame_b = np.roll(np.roll(frame_a,3,axis=1),2,axis=0)
-    u,v = piv(frame_a,frame_b,window_size=20,search_size=32)
-    print u,v
+    u,v = piv(frame_a,frame_b,window_size=16)
+    assert(np.max(np.abs(u-3)) < 0.2)
+    assert(np.max(np.abs(v+2)) < 0.2)
     
     
-    frame_a = np.zeros((64,64))
+    frame_a = np.zeros((256,256))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
     frame_b = np.roll(np.roll(frame_a,3,axis=1),2,axis=0)
     u,v = piv(frame_a,frame_b,window_size=16,search_size=32)
-    print u,v
+    if (np.max(np.abs(u-3) + np.abs(v+2)) > 0.3):
+        scatter(u-3,v+2)
