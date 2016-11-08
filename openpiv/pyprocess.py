@@ -118,6 +118,7 @@ def moving_window_array(array, window_size=WINSIZE, overlap=OVERLAP):
     """
     sz = array.itemsize
     shape = array.shape
+    array = np.ascontiguousarray(array)
 
     strides = (sz * shape[1] * (window_size - overlap),
                sz * (window_size - overlap), sz * shape[1], sz)
