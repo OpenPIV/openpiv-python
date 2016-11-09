@@ -550,11 +550,6 @@ def piv(frame_a, frame_b,
             window_a = frame_a[i - window_size/2:i + window_size/2,
                                j - window_size/2:j + window_size/2]
             
-#            k = i + (search_size-window_size)/2
-#            m = j + (search_size-window_size)/2
-#
-#            print('i,j,k,m'); print i,j,k,m
-
             window_b = frame_b[i - search_size/2:i + search_size/2,
                                j - search_size/2:j + search_size/2]
 
@@ -574,12 +569,13 @@ def piv(frame_a, frame_b,
                 # get displacements, apply coordinate system definition
                 u[I,J],v[I,J] = -col, row
                 
-                J += 1 # next window
-    
                 # get signal to noise ratio
                 if sig2noise_method is not None:
                     sig2noise[I,J] = sig2noise_ratio(
                         corr, sig2noise_method=sig2noise_method, width=width)
+                
+                J += 1 # next window
+    
         
         I += 1
 
