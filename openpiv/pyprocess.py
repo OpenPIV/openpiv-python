@@ -25,6 +25,7 @@ from numpy.fft import fftshift, rfft2, irfft2
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
+import matplotlib.pyplot as plt
 
 
 WINSIZE = 32
@@ -378,13 +379,20 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     -------
     corr : 2d np.ndarray
         a two dimensions array for the correlation function.
-
+    
+    Note that due to the wish to use 2^N windows for faster FFT
+    we use a slightly different convention for the size of the 
+    correlation map. The theory says it is M+N-1, and the 
+    'direct' method gets this size out
+    the FFT-based method returns M+N size out, where M is the window_size
+    and N is the search_size
+    It leads to inconsistency of the output 
     """
     if corr_method == 'fft':
         if nfftx is None:
-            nfftx = window_b.shape[0] + window_a.shape[0]
+            nfftx = window_b.shape[0] + window_a.shape[0] - 1  
         if nffty is None:
-            nffty = window_b.shape[1] + window_a.shape[1]
+            nffty = window_b.shape[1] + window_a.shape[1] - 1 
         return fftshift(irfft2(rfft2(normalize_intensity(window_a),
         s=(nfftx, nffty)) * np.conj(rfft2(normalize_intensity(window_b),
         s=(nfftx, nffty)))).real, axes=(0, 1))
@@ -552,19 +560,26 @@ def piv(frame_a, frame_b,
             
             window_b = frame_b[i - search_size/2:i + search_size/2,
                                j - search_size/2:j + search_size/2]
-
+            
+            fig,ax = plt.subplots(1,2)
+            ax[0].imshow(window_a,cmap=plt.cm.gray)
+            ax[1].imshow(window_b,cmap=plt.cm.gray)
+            plt.show()
         
             if np.any(window_a):
                 corr = correlate_windows(window_a, window_b,
                                          corr_method=corr_method, 
                                          nfftx=nfftx, nffty=nffty)
-    
+                plt.figure()
+                plt.contourf(corr)
                 # get subpixel approximation for peak position row and column index
                 row, col = find_subpixel_peak_position(
                                                        corr, subpixel_method=subpixel_method)
                 
-                row -= search_size - (search_size - window_size)
-                col -= search_size - (search_size - window_size)
+                print 'row,col'; print row,col
+                
+                row -=  (search_size + window_size - 1)/2
+                col -=  (search_size + window_size - 1)/2
     
                 # get displacements, apply coordinate system definition
                 u[I,J],v[I,J] = -col, row
