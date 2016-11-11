@@ -35,7 +35,6 @@ module1 = Extension(    name         = "openpiv.process",
                     
 module2 = Extension(    name         = "openpiv.lib",
                         sources      = ["openpiv/src/lib.pyx"],
-                        libraries    = ["m"],
                         include_dirs = [numpy.get_include()],
                     )
 
@@ -69,7 +68,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.2",
+        version = "0.20.4",
         author = "OpenPIV contributors",
         author_email = "openpiv2008@gmail.com",
         description = "An open source software for PIV data analysis",
