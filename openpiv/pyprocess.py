@@ -21,13 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy.lib.stride_tricks
 import numpy as np
-from numpy.fft import fftshift, rfft2, irfft2
+from numpy.fft import rfft2, irfft2
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
 
+
 WINSIZE = 32
-OVERLAP = 16
+OVERLAP = 0
+SEARCHSIZE = 32
 
 
 def get_coordinates(image_size, window_size=WINSIZE, overlap=OVERLAP):
@@ -118,6 +120,7 @@ def moving_window_array(array, window_size=WINSIZE, overlap=OVERLAP):
     """
     sz = array.itemsize
     shape = array.shape
+    array = np.ascontiguousarray(array)
 
     strides = (sz * shape[1] * (window_size - overlap),
                sz * (window_size - overlap), sz * shape[1], sz)
@@ -237,7 +240,8 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
     """
 
     # initialization
-    default_peak_position = (np.floor(corr.shape[0] / 2.), np.floor(corr.shape[1] / 2.))
+    # default_peak_position = (np.floor(corr.shape[0] / 2.), np.floor(corr.shape[1] / 2.))
+    default_peak_position = (0,0)
 
     
     # the peak locations
@@ -352,7 +356,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     Parameters
     ----------
     window_a : 2d np.ndarray
-        a two dimensions array for the first interrogation window.
+        a two dimensions array for the first interrogation window, 
 
     window_b : 2d np.ndarray
         a two dimensions array for the second interrogation window.
@@ -374,17 +378,29 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     -------
     corr : 2d np.ndarray
         a two dimensions array for the correlation function.
-
+    
+    Note that due to the wish to use 2^N windows for faster FFT
+    we use a slightly different convention for the size of the 
+    correlation map. The theory says it is M+N-1, and the 
+    'direct' method gets this size out
+    the FFT-based method returns M+N size out, where M is the window_size
+    and N is the search_size
+    It leads to inconsistency of the output 
     """
-
+    
     if corr_method == 'fft':
+        window_b = np.conj(window_b[::-1, ::-1])
         if nfftx is None:
-            nfftx = 2 * window_a.shape[0]
+            nfftx = nextpower2(window_b.shape[0] + window_a.shape[0])  
         if nffty is None:
-            nffty = 2 * window_a.shape[1]
-        return fftshift(irfft2(rfft2(normalize_intensity(window_a),
-        s=(nfftx, nffty)) * np.conj(rfft2(normalize_intensity(window_b),
-        s=(nfftx, nffty)))).real, axes=(0, 1))
+            nffty = nextpower2(window_b.shape[1] + window_a.shape[1]) 
+        
+        f2a = rfft2(normalize_intensity(window_a), s=(nfftx, nffty))
+        f2b = rfft2(normalize_intensity(window_b), s=(nfftx, nffty))
+        corr = irfft2(f2a * f2b).real
+        corr = corr[:window_a.shape[0] + window_b.shape[0], 
+                    :window_b.shape[1] + window_a.shape[1]]
+        return corr
     elif corr_method == 'direct':
         return convolve2d(normalize_intensity(window_a),
         normalize_intensity(window_b[::-1, ::-1]), 'full')
@@ -409,10 +425,21 @@ def normalize_intensity(window):
     return window - window.mean()
 
 
-def piv(frame_a, frame_b, window_size=WINSIZE, overlap=OVERLAP, dt=1.0, corr_method='fft',
- subpixel_method='gaussian', sig2noise_method=None, nfftx=None, nffty=None,
- width=2):
-    """Standard PIV cross-correlation algorithm.
+def piv(frame_a, frame_b, 
+        window_size=WINSIZE, 
+        overlap=OVERLAP, 
+        dt=1.0, 
+        corr_method='fft',
+        subpixel_method='gaussian', 
+        sig2noise_method=None, 
+        nfftx=None, nffty=None,
+        width=2, 
+        search_size=None):
+    """Standard PIV cross-correlation algorithm, with an option for 
+    extended area search that increased dynamic range. The search region
+    in the second frame is larger than the interrogation window size in the 
+    first frame. For Cython implementation see 
+    openpiv.process.extended_search_area_piv
 
     This is a pure python implementation of the standard PIV cross-correlation
     algorithm. It is a zero order displacement predictor, and no iterative process
@@ -464,6 +491,11 @@ def piv(frame_a, frame_b, window_size=WINSIZE, overlap=OVERLAP, dt=1.0, corr_met
         the half size of the region around the first
         correlation peak to ignore for finding the second
         peak. [default: 2]. Only used if ``sig2noise_method==peak2peak``.
+    
+    search_size : int 
+       the size of the interrogation window in the second frame, 
+       default is the same interrogation window size and it is a 
+       fallback to the simplest FFT based PIV
 
 
     Returns
@@ -481,45 +513,131 @@ def piv(frame_a, frame_b, window_size=WINSIZE, overlap=OVERLAP, dt=1.0, corr_met
         window pair.
 
     """
-    # transform the arrray into a more covenient form for looping
-    windows_a = moving_window_array(frame_a, window_size, overlap)
-    windows_b = moving_window_array(frame_b, window_size, overlap)
-
-    # get shape of the output so that we can preallocate
-    # memory for velocity array
-    n_rows, n_cols = get_field_shape(
-        image_size=frame_a.shape, window_size=window_size, overlap=overlap)
-
-    u = np.empty(n_rows * n_cols)
-    v = np.empty(n_rows * n_cols)
-
-    # if we want sig2noise information, allocate memory
-    if sig2noise_method is not None:
-        sig2noise = np.empty(n_rows * n_cols)
-
-    # for each interrogation window
-    for i in range(windows_a.shape[0]):
-        # get correlation window
+    
+    # check the inputs for validity
+    
+    if search_size is None:
+        search_size = window_size
         
-        corr = correlate_windows(windows_a[i], windows_b[i],
-        corr_method=corr_method, nfftx=nfftx, nffty=nffty)
+    
+    if overlap >= window_size:
+        raise(BaseException,'Overlap has to be smaller than the window_size')
+    
+    if search_size < window_size:
+        raise(BaseException,'Search size cannot be smaller than the window_size')
+    
+        
+    if (window_size > frame_a.shape[0]) or (window_size > frame_a.shape[1]):
+        raise(BaseException,'window size cannot be larger than the image')
+        
+    # get field shape
+    n_rows, n_cols = get_field_shape(frame_a.shape, window_size, overlap )
+            
+    u = np.zeros((n_rows, n_cols))
+    v = np.zeros((n_rows, n_cols))
+    sig2noise = np.zeros((n_rows, n_cols))
+    
+    if search_size > window_size:
+        frame_b = np.pad(frame_b, ((search_size-window_size)/2,
+                               (search_size-window_size)/2),'constant',
+    constant_values = (0,0))
+    
+#    print frame_a.shape, frame_a.dtype, frame_b.shape, frame_b.dtype
+#    fig,ax = plt.subplots(1,2)
+#    ax[0].imshow(frame_a,cmap=plt.cm.gray)
+#    ax[1].imshow(frame_b,cmap=plt.cm.gray)
+#    plt.show()
+#    'constant',constant_values = 0)    
 
-        # get subpixel approximation for peak position row and column index
-        row, col = find_subpixel_peak_position(
-            corr, subpixel_method=subpixel_method)
+    u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
+    
+        # if we want sig2noise information, allocate memory
+    if sig2noise_method is not None:
+        sig2noise = np.zeros((n_rows, n_cols))
+    
+    # loop over the interrogation windows
+    # i, j are the row, column indices of the center of each interrogation
+    # window
+    for k in range(n_rows):
+        # range(range(search_size/2, frame_a.shape[0] - search_size/2, window_size - overlap ):
+        for m in range(n_cols):
+            # range(search_size/2, frame_a.shape[1] - search_size/2 , window_size - overlap ):
+            
+            i = k*(window_size-overlap) + window_size/2
+            j = m*(window_size-overlap) + window_size/2
 
-        # get displacements, apply coordinate system definition
-        u[i],v[i] = -col, row
+#            print 'center', i,j
 
+            
+            il = i - window_size/2 
+            jt = j - window_size/2 
+            ir = i + window_size/2 
+            jb = j + window_size/2 
+            
+#            print 'a', il,ir,jt,jb
 
-        # get signal to noise ratio
-        if sig2noise_method is not None:
-            sig2noise[i] = sig2noise_ratio(
-                corr, sig2noise_method=sig2noise_method, width=width)
+#            il = il if il > 0 else 0
+#            ir = ir if ir < frame_a.shape[0] else frame_a.shape[0]
+#            jt = jt if jt > 0 else 0
+#            jb = jb if jb < frame_a.shape[1] else frame_a.shape[1]            
+    
+            window_a = frame_a[il:ir, jt:jb]
+            
+            # now shift the second image center accordingly
+            i += (search_size - window_size)/2
+            j += (search_size - window_size)/2
+                   
+            il = i - search_size/2
+            ir = i + search_size/2 
+            jt = j - search_size/2
+            jb = j + search_size/2 
+            
+#            print 'b', il, ir, jt, jb
 
+#            il = il if il > 0 else 0
+#            ir = ir if ir < frame_a.shape[0] else frame_a.shape[0]
+#            jt = jt if jt > 0 else 0
+#            jb = jb if jb < frame_a.shape[1] else frame_a.shape[1]
+            
+            window_b = frame_b[il:ir, jt:jb]
+            
+#            fig,ax = plt.subplots(1,2)
+#            ax[0].imshow(window_a,cmap=plt.cm.gray)
+#            ax[1].imshow(window_b,cmap=plt.cm.gray)
+#            plt.show()
+            
+            if np.any(window_a):
+                corr = correlate_windows(window_a, window_b,
+                                         corr_method=corr_method, 
+                                         nfftx=nfftx, nffty=nffty)
+#                plt.figure()
+#                plt.contourf(corr)
+#                plt.show()
+                # get subpixel approximation for peak position row and column index
+                row, col = find_subpixel_peak_position(
+                                                       corr, subpixel_method=subpixel_method)
+                                
+                row -=  (search_size + window_size - 1)/2
+                col -=  (search_size + window_size - 1)/2
+    
+                # get displacements, apply coordinate system definition
+                u[k,m],v[k,m] = -col, row
+                
+                # get signal to noise ratio
+                if sig2noise_method is not None:
+                    sig2noise[k,m] = sig2noise_ratio(
+                        corr, sig2noise_method=sig2noise_method, width=width)
+                
+    
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
-        return u.reshape(n_rows, n_cols) / dt, v.reshape(n_rows, n_cols) / dt,
-        sig2noise.reshape(n_rows, n_cols)
+        return u/dt, v/dt, sig2noise
     else:
-        return u.reshape(n_rows, n_cols) / dt, v.reshape(n_rows, n_cols) / dt
+        return u/dt, v/dt
+
+
+def nextpower2(i):
+    """ Find 2^n that is equal to or greater than. """
+    n = 1
+    while n < i: n *= 2
+    return n
