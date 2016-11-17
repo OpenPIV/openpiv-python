@@ -387,8 +387,9 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     and N is the search_size
     It leads to inconsistency of the output 
     """
-    window_b = np.conj(window_b[::-1, ::-1])
+    
     if corr_method == 'fft':
+        window_b = np.conj(window_b[::-1, ::-1])
         if nfftx is None:
             nfftx = nextpower2(window_b.shape[0] + window_a.shape[0])  
         if nffty is None:
