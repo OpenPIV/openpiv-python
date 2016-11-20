@@ -1,6 +1,3 @@
-#!/usr/bin/python
-
-
 """A module for spurious vector detection."""
 
 __licence__ = """
