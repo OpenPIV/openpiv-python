@@ -25,7 +25,7 @@ def test_piv():
     assert(np.max(np.abs(v+2)) < 0.2)
     
 def test_piv_smaller_window():
-    """ test of the simplest PIV run """
+    """ test of the search area larger than the window """
     frame_a = np.zeros((32,32))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
@@ -36,7 +36,7 @@ def test_piv_smaller_window():
     assert(np.max(np.abs(v-2)) < 0.2)
     
 def test_extended_search_area():
-    """ test of the extended area PIV """
+    """ test of the extended area PIV with larger image """
     frame_a = np.zeros((64,64))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
@@ -46,7 +46,7 @@ def test_extended_search_area():
     assert(np.max(np.abs(u-3)+np.abs(v+2)) <= 0.5)
     
 def test_extended_search_area_overlap():
-    """ test of the extended area PIV """
+    """ test of the extended area PIV with different overlap """
     frame_a = np.zeros((64,64))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
@@ -56,7 +56,7 @@ def test_extended_search_area_overlap():
     assert(np.max(np.abs(u-3)+np.abs(v+2)) <= 0.3)
     
 def test_extended_search_area_sig2noise():
-    """ test of the extended area PIV """
+    """ test of the extended area PIV with sig2peak """
     frame_a = np.zeros((64,64))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
@@ -66,7 +66,7 @@ def test_extended_search_area_sig2noise():
     assert(np.max(np.abs(u-3)+np.abs(v+2)) <= 0.2)
     
 def test_process_extended_search_area():
-    """ test of the extended area PIV """
+    """ test of the extended area PIV from Cython """
     frame_a = np.zeros((64,64))
     frame_a = random_noise(frame_a)
     frame_a = img_as_ubyte(frame_a)
