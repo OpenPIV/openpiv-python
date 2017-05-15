@@ -131,9 +131,9 @@ def extended_search_area_piv( frame_a,
     # loop over the interrogation windows
     # i, j are the row, column indices of the top left corner
     I = 0
-    for i in range( 0, frame_a.shape[0]-window_size, overlap ):
+    for i in range( 0, frame_a.shape[0]-window_size, window_size - overlap ):
         J = 0
-        for j in range( 0, frame_a.shape[1]-window_size, overlap ):
+        for j in range( 0, frame_a.shape[1]-window_size, window_size - overlap ):
 
             # get interrogation window matrix from frame a
             for k in range( window_size ):
