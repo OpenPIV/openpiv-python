@@ -85,7 +85,7 @@ setup(  name = "OpenPIV",
         package_data = {'': package_data},
         data_files = data_files,
         install_requires = ['scipy','numpy','cython'],
-      'classifiers': [
+        classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
