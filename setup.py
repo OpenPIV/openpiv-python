@@ -105,7 +105,7 @@ setup(  name = "OpenPIV",
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Topic :: Scientific/Engineering :: Fluid Mechanics',
+        'Topic :: Scientific/Engineering',
     ]
 )
 
