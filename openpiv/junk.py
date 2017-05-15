@@ -53,7 +53,7 @@ class ProcessParameters( UserDict ):
         Pretty print all the processing parameters.
         """
         for k, v in self.iteritems():
-            print "%s = %s" % ( k.rjust(30), repr(v).ljust(30) )
+            print("%s = %s" % ( k.rjust(30), repr(v).ljust(30) ));
 
 class Hdf5Database( ):
     """
