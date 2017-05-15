@@ -63,7 +63,7 @@ def test_extended_search_area_sig2noise():
     frame_b = np.roll(np.roll(frame_a,3,axis=1),2,axis=0)
     u,v,s2n = piv(frame_a,frame_b,window_size=16,search_size=32,
                   sig2noise_method='peak2peak')
-    assert(np.max(np.abs(u-3)+np.abs(v+2)) <= 0.2)
+    assert(np.max(np.abs(u-3)+np.abs(v+2)) <= 0.3)
     
 def test_process_extended_search_area():
     """ test of the extended area PIV """
@@ -75,4 +75,4 @@ def test_process_extended_search_area():
                                            frame_b.astype(np.int32),
 window_size=16,search_area_size=32,dt=1,overlap=0)
     # print u,v
-    assert(np.max(np.abs(u[:-1,:-1]-3)+np.abs(v[:-1,:-1]+2)) <= 0.2)
+    assert(np.max(np.abs(u[:-1,:-1]-3)+np.abs(v[:-1,:-1]+2)) <= 0.3)
