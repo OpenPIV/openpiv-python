@@ -25,6 +25,7 @@ from numpy.fft import rfft2, irfft2
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
+import matplotlib.pyplot as plt
 
 
 WINSIZE = 32
@@ -531,16 +532,11 @@ def piv(frame_a, frame_b,
         raise(BaseException,'window size cannot be larger than the image')
         
     # get field shape
-    n_rows, n_cols = get_field_shape(frame_a.shape, window_size, overlap )
+    n_rows, n_cols = get_field_shape(frame_a.shape, search_size, overlap )
             
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
     sig2noise = np.zeros((n_rows, n_cols))
-    
-    if search_size > window_size:
-        frame_b = np.pad(frame_b, ((search_size-window_size)/2,
-                               (search_size-window_size)/2),'constant',
-    constant_values = (0,0))
     
 #    print frame_a.shape, frame_a.dtype, frame_b.shape, frame_b.dtype
 #    fig,ax = plt.subplots(1,2)
@@ -563,56 +559,38 @@ def piv(frame_a, frame_b,
         for m in range(n_cols):
             # range(search_size/2, frame_a.shape[1] - search_size/2 , window_size - overlap ):
             
-            i = k*(window_size-overlap) + window_size/2
-            j = m*(window_size-overlap) + window_size/2
-
-#            print 'center', i,j
-
             
-            il = i - window_size/2 
-            jt = j - window_size/2 
-            ir = i + window_size/2 
-            jb = j + window_size/2 
+            # Select first the largest window, work like usual from the top left corner
+            # the left edge goes as: 
+            # e.g. 0, (search_size - overlap), 2*(search_size - overlap),....
+            # so the center of the larger (search_size) window is 
+            # search_size//2, then overlap + search_size//2,  
             
-#            print 'a', il,ir,jt,jb
-
-#            il = il if il > 0 else 0
-#            ir = ir if ir < frame_a.shape[0] else frame_a.shape[0]
-#            jt = jt if jt > 0 else 0
-#            jb = jb if jb < frame_a.shape[1] else frame_a.shape[1]            
-    
-            window_a = frame_a[il:ir, jt:jb]
+            il = k*(search_size - overlap)
+            ir = il + search_size
             
-            # now shift the second image center accordingly
-            i += (search_size - window_size)/2
-            j += (search_size - window_size)/2
-                   
-            il = i - search_size/2
-            ir = i + search_size/2 
-            jt = j - search_size/2
-            jb = j + search_size/2 
-            
-#            print 'b', il, ir, jt, jb
-
-#            il = il if il > 0 else 0
-#            ir = ir if ir < frame_a.shape[0] else frame_a.shape[0]
-#            jt = jt if jt > 0 else 0
-#            jb = jb if jb < frame_a.shape[1] else frame_a.shape[1]
+            jt = m*(search_size - overlap)
+            jb = jt + search_size
             
             window_b = frame_b[il:ir, jt:jb]
+#            print ('b', il, ir, jt, jb)
             
-#            fig,ax = plt.subplots(1,2)
-#            ax[0].imshow(window_a,cmap=plt.cm.gray)
-#            ax[1].imshow(window_b,cmap=plt.cm.gray)
-#            plt.show()
             
+            il += (search_size - window_size)//2
+            ir = il + window_size
+            jt += (search_size - window_size)//2
+            jb =  jt + window_size
+
+#            print ('a', il,ir,jt,jb)
+            window_a = frame_a[il:ir, jt:jb]
+
             if np.any(window_a):
                 corr = correlate_windows(window_a, window_b,
                                          corr_method=corr_method, 
                                          nfftx=nfftx, nffty=nffty)
-#                plt.figure()
-#                plt.contourf(corr)
-#                plt.show()
+                plt.figure()
+                plt.contourf(corr)
+                plt.show()
                 # get subpixel approximation for peak position row and column index
                 row, col = find_subpixel_peak_position(
                                                        corr, subpixel_method=subpixel_method)

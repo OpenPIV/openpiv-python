@@ -31,6 +31,7 @@ import matplotlib.patches as pt
 import matplotlib.image as mpltimg
 from scipy import ndimage
 from skimage import filters, io
+from builtins import range
 
 
 def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1, **kw):
@@ -165,7 +166,7 @@ def mark_background(threshold, list_img, filename):
     mark = np.zeros(list_frame[0].shape, dtype=np.int32)
     background = np.zeros(list_frame[0].shape, dtype=np.int32)
     for I in range(mark.shape[0]):
-        print(" row ", I , " / " , mark.shape[0]);
+        print((" row ", I , " / " , mark.shape[0]));
         for J in range(mark.shape[1]):
             sum1 = 0
             for K in range(len(list_frame)):
@@ -187,7 +188,7 @@ def mark_background2(list_img, filename):
         list_frame.append(imread(list_img[I]))
     background = np.zeros(list_frame[0].shape, dtype=np.int32)
     for I in range(background.shape[0]):
-        print(" row ", I , " / " , background.shape[0]);
+        print((" row ", I , " / " , background.shape[0]));
         for J in range(background.shape[1]):
             min_1 = 255
             for K in range(len(list_frame)):
@@ -207,7 +208,7 @@ def find_reflexions(list_img, filename):
     background = mark_background2(list_img, filename)
     reflexion = np.zeros(background.shape, dtype=np.int32)
     for I in range(background.shape[0]):
-        print(" row ", I , " / " , background.shape[0]);
+        print((" row ", I , " / " , background.shape[0]));
         for J in range(background.shape[1]):
             if background[I,J] > 253:
                 reflexion[I,J] = 255
@@ -226,15 +227,15 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     print("mark1..");
     mark1 = mark_background(threshold, list_img1, "mark1.bmp")
     print("[DONE]");
-    print(mark1.shape);
+    print((mark1.shape));
     print("mark2..");
     mark2 = mark_background(threshold, list_img2, "mark2.bmp")
     print("[DONE]");
     print("computing boundary");
-    print(mark2.shape);
+    print((mark2.shape));
     list_bound = np.zeros(mark1.shape, dtype=np.int32)
     for I in range(list_bound.shape[0]):
-        print( "bound row ", I , " / " , mark1.shape[0]);
+        print(( "bound row ", I , " / " , mark1.shape[0]));
         for J in range(list_bound.shape[1]):
             list_bound[I,J]=0
             if mark1[I,J]==0:
@@ -387,7 +388,7 @@ class Multiprocesser():
         """
 
         # create a list of tasks to be executed.
-        image_pairs = [ (file_a, file_b, i) for file_a, file_b, i in zip( self.files_a, self.files_b, xrange(self.n_files) ) ]
+        image_pairs = [ (file_a, file_b, i) for file_a, file_b, i in zip( self.files_a, self.files_b, range(self.n_files) ) ]
         
         # for debugging purposes always use n_cpus = 1,
         # since it is difficult to debug multiprocessing stuff.
