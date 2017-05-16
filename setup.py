@@ -68,11 +68,11 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.6",
+        version = "0.20.7",
         author = "OpenPIV contributors",
-        author_email = "openpiv2008@gmail.com",
+        author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
-        license = "GPL v3",
+        license = "GNU General Public License v3 (GPLv3)",
         url = "http://www.openpiv.net",
         long_description =  """OpenPIV is a set of open source algorithms and methods
                             for the state-of-the-art experimental tool
