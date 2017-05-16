@@ -536,14 +536,7 @@ def piv(frame_a, frame_b,
             
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
-    sig2noise = np.zeros((n_rows, n_cols))
-    
-#    print frame_a.shape, frame_a.dtype, frame_b.shape, frame_b.dtype
-#    fig,ax = plt.subplots(1,2)
-#    ax[0].imshow(frame_a,cmap=plt.cm.gray)
-#    ax[1].imshow(frame_b,cmap=plt.cm.gray)
-#    plt.show()
-#    'constant',constant_values = 0)    
+    sig2noise = np.zeros((n_rows, n_cols)) 
 
     u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
     
@@ -563,40 +556,40 @@ def piv(frame_a, frame_b,
             # Select first the largest window, work like usual from the top left corner
             # the left edge goes as: 
             # e.g. 0, (search_size - overlap), 2*(search_size - overlap),....
-            # so the center of the larger (search_size) window is 
-            # search_size//2, then overlap + search_size//2,  
             
             il = k*(search_size - overlap)
             ir = il + search_size
             
+            # same for top-bottom
             jt = m*(search_size - overlap)
             jb = jt + search_size
             
-            window_b = frame_b[il:ir, jt:jb]
-#            print ('b', il, ir, jt, jb)
+            # pick up the window in the second image
+            window_b = frame_b[il:ir, jt:jb]            
             
-            
+            # now shift the left corner of the smaller window inside the larger one
             il += (search_size - window_size)//2
+            # and it's right side is just a window_size apart
             ir = il + window_size
+            # same same
             jt += (search_size - window_size)//2
             jb =  jt + window_size
 
-#            print ('a', il,ir,jt,jb)
             window_a = frame_a[il:ir, jt:jb]
 
             if np.any(window_a):
                 corr = correlate_windows(window_a, window_b,
                                          corr_method=corr_method, 
                                          nfftx=nfftx, nffty=nffty)
-                plt.figure()
-                plt.contourf(corr)
-                plt.show()
+#                 plt.figure()
+#                 plt.contourf(corr)
+#                 plt.show()
                 # get subpixel approximation for peak position row and column index
-                row, col = find_subpixel_peak_position(
-                                                       corr, subpixel_method=subpixel_method)
+                row, col = find_subpixel_peak_position(corr, 
+                                                        subpixel_method=subpixel_method)
                                 
-                row -=  (search_size + window_size - 1)/2
-                col -=  (search_size + window_size - 1)/2
+                row -=  (search_size + window_size - 1)//2
+                col -=  (search_size + window_size - 1)//2
     
                 # get displacements, apply coordinate system definition
                 u[k,m],v[k,m] = -col, row
