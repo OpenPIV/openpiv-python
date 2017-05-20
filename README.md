@@ -29,6 +29,11 @@ We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just
 or 
 
     easy_install openpiv
+    
+Note that if dependicies of Numpy, Scipy and Cython are not present, on Ubuntu Linux, install those as:
+
+    sudo apt-get install cython python-numpy python-scipy
+    pip2.7 install OpenPIV
 
 ### To build from source
 
