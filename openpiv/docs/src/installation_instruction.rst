@@ -15,7 +15,7 @@ you should install them before you can use OpenPIV.
 
 The dependencies are:
 
-* `Python 2.7 <http://python.org/>`_
+* `Python 2.7 or 3.6 <http://python.org/>`_
 * `Scipy <http://numpy.scipy.org/>`_
 * `Numpy <http://www.scipy.org/>`_
 * `Cython <http://cython.org/>`_
