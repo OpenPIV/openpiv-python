@@ -84,7 +84,7 @@ setup(  name = "OpenPIV",
         cmdclass = {'build_ext': build_ext},
         package_data = {'': package_data},
         data_files = data_files,
-        install_requires = ['scipy','numpy','cython'],
+        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0'],
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
