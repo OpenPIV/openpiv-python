@@ -1,3 +1,5 @@
+from six import iteritems
+
 class ProcessParameters( UserDict ):
     def __init__ (self, config_file='' ):
         """
@@ -39,7 +41,7 @@ class ProcessParameters( UserDict ):
         # cast parameters to the right type.
         # this trick is necessary because the ConfigParser
         # class only understands strings
-        for k, v in self.iteritems():
+        for k, v in iteritems(self):
             try:
                 self[k] = int(v)
             except ValueError:
@@ -52,8 +54,8 @@ class ProcessParameters( UserDict ):
         """
         Pretty print all the processing parameters.
         """
-        for k, v in self.iteritems():
-            print "%s = %s" % ( k.rjust(30), repr(v).ljust(30) )
+        for k, v in iteritems(self):
+            print(("%s = %s" % ( k.rjust(30), repr(v).ljust(30) )));
 
 class Hdf5Database( ):
     """

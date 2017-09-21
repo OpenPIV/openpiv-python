@@ -8,7 +8,7 @@ development, to ease the use for those users who don't have python skills.
 
 ## Warning
 
-The OpenPIV python version is currently in alpha state. This means that
+The OpenPIV python version is still in beta state. This means that
 it is buggy, untested and the API may change. However testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
@@ -18,6 +18,10 @@ please test the code.
 
 ## Installing
 
+You can use Conda <http://conda.io>:  
+
+    conda install -c conda-forge openpiv
+
 We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just try:
 
     pip install openpiv
@@ -25,6 +29,11 @@ We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just
 or 
 
     easy_install openpiv
+    
+Note that if dependicies of Numpy, Scipy and Cython are not present, on Ubuntu Linux, install those as:
+
+    sudo apt-get install cython python-numpy python-scipy
+    pip2.7 install OpenPIV
 
 ### To build from source
 
@@ -59,4 +68,6 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [David Lasagna](http://github.com/gasagna)
 5. [Mathias Aubert](http://github.com/MathiasAubert)
 6. [Pete Bachant](http://github.com/petebachant)
+7. Cameron Dallas (http://github.com/CameronDallas5000)
+8. Cecyl Curry (http://github.com/leycec)
 

@@ -68,11 +68,11 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.4",
+        version = "0.20.8",
         author = "OpenPIV contributors",
-        author_email = "openpiv2008@gmail.com",
+        author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
-        license = "GPL v3",
+        license = "GNU General Public License v3 (GPLv3)",
         url = "http://www.openpiv.net",
         long_description =  """OpenPIV is a set of open source algorithms and methods
                             for the state-of-the-art experimental tool
@@ -84,6 +84,28 @@ setup(  name = "OpenPIV",
         cmdclass = {'build_ext': build_ext},
         package_data = {'': package_data},
         data_files = data_files,
-        install_requires = ['numpy','cython']
+        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1'],
+        classifiers = [
+        # PyPI-specific version type. The number specified here is a magic constant
+        # with no relation to this application's version numbering scheme. *sigh*
+        'Development Status :: 4 - Beta',
+
+        # Sublist of all supported Python versions.
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
+
+        # Sublist of all supported platforms and environments.
+        'Environment :: Console',
+        'Environment :: MacOS X',
+        'Environment :: Win32 (MS Windows)',
+        'Environment :: X11 Applications',
+
+        # Miscellaneous metadata.
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Topic :: Scientific/Engineering',
+    ]
 )
 
