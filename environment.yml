@@ -14,7 +14,7 @@ dependencies:
 - openssl=1.0.2g
 - pillow=3.2.0
 - pip=8.1.1
-- progressbar=2.3
+- progressbar2>=3.8.1
 - pyparsing=2.1.1
 - pyqt=4.11.4
 - python=2.7.11
