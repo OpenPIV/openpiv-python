@@ -6,11 +6,8 @@ from numpy.fft import rfft2,irfft2,fftshift
 from math import log
 from scipy.signal import convolve
 import time
-import openpiv
 import warnings
 from progressbar import *
-
-from pylab import * 
 
 
 #cimport numpy as np
@@ -150,12 +147,9 @@ def extended_search_area_piv( frame_a,
                     elif j+window_size/2-search_area_size/2+l < 0 or j+window_size/2-search_area_size/2+l >= frame_b.shape[1]:
                         search_area[k,l] = 0
                     else:
-                        search_area[k,l] = frame_b[ i+window_size/2-search_area_size/2+k, j+window_size/2-search_area_size/2+l ]
+                        search_area[k,l] = frame_b[i+window_size//2-search_area_size//2+k,            
+                                                j+window_size//2-search_area_size//2+l ]
                        
-            imshow(window_a,cmap=cm.gray)
-            show()
-            imshow(search_area,cmap=cm.gray)
-            show()
         
             # compute correlation map 
             if any(window_a.flatten()):
