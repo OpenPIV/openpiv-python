@@ -68,7 +68,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.8",
+        version = "0.20.9",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
