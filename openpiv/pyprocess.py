@@ -28,12 +28,8 @@ from numpy import log
 import matplotlib.pyplot as plt
 
 
-WINSIZE = 32
-OVERLAP = 0
-SEARCHSIZE = 32
 
-
-def get_coordinates(image_size, window_size=WINSIZE, overlap=OVERLAP):
+def get_coordinates(image_size, window_size, overlap):
     """Compute the x, y coordinates of the centers of the interrogation windows.
 
     Parameters
@@ -75,7 +71,7 @@ def get_coordinates(image_size, window_size=WINSIZE, overlap=OVERLAP):
     return np.meshgrid(x, y[::-1])
 
 
-def get_field_shape(image_size, window_size=WINSIZE, overlap=OVERLAP):
+def get_field_shape(image_size, window_size, overlap):
     """Compute the shape of the resulting flow field.
 
     Given the image size, the interrogation window size and
@@ -107,7 +103,7 @@ def get_field_shape(image_size, window_size=WINSIZE, overlap=OVERLAP):
             (image_size[1] - window_size) // (window_size - overlap) + 1)
 
 
-def moving_window_array(array, window_size=WINSIZE, overlap=OVERLAP):
+def moving_window_array(array, window_size, overlap):
     """
     This is a nice numpy trick. The concept of numpy strides should be
     clear to understand this code.
@@ -385,7 +381,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     correlation map. The theory says it is M+N-1, and the 
     'direct' method gets this size out
     the FFT-based method returns M+N size out, where M is the window_size
-    and N is the search_size
+    and N is the search_area_size
     It leads to inconsistency of the output 
     """
     
@@ -426,16 +422,17 @@ def normalize_intensity(window):
     return window - window.mean()
 
 
-def piv(frame_a, frame_b, 
-        window_size=WINSIZE, 
-        overlap=OVERLAP, 
-        dt=1.0, 
+def extended_search_area_piv(
+        frame_a, frame_b, 
+        window_size, 
+        overlap=0, 
+        dt=1.0,
+        search_area_size=None, 
         corr_method='fft',
         subpixel_method='gaussian', 
-        sig2noise_method=None, 
-        nfftx=None, nffty=None,
+        sig2noise_method=None,
         width=2, 
-        search_size=None):
+        nfftx=None, nffty=None):
     """Standard PIV cross-correlation algorithm, with an option for 
     extended area search that increased dynamic range. The search region
     in the second frame is larger than the interrogation window size in the 
@@ -493,7 +490,7 @@ def piv(frame_a, frame_b,
         correlation peak to ignore for finding the second
         peak. [default: 2]. Only used if ``sig2noise_method==peak2peak``.
     
-    search_size : int 
+    search_area_size : int 
        the size of the interrogation window in the second frame, 
        default is the same interrogation window size and it is a 
        fallback to the simplest FFT based PIV
@@ -517,22 +514,21 @@ def piv(frame_a, frame_b,
     
     # check the inputs for validity
     
-    if search_size is None:
-        search_size = window_size
-        
+    if search_area_size is None:
+        search_area_size = window_size
     
     if overlap >= window_size:
-        raise(BaseException,'Overlap has to be smaller than the window_size')
+        raise ValueError('Overlap has to be smaller than the window_size')
     
-    if search_size < window_size:
-        raise(BaseException,'Search size cannot be smaller than the window_size')
+    if search_area_size < window_size:
+        raise ValueError('Search size cannot be smaller than the window_size')
     
         
     if (window_size > frame_a.shape[0]) or (window_size > frame_a.shape[1]):
-        raise(BaseException,'window size cannot be larger than the image')
+        raise ValueError('window size cannot be larger than the image')
         
     # get field shape
-    n_rows, n_cols = get_field_shape(frame_a.shape, search_size, overlap )
+    n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap )
             
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
@@ -548,31 +544,31 @@ def piv(frame_a, frame_b,
     # i, j are the row, column indices of the center of each interrogation
     # window
     for k in range(n_rows):
-        # range(range(search_size/2, frame_a.shape[0] - search_size/2, window_size - overlap ):
+        # range(range(search_area_size/2, frame_a.shape[0] - search_area_size/2, window_size - overlap ):
         for m in range(n_cols):
-            # range(search_size/2, frame_a.shape[1] - search_size/2 , window_size - overlap ):
+            # range(search_area_size/2, frame_a.shape[1] - search_area_size/2 , window_size - overlap ):
             
             
             # Select first the largest window, work like usual from the top left corner
             # the left edge goes as: 
-            # e.g. 0, (search_size - overlap), 2*(search_size - overlap),....
+            # e.g. 0, (search_area_size - overlap), 2*(search_area_size - overlap),....
             
-            il = k*(search_size - overlap)
-            ir = il + search_size
+            il = k*(search_area_size - overlap)
+            ir = il + search_area_size
             
             # same for top-bottom
-            jt = m*(search_size - overlap)
-            jb = jt + search_size
+            jt = m*(search_area_size - overlap)
+            jb = jt + search_area_size
             
             # pick up the window in the second image
             window_b = frame_b[il:ir, jt:jb]            
             
             # now shift the left corner of the smaller window inside the larger one
-            il += (search_size - window_size)//2
+            il += (search_area_size - window_size)//2
             # and it's right side is just a window_size apart
             ir = il + window_size
             # same same
-            jt += (search_size - window_size)//2
+            jt += (search_area_size - window_size)//2
             jb =  jt + window_size
 
             window_a = frame_a[il:ir, jt:jb]
@@ -588,8 +584,8 @@ def piv(frame_a, frame_b,
                 row, col = find_subpixel_peak_position(corr, 
                                                         subpixel_method=subpixel_method)
                                 
-                row -=  (search_size + window_size - 1)//2
-                col -=  (search_size + window_size - 1)//2
+                row -=  (search_area_size + window_size - 1)//2
+                col -=  (search_area_size + window_size - 1)//2
     
                 # get displacements, apply coordinate system definition
                 u[k,m],v[k,m] = -col, row

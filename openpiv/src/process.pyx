@@ -1,5 +1,5 @@
 """This module is dedicated to advanced algorithms for PIV image analysis."""
-
+from __future__ import division
 import numpy as np
 import numpy.ma as ma
 from numpy.fft import rfft2,irfft2,fftshift
@@ -112,7 +112,22 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     
     >>> u, v = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=16, overlap=8, search_area_size=48, dt=0.1)
     """
-                                                      
+                      
+    # check the inputs for validity
+    
+    if search_area_size is None:
+        search_area_size = window_size
+    
+    if overlap >= window_size:
+        raise ValueError('Overlap has to be smaller than the window_size')
+    
+    if search_area_size < window_size:
+        raise ValueError('Search size cannot be smaller than the window_size')
+    
+        
+    if (window_size > frame_a.shape[0]) or (window_size > frame_a.shape[1]):
+        raise ValueError('window size cannot be larger than the image')
+                                
 
     cdef int i, j, k, l, I, J
     
@@ -140,9 +155,9 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     # loop over the interrogation windows
     # i, j are the row, column indices of the top left corner
     I = 0
-    for i in range( 0, frame_a.shape[0]-window_size, window_size-overlap ):
+    for i in range( 0, frame_a.shape[0]-window_size+1, window_size-overlap ):
         J = 0
-        for j in range( 0, frame_a.shape[1]-window_size, window_size-overlap ):
+        for j in range( 0, frame_a.shape[1]-window_size+1, window_size-overlap ):
 
             # get interrogation window matrix from frame a
             for k in range( window_size ):
@@ -154,12 +169,15 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 for l in range( search_area_size ):
                     
                     # fill with zeros if we are out of the borders
-                    if i+window_size/2-search_area_size/2+k < 0 or i+window_size/2-search_area_size/2+k >= frame_b.shape[0]:
+                    if i+window_size/2-search_area_size//2+k < 0 or \
+                        i+window_size//2-search_area_size//2+k >= frame_b.shape[0]:
                         search_area[k,l] = 0
-                    elif j+window_size/2-search_area_size/2+l < 0 or j+window_size/2-search_area_size/2+l >= frame_b.shape[1]:
+                    elif j+window_size//2-search_area_size//2+l < 0 or \
+                        j+window_size//2-search_area_size//2+l >= frame_b.shape[1]:
                         search_area[k,l] = 0
                     else:
-                        search_area[k,l] = frame_b[ i+window_size/2-search_area_size/2+k, j+window_size/2-search_area_size/2+l ]
+                        search_area[k,l] = frame_b[ i+window_size//2-search_area_size//2+k,
+                            j+window_size//2-search_area_size//2+l ]
                         
             # compute correlation map 
             if any(window_a.flatten()):
