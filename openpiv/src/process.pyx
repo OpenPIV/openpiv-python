@@ -23,9 +23,9 @@ ctypedef np.float64_t DTYPEf_t
 def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a, 
                               np.ndarray[DTYPEi_t, ndim=2] frame_b,
                               int window_size,
-                              int overlap,
-                              float dt,
-                              int search_area_size,
+                              int overlap=0,
+                              float dt=1.0,
+                              int search_area_size=0,
                               str subpixel_method='gaussian',
                               sig2noise_method=None,
                               int width=2,
@@ -115,7 +115,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                       
     # check the inputs for validity
     
-    if search_area_size is None:
+    if search_area_size == 0:
         search_area_size = window_size
     
     if overlap >= window_size:
