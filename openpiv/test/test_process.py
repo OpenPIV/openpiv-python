@@ -7,12 +7,16 @@ import numpy as np
 
 from skimage.util import random_noise
 from skimage import img_as_ubyte
+    
+import warnings
 
 def test_piv():
     """ test of the simplest PIV run """
     frame_a = np.zeros((32,32))
     frame_a = random_noise(frame_a)
-    frame_a = img_as_ubyte(frame_a)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        frame_a = img_as_ubyte(frame_a)
     frame_b = np.roll(np.roll(frame_a,3,axis=1),2,axis=0)
     u,v = piv(frame_a.astype(np.int32),frame_b.astype(np.int32),window_size=32)
     # print u,v
