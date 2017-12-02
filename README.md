@@ -9,12 +9,17 @@ development, to ease the use for those users who don't have python skills.
 ## Warning
 
 The OpenPIV python version is still in beta state. This means that
-it is buggy, untested and the API may change. However testing and contributing
+it still might have some bugs and the API may change. However testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
 Development is currently done on a Linux/Mac OSX environment, but as soon as possible 
 Windows will be tested. If you have access to one of these platforms
 please test the code. 
+
+## Test it without installation
+Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in your browser with zero installation:
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openpiv/openpiv-python-example/master?filepath=index.ipynb)
+
 
 ## Installing
 
