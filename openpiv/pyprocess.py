@@ -25,7 +25,6 @@ from numpy.fft import rfft2, irfft2
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
-import matplotlib.pyplot as plt
 
 
 
@@ -63,10 +62,9 @@ def get_coordinates(image_size, window_size, overlap):
     field_shape = get_field_shape(image_size, window_size, overlap)
 
     # compute grid coordinates of the interrogation window centers
-    x = np.arange(field_shape[1]) * (window_size -
-                                     overlap) + (window_size - 1) / 2.0
-    y = np.arange(field_shape[0]) * (window_size -
-                                     overlap) + (window_size - 1) / 2.0
+    # compute grid coordinates of the interrogation window centers
+    x = np.arange( field_shape[1] )*(window_size-overlap) + window_size/2.0
+    y = np.arange( field_shape[0] )*(window_size-overlap) + window_size/2.0
 
     return np.meshgrid(x, y[::-1])
 
@@ -514,7 +512,7 @@ def extended_search_area_piv(
     
     # check the inputs for validity
     
-    if search_area_size is None:
+    if search_area_size == 0:
         search_area_size = window_size
     
     if overlap >= window_size:
@@ -528,7 +526,8 @@ def extended_search_area_piv(
         raise ValueError('window size cannot be larger than the image')
         
     # get field shape
-    n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap )
+    n_rows, n_cols = get_field_shape((frame_a.shape[0], frame_a.shape[1]), 
+                                     window_size, overlap )
             
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
