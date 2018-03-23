@@ -15,12 +15,13 @@ you should install them before you can use OpenPIV.
 
 The dependencies are:
 
-* `Python 2.7 <http://python.org/>`_
+* `Python 2.7 or 3.6 <http://python.org/>`_
 * `Scipy <http://numpy.scipy.org/>`_
 * `Numpy <http://www.scipy.org/>`_
 * `Cython <http://cython.org/>`_
+* `scikit-image <http://scikit-image.org/>`_
 
-On all platforms, the following Python distributions arerecommended:
+The following distributions that include Python with the required libraries are recommended for easy installations of dependencies:
 
 * Canopy <http://www.enthought.com>  
 * Anaconda <https://store.continuum.io/cshop/anaconda/>  
@@ -29,20 +30,35 @@ On all platforms, the following Python distributions arerecommended:
 
 How to install the dependencies on Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On a Linux platform installing these dependencies should be trick. Often, if not always, 
+On a Linux platform installing these dependencies should not be tricky. Often, if not always, 
 python is installed by default, while the other dependencies should appear in your package
-manager.
+manager. 
+
+Thanks for the issue raised on our Github page, the Ubuntu installation should work as:   
+
+    sudo apt-get install cython python-numpy python-scipy
+    
+    pip2.7 install OpenPIV
+
+
+Using Conda 
+^^^^^^^^^^^
+
+    conda install -c conda-forge openpiv
+ 
+Should include all the missing packages and automatically build the dependenices. 
+
 
 How to install the dependencies on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 On Windows all these dependencies, as well as several other useful packages, can be installed
-using the Python(x,y) distribution, available at http://www.pythonxy.com/. Note: Install it in Custom Directories, 
-without spaces in the directory names (i.e. Program Files are prohibited), e.g. C:\Pythonxy\
+using one of the aforementioned distributions, e.g. Anaconda, PythonXY. Note: Install it in Custom Directories, 
+without spaces in the directory names (i.e. Program Files are prohibited), e.g. `C:\Pythonxy\`
 
 
 How to install the dependencies on a Mac
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The binary (32 or 64 bit) Enthought Python Distribution (EPD) is recommended.  Visit http://www.enthought.com. However, if you use EPD Free distribution, you need to install Cython from http://www.cython.org
+The binary (32 or 64 bit) Enthought Python Distribution (EPD) or Anaconda are recommended.  Note: if you use EPD Free distribution, you need to add and install Cython from http://www.cython.org
 
 
 Missing package ``progressbar``
@@ -52,6 +68,16 @@ Some distributions lack `progressbar` package. Install it separately using `pip`
 
     pip install progressbar
 
+
+In Python 3 the project changed name to `progressbar2` package. Install it separately using `pip`
+
+    pip install progressbar2
+    
+Or using Conda:   
+
+    conda install progressbar2
+    
+We will remove this requirement in the future, so don't be surprised it if just works without progressbar. 
 
 Get OpenPIV source code!
 ========================
