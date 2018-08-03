@@ -38,7 +38,7 @@ plt.quiver(u,v)
 plt.axis('equal')
 plt.show()
 
-u1, v1 = pyprocess.piv(frame_a, frame_b, window_size=32, search_size=48, overlap=24)
+u1, v1 = pyprocess.extended_search_area_piv(frame_a, frame_b, window_size=32, search_size=48, overlap=24)
 
 # x, y = process.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=0)
 
