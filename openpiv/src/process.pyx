@@ -831,7 +831,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                                 else:
                                     neighbours[0,L,M]=0
                                     neighbours[1,L,M]=0
-                                    
+
                             if np.sum(neighbours_present) !=0 and mark[np.int(F[K,I,J,0]), np.int(F[K,I,J,1])] == 1:
                             #if np.sum(neighbours_present):
                                 mean_u = np.sum(neighbours[0])/np.float(np.sum(neighbours_present))#computing the mean velocity
@@ -921,13 +921,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         # pbar.finish()
         print("..[DONE] -----> going to iteration ",K+1)
         print(" ")
-
-
-
-
-
-
-
 
 
 def interpolate_surroundings(np.ndarray[DTYPEf_t, ndim=4] F,
@@ -1286,10 +1279,6 @@ def launch( str method, names, arg ):
         the current time --> can be used to print the execution time of the programm at the end.
     
     """
-    cdef int i
-    space = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
-    for i in range(len(space)):
-        print(space[i])
     print( '----------------------------------------------------------')
     print('|----->     ||   The Open Source  P article              |')
     print('| Open      ||                    I mage                 |')              
@@ -1306,7 +1295,7 @@ def launch( str method, names, arg ):
     print("-----------------------------------")
     print("|           STARTING              |")
     print("-----------------------------------")
-    cdef float StartTime= time.time()
+    cdef float StartTime  = time.time()
     return StartTime
 
 
