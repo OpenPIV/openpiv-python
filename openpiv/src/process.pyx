@@ -681,7 +681,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     """
 
     #initializations
-    warnings.warn("deprecated", RuntimeWarning)
+    # warnings.warn("deprecated", RuntimeWarning)
     if nb_iter_max <= coarse_factor:
         raise ValueError( "Please provide a nb_iter_max that is greater than the coarse_level" )
     cdef int K #main iteration index
@@ -743,12 +743,9 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     ####################################################
     #main loop
     for K in range(nb_iter_max):
-        print " "
-        print "//////////////////////////////////////////////////////////////////"
-        print " "
-        print "ITERATION # ",K
+        print("ITERATION # ", K)
         window_a, window_b = define_windows(W[K])
-        print " "
+        print(" ")
         #a simple progress bar
         widgets = ['Computing the displacements : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()]
@@ -756,7 +753,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         pbar.start()
         residual = 0
         for I in range(Nrow[K]):#run through interpolations locations
-            pbar.update(100*I/Nrow[K])#progress update
+            # pbar.update(100*I/Nrow[K])#progress update
             for J in range(Ncol[K]):
                 
                 #compute xb, yb:
@@ -799,22 +796,22 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 F[K,I,J,10]=F[K,I,J,5] / dt #u=dy/dt
                 F[K,I,J,11]=-F[K,I,J,4] / dt #v=-dx/dt
         pbar.finish()#close progress bar
-        print "..[DONE]"
+        print("..[DONE]")
         if K==0:
             residual_0 = residual/np.float(Nrow[K]*Ncol[K])
-        print " --residual : ", (residual/np.float(Nrow[K]*Ncol[K]))/residual_0
+        print(" --residual : ", (residual/np.float(Nrow[K]*Ncol[K]))/residual_0)
         #####################################################
         #validation of the velocity vectors with 3*3 filtering
         if K==0 and trust_1st_iter:#1st iteration can generally be trust if it follows the 1/4 rule
-            print "no validation : trusting 1st iteration"
+            print("no validation : trusting 1st iteration")
         else: 
-            print "Starting validation.."
+            print("Starting validation..")
             for I in range(Nrow[nb_iter_max-1]):#init mask to False
                 for J in range(Ncol[nb_iter_max-1]):
                     (<object>mask)[I,J]=False
             for i in range(validation_iter):#real validation starts
-                print "Validation, iteration number ",i
-                print " "
+                print("Validation, iteration number ",i)
+                print(" ")
                 widgets = ['Validation : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()]
                 pbar = ProgressBar(widgets=widgets, maxval=100)
@@ -882,28 +879,28 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                                                 F[K,I,J,4] = -F[K,I,J,11]*dt
                                                 F[K,I,J,5] = F[K,I,J,10]*dt
             pbar.finish()                    
-            print "..[DONE]"
-            print " "
+            print("..[DONE]")
+            print(" ")
         #end of validation
         ##############################################################################
         #stop process if this is the last iteration
         if K==nb_iter_max-1:
-            print "//////////////////////////////////////////////////////////////////"
-            print "end of iterative process.. Re-arranging vector fields.."
+            print("//////////////////////////////////////////////////////////////////")
+            print("end of iterative process.. Re-arranging vector fields..")
             for I in range(Nrow[K]):#assembling the u,v and x,y fields for outputs
                 for J in range(Ncol[K]):
                     x[I,J]=F[K,I,J,1]
                     y[I,J]=F[K,Nrow[K]-I-1,J,0]
                     u[I,J]=F[K,I,J,10]
                     v[I,J]=F[K,I,J,11]
-            print "...[DONE]"
+            print("...[DONE]")
             end(startTime)
             return x, y, u, v, (<object>mask)
         #############################################################################
         #go to next iteration : compute the predictors dpx and dpy from the current displacements
-        print "going to next iteration.. "
-        print "performing interpolation of the displacement field"
-        print " "
+        print("going to next iteration.. ")
+        print("performing interpolation of the displacement field")
+        print(" ")
         widgets = ['Performing interpolations : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
            ' ', ETA(), ' ', FileTransferSpeed()]
         pbar = ProgressBar(widgets=widgets, maxval=100)
@@ -918,8 +915,8 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                     F[K+1,I,J,6] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 4)
                     F[K+1,I,J,7] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 5)
         pbar.finish()
-        print "..[DONE] -----> going to iteration ",K+1
-        print " "
+        print("..[DONE] -----> going to iteration ",K+1)
+        print(" ")
 
 
 
@@ -1288,23 +1285,23 @@ def launch( str method, names, arg ):
     cdef int i
     space = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
     for i in range(len(space)):
-        print space[i]
-    print '----------------------------------------------------------'
-    print '|----->     ||   The Open Source  P article              |'
-    print '| Open      ||                    I mage                 |'              
-    print '|     PIV   ||                    V elocimetry  Toolbox  |'                                                  
-    print '|     <-----||   www.openpiv.net          version 1.0    |'                
-    print '----------------------------------------------------------' 
-    print " "
-    print "Algorithm : ", method
-    print " "
-    print "Parameters   "
-    print "-----------------------------------"
+        print(space[i])
+    print( '----------------------------------------------------------')
+    print('|----->     ||   The Open Source  P article              |')
+    print('| Open      ||                    I mage                 |')              
+    print('|     PIV   ||                    V elocimetry  Toolbox  |')                                                  
+    print('|     <-----||   www.openpiv.net          version 1.0    |')                
+    print('----------------------------------------------------------') 
+    print(" ")
+    print("Algorithm : ", method)
+    print(" ")
+    print("Parameters   ")
+    print("-----------------------------------")
     for i in range(len(arg)-1):
-        print "     ", names[i], " | ", arg[i]
-    print "-----------------------------------"
-    print "|           STARTING              |"
-    print "-----------------------------------"
+        print("     ", names[i], " | ", arg[i])
+    print("-----------------------------------")
+    print("|           STARTING              |")
+    print("-----------------------------------")
     cdef float StartTime= time.time()
     return StartTime
 
@@ -1321,9 +1318,9 @@ def end( float startTime ):
         a time
     
     """
-    print "-------------------------------------------------------------"
-    print "[DONE] ..after ", (time.time() - startTime), "seconds "
-    print "-------------------------------------------------------------"
+    print("-------------------------------------------------------------")
+    print("[DONE] ..after ", (time.time() - startTime), "seconds ")
+    print("-------------------------------------------------------------")
     
 
 
