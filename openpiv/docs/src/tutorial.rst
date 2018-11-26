@@ -17,6 +17,8 @@ The first example shows how to process a single image pair. This is a common tas
     import openpiv.tools
     import openpiv.process
     import openpiv.scaling
+    import openpiv.validation
+    import openpiv.filters
     
     frame_a  = openpiv.tools.imread( 'exp1_001_a.bmp' )
     frame_b  = openpiv.tools.imread( 'exp1_001_b.bmp' )
@@ -40,6 +42,8 @@ We first import some of the openpiv modules.::
     import openpiv.tools
     import openpiv.process
     import openpiv.scaling
+    import openpiv.validation
+    import openpiv.filters
     
 Module ``openpiv.tools`` contains mostly contains utilities and tools, such as file I/O and multiprocessingvfacilities. Module ``openpiv.process`` contains advanced algorithms for PIV analysis and several helper functions. Last, module ``openpiv.scaling`` contains functions for field scaling.
 
@@ -140,6 +144,8 @@ Let's first import the needed modules.::
   import openpiv.tools
   import openpiv.scaling
   import openpiv.process
+  import openpiv.validation
+  import openpiv.filters
   
 We then define a python function which will be excecuted for each image pair. In this function we can specify any operation to execute on each single image pair, but here, for clarity we will setup a basic analysis, without a validation/replacement step.
 
