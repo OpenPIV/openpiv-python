@@ -120,7 +120,7 @@ def imread( filename, flatten=0 ):
     
     """
     
-    return io.imread( filename, as_grey = True)
+    return io.imread( filename, as_gray = True)
 
 def imsave( filename, arr ):
     """Write an image file from a numpy array
