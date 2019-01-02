@@ -1,6 +1,16 @@
 import sys
 import glob
 import numpy
+import re
+
+VERSIONFILE="openpiv/_version.py"
+verstrline = open(VERSIONFILE, "rt").read()
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+mo = re.search(VSRE, verstrline, re.M)
+if mo:
+    verstr = mo.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 try:
     from setuptools import setup
@@ -68,7 +78,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.9",
+        version = verstr,
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
