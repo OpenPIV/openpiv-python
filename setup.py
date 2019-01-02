@@ -1,7 +1,21 @@
 import sys
 import glob
 import numpy
-import openpiv
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 try:
     from setuptools import setup
@@ -69,7 +83,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = openpiv.__version__,
+        version=find_version("package", "__init__.py"),
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
