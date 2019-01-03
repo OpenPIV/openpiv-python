@@ -2,6 +2,7 @@ import sys
 import glob
 import numpy
 
+
 try:
     from setuptools import setup
     from setuptools import Extension
@@ -68,7 +69,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version = "0.20.9",
+        version="0.21.1a",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",

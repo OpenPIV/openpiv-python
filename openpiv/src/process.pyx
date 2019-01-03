@@ -501,7 +501,9 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
             nfftx = 2*window_a.shape[0]
         if nffty is None:
             nffty = 2*window_a.shape[1]
-        return fftshift(irfft2(rfft2(normalize_intensity(window_a),s=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),s=(nfftx,nffty)))).real, axes=(0,1)  )
+        return fftshift(irfft2(rfft2(normalize_intensity(window_a),\
+            s=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),\
+            s=(nfftx,nffty)))).real, axes=(0,1)  )
     elif corr_method == 'direct':
         return convolve(normalize_intensity(window_a), normalize_intensity(window_b[::-1,::-1]), 'full')
     else:
@@ -681,7 +683,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     """
 
     #initializations
-    warnings.warn("deprecated", RuntimeWarning)
+    # warnings.warn("deprecated", RuntimeWarning)
     if nb_iter_max <= coarse_factor:
         raise ValueError( "Please provide a nb_iter_max that is greater than the coarse_level" )
     cdef int K #main iteration index
@@ -743,20 +745,16 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     ####################################################
     #main loop
     for K in range(nb_iter_max):
-        print " "
-        print "//////////////////////////////////////////////////////////////////"
-        print " "
-        print "ITERATION # ",K
+        print("ITERATION # ", K)
         window_a, window_b = define_windows(W[K])
-        print " "
         #a simple progress bar
-        widgets = ['Computing the displacements : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
-           ' ', ETA(), ' ', FileTransferSpeed()]
-        pbar = ProgressBar(widgets=widgets, maxval=100)
-        pbar.start()
+        # widgets = ['Computing the displacements : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
+        #    ' ', ETA(), ' ', FileTransferSpeed()]
+        # pbar = ProgressBar(widgets=widgets, maxval=100)
+        # pbar.start()
         residual = 0
         for I in range(Nrow[K]):#run through interpolations locations
-            pbar.update(100*I/Nrow[K])#progress update
+            # pbar.update(100*I/Nrow[K])#progress update
             for J in range(Ncol[K]):
                 
                 #compute xb, yb:
@@ -776,14 +774,16 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 #fill windows a and b
                 for L in range(W[K]):
                     for M in range(W[K]):
-                        window_a[L,M]=frame_a[F[K,I,J,0] - W[K]/2 + L, F[K,I,J,1] - W[K]/2 + M]
-                        window_b[L,M]=frame_b[F[K,I,J,2] - W[K]/2 + L, F[K,I,J,3] - W[K]/2 + M]
+                        window_a[L,M]=frame_a[np.int(F[K,I,J,0] - W[K]/2 + L), \
+                                            np.int(F[K,I,J,1] - W[K]/2 + M)]
+                        window_b[L,M]=frame_b[np.int(F[K,I,J,2] - W[K]/2 + L), \
+                                            np.int(F[K,I,J,3] - W[K]/2 + M)]
                 #perform correlation of the two windows
                 corr = correlate_windows( window_b, window_a, nfftx=nfftx, nffty=nffty )
                 c = CorrelationFunction( corr )
                 F[K,I,J,12] = c.sig2noise_ratio( sig2noise_method, width )#compute sig2noise
                 i_peak, j_peak = c.subpixel_peak_position( subpixel_method )#get peak position
-                if np.any(np.isnan((i_peak, j_peak))) or mark[F[K,I,J,0], F[K,I,J,1]] == 0:#prevent 'Not a Number' peak location
+                if np.any(np.isnan((i_peak, j_peak))) or mark[np.int(F[K,I,J,0]), np.int(F[K,I,J,1])] == 0:#prevent 'Not a Number' peak location
                 #if np.any(np.isnan((i_peak, j_peak))):
                     F[K,I,J,8]=0.0
                     F[K,I,J,9]=0.0
@@ -798,29 +798,29 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 #get new velocity vectors
                 F[K,I,J,10]=F[K,I,J,5] / dt #u=dy/dt
                 F[K,I,J,11]=-F[K,I,J,4] / dt #v=-dx/dt
-        pbar.finish()#close progress bar
-        print "..[DONE]"
+        # pbar.finish()#close progress bar
+        print("..[DONE]")
         if K==0:
             residual_0 = residual/np.float(Nrow[K]*Ncol[K])
-        print " --residual : ", (residual/np.float(Nrow[K]*Ncol[K]))/residual_0
+        print(" --residual : ", (residual/np.float(Nrow[K]*Ncol[K]))/residual_0)
         #####################################################
         #validation of the velocity vectors with 3*3 filtering
         if K==0 and trust_1st_iter:#1st iteration can generally be trust if it follows the 1/4 rule
-            print "no validation : trusting 1st iteration"
+            print("no validation : trusting 1st iteration")
         else: 
-            print "Starting validation.."
+            print("Starting validation..")
             for I in range(Nrow[nb_iter_max-1]):#init mask to False
                 for J in range(Ncol[nb_iter_max-1]):
                     (<object>mask)[I,J]=False
             for i in range(validation_iter):#real validation starts
-                print "Validation, iteration number ",i
-                print " "
-                widgets = ['Validation : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
-           ' ', ETA(), ' ', FileTransferSpeed()]
-                pbar = ProgressBar(widgets=widgets, maxval=100)
-                pbar.start()
+                print("Validation, iteration number ",i)
+                print(" ")
+                # widgets = ['Validation : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
+           # ' ', ETA(), ' ', FileTransferSpeed()]
+                # pbar = ProgressBar(widgets=widgets, maxval=100)
+                # pbar.start()
                 for I in range(Nrow[K]):#run through locations
-                    pbar.update(100*I/Nrow[K])                    
+                    # pbar.update(100*I/Nrow[K])                    
                     for J in range(Ncol[K]):
                         neighbours_present = find_neighbours(I, J, Nrow[K]-1, Ncol[K]-1)#get a map of the neighbouring locations
                         for L in range(3):#get the velocity of the neighbours in a 2*3*3 array
@@ -831,7 +831,8 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                                 else:
                                     neighbours[0,L,M]=0
                                     neighbours[1,L,M]=0
-                            if np.sum(neighbours_present) !=0 and mark[F[K,I,J,0], F[K,I,J,1]] == 1:
+
+                            if np.sum(neighbours_present) !=0 and mark[np.int(F[K,I,J,0]), np.int(F[K,I,J,1])] == 1:
                             #if np.sum(neighbours_present):
                                 mean_u = np.sum(neighbours[0])/np.float(np.sum(neighbours_present))#computing the mean velocity
                                 mean_v = np.sum(neighbours[1])/np.float(np.sum(neighbours_present))
@@ -881,35 +882,35 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                                                 (<object>mask)[I,J]=True
                                                 F[K,I,J,4] = -F[K,I,J,11]*dt
                                                 F[K,I,J,5] = F[K,I,J,10]*dt
-            pbar.finish()                    
-            print "..[DONE]"
-            print " "
+            # pbar.finish()                    
+            print("..[DONE]")
+            print(" ")
         #end of validation
         ##############################################################################
         #stop process if this is the last iteration
         if K==nb_iter_max-1:
-            print "//////////////////////////////////////////////////////////////////"
-            print "end of iterative process.. Re-arranging vector fields.."
+            print("//////////////////////////////////////////////////////////////////")
+            print("end of iterative process.. Re-arranging vector fields..")
             for I in range(Nrow[K]):#assembling the u,v and x,y fields for outputs
                 for J in range(Ncol[K]):
                     x[I,J]=F[K,I,J,1]
                     y[I,J]=F[K,Nrow[K]-I-1,J,0]
                     u[I,J]=F[K,I,J,10]
                     v[I,J]=F[K,I,J,11]
-            print "...[DONE]"
+            print("...[DONE]")
             end(startTime)
             return x, y, u, v, (<object>mask)
         #############################################################################
         #go to next iteration : compute the predictors dpx and dpy from the current displacements
-        print "going to next iteration.. "
-        print "performing interpolation of the displacement field"
-        print " "
-        widgets = ['Performing interpolations : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
-           ' ', ETA(), ' ', FileTransferSpeed()]
-        pbar = ProgressBar(widgets=widgets, maxval=100)
-        pbar.start()
+        print("going to next iteration.. ")
+        print("performing interpolation of the displacement field")
+        print(" ")
+        # widgets = ['Performing interpolations : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
+        #    ' ', ETA(), ' ', FileTransferSpeed()]
+        # pbar = ProgressBar(widgets=widgets, maxval=100)
+        # pbar.start()
         for I in range(Nrow[K+1]):
-            pbar.update(100*I/Nrow[K+1])
+            # pbar.update(100*I/Nrow[K+1])
             for J in range(Ncol[K+1]):
                 if Nrow[K+1]==Nrow[K] and Ncol[K+1]==Ncol[K]:
                     F[K+1,I,J,6] = F[K,I,J,4]#dpx_k+1 = dx_k 
@@ -917,16 +918,9 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 else:#interpolate if dimensions do not agree
                     F[K+1,I,J,6] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 4)
                     F[K+1,I,J,7] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 5)
-        pbar.finish()
-        print "..[DONE] -----> going to iteration ",K+1
-        print " "
-
-
-
-
-
-
-
+        # pbar.finish()
+        print("..[DONE] -----> going to iteration ",K+1)
+        print(" ")
 
 
 def interpolate_surroundings(np.ndarray[DTYPEf_t, ndim=4] F,
@@ -1285,27 +1279,23 @@ def launch( str method, names, arg ):
         the current time --> can be used to print the execution time of the programm at the end.
     
     """
-    cdef int i
-    space = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
-    for i in range(len(space)):
-        print space[i]
-    print '----------------------------------------------------------'
-    print '|----->     ||   The Open Source  P article              |'
-    print '| Open      ||                    I mage                 |'              
-    print '|     PIV   ||                    V elocimetry  Toolbox  |'                                                  
-    print '|     <-----||   www.openpiv.net          version 1.0    |'                
-    print '----------------------------------------------------------' 
-    print " "
-    print "Algorithm : ", method
-    print " "
-    print "Parameters   "
-    print "-----------------------------------"
+    print( '----------------------------------------------------------')
+    print('|----->     ||   The Open Source  P article              |')
+    print('| Open      ||                    I mage                 |')              
+    print('|     PIV   ||                    V elocimetry  Toolbox  |')                                                  
+    print('|     <-----||   www.openpiv.net          version 1.0    |')                
+    print('----------------------------------------------------------') 
+    print(" ")
+    print("Algorithm : ", method)
+    print(" ")
+    print("Parameters   ")
+    print("-----------------------------------")
     for i in range(len(arg)-1):
-        print "     ", names[i], " | ", arg[i]
-    print "-----------------------------------"
-    print "|           STARTING              |"
-    print "-----------------------------------"
-    cdef float StartTime= time.time()
+        print("     ", names[i], " | ", arg[i])
+    print("-----------------------------------")
+    print("|           STARTING              |")
+    print("-----------------------------------")
+    cdef float StartTime  = time.time()
     return StartTime
 
 
@@ -1321,9 +1311,9 @@ def end( float startTime ):
         a time
     
     """
-    print "-------------------------------------------------------------"
-    print "[DONE] ..after ", (time.time() - startTime), "seconds "
-    print "-------------------------------------------------------------"
+    print("-------------------------------------------------------------")
+    print("[DONE] ..after ", (time.time() - startTime), "seconds ")
+    print("-------------------------------------------------------------")
     
 
 

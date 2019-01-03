@@ -77,7 +77,6 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     
     a = np.loadtxt(filename)
     fig=pl.figure()
-    pl.hold(True)
     if on_img: # plot a background image
         im = imread(image_name)
         im = negative(im) #plot negative of the image for more clarity
@@ -121,7 +120,7 @@ def imread( filename, flatten=0 ):
     
     """
     
-    return io.imread( filename, as_grey = True)
+    return io.imread( filename, as_gray = True)
 
 def imsave( filename, arr ):
     """Write an image file from a numpy array
@@ -447,7 +446,6 @@ def display_windows_sampling( x, y, window_size, skip=0,  method='standard'):
     """
     
     fig=pl.figure()
-    pl.hold(True)
     if skip < 0 or skip +1 > len(x[0])*len(y):
         fig.canvas.set_window_title('interrogation points map')
         pl.scatter(x, y, color='g') #plot interrogation locations
