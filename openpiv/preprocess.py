@@ -73,7 +73,7 @@ def dynamic_masking(image,method='edges',filter_size=7,threshold=0.005):
         blur_edges = gaussian_filter(edges,21)
         # create the boolean mask 
         bw = (blur_edges > threshold)
-        bw = binary_fill_holes(bw)
+        bw = img_as_ubyte(binary_fill_holes(bw))
         imcopy -= blurback
         imcopy[bw] = 0.0
     elif method is 'intensity':
