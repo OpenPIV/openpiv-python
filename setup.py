@@ -69,7 +69,7 @@ packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version="0.21.2",
+        version="0.21.3",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
@@ -92,7 +92,7 @@ setup(  name = "OpenPIV",
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.6',
 
         # Sublist of all supported platforms and environments.
