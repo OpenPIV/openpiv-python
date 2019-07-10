@@ -25,7 +25,7 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 You can use Conda <http://conda.io>:  
 
-    conda install -c alexlib openpiv
+    conda install -c conda-forge openpiv
 
 We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just try:
 
