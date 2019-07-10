@@ -1,6 +1,6 @@
-import openpiv.tools
-import openpiv.scaling
-import openpiv.process
+from openpiv import tools, scaling, process, validation, filters
+import os
+import numpy as np
 
 def func( args ):
     """A function to process each image pair."""
@@ -16,26 +16,27 @@ def func( args ):
     #####################
 
     # read images into numpy arrays
-    frame_a  = openpiv.tools.imread( file_a )
-    frame_b  = openpiv.tools.imread( file_b )
+    frame_a  = tools.imread( os.path.join(path,file_a) )
+    frame_b  = tools.imread( os.path.join(path,file_b) )
+
+    frame_a = (frame_a*1024).astype(np.int32)
+    frame_b = (frame_b*1024).astype(np.int32)
+
 
     # process image pair with extended search area piv algorithm.
-    u, v, sig2noise = openpiv.process.extended_search_area_piv( frame_a, frame_b, window_size=32, overlap=16, dt=0.02, search_area_size=48, sig2noise_method='peak2peak')
-
-
-    u, v, mask = openpiv.validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
-
-    u, v = openpiv.filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
-
+    u, v, sig2noise = process.extended_search_area_piv( frame_a, frame_b, \
+        window_size=64, overlap=32, dt=0.02, search_area_size=128, sig2noise_method='peak2peak')
+    u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.5 )
+    u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
     # get window centers coordinates
-    x, y = openpiv.process.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=16 )
-
+    x, y = process.get_coordinates( image_size=frame_a.shape, window_size=64, overlap=32 )
     # save to a file
-    openpiv.tools.save(x, y, u, v, mask, 'exp1_%03d.txt' % counter)
-    
-    openpiv.tools.display_vector_field('exp1_%03d.txt' % counter)
+    tools.save(x, y, u, v, mask, 'test2_%03d.txt' % counter)
+    tools.display_vector_field('test2_%03d.txt' % counter)
 
-task = openpiv.tools.Multiprocesser( data_dir = '.', pattern_a='2image_*0.tif', pattern_b='2image_*1.tif' )
+path = os.path.dirname(os.path.abspath(__file__))
+path = os.path.join(path,'../test2/')
+task = tools.Multiprocesser( data_dir = path, pattern_a='2image_*0.tif', pattern_b='2image_*1.tif' )
 task.run( func = func, n_cpus=1 )
 
 

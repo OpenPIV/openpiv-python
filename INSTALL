@@ -6,7 +6,7 @@ Dependencies
 ============
 
 OpenPIV would not have been possible if other great open source projects did not
-exist. We make extensive use of code and tools that other people have created, so 
+exist. We make extensive use of code and tools that other people have created, so
 you should install them before you can use OpenPIV.
 
 The dependencies are:
@@ -20,9 +20,9 @@ The dependencies are:
 On all the platforms, the binary Anaconda installation is recommended. 
 Visit https://www.continuum.io/downloads
 
-How to install the dependencies on Linux (detailed) 
+How to install the dependencies on Linux (detailed)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On a Linux platform installing these dependencies should be trick. Often, if not always, 
+On a Linux platform installing these dependencies should be trick. Often, if not always,
 python is installed by default, while the other dependencies should appear in your package
 manager.
 

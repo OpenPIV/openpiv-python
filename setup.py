@@ -43,29 +43,21 @@ module2 = Extension(    name         = "openpiv.lib",
 ext_modules = [module1, module2]
 
 
-# Package data are those filed 'strictly' needed by the program
-# to function correctly.  Images, default configuration files, et cetera.
-package_data =  [ 'data/defaults-processing-parameters.cfg', 
-                  'data/ui_resources.qrc',
-                  'data/images/*.png',
-                  'data/icons/*.png',
-                ]
-
-
 # data files are other files which are not required by the program but 
 # we want to ditribute as well, for example documentation.
-data_files = [ ('openpiv/examples/tutorial-part1', glob.glob('openpiv/examples/tutorial-part1/*') ),
-               ('openpiv/examples/masking_tutorial', glob.glob('openpiv/examples/masking_tutorial/*') ),
-               ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
-               ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('openpiv/docs/openpiv', ['README.md'] ),
-               ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
-             ]
+data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
+               ('test2',glob.glob('openpiv/examples/test2/*')),
+               ('test3',glob.glob('openpiv/examples/test3/*')),
+               ('test4',glob.glob('openpiv/examples/test4/*')),
+               ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
+               ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
+# [ ('test', [glob.glob('openpiv/examples/test1/*')]),
+               # ('readme', ['README.md']),
+            # ]
 
 
 # packages that we want to distribute. THis is how
 # we have divided the openpiv package.
-packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
@@ -81,9 +73,8 @@ setup(  name = "OpenPIV",
                             are free, open, and easy to operate.""",
                             
         ext_modules = ext_modules, 
-        packages = packages,
+        packages = ['openpiv'],
         cmdclass = {'build_ext': build_ext},
-        package_data = {'': package_data},
         data_files = data_files,
         install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1'],
         classifiers = [
@@ -93,7 +84,6 @@ setup(  name = "OpenPIV",
 
         # Sublist of all supported Python versions.
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.6',
 
         # Sublist of all supported platforms and environments.
         'Environment :: Console',
