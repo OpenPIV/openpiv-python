@@ -17,8 +17,8 @@ before_install:
     - hash -r
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - conda env create
-    - source activate openpiv
+    - conda create -n openpiv
+    - conda activate openpiv
 
 install:
     - conda install numpy cython
