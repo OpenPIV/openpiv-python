@@ -14,6 +14,10 @@ except ImportError:
 from setuptools.dist import Distribution
 Distribution(dict(setup_requires='Cython'))
 
+
+from distutils.core import setup
+from Cython.Build import cythonize
+
 # try:
 #     from Cython.Distutils import build_ext
 # except ImportError:
@@ -32,16 +36,7 @@ class build_ext(_build_ext):
 
 
 # Build extensions 
-module1 = Extension(    name         = "openpiv.process",
-                        sources      = ["openpiv/src/process.pyx"]
-                    )
-                    
-module2 = Extension(    name         = "openpiv.lib",
-                        sources      = ["openpiv/src/lib.pyx"]
-                    )
-
-# a list of the extension modules that we want to distribute
-ext_modules = [module1, module2]
+ext_modules = cythonize(["openpiv/src/process.pyx","openpiv/src/lib.pyx"])
 
 
 # data files are other files which are not required by the program but 

@@ -8,6 +8,7 @@ def test_import():
     """ test of the simplest PIV run """
     try:
         from openpiv import filters
+        from openpiv import lib
     except:
         raise ImportError
     
