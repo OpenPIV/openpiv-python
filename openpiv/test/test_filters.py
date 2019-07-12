@@ -1,4 +1,5 @@
-from openpiv import filters, lib
+from openpiv import filters
+from openpiv.src import lib
 import numpy as np
 from skimage.util import random_noise
 from skimage import img_as_ubyte
@@ -8,7 +9,7 @@ def test_import():
     """ test of the simplest PIV run """
     try:
         from openpiv import filters
-        from openpiv import lib
+        from openpiv.src import lib
     except:
         raise ImportError
     
