@@ -6,7 +6,7 @@ sudo: false
 language: python
 
 python:
-  - 2.7
+  - 3.7
   - 3.6
 
 before_install:
@@ -21,7 +21,7 @@ before_install:
     - source activate openpiv
 
 install:
-    - python setup.py build_ext --inplace
+    - conda install numpy cython
     - python setup.py install
 
 script:
