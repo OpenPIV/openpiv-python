@@ -1,11 +1,10 @@
 import sys
 import glob
-import numpy
-
 
 try:
     from setuptools import setup
     from setuptools import Extension
+    from setuptools.command.build_ext import build_ext as _build_ext
 except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
@@ -15,28 +14,30 @@ except ImportError:
 from setuptools.dist import Distribution
 Distribution(dict(setup_requires='Cython'))
 
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    print("Could not import Cython.Distutils. Install `cython` and rerun.")
-    sys.exit(1)
-    
+# try:
+#     from Cython.Distutils import build_ext
+# except ImportError:
+#     print("Could not import Cython.Distutils. Install `cython` and rerun.")
+#     sys.exit(1)
 
 
-# from distutils.core import setup, Extension
-# from Cython.Distutils import build_ext
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 
 # Build extensions 
 module1 = Extension(    name         = "openpiv.process",
-                        sources      = ["openpiv/src/process.pyx"],
-                        include_dirs = [numpy.get_include()],
+                        sources      = ["openpiv/src/process.pyx"]
                     )
                     
 module2 = Extension(    name         = "openpiv.lib",
-                        sources      = ["openpiv/src/lib.pyx"],
-                        include_dirs = [numpy.get_include()],
+                        sources      = ["openpiv/src/lib.pyx"]
                     )
 
 # a list of the extension modules that we want to distribute
@@ -76,7 +77,8 @@ setup(  name = "OpenPIV",
         packages = ['openpiv'],
         cmdclass = {'build_ext': build_ext},
         data_files = data_files,
-        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1'],
+        install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
+            'pygments','future'],
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
