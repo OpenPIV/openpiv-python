@@ -1,29 +1,14 @@
-os:
-  - linux
-
-sudo: false
-
 language: python
-
 python:
-  - 3.7
-  - 3.6
+  - "3.7"
+  - "3.6"
 
-before_install:
-    # http://conda.pydata.org/docs/travis.html#the-travis-yml-file
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH="$HOME/miniconda/bin:$PATH"
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda create -n openpiv
-    - conda init bash
-    - conda activate openpiv
+notifications:
+  email: false
 
 install:
-    - conda install numpy cython
-    - python setup.py install
+    - pip install -q numpy cython
+    - python setup.py develop
 
 script:
-    - py.test
+  - pytest openpiv
