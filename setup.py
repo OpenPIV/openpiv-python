@@ -36,7 +36,7 @@ class build_ext(_build_ext):
 
 
 # Build extensions 
-ext_modules = cythonize(["openpiv/src/process.pyx","openpiv/src/lib.pyx"])
+ext_modules = cythonize(["openpiv/process.pyx","openpiv/lib.pyx"])
 
 
 # data files are other files which are not required by the program but 

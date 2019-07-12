@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from openpiv.src import lib
+from openpiv.lib import replace_nans
 import numpy as np
 from scipy.signal import convolve
   
@@ -136,7 +136,7 @@ def replace_outliers( u, v, method='localmean', max_iter=5, tol=1e-3, kernel_siz
     """
     uf = u.copy()
     vf = v.copy()
-    uf = lib.replace_nans( uf, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
-    vf = lib.replace_nans( vf, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
+    uf = replace_nans( uf, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
+    vf = replace_nans( vf, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size )
     
     return uf, vf
