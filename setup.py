@@ -1,42 +1,11 @@
 import sys
 import glob
+import numpy 
 
-try:
-    from setuptools import setup
-    from setuptools import Extension
-    from setuptools.command.build_ext import build_ext as _build_ext
-except ImportError:
-    from distutils.core import setup
-    from distutils.extension import Extension
-#
-# Force `setup_requires` stuff like Cython to be installed before proceeding
-#
-from setuptools.dist import Distribution
-Distribution(dict(setup_requires='Cython'))
-
-
-from distutils.core import setup
-from Cython.Build import cythonize
-
-# try:
-#     from Cython.Distutils import build_ext
-# except ImportError:
-#     print("Could not import Cython.Distutils. Install `cython` and rerun.")
-#     sys.exit(1)
-
-
-class build_ext(_build_ext):
-    def finalize_options(self):
-        _build_ext.finalize_options(self)
-        # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
-
-
-
-# Build extensions 
-ext_modules = cythonize(["openpiv/process.pyx","openpiv/lib.pyx"])
+from setuptools import setup
+from setuptools.extension import Extension
+# we do not need Cython if we distribute C files
+# from Cython.Build import cythonize
 
 
 # data files are other files which are not required by the program but 
@@ -52,12 +21,8 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
             # ]
 
 
-# packages that we want to distribute. THis is how
-# we have divided the openpiv package.
-
-
 setup(  name = "OpenPIV",
-        version="0.21.2b",
+        version="0.21.2c",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
@@ -67,10 +32,15 @@ setup(  name = "OpenPIV",
                             for the state-of-the-art experimental tool
                             of Particle Image Velocimetry (PIV) which 
                             are free, open, and easy to operate.""",
-                            
-        ext_modules = ext_modules, 
+        # ext_modules=cythonize("openpiv/*.pyx", include_path=[numpy.get_include()]),
+        ext_modules=[
+        Extension("process", ["openpiv/process.c"],
+                  include_dirs=[numpy.get_include()]),
+        Extension("lib", ["openpiv/lib.c"],
+                  include_dirs=[numpy.get_include()]),
+    ],
+        include_dirs=[numpy.get_include()],
         packages = ['openpiv'],
-        cmdclass = {'build_ext': build_ext},
         data_files = data_files,
         install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
             'pygments','future'],
