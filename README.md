@@ -2,6 +2,14 @@
 [![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
 [![DOI](https://zenodo.org/badge/4213/OpenPIV/openpiv-python.svg)](https://zenodo.org/badge/latestdoi/4213/OpenPIV/openpiv-python)
 
+https://anaconda.org/conda-forge/openpiv/badges/installer/conda.svg
+https://anaconda.org/conda-forge/openpiv/badges/downloads.svg
+https://anaconda.org/conda-forge/openpiv/badges/platforms.svg
+https://anaconda.org/conda-forge/openpiv/badges/license.svg
+https://anaconda.org/conda-forge/openpiv/badges/latest_release_relative_date.svg
+https://anaconda.org/conda-forge/openpiv/badges/version.svg
+
+
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
