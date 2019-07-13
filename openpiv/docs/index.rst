@@ -30,6 +30,7 @@ Contents:
    src/tutorial
    src/downloads_page
    src/api_reference
+   src/faq
    
 
 Indices and tables
