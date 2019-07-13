@@ -27,7 +27,7 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
     pip install numpy cython
-    pip install openpiv
+    pip install openpiv --pre
 
 
 ### To build from source
