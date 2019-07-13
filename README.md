@@ -1,6 +1,6 @@
 # OpenPIV
 [![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
-[![DOI](https://www.zenodo.org/badge/DOI/10.5281/zenodo.3334232.svg)](https://doi.org/10.5281/zenodo.3334232)
+[![DOI](https://zenodo.org/badge/4213/OpenPIV/openpiv-python.svg)](https://zenodo.org/badge/latestdoi/4213/OpenPIV/openpiv-python)
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
