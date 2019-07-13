@@ -59,6 +59,8 @@ def global_val( u, v, u_thresholds, v_thresholds ):
         a boolean array. True elements corresponds to outliers.
         
     """
+
+    np.warnings.filterwarnings('ignore')
     
     ind = np.logical_or(\
           np.logical_or(u < u_thresholds[0], u > u_thresholds[1]), \
