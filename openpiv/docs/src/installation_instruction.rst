@@ -27,7 +27,11 @@ On all platforms, the following Python distribution is recommended:
 Installation
 ============
 
-Use `pip` :: 
+Use `conda` :: 
+
+    conda install -c conda-forge openpiv
+
+Or use `pip` :: 
 
     pip install numpy cython
     pip install openpiv --pre

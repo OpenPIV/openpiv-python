@@ -17,7 +17,7 @@ development, to ease the use for those users who don't have python skills.
 ## Warning
 
 The OpenPIV python version is still in beta state. This means that
-it still might have some bugs and the API may change. However testing and contributing
+it still might have some bugs and the API may change. However, testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
 Development is currently done on a Linux/Mac OSX environment, but as soon as possible 
@@ -31,10 +31,16 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 ## Installing
 
-We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>:
+You can use `conda` : 
+
+    conda install -c conda-forge openpiv
+
+Or PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
     pip install numpy cython
     pip install openpiv --pre
+
+`--pre` because sometimes we have pre-release
 
 
 ### To build from source
