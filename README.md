@@ -23,22 +23,11 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 ## Installing
 
-You can use Conda <http://conda.io>:  
+We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    conda install -c conda-forge openpiv
-
-We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just try:
-
+    pip install numpy cython
     pip install openpiv
 
-or 
-
-    easy_install openpiv
-    
-Note that if dependicies of Numpy, Scipy and Cython are not present, on Ubuntu Linux, install those as:
-
-    sudo apt-get install cython python-numpy python-scipy
-    pip2.7 install OpenPIV
 
 ### To build from source
 
