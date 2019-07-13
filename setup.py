@@ -57,7 +57,7 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
 
 
 setup(  name = "OpenPIV",
-        version="0.21.2a",
+        version="0.21.2b",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
