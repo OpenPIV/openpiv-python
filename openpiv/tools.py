@@ -25,12 +25,9 @@ import os.path
 import multiprocessing
 
 import numpy as np
-import scipy.misc
+from matplotlib.image import imsave as _imsave, imread as _imread
 import matplotlib.pyplot as pl
 import matplotlib.patches as pt
-import matplotlib.image as mpltimg
-from scipy import ndimage
-from skimage import filters, io
 from builtins import range
 
 
@@ -81,7 +78,7 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
         im = imread(image_name)
         im = negative(im) #plot negative of the image for more clarity
         imsave('neg.tif', im)
-        im = mpltimg.imread('neg.tif')
+        im = imread('neg.tif')
         xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
         ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
         implot = pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
@@ -95,7 +92,7 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
 
 def imread( filename, flatten=0 ):
     """Read an image file into a numpy array
-    using skimage.io.imread
+    using imageio.imread
     
     Parameters
     ----------
@@ -119,12 +116,19 @@ def imread( filename, flatten=0 ):
     
     
     """
-    
-    return io.imread( filename, as_gray = True)
+    im = _imread(filename)
+    if np.ndim(im) > 2:
+        im = rgb2gray(im)
+
+    return im
+
+def rgb2gray(rgb):
+    return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
+
 
 def imsave( filename, arr ):
     """Write an image file from a numpy array
-    using scipy.misc.imread
+    using imageio.imread
     
     Parameters
     ----------
@@ -141,21 +145,30 @@ def imsave( filename, arr ):
     >>> imsave( 'negative-image.tif', image2)
     
     """
-    
-    if np.amax(arr) < 256 and np.amin(arr) >= 0:
-        scipy.misc.imsave( filename, arr )
+
+    if np.ndim(arr) > 2:
+        arr = rgb2gray(arr)
+
+    if np.amin(arr) < 0:
+        arr -= arr.min()
+
+    if np.amax(arr) > 255:
+        arr /= arr.max()
+        arr *= 255
+
+    if filename.endswith('tif'):
+        _imsave( filename, arr ,format='TIFF')
     else:
-        raise ValueError('please provide a 2d array of grey levels (value in [0, 255])')
+        _imsave( filename, arr)
 
 
 def convert16bitsTIF( filename, save_name):
-    img = pl.imread( filename )
+    img = imread( filename )
     img2 = np.zeros([img.shape[0],img.shape[1]], dtype = np.int32)
     for I in range(img.shape[0]):
         for J in range(img.shape[1]):
             img2[I,J]=img[I,J,0]
     imsave( save_name, img2)
-    print("converted");
 
 
 def mark_background(threshold, list_img, filename):

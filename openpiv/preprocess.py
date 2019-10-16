@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
-from skimage import io, img_as_float, exposure, data, img_as_uint
+from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
 from skimage.filters import sobel, rank, threshold_otsu
 import numpy as np
 
@@ -66,14 +66,14 @@ def dynamic_masking(image,method='edges',filter_size=7,threshold=0.005):
     # stretch the histogram
     image = exposure.rescale_intensity(img_as_float(image), in_range=(0, 1))
     # blur the image, low-pass
-    blurback = gaussian_filter(image,filter_size)
+    blurback = img_as_ubyte(gaussian_filter(image,filter_size))
     if method is 'edges':
         # identify edges
         edges = sobel(blurback)
         blur_edges = gaussian_filter(edges,21)
         # create the boolean mask 
         bw = (blur_edges > threshold)
-        bw = binary_fill_holes(bw)
+        bw = img_as_ubyte(binary_fill_holes(bw))
         imcopy -= blurback
         imcopy[bw] = 0.0
     elif method is 'intensity':

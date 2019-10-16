@@ -3,6 +3,14 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/4ht2vwvur22jmn6b?svg=true)](https://ci.appveyor.com/project/alexlib/openpiv-python)
 [![DOI](https://zenodo.org/badge/4213/OpenPIV/openpiv-python.svg)](https://zenodo.org/badge/latestdoi/4213/OpenPIV/openpiv-python)
 
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/version.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/platforms.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/license.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/downloads.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/installer/conda.svg)](https://conda.anaconda.org/conda-forge)
+
+
+
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
 development, to ease the use for those users who don't have python skills.
@@ -10,7 +18,7 @@ development, to ease the use for those users who don't have python skills.
 ## Warning
 
 The OpenPIV python version is still in beta state. This means that
-it still might have some bugs and the API may change. However testing and contributing
+it still might have some bugs and the API may change. However, testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
 Development is currently done on a Linux/Mac OSX environment, but as soon as possible 
@@ -24,22 +32,17 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 ## Installing
 
-You can use Conda <http://conda.io>:  
+You can use `conda` : 
 
     conda install -c conda-forge openpiv
 
-We are listed on PyPI: <https://pypi.python.org/pypi/OpenPIV>, so you could just try:
+Or PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    pip install openpiv
+    pip install numpy cython
+    pip install openpiv --pre
 
-or 
+`--pre` because sometimes we have pre-release
 
-    easy_install openpiv
-    
-Note that if dependicies of Numpy, Scipy and Cython are not present, on Ubuntu Linux, install those as:
-
-    sudo apt-get install cython python-numpy python-scipy
-    pip2.7 install OpenPIV
 
 ### To build from source
 
@@ -64,6 +67,13 @@ Latest developments go into @alexlib repository <https://github.com/alexlib/open
 ## Documentation
 
 The OpenPIV documentation is available on the project web page at <http://openpiv.readthedocs.org>
+
+## Demo notebooks 
+
+1. [Tutorial Notebook 1](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial1.ipynb)
+2. [Tutorial notebook 2](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial2.ipynb)
+3. [Dynamic masking tutorial](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/masking_tutorial.ipynb)
+4. [Multipass tutorial with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
 
 
 ## Contributors

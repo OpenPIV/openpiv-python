@@ -1,11 +1,10 @@
 import sys
 import glob
-import numpy
-
 
 try:
     from setuptools import setup
     from setuptools import Extension
+    from setuptools.command.build_ext import build_ext as _build_ext
 except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
@@ -15,61 +14,50 @@ except ImportError:
 from setuptools.dist import Distribution
 Distribution(dict(setup_requires='Cython'))
 
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    print("Could not import Cython.Distutils. Install `cython` and rerun.")
-    sys.exit(1)
-    
+
+from distutils.core import setup
+from Cython.Build import cythonize
+
+# try:
+#     from Cython.Distutils import build_ext
+# except ImportError:
+#     print("Could not import Cython.Distutils. Install `cython` and rerun.")
+#     sys.exit(1)
 
 
-# from distutils.core import setup, Extension
-# from Cython.Distutils import build_ext
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 
 # Build extensions 
-module1 = Extension(    name         = "openpiv.process",
-                        sources      = ["openpiv/src/process.pyx"],
-                        include_dirs = [numpy.get_include()],
-                    )
-                    
-module2 = Extension(    name         = "openpiv.lib",
-                        sources      = ["openpiv/src/lib.pyx"],
-                        include_dirs = [numpy.get_include()],
-                    )
-
-# a list of the extension modules that we want to distribute
-ext_modules = [module1, module2]
-
-
-# Package data are those filed 'strictly' needed by the program
-# to function correctly.  Images, default configuration files, et cetera.
-package_data =  [ 'data/defaults-processing-parameters.cfg', 
-                  'data/ui_resources.qrc',
-                  'data/images/*.png',
-                  'data/icons/*.png',
-                ]
+ext_modules = cythonize(["openpiv/process.pyx","openpiv/lib.pyx"])
 
 
 # data files are other files which are not required by the program but 
 # we want to ditribute as well, for example documentation.
-data_files = [ ('openpiv/examples/tutorial-part1', glob.glob('openpiv/examples/tutorial-part1/*') ),
-               ('openpiv/examples/masking_tutorial', glob.glob('openpiv/examples/masking_tutorial/*') ),
-               ('openpiv/docs/openpiv/examples/example1', glob.glob('openpiv/docs/examples/example1/*') ),
-               ('openpiv/docs/openpiv/examples/gurney-flap', glob.glob('openpiv/docs/examples/gurney-flap/*') ),
-               ('openpiv/docs/openpiv', ['README.md'] ),
-               ('openpiv/data/ui', glob.glob('openpiv/data/ui/*.ui') ),
-             ]
+data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
+               ('test2',glob.glob('openpiv/examples/test2/*')),
+               ('test3',glob.glob('openpiv/examples/test3/*')),
+               ('test4',glob.glob('openpiv/examples/test4/*')),
+               ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
+               ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
+# [ ('test', [glob.glob('openpiv/examples/test1/*')]),
+               # ('readme', ['README.md']),
+            # ]
 
 
 # packages that we want to distribute. THis is how
 # we have divided the openpiv package.
-packages = ['openpiv', 'openpiv.ui']
 
 
 setup(  name = "OpenPIV",
-        version="0.21.1a",
+        version="0.21.2b",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
@@ -81,19 +69,22 @@ setup(  name = "OpenPIV",
                             are free, open, and easy to operate.""",
                             
         ext_modules = ext_modules, 
-        packages = packages,
+        packages = ['openpiv'],
         cmdclass = {'build_ext': build_ext},
-        package_data = {'': package_data},
         data_files = data_files,
+<<<<<<< HEAD
         install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','future'],
+=======
+        install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
+            'pygments','future'],
+>>>>>>> 2d4f48449c80e4fc0fd28dbaa87727a03ce5a992
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
 
         # Sublist of all supported platforms and environments.
         'Environment :: Console',

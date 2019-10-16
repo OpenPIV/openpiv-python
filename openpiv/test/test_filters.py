@@ -1,4 +1,5 @@
-import openpiv.filters as filters
+from openpiv import filters
+from openpiv.lib import replace_nans
 import numpy as np
 from skimage.util import random_noise
 from skimage import img_as_ubyte
@@ -7,7 +8,8 @@ from skimage import img_as_ubyte
 def test_import():
     """ test of the simplest PIV run """
     try:
-        import openpiv.filters as filters
+        from openpiv import filters
+        from openpiv import lib
     except:
         raise ImportError
     
@@ -38,15 +40,15 @@ def test_replace_nans():
     """ test of NaNs inpainting """
     u = np.nan*np.ones((5,5))
     u[2,2] = 1
-    filters.replace_nans(u,2,1e-3)
+    replace_nans(u,2,1e-3)
     assert(~np.all(np.isnan(u)))
     v = np.ones((9,9))
     v[1:-1,1:-1] = np.nan
     u = v.copy()
-    filters.replace_nans(u,1,1e-3,method='disk')
+    replace_nans(u,1,1e-3,method='disk')
     assert(np.sum(np.isnan(u)) == 9) # central core is nan
     u = v.copy()
-    filters.replace_nans(u,2,1e-3,method='disk')
+    replace_nans(u,2,1e-3,method='disk')
     assert(np.allclose(np.ones((9,9)),u))
     
     
