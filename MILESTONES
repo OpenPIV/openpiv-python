@@ -1,0 +1,22 @@
+Milestones and targets for future OpenPiv versions.
+
+v 0.1
++ all functions should be unit tested
++ all functions should be correctly documented
++ the basic api structure should be clear and defined
+
+v 0.2
++ Lavision file format reader
++ Hdf5 output
++ at least one advanced processing algorithm, ( 1st order, 2nd order )
+
+v 0.3
++ data display submodule using matplotlib
++ post-processing facilities
+
+v 0.4
++ basic gui for image processing. The gui will allow to select image directory
+processing parameters, algorithm, etc, but not display result at the moment.
+
+v 0.5
++ Gui post-processing and data visualization

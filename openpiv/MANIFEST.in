@@ -1,0 +1,15 @@
+include *.md
+include *.sh
+include *.txt
+include INSTALL
+include LICENSE.txt
+include MILESTONES
+include TODO
+recursive-include openpiv *.bmp
+recursive-include openpiv *.ipynb
+recursive-include openpiv *.pdf
+recursive-include openpiv *.png
+recursive-include openpiv *.py
+recursive-include openpiv *.rst
+recursive-include openpiv *.tif
+recursive-include openpiv *.zip
