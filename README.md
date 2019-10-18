@@ -84,8 +84,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [David Lasagna](http://github.com/gasagna)
 5. [Mathias Aubert](http://github.com/MathiasAubert)
 6. [Pete Bachant](http://github.com/petebachant)
-7. [Cameron Dallas] (http://github.com/CameronDallas5000)
-8. [Cecyl Curry] (http://github.com/leycec)
+7. [Cameron Dallas](http://github.com/CameronDallas5000)
+8. [Cecyl Curry](http://github.com/leycec)
 9. [Theo Käufer](http://github.com/TKaeufer) 
 
 
