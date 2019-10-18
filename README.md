@@ -72,7 +72,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 1. [Tutorial Notebook 1](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial1.ipynb)
 2. [Tutorial notebook 2](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial2.ipynb)
 3. [Dynamic masking tutorial](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/masking_tutorial.ipynb)
-4. [Multipass tutorial with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
+4. [Multipass tutorial with WiDiM](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
+5. [Multipass with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/window_deformation_comparison.ipynb)
 
 
 ## Contributors
@@ -83,6 +84,11 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [David Lasagna](http://github.com/gasagna)
 5. [Mathias Aubert](http://github.com/MathiasAubert)
 6. [Pete Bachant](http://github.com/petebachant)
-7. Cameron Dallas (http://github.com/CameronDallas5000)
-8. Cecyl Curry (http://github.com/leycec)
+7. [Cameron Dallas] (http://github.com/CameronDallas5000)
+8. [Cecyl Curry] (http://github.com/leycec)
+9. [Theo Käufer](http://github.com/TKaeufer) 
+
+
+Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
+
 
