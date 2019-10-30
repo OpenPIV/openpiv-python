@@ -143,7 +143,7 @@ def piv(settings):
             u, v = filters.replace_outliers( u, v, method=settings.filter_method, max_iter=settings.max_filter_iteration, kernel_size=settings.filter_kernel_size)
         'pixel/frame->pixel/sec'
         u=u/settings.dt
-        v=v/settings.dt
+        v=-v/settings.dt
         'scales the results pixel-> meter'
         x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = settings.scaling_factor )     
         'save to a file'
@@ -578,8 +578,8 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     invalid = a[:,5].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
-    plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],-a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
-    plt.quiver(a[valid,0],a[valid,1],a[valid,2],-a[valid,3],color='b',width=0.001,headwidth=3,**kw)
+    plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
+    plt.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',width=0.001,headwidth=3,**kw)
     plt.draw()
 
 
