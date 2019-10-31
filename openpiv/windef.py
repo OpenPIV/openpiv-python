@@ -143,7 +143,7 @@ def piv(settings):
             u, v = filters.replace_outliers( u, v, method=settings.filter_method, max_iter=settings.max_filter_iteration, kernel_size=settings.filter_kernel_size)
         'pixel/frame->pixel/sec'
         u=u/settings.dt
-        v=-v/settings.dt
+        v=v/settings.dt
         'scales the results pixel-> meter'
         x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = settings.scaling_factor )     
         'save to a file'
@@ -223,7 +223,7 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
     '''
     x, y = np.meshgrid(side_x, side_y)#create a meshgrid 
     frame_def = scn.map_coordinates(
-        frame, ((y-vt, x+ut,)), order=interpolation_order,mode='nearest')
+        frame, ((y+vt, x+ut,)), order=interpolation_order,mode='nearest')
     #deform the image by using the map coordinates function
     '''This spline interpolation is doing the image deformation. This one likes meshgrids
     new grid is defined by the old grid + the displacement.
@@ -298,7 +298,7 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
     shapes = np.array(process.get_field_shape(
         np.shape(frame_a), window_size, overlap))
     u = disp[:, 1].reshape(shapes)
-    v = disp[:, 0].reshape(shapes)
+    v = -disp[:, 0].reshape(shapes)
     'reshaping the interrogation window to vector field shape'
     
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
@@ -451,7 +451,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     shapes = np.array(process.get_field_shape(
         np.shape(frame_a), window_size, overlap))
     u = disp[:, 1].reshape(shapes)
-    v = disp[:, 0].reshape(shapes)
+    v = -disp[:, 0].reshape(shapes)
 
     'adding the recent displacment on to the displacment of the previous pass'
     u = u+u_pre
