@@ -1,4 +1,4 @@
-def piv(im1,im2):
+def piv(im1=r'C:\Users\alex\Downloads\B005_1.tif',im2=r'C:\Users\alex\Downloads\B005_2.tif'):
     """
     Simplest PIV run on the pair of images using default settings
 
@@ -13,16 +13,16 @@ def piv(im1,im2):
 
     from openpiv import process
     
-    frame_a = imageio.imread(im1).as_type(np.int32)
-    frame_b = imageio.imread(im2).as_type(np.int32)
+    frame_a = imageio.imread(im1)
+    frame_b = imageio.imread(im2)
 
-    u, v =  process.extended_search_area_piv(frame_a,frame_b)
+    u, v = process.extended_search_area_piv(frame_a.astype(np.int32),frame_b.astype(np.int32),window_size=32,overlap=16)
     x, y = process.get_coordinates( image_size=frame_a.shape, 
-                               window_size=24, overlap=12 )
+                               window_size=32, overlap=16)
 
     plt.figure(figsize=(12,12))
-    plt.imshow(frame_a,cm=plt.cm.gray)
-    plt.quiver(x,y,u,-v)
+    plt.imshow(frame_a,cmap=plt.cm.gray,alpha=0.8,origin='lower')
+    plt.quiver(x,y,u,-v,scale=50,color='r')
     plt.show()
     # plt.gca().invert_yaxis()
     
