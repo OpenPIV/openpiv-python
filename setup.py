@@ -45,6 +45,7 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
                ('test2',glob.glob('openpiv/examples/test2/*')),
                ('test3',glob.glob('openpiv/examples/test3/*')),
                ('test4',glob.glob('openpiv/examples/test4/*')),
+               ('test5',glob.glob('openpiv/examples/test5/*')),
                ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
                ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
 # [ ('test', [glob.glob('openpiv/examples/test1/*')]),
