@@ -5,6 +5,11 @@ include INSTALL
 include LICENSE.txt
 include MILESTONES
 include TODO
+
+recursive-include openpiv/docs *
+recursive-include openpiv/examples *
+recursive-include openpiv/test *
+
 recursive-include openpiv *.bmp
 recursive-include openpiv *.ipynb
 recursive-include openpiv *.pdf

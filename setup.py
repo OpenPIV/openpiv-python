@@ -39,20 +39,6 @@ class build_ext(_build_ext):
 ext_modules = cythonize(["openpiv/process.pyx","openpiv/lib.pyx"])
 
 
-# data files are other files which are not required by the program but 
-# we want to ditribute as well, for example documentation.
-data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
-               ('test2',glob.glob('openpiv/examples/test2/*')),
-               ('test3',glob.glob('openpiv/examples/test3/*')),
-               ('test4',glob.glob('openpiv/examples/test4/*')),
-               ('test5',glob.glob('openpiv/examples/test5/*')),
-               ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
-               ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
-# [ ('test', [glob.glob('openpiv/examples/test1/*')]),
-               # ('readme', ['README.md']),
-            # ]
-
-
 # packages that we want to distribute. THis is how
 # we have divided the openpiv package.
 
@@ -70,9 +56,9 @@ setup(  name = "OpenPIV",
                             are free, open, and easy to operate.""",
                             
         ext_modules = ext_modules, 
-        packages = ['openpiv'],
+        packages=find_packages(),
+        include_package_data=True,
         cmdclass = {'build_ext': build_ext},
-        data_files = data_files,
         install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','pygments','future'],
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
