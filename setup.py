@@ -2,7 +2,7 @@ import sys
 import glob
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
     from setuptools import Extension
     from setuptools.command.build_ext import build_ext as _build_ext
 except ImportError:
