@@ -45,6 +45,7 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
                ('test2',glob.glob('openpiv/examples/test2/*')),
                ('test3',glob.glob('openpiv/examples/test3/*')),
                ('test4',glob.glob('openpiv/examples/test4/*')),
+               ('test5',glob.glob('openpiv/examples/test5/*')),
                ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
                ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
 # [ ('test', [glob.glob('openpiv/examples/test1/*')]),
@@ -57,7 +58,7 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
 
 
 setup(  name = "OpenPIV",
-        version="0.21.3a",
+        version="0.21.4",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
@@ -72,15 +73,16 @@ setup(  name = "OpenPIV",
         packages = ['openpiv'],
         cmdclass = {'build_ext': build_ext},
         data_files = data_files,
-        install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
-            'pygments','future'],
+        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','pygments','future'],
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
 
         # Sublist of all supported platforms and environments.
         'Environment :: Console',
