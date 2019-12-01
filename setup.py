@@ -57,7 +57,7 @@ data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
 
 
 setup(  name = "OpenPIV",
-        version="0.21.3a",
+        version="0.21.4",
         author = "OpenPIV contributors",
         author_email = "openpiv-users@googlegroups.com",
         description = "An open source software for PIV data analysis",
@@ -72,19 +72,16 @@ setup(  name = "OpenPIV",
         packages = ['openpiv'],
         cmdclass = {'build_ext': build_ext},
         data_files = data_files,
-<<<<<<< HEAD
-        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','future'],
-=======
-        install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
-            'pygments','future'],
->>>>>>> 2d4f48449c80e4fc0fd28dbaa87727a03ce5a992
+        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','pygments','future'],
         classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
 
         # Sublist of all supported platforms and environments.
         'Environment :: Console',
