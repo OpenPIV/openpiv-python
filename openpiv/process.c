@@ -27122,8 +27122,8 @@ static int __pyx_import_star_set(PyObject *o, PyObject* py_name, char *name) {
   static const char* internal_type_names[] = {
     "DTYPEf_t",
     "DTYPEi_t",
-    "__pyx_ctuple_556c8____dunderpyx_ctuple_npy_intp__dunderand_npy_intp__and_int__and_int__etc",
-    "__pyx_ctuple_556c8____dunderpyx_ctuple_npy_intp__dunderand_npy_intp__and_int__and_int__etc_struct",
+    "__pyx_ctuple_76e11____dunderpyx_ctuple_npy_intp__dunderand_npy_intp__and_int__and_int__etc",
+    "__pyx_ctuple_76e11____dunderpyx_ctuple_npy_intp__dunderand_npy_intp__and_int__and_int__etc_struct",
     "__pyx_ctuple_Py_ssize_t",
     "__pyx_ctuple_Py_ssize_t_struct",
     "__pyx_ctuple___dunderpyx_ctuple_float__dunderand_float",

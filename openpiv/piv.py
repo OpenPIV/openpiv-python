@@ -19,8 +19,8 @@ def piv():
 
 
     # if im1 is None and im2 is None:
-    im1 = pkg.resource_filename('openpiv','../test5/frame_a.tif')
-    im2 = pkg.resource_filename('openpiv','../test5/frame_b.tif')
+    im1 = pkg.resource_filename('openpiv','examples/test5/frame_a.tif')
+    im2 = pkg.resource_filename('openpiv','examples/test5/frame_b.tif')
 
 
     frame_a = imageio.imread(im1)
