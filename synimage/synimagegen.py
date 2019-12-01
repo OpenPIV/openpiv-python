@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import numpy as np
 import scipy
+import scipy.special
+import scipy.interpolate
 from scipy import io
 import matplotlib.pyplot as pl
 import matplotlib.cm as cm
@@ -43,13 +45,13 @@ class continuous_flow_field:
     '''
     def f_U(self,x,y):
         #example for synthetic U velocity
-        #u=2.5+0.5*np.sin((x**2+y**2)/0.01)
+        u=2.5+0.5*np.sin((x**2+y**2)/0.01)
         return u
         
     
     def f_V(self,x,y):
         #example for synthetic V velocity
-        #v=0.5+0.1*np.cos((x**2+y**2)/0.01)
+        v=0.5+0.1*np.cos((x**2+y**2)/0.01)
         return v
     
     def get_U_V(self,x,y):
@@ -87,7 +89,7 @@ class continuous_flow_field:
         return X,Y,U,V
 
 
-def create_synimage_parameters(input_data,x_bound,y_bound,image_size,path='None',inter=False,den=0.008,per_loss_pairs=2,par_diam_mean=8**(1.0/2),par_diam_std=0.5,par_int_std=0.25,dt=0.1):
+def create_synimage_parameters(input_data,x_bound,y_bound,image_size,path='None',inter=False,den=0.008,per_loss_pairs=2,par_diam_mean=15**(1.0/2),par_diam_std=1.5,par_int_std=0.25,dt=0.1):
     """Creates the synthetic image with the synthetic image parameters
 
     Parameters
@@ -164,10 +166,9 @@ def create_synimage_parameters(input_data,x_bound,y_bound,image_size,path='None'
         f = open(path,'r')
         data = f.readlines()
         f.close()
-        data = [line.split('\t')[:5] for line in data]
+        data = [line.split('\t') for line in data]
         data = np.array(data).astype(float)
         data = np.array([line for line in data.tolist() if 1.2*x_bound[1]>=line[1]>=0.8*x_bound[0] and 1.2*y_bound[1]>=line[2]>=0.8*y_bound[0]])
-        data = data[:,1:]
         
     else:
         data = input_data
