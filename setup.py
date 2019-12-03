@@ -64,18 +64,15 @@ setup(  name = "OpenPIV",
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
-
         # Sublist of all supported Python versions.
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-
         # Sublist of all supported platforms and environments.
         'Environment :: Console',
         'Environment :: MacOS X',
         'Environment :: Win32 (MS Windows)',
         'Environment :: X11 Applications',
-
         # Miscellaneous metadata.
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',

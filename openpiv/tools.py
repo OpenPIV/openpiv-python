@@ -119,8 +119,9 @@ def imread( filename, flatten=0 ):
     im = _imread(filename)
     if np.ndim(im) > 2:
         im = rgb2gray(im)
+       
 
-    return im
+    return im.astype(np.int32)
 
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
