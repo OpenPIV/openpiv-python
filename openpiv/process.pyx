@@ -8,7 +8,6 @@ from scipy.signal import convolve
 import time
 import openpiv
 import warnings
-from progressbar import *
 
 cimport numpy as np
 cimport cython
@@ -747,11 +746,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     for K in range(nb_iter_max):
         print("ITERATION # ", K)
         window_a, window_b = define_windows(W[K])
-        #a simple progress bar
-        # widgets = ['Computing the displacements : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
-        #    ' ', ETA(), ' ', FileTransferSpeed()]
-        # pbar = ProgressBar(widgets=widgets, maxval=100)
-        # pbar.start()
         residual = 0
         for I in range(Nrow[K]):#run through interpolations locations
             # pbar.update(100*I/Nrow[K])#progress update
@@ -815,10 +809,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
             for i in range(validation_iter):#real validation starts
                 print("Validation, iteration number ",i)
                 print(" ")
-                # widgets = ['Validation : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
-           # ' ', ETA(), ' ', FileTransferSpeed()]
-                # pbar = ProgressBar(widgets=widgets, maxval=100)
-                # pbar.start()
                 for I in range(Nrow[K]):#run through locations
                     # pbar.update(100*I/Nrow[K])                    
                     for J in range(Ncol[K]):
