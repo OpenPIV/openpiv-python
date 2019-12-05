@@ -9,7 +9,7 @@ notifications:
 
 install:
     - pip install -q numpy cython pytest
-    - pip install .
+    - pip install -e .
 
 script:
   - pytest openpiv
