@@ -66,7 +66,7 @@ def get_coordinates(image_size, window_size, overlap):
     x = np.arange( field_shape[1] )*(window_size-overlap) + window_size/2.0
     y = np.arange( field_shape[0] )*(window_size-overlap) + window_size/2.0
 
-    return np.meshgrid(x, y[::-1])
+    return np.meshgrid(x, y)
 
 
 def get_field_shape(image_size, window_size, overlap):
