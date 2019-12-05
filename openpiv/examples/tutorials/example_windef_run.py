@@ -1,4 +1,5 @@
 from openpiv import windef
+from pkg_resources import resource_filename
 
 
 settings = windef.Settings()
@@ -6,7 +7,7 @@ settings = windef.Settings()
 
 'Data related settings'
 # Folder with the images to process
-settings.filepath_images = '../test1'
+settings.filepath_images = resource_filename('openpiv','examples/test1')
 # Folder for the outputs
 settings.save_path = ''
 # Root name of the output Folder for Result Files

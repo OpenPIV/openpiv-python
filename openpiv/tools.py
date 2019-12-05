@@ -73,21 +73,21 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     """
     
     a = np.loadtxt(filename)
-    fig=pl.figure()
+    x,y,u,v = a[:,0],a[:,1],a[:,2],a[:,3]
+
+    fig,ax = pl.subplots(figsize=(11,8))
     if on_img: # plot a background image
         im = imread(image_name)
-        im = negative(im) #plot negative of the image for more clarity
-        imsave('neg.tif', im)
-        im = imread('neg.tif')
-        xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
-        ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
-        implot = pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
+        xmax = np.amax(x)+window_size/(2*scaling_factor)
+        ymax = np.amax(y)+window_size/(2*scaling_factor)
+        pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax],alpha=.8)
+
     invalid = a[:,4].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
-    pl.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',**kw)
-    pl.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
-    pl.draw()
+    ax.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',**kw)
+    ax.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
+    ax.invert_yaxis()
     pl.show()
 
 def imread( filename, flatten=0 ):
