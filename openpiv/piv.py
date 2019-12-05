@@ -15,7 +15,12 @@ def piv():
 
     from openpiv import process
     import pkg_resources as pkg
-    # import os
+
+    import numpy as np
+
+    import matplotlib.animation as animation
+
+
 
 
     # if im1 is None and im2 is None:
@@ -27,21 +32,38 @@ def piv():
     frame_b = imageio.imread(im2)
     
     frame_a[0:32,512-32:] = 255
+
+
+    images = []
+    images.extend([frame_a,frame_b])
+
+
+    fig,ax  = plt.subplots()
+
+    # ims is a list of lists, each row is a list of artists to draw in the
+    # current frame; here we are just animating one artist, the image, in
+    # each frame
+    ims = []
+    for i in range(2):
+        im = ax.imshow(images[i%2], animated=True, cmap=plt.cm.gray)
+        ims.append([im])
+
+    animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=0)
+    plt.show()
+
+    # import os
     
     u, v = process.extended_search_area_piv(frame_a.astype(np.int32),frame_b.astype(np.int32),window_size=32,overlap=16)
     x, y = process.get_coordinates( image_size=frame_a.shape, 
                                window_size=32, overlap=16)
 
-    fig,ax = plt.subplots(1,2,figsize=(12,12))
+    fig,ax = plt.subplots(1,2,figsize=(11,8))
     ax[0].imshow(frame_a,cmap=plt.get_cmap('gray'),alpha=0.8,origin='upper')
     ax[0].quiver(x,np.flipud(y),u,v,scale=50,color='r')
-    # plt.gca().invert_yaxis()
-    # plt.show()
     
-    
-    # plt.imshow(frame_a,cmap=plt.get_cmap('gray'),alpha=0.8,origin='upper')
     ax[1].quiver(x,y,u,v,scale=50,color='b')
     ax[1].set_aspect(1.1)
-    # plt.gca().invert_yaxis()
     plt.show()
+
+    return x,y,u,v
     
