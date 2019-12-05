@@ -1,5 +1,6 @@
 language: python
 python:
+  - "3.8"
   - "3.7"
   - "3.6"
 
@@ -7,8 +8,8 @@ notifications:
   email: false
 
 install:
-    - pip install -q numpy cython
-    - python setup.py develop
+    - pip install -q numpy cython pytest
+    - pip install .
 
 script:
   - pytest openpiv
