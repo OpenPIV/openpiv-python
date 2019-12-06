@@ -48,7 +48,7 @@ def piv():
         im = ax.imshow(images[i%2], animated=True, cmap=plt.cm.gray)
         ims.append([im])
 
-    animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=0)
+    _ = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=0)
     plt.show()
 
     # import os
