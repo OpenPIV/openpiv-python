@@ -34,7 +34,7 @@ setup(
     setup_requires=[
         'setuptools',
         'cython>=0.29.14',
-        'numpy>=1.17.4'
+        'numpy>=1.17'
     ],
     install_requires=[
         'imageio',
