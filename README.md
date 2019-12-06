@@ -34,14 +34,13 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 You can use `conda` : 
 
-    conda install -c conda-forge openpiv
+    conda install -c openpiv openpiv
 
 Or PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    pip install numpy cython
-    pip install openpiv --pre
+    pip install openpiv
 
-`--pre` because sometimes we have pre-release
+`--pre` because sometimes we push pre-releases
 
 
 ### To build from source
