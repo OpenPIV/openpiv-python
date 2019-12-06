@@ -25,8 +25,9 @@ setup(
     # packages=find_packages(),
     include_package_data=True,
     setup_requires=[
-        'cython>=0.29',
-        'numpy>=1.17'
+        'setuptools',
+        'cython>=0.29.14',
+        'numpy>=1.17.4'
     ],
     install_requires=[
         'imageio',
