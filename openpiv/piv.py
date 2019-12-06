@@ -59,10 +59,11 @@ def piv():
 
     fig,ax = plt.subplots(1,2,figsize=(11,8))
     ax[0].imshow(frame_a,cmap=plt.get_cmap('gray'),alpha=0.8,origin='upper')
-    ax[0].quiver(x,np.flipud(y),u,v,scale=50,color='r')
+    ax[0].quiver(x,y,u,v,scale=50,color='r')
     
     ax[1].quiver(x,y,u,v,scale=50,color='b')
     ax[1].set_aspect(1.1)
+    ax[1].invert_yaxis()
     plt.show()
 
     return x,y,u,v
