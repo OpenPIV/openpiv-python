@@ -1,2 +1,2 @@
 [build-system]
-requires = ["setuptools","cython>=0.29.14","numpy>=1.17"]
+requires = ["setuptools","cython","numpy"]
