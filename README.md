@@ -3,6 +3,12 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/4ht2vwvur22jmn6b?svg=true)](https://ci.appveyor.com/project/alexlib/openpiv-python)
 [![DOI](https://zenodo.org/badge/4213/OpenPIV/openpiv-python.svg)](https://zenodo.org/badge/latestdoi/4213/OpenPIV/openpiv-python)
 
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/version.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/platforms.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/license.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/downloads.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/installer/conda.svg)](https://conda.anaconda.org/conda-forge)
+
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
@@ -32,7 +38,11 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
 `--pre` because sometimes we push pre-releases
 
+## Or `conda` 
 
+    conda install -c conda-forge openpiv
+    
+    
 ### To build from source
 
 Download the package from the Github: https://github.com/OpenPIV/openpiv-python/archive/master.zip
