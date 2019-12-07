@@ -29,7 +29,7 @@ setup(
     version ='0.21.7',
     cmdclass = {'build_ext': build_ext},
     ext_modules = extensions,
-    # packages=find_packages(),
+    packages=find_packages(),
     include_package_data=True,
     setup_requires=[
         'setuptools',
