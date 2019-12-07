@@ -31,14 +31,14 @@ setup(
     setup_requires=[
         'setuptools',
         'cython>=0.29.14',
-        'numpy>=1.17'
+        'numpy'
     ],
     install_requires=[
         'imageio',
         'matplotlib>=3',
         'scikit-image',
         'progressbar2',
-        'scipy>=1.3',
+        'scipy',
     ],
     classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
