@@ -26,7 +26,8 @@ please test the code.
 
 ## Test it without installation
 Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in your browser with zero installation:
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openpiv/openpiv-python-example/master?filepath=index.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/openpiv/openpiv-python/master?filepath=openpiv%2Fexamples%2Fnotebooks%2Ftutorial1.ipynb)
+
 
 
 ## Installing
