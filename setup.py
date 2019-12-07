@@ -1,9 +1,6 @@
 import os
 
-# from setuptools import setup, find_packages
-# from setuptools.extension import Extension
-
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
