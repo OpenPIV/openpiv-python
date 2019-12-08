@@ -1,15 +1,21 @@
 include *.md
-include *.sh
 include *.txt
 include INSTALL
 include LICENSE.txt
 include MILESTONES
 include TODO
+
+recursive-include openpiv/docs *
+recursive-include openpiv/examples *
+recursive-include openpiv/test *
+
 recursive-include openpiv *.bmp
+recursive-include openpiv *.c
 recursive-include openpiv *.ipynb
 recursive-include openpiv *.pdf
 recursive-include openpiv *.png
 recursive-include openpiv *.py
+recursive-include openpiv *.pyx
 recursive-include openpiv *.rst
-recursive-include openpiv *.tif
-recursive-include openpiv *.zip
+recursive-include openpiv *.tifinclude cysetuptools.py
+include cysetuptools.py

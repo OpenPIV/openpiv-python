@@ -2,9 +2,7 @@ build: false
 
 environment:
   matrix:
-    - PYTHON_VERSION: 2.7
-      MINICONDA: C:\Miniconda
-    - PYTHON_VERSION: 3.6
+    - PYTHON_VERSION: 3.8
       MINICONDA: C:\Miniconda3
 
 init:
@@ -15,9 +13,10 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy scikit-image progressbar2 nose"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy scikit-image progressbar2 pytest"
   - activate test-environment
-  - pip install coverage
+  - pip install openpiv
+  
 
 test_script:
-  - nosetests
+  - pytest openpiv

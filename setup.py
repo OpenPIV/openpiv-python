@@ -1,90 +1,54 @@
-import sys
-import glob
+import os
 
-try:
-    from setuptools import setup
-    from setuptools import Extension
-    from setuptools.command.build_ext import build_ext as _build_ext
-except ImportError:
-    from distutils.core import setup
-    from distutils.extension import Extension
-#
-# Force `setup_requires` stuff like Cython to be installed before proceeding
-#
-from setuptools.dist import Distribution
-Distribution(dict(setup_requires='Cython'))
-
-
-from distutils.core import setup
+from setuptools import setup, find_packages
+from setuptools.extension import Extension
 from Cython.Build import cythonize
-
-# try:
-#     from Cython.Distutils import build_ext
-# except ImportError:
-#     print("Could not import Cython.Distutils. Install `cython` and rerun.")
-#     sys.exit(1)
+from Cython.Distutils import build_ext
+import numpy
 
 
-class build_ext(_build_ext):
-    def finalize_options(self):
-        _build_ext.finalize_options(self)
-        # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
+extensions = [
+    Extension("openpiv.process",["./openpiv/process.pyx"],include_dirs = [numpy.get_include()]),
+    Extension("openpiv.lib",["./openpiv/lib.pyx"], include_dirs = [numpy.get_include()])
+    ]
+
+extensions = cythonize(extensions,include_path = [numpy.get_include()])
 
 
+# read the contents of your README file
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+#with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+with open(path.join(this_directory, 'README.md')) as f:
+    long_description = f.read()
 
-# Build extensions 
-ext_modules = cythonize(["openpiv/process.pyx","openpiv/lib.pyx"])
-
-
-# data files are other files which are not required by the program but 
-# we want to ditribute as well, for example documentation.
-data_files = [('test1',glob.glob('openpiv/examples/test1/*')),
-               ('test2',glob.glob('openpiv/examples/test2/*')),
-               ('test3',glob.glob('openpiv/examples/test3/*')),
-               ('test4',glob.glob('openpiv/examples/test4/*')),
-               ('notebooks',glob.glob('openpiv/examples/notebooks/*')),
-               ('tutorials',glob.glob('openpiv/examples/tutorials/*'))]
-# [ ('test', [glob.glob('openpiv/examples/test1/*')]),
-               # ('readme', ['README.md']),
-            # ]
-
-
-# packages that we want to distribute. THis is how
-# we have divided the openpiv package.
-
-
-setup(  name = "OpenPIV",
-        version="0.21.2b",
-        author = "OpenPIV contributors",
-        author_email = "openpiv-users@googlegroups.com",
-        description = "An open source software for PIV data analysis",
-        license = "GNU General Public License v3 (GPLv3)",
-        url = "http://www.openpiv.net",
-        long_description =  """OpenPIV is a set of open source algorithms and methods
-                            for the state-of-the-art experimental tool
-                            of Particle Image Velocimetry (PIV) which 
-                            are free, open, and easy to operate.""",
-                            
-        ext_modules = ext_modules, 
-        packages = ['openpiv'],
-        cmdclass = {'build_ext': build_ext},
-        data_files = data_files,
-<<<<<<< HEAD
-        install_requires = ['scipy','numpy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1','future'],
-=======
-        install_requires = ['numpy','scipy','cython','scikit-image >= 0.12.0','progressbar2 >= 3.8.1',\
-            'pygments','future'],
->>>>>>> 2d4f48449c80e4fc0fd28dbaa87727a03ce5a992
-        classifiers = [
+setup(
+    name = "OpenPIV",
+    version ='0.21.8b',
+    cmdclass = {'build_ext': build_ext},
+    ext_modules = extensions,
+    packages=find_packages(),
+    include_package_data=True,
+    setup_requires=[
+        'setuptools',
+        'cython>=0.29.14',
+        'numpy'
+    ],
+    install_requires=[
+        'imageio',
+        'matplotlib>=3',
+        'scikit-image',
+        'progressbar2',
+        'scipy',
+    ],
+    classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
         # with no relation to this application's version numbering scheme. *sigh*
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
 
         # Sublist of all supported platforms and environments.
         'Environment :: Console',
@@ -98,6 +62,7 @@ setup(  name = "OpenPIV",
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
-    ]
+    ],
+    long_description=long_description,
+    long_description_content_type='text/markdown'
 )
-

@@ -10,7 +10,6 @@
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/installer/conda.svg)](https://conda.anaconda.org/conda-forge)
 
 
-
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
 a set of PIV image pairs. In addition, a Qt graphical user interface is in 
 development, to ease the use for those users who don't have python skills.
@@ -27,23 +26,25 @@ please test the code.
 
 ## Test it without installation
 Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in your browser with zero installation:
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openpiv/openpiv-python-example/master?filepath=index.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/openpiv/openpiv-python/master?filepath=openpiv%2Fexamples%2Fnotebooks%2Ftutorial1.ipynb)
+
+
 
 
 ## Installing
 
-You can use `conda` : 
+Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    conda install -c conda-forge openpiv
-
-Or PyPI: <https://pypi.python.org/pypi/OpenPIV>:
-
-    pip install numpy cython
+    pip install cython numpy 
     pip install openpiv --pre
 
-`--pre` because sometimes we have pre-release
+`--pre` because sometimes we push pre-releases
 
+## Or `conda` 
 
+    conda install -c conda-forge openpiv
+    
+    
 ### To build from source
 
 Download the package from the Github: https://github.com/OpenPIV/openpiv-python/archive/master.zip
@@ -73,7 +74,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 1. [Tutorial Notebook 1](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial1.ipynb)
 2. [Tutorial notebook 2](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial2.ipynb)
 3. [Dynamic masking tutorial](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/masking_tutorial.ipynb)
-4. [Multipass tutorial with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
+4. [Multipass tutorial with WiDiM](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
+5. [Multipass with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/window_deformation_comparison.ipynb)
 
 
 ## Contributors
@@ -84,6 +86,11 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [David Lasagna](http://github.com/gasagna)
 5. [Mathias Aubert](http://github.com/MathiasAubert)
 6. [Pete Bachant](http://github.com/petebachant)
-7. Cameron Dallas (http://github.com/CameronDallas5000)
-8. Cecyl Curry (http://github.com/leycec)
+7. [Cameron Dallas](http://github.com/CameronDallas5000)
+8. [Cecyl Curry](http://github.com/leycec)
+9. [Theo Käufer](http://github.com/TKaeufer) 
+
+
+Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
+
 
