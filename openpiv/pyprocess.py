@@ -528,10 +528,6 @@ def extended_search_area_piv(
     # get field shape
     n_rows, n_cols = get_field_shape((frame_a.shape[0], frame_a.shape[1]), 
                                      window_size, overlap )
-            
-    u = np.zeros((n_rows, n_cols))
-    v = np.zeros((n_rows, n_cols))
-    sig2noise = np.zeros((n_rows, n_cols)) 
 
     u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
     
