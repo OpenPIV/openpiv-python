@@ -28,7 +28,6 @@ Contents:
    src/installation_instruction
    src/developers
    src/tutorial
-   src/downloads_page
    src/api_reference
    src/faq
    
