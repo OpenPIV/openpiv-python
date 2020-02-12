@@ -547,7 +547,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
            int nb_iter_max=3,
            str subpixel_method='gaussian',
            str sig2noise_method='peak2peak',
-           int sig2noise_threshold = 1.5,
+           float sig2noise_threshold = 1.5,
            int width=2,
            nfftx=None,
            nffty=None):
@@ -657,7 +657,9 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     Example
     --------
     
-    >>> x,y,u,v, mask = openpiv.process.WiDIM( frame_a, frame_b, mark, min_window_size=16, overlap_ratio=0.25, coarse_factor=2, dt=0.02, validation_method='mean_velocity', trust_1st_iter=1, validation_iter=2, tolerance=0.7, nb_iter_max=4, sig2noise_method='peak2peak')
+    >>> x,y,u,v, mask = openpiv.process.WiDIM( frame_a, frame_b, mark, min_window_size=16, overlap_ratio=0.25, 
+      coarse_factor=2, dt=0.02, validation_method='mean_velocity', trust_1st_iter=1, validation_iter=2, tolerance=0.7, 
+      nb_iter_max=4, sig2noise_method='peak2peak', sig2noise_threshold = 1.5)
 
     --------------------------------------
     Method of implementation : to improve the speed of the programm,
