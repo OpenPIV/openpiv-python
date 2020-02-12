@@ -547,6 +547,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
            int nb_iter_max=3,
            str subpixel_method='gaussian',
            str sig2noise_method='peak2peak',
+           int sig2noise_threshold = 1.5,
            int width=2,
            nfftx=None,
            nffty=None):
@@ -614,6 +615,10 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     sig2noise_method : string 
         defines the method of signal-to-noise-ratio measure,
         ('peak2peak' or 'peak2mean'. If None, no measure is performed.)
+        
+    sig2noise_threshold : float, recommended to use 1.5
+        defines a threshold of a local outlier vector that is below the signal-to-noise threshold,
+        see the sig2noise_method above for better understanding of this value.
         
     width : int
         the half size of the region around the first
@@ -836,7 +841,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                             #if np.sum(neighbours_present):
                                 mean_u = np.sum(neighbours[0])/np.float(np.sum(neighbours_present))#computing the mean velocity
                                 mean_v = np.sum(neighbours[1])/np.float(np.sum(neighbours_present))
-                                if F[K,I,J,12] < 1.5:#validation with the sig2noise ratio, 1.5 is a recommended minimum value
+                                if F[K,I,J,12] < sig2noise_threshold:#validation with the sig2noise ratio, 1.5 is a recommended minimum value
                                     if K==0:#if in 1st iteration, no interpolation is needed so just replace by the mean
                                         F[K,I,J,10] = mean_u
                                         F[K,I,J,11] = mean_v
