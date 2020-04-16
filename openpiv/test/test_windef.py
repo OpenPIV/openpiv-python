@@ -38,7 +38,7 @@ def test_first_pass_circ():
     # print u,v
     #print('test')
     assert(np.max(np.abs(u-3)) < 0.1)
-    assert(np.max(np.abs(v-2)) < 0.1)
+    assert(np.max(np.abs(v+2)) < 0.1)
 
 
 
@@ -63,7 +63,7 @@ def test_multi_pass_circ():
                              MinMaxU=(-100, 50), MinMaxV=(-50, 50), std_threshold=1000000, median_threshold=200000,median_size=1, filter_method='localmean',
                              max_filter_iteration=10, filter_kernel_size=2, interpolation_order=3)
     assert(np.max(np.abs(u-3)) < 0.1 and np.any(u!=u_old))
-    assert(np.max(np.abs(v-2)) < 0.1 and np.any(v!=v_old))
+    assert(np.max(np.abs(v+2)) < 0.1 and np.any(v!=v_old))
     #the second condition is to check if the multpass is done. It need's a little numerical inaccuracy.
     
 ##################################################################################
@@ -83,7 +83,7 @@ def test_first_pass_lin():
     # print u,v
     #print('test')
     assert(np.max(np.abs(u-3)) < 0.1)
-    assert(np.max(np.abs(v-2)) < 0.1)
+    assert(np.max(np.abs(v+2)) < 0.1)
 
 
 
@@ -108,6 +108,6 @@ def test_multi_pass_lin():
                              MinMaxU=(-100, 50), MinMaxV=(-50, 50), std_threshold=1000000, median_threshold=200000,median_size=1, filter_method='localmean',
                              max_filter_iteration=10, filter_kernel_size=2, interpolation_order=3)
     assert(np.max(np.abs(u-3)) < 0.1 and np.any(u!=u_old))
-    assert(np.max(np.abs(v-2)) < 0.1 and np.any(v!=v_old))
+    assert(np.max(np.abs(v+2)) < 0.1 and np.any(v!=v_old))
     #the second condition is to check if the multpass is done. It need's a little numerical inaccuracy.
     
