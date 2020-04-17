@@ -223,7 +223,7 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
     '''
     x, y = np.meshgrid(side_x, side_y)#create a meshgrid 
     frame_def = scn.map_coordinates(
-        frame, ((y-vt, x+ut,)), order=interpolation_order,mode='nearest')
+        frame, ((y+vt, x+ut,)), order=interpolation_order,mode='nearest')
     #deform the image by using the map coordinates function
     '''This spline interpolation is doing the image deformation. This one likes meshgrids
     new grid is defined by the old grid + the displacement.
@@ -298,7 +298,7 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
     shapes = np.array(process.get_field_shape(
         np.shape(frame_a), window_size, overlap))
     u = disp[:, 1].reshape(shapes)
-    v = disp[:, 0].reshape(shapes)
+    v = -disp[:, 0].reshape(shapes)
     'reshaping the interrogation window to vector field shape'
     
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
@@ -451,7 +451,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     shapes = np.array(process.get_field_shape(
         np.shape(frame_a), window_size, overlap))
     u = disp[:, 1].reshape(shapes)
-    v = disp[:, 0].reshape(shapes)
+    v = -disp[:, 0].reshape(shapes)
 
     'adding the recent displacment on to the displacment of the previous pass'
     u = u+u_pre
@@ -578,8 +578,8 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     invalid = a[:,5].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
-    plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],-a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
-    plt.quiver(a[valid,0],a[valid,1],a[valid,2],-a[valid,3],color='b',width=0.001,headwidth=3,**kw)
+    plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
+    plt.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',width=0.001,headwidth=3,**kw)
     plt.draw()
 
 

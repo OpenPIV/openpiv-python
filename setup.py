@@ -35,6 +35,8 @@ setup(
         'numpy'
     ],
     install_requires=[
+        'cython>=0.29.14',
+        'numpy',            
         'imageio',
         'matplotlib>=3',
         'scikit-image',
