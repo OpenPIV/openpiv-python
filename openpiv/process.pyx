@@ -27,10 +27,10 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                               float dt=1.0,
                               int search_area_size=0,
                               str subpixel_method='gaussian',
-                              sig2noise_method=None,
+                              str sig2noise_method=None,
                               int width=2,
-                              nfftx=None,
-                              nffty=None):
+                              int nfftx=0,
+                              int nffty=0):
     """
     The implementation of the one-step direct correlation with different 
     size of the interrogation window and the search area. The increased
@@ -462,7 +462,7 @@ def get_field_shape ( image_size, window_size, overlap ):
     return ( (image_size[0] - window_size)//(window_size-overlap)+1, 
              (image_size[1] - window_size)//(window_size-overlap)+1 )
 
-def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nffty = None ):
+def correlate_windows( window_a, window_b, corr_method = 'fft', int nfftx = 0, int nffty = 0 ):
     """Compute correlation function between two interrogation windows.
     
     The correlation function can be computed by using the correlation 
@@ -497,9 +497,9 @@ def correlate_windows( window_a, window_b, corr_method = 'fft', nfftx = None, nf
     """
     
     if corr_method == 'fft':
-        if nfftx is None:
+        if nfftx == 0:
             nfftx = 2*window_a.shape[0]
-        if nffty is None:
+        if nffty == 0:
             nffty = 2*window_a.shape[1]
         return fftshift(irfft2(rfft2(normalize_intensity(window_a),\
             s=(nfftx,nffty))*np.conj(rfft2(normalize_intensity(window_b),\
@@ -549,8 +549,8 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
            str sig2noise_method='peak2peak',
            float sig2noise_threshold = 1.5,
            int width=2,
-           nfftx=None,
-           nffty=None):
+           int nfftx=0,
+           int nffty=0):
     """
     Implementation of the WiDIM algorithm (Window Displacement Iterative Method).
     This is an iterative  method to cope with  the lost of pairs due to particles 

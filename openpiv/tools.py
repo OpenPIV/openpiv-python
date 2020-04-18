@@ -11,7 +11,7 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
+but WITHOUT ANY WARRANTY without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
@@ -25,13 +25,15 @@ import os.path
 import multiprocessing
 
 import numpy as np
-from matplotlib.image import imsave as _imsave, imread as _imread
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 import matplotlib.patches as pt
-from builtins import range
+# from builtins import range
+from imageio import imread as _imread, imsave as _imsave
 
 
-def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1, **kw):
+def display_vector_field(filename, on_img=False, image_name='None', 
+                         window_size=32, scaling_factor=1, widim=False, 
+                         ax=None, **kw):
     """ Displays quiver plot of the data stored in the file 
     
     
@@ -41,17 +43,23 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
         the absolute path of the text file
 
     on_img : Bool, optional
-        if True, display the vector field on top of the image provided by image_name
+        if True, display the vector field on top of the image provided by 
+        image_name
 
     image_name : string, optional
         path to the image to plot the vector field onto when on_img is True
 
     window_size : int, optional
-        when on_img is True, provide the interogation window size to fit the background image to the vector field
+        when on_img is True, provide the interrogation window size to fit the 
+        background image to the vector field
 
     scaling_factor : float, optional
-        when on_img is True, provide the scaling factor to scale the background image to the vector field
+        when on_img is True, provide the scaling factor to scale the background
+        image to the vector field
     
+    widim : bool, optional, default is False
+        when widim == True, the y values are flipped, i.e. y = y.max() - y
+        
     Key arguments   : (additional parameters, optional)
         *scale*: [None | float]
         *width*: [None | float]
@@ -65,32 +73,54 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     Examples
     --------
     --- only vector field
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, width=0.0025) 
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, 
+                                           width=0.0025) 
 
     --- vector field on top of image
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True, image_name='exp1_001_a.bmp', window_size=32, scaling_factor=70, scale=100, width=0.0025)
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True, 
+                                          image_name='exp1_001_a.bmp', 
+                                          window_size=32, scaling_factor=70, 
+                                          scale=100, width=0.0025)
     
     """
     
     a = np.loadtxt(filename)
-    fig=pl.figure()
-    if on_img: # plot a background image
-        im = imread(image_name)
-        im = negative(im) #plot negative of the image for more clarity
-        imsave('neg.tif', im)
-        im = imread('neg.tif')
-        xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
-        ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
-        implot = pl.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
-    invalid = a[:,4].astype('bool')
-    fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
-    valid = ~invalid
-    pl.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',**kw)
-    pl.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',**kw)
-    pl.draw()
-    pl.show()
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
-def imread( filename, flatten=0 ):
+    if on_img is True:  # plot a background image
+        im = imread(image_name)
+        im = negative(im)  # plot negative of the image for more clarity
+        # imsave('neg.tif', im)
+        # im = imread('neg.tif')
+        xmax = np.amax(a[:, 0])+window_size/(2*scaling_factor)
+        ymax = np.amax(a[:, 1])+window_size/(2*scaling_factor)
+        ax.imshow(im, origin='lower', cmap="Greys_r", 
+                  extent=[0., xmax, 0., ymax])
+        plt.draw()
+    
+    if widim is True:
+        a[:, 1] = a[:, 1].max() - a[:, 1]
+        
+    invalid = a[:, 4].astype('bool')  # mask
+    # fig.canvas.set_window_title('Vector field, 
+    #       '+str(np.count_nonzero(invalid))+' wrong vectors')
+    valid = ~invalid
+    ax.quiver(a[invalid, 0], a[invalid, 1], a[invalid, 2], a[invalid, 3],
+              color='r', **kw)
+    ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color='b',
+              **kw)
+#     if on_img is False:
+    ax.invert_yaxis()
+
+    plt.show()
+
+    return fig, ax
+
+
+def imread(filename, flatten=0):
     """Read an image file into a numpy array
     using imageio.imread
     
@@ -122,8 +152,9 @@ def imread( filename, flatten=0 ):
 
     return im
 
+
 def rgb2gray(rgb):
-    return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
+    return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
 
 
 def imsave( filename, arr ):
@@ -157,18 +188,19 @@ def imsave( filename, arr ):
         arr *= 255
 
     if filename.endswith('tif'):
-        _imsave( filename, arr ,format='TIFF')
+        _imsave(filename, arr, format='TIFF')
     else:
-        _imsave( filename, arr)
+        _imsave(filename, arr)
 
 
 def convert16bitsTIF( filename, save_name):
-    img = imread( filename )
-    img2 = np.zeros([img.shape[0],img.shape[1]], dtype = np.int32)
+    img = imread(filename)
+    img2 = np.zeros([img.shape[0], img.shape[1]], dtype=np.int32)
     for I in range(img.shape[0]):
         for J in range(img.shape[1]):
-            img2[I,J]=img[I,J,0]
-    imsave( save_name, img2)
+            img2[I, J] = img[I, J, 0]
+    
+    imsave(save_name, img2)
 
 
 def mark_background(threshold, list_img, filename):
@@ -178,18 +210,18 @@ def mark_background(threshold, list_img, filename):
     mark = np.zeros(list_frame[0].shape, dtype=np.int32)
     background = np.zeros(list_frame[0].shape, dtype=np.int32)
     for I in range(mark.shape[0]):
-        print((" row ", I , " / " , mark.shape[0]));
+        print((" row ", I , " / " , mark.shape[0]))
         for J in range(mark.shape[1]):
             sum1 = 0
             for K in range(len(list_frame)):
                 sum1 = sum1 + list_frame[K][I, J]
             if sum1 < threshold*len(list_img):
-                mark[I,J] = 0
+                mark[I, J] = 0
             else:
-                mark[I,J]=1
-            background[I,J]=mark[I,J]*255
+                mark[I, J] = 1
+            background[I, J] = mark[I, J]*255
     imsave(filename, background)
-    print("done with background");
+    print("done with background")
     return background
 
 
@@ -200,7 +232,7 @@ def mark_background2(list_img, filename):
         list_frame.append(imread(list_img[I]))
     background = np.zeros(list_frame[0].shape, dtype=np.int32)
     for I in range(background.shape[0]):
-        print((" row ", I , " / " , background.shape[0]));
+        print((" row ", I , " / " , background.shape[0]))
         for J in range(background.shape[1]):
             min_1 = 255
             for K in range(len(list_frame)):
@@ -208,7 +240,7 @@ def mark_background2(list_img, filename):
                     min_1 = list_frame[K][I,J]
             background[I,J]=min_1
     imsave(filename, background)
-    print("done with background");
+    print("done with background")
     return background
 
 def edges(list_img, filename):
@@ -220,34 +252,29 @@ def find_reflexions(list_img, filename):
     background = mark_background2(list_img, filename)
     reflexion = np.zeros(background.shape, dtype=np.int32)
     for I in range(background.shape[0]):
-        print((" row ", I , " / " , background.shape[0]));
+        print((" row ", I, " / ", background.shape[0]))
         for J in range(background.shape[1]):
-            if background[I,J] > 253:
-                reflexion[I,J] = 255
+            if background[I, J] > 253:
+                reflexion[I, J] = 255
     imsave(filename, reflexion)
-    print("done with reflexions");
+    print("done with reflexions")
     return reflexion
             
 
-
-
-
-
-
 def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     f = open(filename, 'w')
-    print("mark1..");
+    print("mark1..")
     mark1 = mark_background(threshold, list_img1, "mark1.bmp")
-    print("[DONE]");
-    print((mark1.shape));
-    print("mark2..");
+    print("[DONE]")
+    print((mark1.shape))
+    print("mark2..")
     mark2 = mark_background(threshold, list_img2, "mark2.bmp")
-    print("[DONE]");
-    print("computing boundary");
-    print((mark2.shape));
+    print("[DONE]")
+    print("computing boundary")
+    print((mark2.shape))
     list_bound = np.zeros(mark1.shape, dtype=np.int32)
     for I in range(list_bound.shape[0]):
-        print(( "bound row ", I , " / " , mark1.shape[0]));
+        print(( "bound row ", I , " / " , mark1.shape[0]))
         for J in range(list_bound.shape[1]):
             list_bound[I,J]=0
             if mark1[I,J]==0:
@@ -260,7 +287,7 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
             else:
                 list_bound[I,J]=255
             f.write(str(I)+'\t'+str(J)+'\t'+str(list_bound[I,J])+'\n')
-    print('[DONE]');
+    print('[DONE]')
     f.close()
     imsave(picname, list_bound)
     return list_bound
@@ -458,15 +485,15 @@ def display_windows_sampling( x, y, window_size, skip=0,  method='standard'):
     
     """
     
-    fig=pl.figure()
+    fig=plt.figure()
     if skip < 0 or skip +1 > len(x[0])*len(y):
         fig.canvas.set_window_title('interrogation points map')
-        pl.scatter(x, y, color='g') #plot interrogation locations
+        plt.scatter(x, y, color='g') #plot interrogation locations
     else:
         nb_windows = len(x[0])*len(y)/(skip+1)
         #standard method --> display uniformly picked windows
         if method == 'standard':
-            pl.scatter(x, y, color='g')#plot interrogation locations (green dots)
+            plt.scatter(x, y, color='g')#plot interrogation locations (green dots)
             fig.canvas.set_window_title('interrogation window map')
             #plot the windows as red squares
             for i in range(len(x[0])):
@@ -475,24 +502,24 @@ def display_windows_sampling( x, y, window_size, skip=0,  method='standard'):
                         if i%(skip+1) == 0:
                             x1 = x[0][i] - window_size/2
                             y1 = y[j][0] - window_size/2
-                            pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+                            plt.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
                     else:
                         if i%(skip+1) == 1 or skip==0:
                             x1 = x[0][i] - window_size/2
                             y1 = y[j][0] - window_size/2
-                            pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+                            plt.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
         #random method --> display randomly picked windows
         elif method == 'random':
-            pl.scatter(x, y, color='g')#plot interrogation locations
+            plt.scatter(x, y, color='g')#plot interrogation locations
             fig.canvas.set_window_title('interrogation window map, showing randomly '+str(nb_windows)+' windows')
             for i in range(nb_windows):
                 k=np.random.randint(len(x[0])) #pick a row and column index
                 l=np.random.randint(len(y))
                 x1 = x[0][k] - window_size/2
                 y1 = y[l][0] - window_size/2
-                pl.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
+                plt.gca().add_patch(pt.Rectangle((x1, y1), window_size, window_size, facecolor='r', alpha=0.5))
         else:
             raise ValueError('method not valid: choose between standard and random')
-    pl.draw()
-    pl.show()
+    plt.draw()
+    plt.show()
    
