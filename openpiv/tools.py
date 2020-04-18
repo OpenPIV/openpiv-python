@@ -28,7 +28,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
 # from builtins import range
-import imageio
+from imageio import imread as _imread, imsave as _imsave
 
 
 def display_vector_field(filename, on_img=False, image_name='None', 
@@ -87,6 +87,8 @@ def display_vector_field(filename, on_img=False, image_name='None',
     a = np.loadtxt(filename)
     if ax is None:
         fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     if on_img is True:  # plot a background image
         im = imread(image_name)
@@ -115,7 +117,7 @@ def display_vector_field(filename, on_img=False, image_name='None',
 
     plt.show()
 
-    return ax
+    return fig, ax
 
 
 def imread(filename, flatten=0):
@@ -144,7 +146,7 @@ def imread(filename, flatten=0):
     
     
     """
-    im = imageio.imread(filename)
+    im = _imread(filename)
     if np.ndim(im) > 2:
         im = rgb2gray(im)
 
@@ -186,9 +188,9 @@ def imsave( filename, arr ):
         arr *= 255
 
     if filename.endswith('tif'):
-        imageio.imsave(filename, arr, format='TIFF')
+        _imsave(filename, arr, format='TIFF')
     else:
-        imageio.imsave(filename, arr)
+        _imsave(filename, arr)
 
 
 def convert16bitsTIF( filename, save_name):

@@ -59,6 +59,4 @@ tools.save(x, y, u, v, mask, 'exp1_001_direct.txt' )
 # %%
 tools.display_vector_field('exp1_001_extended.txt', scale=30, width=0.0025)
 tools.display_vector_field('exp1_001_direct.txt', scale=30, width=0.0025)
-tools.display_vector_field('exp1_001_fft.txt', scale=30, width=0.0025)
-
-# %%
+tools.display_vector_field('exp1_001_fft.txt', scale=30, width=0.0025);

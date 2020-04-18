@@ -25,8 +25,8 @@ from pylab import *
 
 from skimage import img_as_uint
 
-frame_a  = imageio.imread('../test3/Y4-S3_Camera000398.tif')  
-frame_b  = imageio.imread('../test3/Y4-S3_Camera000399.tif')
+frame_a  = tools.imread('../test3/Y4-S3_Camera000398.tif')  
+frame_b  = tools.imread('../test3/Y4-S3_Camera000399.tif')
 ```
 
 ```python
@@ -39,9 +39,9 @@ plt.imshow(np.c_[frame_a,frame_b],cmap=plt.cm.gray)
 ```
 
 ```python
+# Use Cython version: process.pyx
+
 u, v, sig2noise = process.extended_search_area_piv( frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, overlap=8, dt=.1, sig2noise_method='peak2peak' )
-#u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, window_size=32, overlap=8, dt=.1, sig2noise_method='peak2peak' )
-x, y = pyprocess.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=8 )
 x, y = process.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=8 )
 
 u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
@@ -49,6 +49,18 @@ u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_s
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 
 tools.save(x, y, u, v, mask, 'Y4-S3_Camera000398_a.txt' )
+```
+
+```python
+# Use Python version, pyprocess:
+
+u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, overlap=8, dt=.1, sig2noise_method='peak2peak' )
+x, y = pyprocess.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=8 )
+u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
+u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
+x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
+
+tools.save(x, y, u, v, mask, 'Y4-S3_Camera000398_b.txt' )
 ```
 
 ```python
@@ -68,15 +80,11 @@ tools.display_vector_field('Y4-S3_Camera000398_a.txt',on_img=True,image_name='..
 ```
 
 ```python
-tools.display_vector_field('Y4-S3_Camera000398_a.txt',on_img=True,image_name='../test3/Y4-S3_Camera000398.tif',scaling_factor=96.52)
-```
-
-```python
 tools.display_vector_field('Y4-S3_Camera000398_a.txt')
 ```
 
 ```python
-tools.display_vector_field('Y4-S3_Camera000398_a.txt')
+tools.display_vector_field('Y4-S3_Camera000398_b.txt')
 ```
 
 ```python
@@ -93,16 +101,6 @@ x,y,u,v, mask = process.WiDIM(frame_a.astype(np.int32), frame_b.astype(np.int32)
 
 ```python
 tools.save(x, y, u, v, zeros_like(u), 'Y4-S3_Camera000398_widim2.txt' )
-```
-
-```python
-u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, overlap=8, dt=.1, sig2noise_method='peak2peak' )
-x, y = pyprocess.get_coordinates( image_size=frame_a.shape, window_size=32, overlap=8 )
-u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
-u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
-x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
-
-tools.save(x, y, u, v, mask, 'Y4-S3_Camera000398_b.txt' )
 ```
 
 ```python

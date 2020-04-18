@@ -26,6 +26,8 @@ from openpiv import tools, process, validation, filters, scaling
 import numpy as np
 import matplotlib.pyplot as plt
 %matplotlib inline
+
+import imageio
 ```
 
 
@@ -35,7 +37,7 @@ frame_b  = tools.imread( '../test1/exp1_001_b.bmp' )
 ```
 
 ```python
-fig,ax = plt.subplots(1,2)
+fig,ax = plt.subplots(1,2,figsize=(12,10))
 ax[0].imshow(frame_a,cmap=plt.cm.gray)
 ax[1].imshow(frame_b,cmap=plt.cm.gray)
 ```
@@ -73,6 +75,13 @@ tools.save(x, y, u3, v3, mask, 'exp1_001.txt' )
 
 ```python
 tools.display_vector_field('exp1_001.txt', scale=50, width=0.0025)
+```
+
+```python
+# If you need a larger view:
+
+fig, ax = plt.subplots(figsize=(12,12))
+tools.display_vector_field('exp1_001.txt', ax=ax, scaling_factor=96.52, scale=50, width=0.0025, on_img=True, image_name='../test1/exp1_001_a.bmp');
 ```
 
 ```python
