@@ -425,7 +425,7 @@ def extended_search_area_piv(
         window_size, 
         overlap=0, 
         dt=1.0,
-        search_area_size=None, 
+        search_area_size=0, 
         corr_method='fft',
         subpixel_method='gaussian', 
         sig2noise_method=None,
@@ -579,11 +579,11 @@ def extended_search_area_piv(
                 row, col = find_subpixel_peak_position(corr, 
                                                         subpixel_method=subpixel_method)
                                 
-                row -=  (search_area_size + window_size - 1)//2
-                col -=  (search_area_size + window_size - 1)//2
+                row -= (search_area_size + window_size - 1)//2
+                col -= (search_area_size + window_size - 1)//2
     
                 # get displacements, apply coordinate system definition
-                u[k,m],v[k,m] = -col, row
+                u[k,m],v[k,m] = -col, row 
                 
                 # get signal to noise ratio
                 if sig2noise_method is not None:
