@@ -62,4 +62,6 @@ x, y, u3, v3 = scaling.uniform(x, y, u2, v2, scaling_factor = 96.52 )
 tools.save(x, y, u3, v3, mask, 'exp1_001.txt' )
 
 # %%
-tools.display_vector_field('exp1_001.txt', scale=100, width=0.0025)
+tools.display_vector_field('exp1_001.txt', scale=50, width=0.0025)
+
+# %%

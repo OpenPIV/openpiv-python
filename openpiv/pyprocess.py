@@ -274,7 +274,6 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
     except IndexError:
         subp_peak_position = default_peak_position
         
-
     return subp_peak_position[0] - default_peak_position[0], subp_peak_position[1] - default_peak_position[1]
 
 
@@ -284,7 +283,7 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
 
     The signal to noise ratio is computed from the correlation map with
     one of two available method. It is a measure of the quality of the
-    matching between to interogation windows.
+    matching between to interrogation windows.
 
     Parameters
     ----------
@@ -342,7 +341,7 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
     return sig2noise
 
 
-def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=None):
+def correlate_windows(window_a, window_b, corr_method='fft', nfftx=0, nffty=0):
     """Compute correlation function between two interrogation windows.
 
     The correlation function can be computed by using the correlation
@@ -385,9 +384,9 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     
     if corr_method == 'fft':
         window_b = np.conj(window_b[::-1, ::-1])
-        if nfftx is None:
+        if nfftx == 0:
             nfftx = nextpower2(window_b.shape[0] + window_a.shape[0])  
-        if nffty is None:
+        if nffty  == 0:
             nffty = nextpower2(window_b.shape[1] + window_a.shape[1]) 
         
         f2a = rfft2(normalize_intensity(window_a), s=(nfftx, nffty))
@@ -430,7 +429,7 @@ def extended_search_area_piv(
         subpixel_method='gaussian', 
         sig2noise_method=None,
         width=2, 
-        nfftx=None, nffty=None):
+        nfftx=0, nffty=0):
     """Standard PIV cross-correlation algorithm, with an option for 
     extended area search that increased dynamic range. The search region
     in the second frame is larger than the interrogation window size in the 

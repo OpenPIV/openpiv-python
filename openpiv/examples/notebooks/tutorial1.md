@@ -26,8 +26,8 @@ from openpiv import tools, process, validation, filters, scaling
 import numpy as np
 import matplotlib.pyplot as plt
 %matplotlib inline
-
 ```
+
 
 ```python
 frame_a  = tools.imread( '../test1/exp1_001_a.bmp' )
@@ -38,8 +38,8 @@ frame_b  = tools.imread( '../test1/exp1_001_b.bmp' )
 fig,ax = plt.subplots(1,2)
 ax[0].imshow(frame_a,cmap=plt.cm.gray)
 ax[1].imshow(frame_b,cmap=plt.cm.gray)
-
 ```
+
 
 ```python
 winsize = 24 # pixels
@@ -72,5 +72,9 @@ tools.save(x, y, u3, v3, mask, 'exp1_001.txt' )
 ```
 
 ```python
-tools.display_vector_field('exp1_001.txt', scale=100, width=0.0025)
+tools.display_vector_field('exp1_001.txt', scale=50, width=0.0025)
+```
+
+```python
+
 ```

@@ -38,7 +38,6 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 2.5 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 tools.save(x, y, u, v, mask, 'exp1_001_extended.txt' )
-tools.display_vector_field('exp1_001_extended.txt', scale=100, width=0.0025)
 ```
 
 ```python
@@ -49,7 +48,6 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 2.5 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2.5)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 tools.save(x, y, u, v, mask, 'exp1_001_fft.txt' )
-tools.display_vector_field('exp1_001_fft.txt', scale=100, width=0.0025)
 ```
 
 ```python
@@ -60,7 +58,12 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 2.5 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2.5)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 tools.save(x, y, u, v, mask, 'exp1_001_direct.txt' )
-tools.display_vector_field('exp1_001_direct.txt', scale=100, width=0.0025)
+```
+
+```python
+tools.display_vector_field('exp1_001_extended.txt', scale=30, width=0.0025)
+tools.display_vector_field('exp1_001_direct.txt', scale=30, width=0.0025)
+tools.display_vector_field('exp1_001_fft.txt', scale=30, width=0.0025)
 ```
 
 ```python
