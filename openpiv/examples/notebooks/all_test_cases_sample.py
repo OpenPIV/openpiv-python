@@ -62,7 +62,3 @@ for test in list_of_tests:
     
     openpiv_default_run(list_of_images[0],list_of_images[1])
 
-
-# %%
-
-# %%
