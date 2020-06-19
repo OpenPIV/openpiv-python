@@ -136,12 +136,17 @@ if save_plots:
 # this calculation takes takes ~ 3-4 minutes on my 4-core Intel i5@2.5 GHz Laptop
 
 
+import git 
+repo = git.Repo.clone_from("https://github.com/fabrylab/3D_piv_example_data.git", './test_3d', branch='master')
+
 ### plese enter the path to the dataset provided at
-folder = r"/Users/alexliberzon/Downloads/3D_piv_example_data-master/"
+folder = r"test_3d"
+
+
 
 if not os.path.exists(folder):
     raise FileNotFoundError("path to 3d piv data '%s' does not exists\n"
-                            ". Pleas download the data from https://github.com/fabrylab/3D_piv_example_data.git" % folder)
+                            ". Please download the data from https://github.com/fabrylab/3D_piv_example_data.git" % folder)
 # stack properties
 # factors for voxel size
 du = 0.2407
