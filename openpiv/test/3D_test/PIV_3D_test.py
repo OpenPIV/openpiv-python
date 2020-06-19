@@ -137,7 +137,7 @@ if save_plots:
 
 
 ### plese enter the path to the dataset provided at
-folder = r"/home/user/Software/3D_piv_example_data/"
+folder = r"/Users/alexliberzon/Downloads/3D_piv_example_data-master/"
 
 if not os.path.exists(folder):
     raise FileNotFoundError("path to 3d piv data '%s' does not exists\n"
