@@ -125,7 +125,11 @@ fig10 = scatter_3D(arr_show, size=50, sca_args={"alpha": 0.6})
 ```
 
 ```python
-#####################
+# Run it only once:
+import os
+if not os.path.exists('test_3d'):
+    import git 
+    repo = git.Repo.clone_from("https://github.com/fabrylab/3D_piv_example_data.git", './test_3d', branch='master')
 ```
 
 ```python
@@ -137,8 +141,6 @@ fig10 = scatter_3D(arr_show, size=50, sca_args={"alpha": 0.6})
 # this calculation takes takes ~ 3-4 minutes on my 4-core Intel i5@2.5 GHz Laptop
 
 
-import git 
-repo = git.Repo.clone_from("https://github.com/fabrylab/3D_piv_example_data.git", './test_3d', branch='master')
 
 ### plese enter the path to the dataset provided at
 folder = r"test_3d"
@@ -195,8 +197,9 @@ w -= np.nanmean(w)
 # filtering
 uf, vf, wf, mask = sig2noise_val(u, v, w=w, sig2noise=sig2noise, threshold=signoise_filter)
 uf, vf, wf = replace_outliers(uf, vf, wf, max_iter=1, tol=100, kernel_size=2, method='disk')
+```
 
-
+```python
 # plotting
 # representation of the image stacks by maximums projections. The red circle marks the position of the cell
 def update_plot(i, ims, ax):
