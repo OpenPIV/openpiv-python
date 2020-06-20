@@ -1,3 +1,8 @@
+import numpy.lib.stride_tricks
+import numpy as np
+from numpy.fft import rfftn, irfftn
+from numpy import ma
+
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
 
@@ -18,11 +23,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import numpy.lib.stride_tricks
-import numpy as np
-from numpy.fft import rfftn, irfftn
-from numpy import ma
-from scipy.signal import convolve2d
+
 
 
 
@@ -231,11 +232,12 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
                     ((peak1_z - 1) * cf + peak1_z * c + (peak1_z + 1) * cb) / (cf + c + cb))
 
             elif subpixel_method == 'gaussian':
-                subp_peak_position = (
-                    peak1_i + ((np.log(cl) - np.log(cr)) / (2 * np.log(cl) - 4 * np.log(c) + 2 * np.log(cr))),
-                    peak1_j + ((np.log(cd) - np.log(cu)) / (2 * np.log(cd) - 4 * np.log(c) + 2 * np.log(cu))),
-                    peak1_z + ((np.log(cf) - np.log(cb)) / (2 * np.log(cf) - 4 * np.log(c) + 2 * np.log(cb)))
-                )
+                with numpy.errstate(divide='ignore'):
+                    subp_peak_position = (
+                        peak1_i + ((np.log(cl) - np.log(cr)) / (2 * np.log(cl) - 4 * np.log(c) + 2 * np.log(cr))),
+                        peak1_j + ((np.log(cd) - np.log(cu)) / (2 * np.log(cd) - 4 * np.log(c) + 2 * np.log(cu))),
+                        peak1_z + ((np.log(cf) - np.log(cb)) / (2 * np.log(cf) - 4 * np.log(c) + 2 * np.log(cb)))
+                    )
 
             elif subpixel_method == 'parabolic':
                 subp_peak_position = (peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
@@ -326,8 +328,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
         a two dimensions array for the second interrogation window.
 
     corr_method   : string
-        one of the two methods currently implemented: 'fft' or 'direct'.
-        Default is 'fft', which is much faster.
+        one method is currently implemented: 'fft'.
 
     nfftx   : int
         the size of the 2D FFT in x-direction,
@@ -337,11 +338,15 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
         the size of the 2D FFT in y-direction,
         [default: 2 x windows_a.shape[1] is recommended].
 
+    nfftz   : int
+        the size of the 2D FFT in z-direction,
+        [default: 2 x windows_a.shape[2] is recommended].
+
 
     Returns
     -------
-    corr : 2d np.ndarray
-        a two dimensions array for the correlation function.
+    corr : 3d np.ndarray
+        a three dimensional array of the correlation function.
 
     Note that due to the wish to use 2^N windows for faster FFT
     we use a slightly different convention for the size of the
@@ -361,15 +366,18 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
         if nfftz is None:
             nfftz = nextpower2(window_b.shape[2] + window_a.shape[2])
 
-        f2a = rfftn(normalize_intensity(window_a), s=(nfftx, nffty, nfftz))
-        f2b = rfftn(normalize_intensity(window_b), s=(nfftx, nffty, nfftz))
+        f2a = rfftn(normalize_intensity(window_a),
+                    s=(nfftx, nffty, nfftz))
+        f2b = rfftn(normalize_intensity(window_b),
+                    s=(nfftx, nffty, nfftz))
         corr = irfftn(f2a * f2b).real
         corr = corr[:window_a.shape[0] + window_b.shape[0],
-               :window_b.shape[1] + window_a.shape[1], :window_b.shape[2] + window_a.shape[2]]
+                    :window_b.shape[1] + window_a.shape[1],
+                    :window_b.shape[2] + window_a.shape[2]]
         return corr
-    elif corr_method == 'direct':
-        return convolve2d(normalize_intensity(window_a),
-                          normalize_intensity(window_b[::-1, ::-1, ::-1]), 'full')
+    # elif corr_method == 'direct':
+    #     return convolve2d(normalize_intensity(window_a),
+    #                       normalize_intensity(window_b[::-1, ::-1, ::-1]), 'full')
     else:
         raise ValueError('method is not implemented')
 
@@ -391,11 +399,11 @@ def normalize_intensity(window):
     return window - window.mean()
 
 
-
 def nextpower2(i):
     """ Find 2^n that is equal to or greater than. """
     n = 1
-    while n < i: n *= 2
+    while n < i:
+        n *= 2
     return n
 
 
@@ -418,8 +426,6 @@ def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
     return window_size, overlap, search_area_size
 
 
-
-
 def extended_search_area_piv3D(
         frame_a, frame_b,
         window_size,
@@ -434,20 +440,19 @@ def extended_search_area_piv3D(
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
     in the second frame is larger than the interrogation window size in the
-    first frame. For Cython implementation see
-    openpiv.process.extended_search_area_piv
+    first frame.
 
     This is a pure python implementation of the standard PIV cross-correlation
-    algorithm. It is a zero order displacement predictor, and no iterative process
-    is performed.
+    algorithm. It is a zero order displacement predictor, and no iterative
+    process is performed.
 
     Parameters
     ----------
-    frame_a : 2d np.ndarray
+    frame_a : 3d np.ndarray
         an two dimensions array of integers containing grey levels of
         the first frame.
 
-    frame_b : 2d np.ndarray
+    frame_b : 3d np.ndarray
         an two dimensions array of integers containing grey levels of
         the second frame.
 
@@ -462,8 +467,7 @@ def extended_search_area_piv3D(
         the time delay separating the two frames [default: 1.0].
 
     corr_method : string
-        one of the two methods implemented: 'fft' or 'direct',
-        [default: 'fft'].
+        only one method is currently implemented: 'fft'
 
     subpixel_method : string
          one of the following methods to estimate subpixel location of the peak:
@@ -476,12 +480,16 @@ def extended_search_area_piv3D(
         ('peak2peak' or 'peak2mean'. If None, no measure is performed.)
 
     nfftx   : int
-        the size of the 2D FFT in x-direction,
+        the size of the 3D FFT in x-direction,
         [default: 2 x windows_a.shape[0] is recommended]
 
     nffty   : int
-        the size of the 2D FFT in y-direction,
+        the size of the 3D FFT in y-direction,
         [default: 2 x windows_a.shape[1] is recommended]
+
+    nfftz   : int
+        the size of the 3D FFT in z-direction,
+        [default: 2 x windows_a.shape[2] is recommended]
 
     width : int
         the half size of the region around the first
@@ -496,12 +504,16 @@ def extended_search_area_piv3D(
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
+    u : 3d np.ndarray
+        a three dimensional array containing the u velocity component,
         in pixels/seconds.
 
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
+    v : 3d np.ndarray
+        a three dimensional array containing the v velocity component,
+        in pixels/seconds.
+
+    w : 3d np.ndarray
+        a three dimensional array containing the w velocity component,
         in pixels/seconds.
 
     sig2noise : 2d np.ndarray, ( optional: only if sig2noise_method is not None )
@@ -587,5 +599,4 @@ def extended_search_area_piv3D(
         return u / dt[0], v / dt[1], w / dt[2], sig2noise
     else:
         return u / dt[0], v / dt[1], w / dt[2]
-
 
