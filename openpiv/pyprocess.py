@@ -392,8 +392,8 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=0, nffty=0):
         f2a = rfft2(normalize_intensity(window_a), s=(nfftx, nffty))
         f2b = rfft2(normalize_intensity(window_b), s=(nfftx, nffty))
         corr = irfft2(f2a * f2b).real
-        corr = corr[:window_a.shape[0] + window_b.shape[0], 
-                    :window_b.shape[1] + window_a.shape[1]]
+        corr = corr[:window_a.shape[0] + window_b.shape[0] - 1,
+                    :window_b.shape[1] + window_a.shape[1] - 1]
         return corr
     elif corr_method == 'direct':
         return convolve2d(normalize_intensity(window_a),
@@ -526,10 +526,14 @@ def extended_search_area_piv(
         
     # get field shape
     n_rows, n_cols = get_field_shape((frame_a.shape[0], frame_a.shape[1]), 
-                                     search_area_size, overlap)
+                                     window_size, overlap)
 
     u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
-    
+
+    # zero padding of frame_b, otherwise search_area_size > window_size is not possible
+    pad1 = int(np.ceil(search_area_size)/2)
+    frame_b = np.pad(frame_b, ((pad1,pad1),(pad1, pad1)))
+
     # if we want sig2noise information, allocate memory
     if sig2noise_method is not None:
         sig2noise = np.zeros((n_rows, n_cols))
@@ -541,33 +545,35 @@ def extended_search_area_piv(
         # range(range(search_area_size/2, frame_a.shape[0] - search_area_size/2, window_size - overlap ):
         for m in range(n_cols):
             # range(search_area_size/2, frame_a.shape[1] - search_area_size/2 , window_size - overlap ):
-            
-            
-            # Select first the largest window, work like usual from the top left corner
-            # the left edge goes as: 
-            # e.g. 0, (search_area_size - overlap), 2*(search_area_size - overlap),....
-            
-            il = k*(search_area_size - overlap)
-            ir = il + search_area_size
-            
-            # same for top-bottom
-            jt = m*(search_area_size - overlap)
-            jb = jt + search_area_size
-            
-            # pick up the window in the second image
-            window_b = frame_b[il:ir, jt:jb]            
-            
-            # now shift the left corner of the smaller window inside the larger one
-            il += (search_area_size - window_size)//2
-            # and it's right side is just a window_size apart
-            ir = il + window_size
-            # same same
-            jt += (search_area_size - window_size)//2
-            jb =  jt + window_size
 
-            window_a = frame_a[il:ir, jt:jb]
+            # positions of left top corner of window in frame a
+            kn = k * (window_size - overlap)
+            mn = m * (window_size - overlap)
 
-            if np.any(window_a):
+            # selecting window from frame a
+            window_a = frame_a[kn:kn + window_size, mn:mn + window_size]
+
+            # top and bottom edges of search area window from frame_b
+            # first: move to center of interrrogation window
+            r1 = np.array([kn, kn]) + window_size/2
+            # second: spread search_area_size/2 in both directions
+            r1[0] -= search_area_size/2
+            r1[1] += search_area_size/2
+
+            # left and right edges of search area window from frame_b
+            # first: move to center of interrogation window
+            r2 = np.array([mn, mn]) + window_size / 2
+            # second: spread search_area_size/2 in both directions
+            r2[0] -= search_area_size / 2
+            r2[1] += search_area_size / 2
+            # conversion to integers, required for uses as array indices and adding the index shift introduced by
+            # zero-padding
+            r1 = r1.astype(int) + pad1
+            r2 = r2.astype(int) + pad1
+            # extracting the search area
+            window_b = frame_b[r1[0]:r1[1], r2[0]:r2[1]]
+
+            if np.any(window_a) and np.any(window_b):
                 corr = correlate_windows(window_a, window_b,
                                          corr_method=corr_method, 
                                          nfftx=nfftx, nffty=nffty)
@@ -578,11 +584,11 @@ def extended_search_area_piv(
                 row, col = find_subpixel_peak_position(corr, 
                                                         subpixel_method=subpixel_method)
                                 
-                row -= (search_area_size + window_size - 1)//2
-                col -= (search_area_size + window_size - 1)//2
+                row -= (search_area_size + window_size)//2  - 1
+                col -= (search_area_size + window_size)//2  - 1
     
                 # get displacements, apply coordinate system definition
-                u[k,m],v[k,m] = -col, row 
+                u[k,m], v[k,m] = -col, row
                 
                 # get signal to noise ratio
                 if sig2noise_method is not None:
