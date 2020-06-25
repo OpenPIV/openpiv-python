@@ -510,7 +510,7 @@ def extended_search_area_piv(
     """
     
     # check the inputs for validity
-    
+
     if search_area_size == 0:
         search_area_size = window_size
     
@@ -531,8 +531,8 @@ def extended_search_area_piv(
     u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
 
     # zero padding of frame_b, otherwise search_area_size > window_size is not possible
-    pad1 = int(np.ceil(search_area_size)/2)
-    frame_b = np.pad(frame_b, ((pad1,pad1),(pad1, pad1)))
+    pad1 = int(np.ceil(search_area_size/2))
+    frame_b = np.pad(frame_b, ((pad1, pad1), (pad1, pad1)))
 
     # if we want sig2noise information, allocate memory
     if sig2noise_method is not None:
@@ -546,15 +546,15 @@ def extended_search_area_piv(
         for m in range(n_cols):
             # range(search_area_size/2, frame_a.shape[1] - search_area_size/2 , window_size - overlap ):
 
-            # positions of left top corner of window in frame a
+            # positions of left top corner of window_a in frame_a
             kn = k * (window_size - overlap)
             mn = m * (window_size - overlap)
 
-            # selecting window from frame a
+            # selecting window_ from frame_a
             window_a = frame_a[kn:kn + window_size, mn:mn + window_size]
 
             # top and bottom edges of search area window from frame_b
-            # first: move to center of interrrogation window
+            # first: move to center of interrogation window
             r1 = np.array([kn, kn]) + window_size/2
             # second: spread search_area_size/2 in both directions
             r1[0] -= search_area_size/2
@@ -566,27 +566,28 @@ def extended_search_area_piv(
             # second: spread search_area_size/2 in both directions
             r2[0] -= search_area_size / 2
             r2[1] += search_area_size / 2
+
             # conversion to integers, required for uses as array indices and adding the index shift introduced by
             # zero-padding
-            r1 = r1.astype(int) + pad1
-            r2 = r2.astype(int) + pad1
+            r1 = np.floor(r1).astype(int) + pad1
+            r2 = np.floor(r2).astype(int) + pad1
             # extracting the search area
             window_b = frame_b[r1[0]:r1[1], r2[0]:r2[1]]
 
             if np.any(window_a) and np.any(window_b):
                 corr = correlate_windows(window_a, window_b,
-                                         corr_method=corr_method, 
+                                         corr_method=corr_method,
                                          nfftx=nfftx, nffty=nffty)
 #                 plt.figure()
 #                 plt.contourf(corr)
 #                 plt.show()
                 # get subpixel approximation for peak position row and column index
-                row, col = find_subpixel_peak_position(corr, 
+                row, col = find_subpixel_peak_position(corr,
                                                         subpixel_method=subpixel_method)
-                                
-                row -= (search_area_size + window_size)//2  - 1
-                col -= (search_area_size + window_size)//2  - 1
-    
+                # substracting the center of the correlation matrix
+                row -= (search_area_size + window_size)/2 - 1
+                col -= (search_area_size + window_size)/2 - 1
+
                 # get displacements, apply coordinate system definition
                 u[k,m], v[k,m] = -col, row
                 
