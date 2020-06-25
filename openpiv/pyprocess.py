@@ -531,8 +531,8 @@ def extended_search_area_piv(
     u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
 
     # zero padding of frame_b, otherwise search_area_size > window_size is not possible
-    pad1 = int(np.ceil(search_area_size/2))
-    frame_b = np.pad(frame_b, ((pad1, pad1), (pad1, pad1)))
+    pad = int(np.ceil(search_area_size/2))
+    frame_b = np.pad(frame_b, ((pad, pad), (pad, pad)))
 
     # if we want sig2noise information, allocate memory
     if sig2noise_method is not None:
@@ -569,8 +569,8 @@ def extended_search_area_piv(
 
             # conversion to integers, required for uses as array indices and adding the index shift introduced by
             # zero-padding
-            r1 = np.floor(r1).astype(int) + pad1
-            r2 = np.floor(r2).astype(int) + pad1
+            r1 = np.floor(r1).astype(int) + pad
+            r2 = np.floor(r2).astype(int) + pad
             # extracting the search area
             window_b = frame_b[r1[0]:r1[1], r2[0]:r2[1]]
 
@@ -584,7 +584,7 @@ def extended_search_area_piv(
                 # get subpixel approximation for peak position row and column index
                 row, col = find_subpixel_peak_position(corr,
                                                         subpixel_method=subpixel_method)
-                # substracting the center of the correlation matrix
+                # subtracting the center of the correlation matrix
                 row -= (search_area_size + window_size)/2 - 1
                 col -= (search_area_size + window_size)/2 - 1
 
