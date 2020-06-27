@@ -20,7 +20,10 @@ import os
 from natsort import natsorted
 import matplotlib.animation as animation
 
-save_plots = True
+# Make save_plots = True if you want to compare the 
+# visual results 
+
+save_plots = False
 out_put_folder = "output_3D_test"
 if save_plots:
     if not os.path.exists(out_put_folder):
@@ -135,12 +138,14 @@ if save_plots:
 # download the data at https://github.com/fabrylab/3D_piv_example_data.git
 # this calculation takes takes ~ 3-4 minutes on my 4-core Intel i5@2.5 GHz Laptop
 
-
-import git 
-repo = git.Repo.clone_from("https://github.com/fabrylab/3D_piv_example_data.git", './test_3d', branch='master')
-
 ### plese enter the path to the dataset provided at
 folder = r"test_3d"
+
+if not os.path.exists(folder): 
+    import git 
+    repo = git.Repo.clone_from("https://github.com/fabrylab/3D_piv_example_data.git", './test_3d', branch='master')
+
+
 
 
 
