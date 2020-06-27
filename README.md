@@ -89,7 +89,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 6. [Pete Bachant](http://github.com/petebachant)
 7. [Cameron Dallas](http://github.com/CameronDallas5000)
 8. [Cecyl Curry](http://github.com/leycec)
-9. [Theo Käufer](http://github.com/TKaeufer) 
+9. [Theo Käufer](http://github.com/TKaeufer)
+10. [Andreas Bauer](https://github.com/AndreasBauerGit)
 
 
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
