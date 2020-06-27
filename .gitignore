@@ -42,3 +42,4 @@ openpiv/masking_tutorial/.ipynb_checkpoints
 OpenPIV.egg-info
 *.ipynb_checkpoints*
 .vscode/settings.json
+*.so

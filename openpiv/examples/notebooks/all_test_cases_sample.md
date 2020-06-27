@@ -5,11 +5,11 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.2'
-      jupytext_version: 1.4.2
+      jupytext_version: 1.5.0
   kernelspec:
-    display_name: Python [conda env:openpiv] *
+    display_name: Python [conda env:openpiv-3d] *
     language: python
-    name: conda-env-openpiv-py
+    name: conda-env-openpiv-3d-py
 ---
 
 ## OpenPIV tutorial of all test cases
@@ -61,5 +61,5 @@ for test in list_of_tests:
     list_of_images = [f for f in list_of_files if f[-3:] in alist_filter]
     
     openpiv_default_run(list_of_images[0],list_of_images[1])
-
 ```
+

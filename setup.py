@@ -42,6 +42,8 @@ setup(
         'scikit-image',
         'progressbar2',
         'scipy',
+        'natsort',
+        'GitPython'
     ],
     classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant

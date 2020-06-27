@@ -1,3 +1,22 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.5.0
+#   kernelspec:
+#     display_name: Python [conda env:openpiv-3d] *
+#     language: python
+#     name: conda-env-openpiv-3d-py
+# ---
+
+# %%
+# running tests instead of pytest
+
+# %%
+# # %load ../../test/test_process.py
 try:
     from openpiv.process import extended_search_area_piv as piv
 except ImportError:
@@ -96,4 +115,5 @@ def test_piv_vs_extended_search():
         assert(np.allclose(v,v1))
     except ImportError:
         raise warning(" Probably Cython or a compiler was not installed, failed to import process ")
+
 
