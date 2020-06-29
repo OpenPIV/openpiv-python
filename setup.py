@@ -24,7 +24,7 @@ with open(path.join(this_directory, 'README.md')) as f:
 
 setup(
     name = "OpenPIV",
-    version ='0.22.0',
+    version ='0.22.1',
     cmdclass = {'build_ext': build_ext},
     ext_modules = extensions,
     packages=find_packages(),
@@ -43,7 +43,8 @@ setup(
         'progressbar2',
         'scipy',
         'natsort',
-        'GitPython'
+        'GitPython',
+        'pytest'
     ],
     classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
