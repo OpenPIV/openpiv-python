@@ -179,8 +179,8 @@ def correlation_func(cor_win_1, cor_win_2, window_size,correlation_method='circu
     the .real is to cut off possible imaginary parts that remains due to finite numerical accuarcy
      '''
     if correlation_method=='linear':
-        cor_win_1=cor_win_1-cor_win_1.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
-        cor_win_2=cor_win_2-cor_win_2.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
+        cor_win_1 = cor_win_1-cor_win_1.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
+        cor_win_2 = cor_win_2-cor_win_2.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
         cor_win_1[cor_win_1<0]=0
         cor_win_2[cor_win_2<0]=0
 
@@ -286,7 +286,7 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
     in a 3d array with number of interrogation window *window_size*window_size
     this way is much faster then using a loop'''
 
-    correlation = correlation_func(cor_win_1, cor_win_2, window_size,correlation_method=correlation_method)
+    correlation = correlation_func(cor_win_1, cor_win_2, window_size, correlation_method=correlation_method)
     'do the correlation'
     disp = np.zeros((np.size(correlation, 0), 2))#create a dummy for the loop to fill
     for i in range(0, np.size(correlation, 0)):
@@ -296,12 +296,12 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
     'this loop is doing the displacment evaluation for each window '
 
     shapes = np.array(process.get_field_shape(
-        np.shape(frame_a), window_size, overlap))
+        frame_a.shape, window_size, overlap))
     u = disp[:, 1].reshape(shapes)
     v = -disp[:, 0].reshape(shapes)
     'reshaping the interrogation window to vector field shape'
     
-    x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
+    x, y = get_coordinates(frame_a.shape, window_size, overlap)
     'get coordinates for to map the displacement'
     if do_sig2noise==True and iterations==1:
         sig2noise_ratio = sig2noise_ratio_function(correlation, sig2noise_method=sig2noise_method, width=sig2noise_mask)
@@ -384,7 +384,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
         size of the kernel used for the filtering
 
     interpolation_order : int
-        the order of the spline inpolation used for the image deformation
+        the order of the spline interpolation used for the image deformation
 
     Returns
     -------
@@ -572,8 +572,8 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
         im = fig.negative(im) #plot negative of the image for more clarity
         fig.imsave('neg.tif', im)
         im = fig.imread('neg.tif')
-        xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
-        ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
+        xmax = np.amax(a[:,0])+window_size/(2*scaling_factor)
+        ymax = np.amax(a[:,1])+window_size/(2*scaling_factor)
         implot = plt.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
     invalid = a[:,5].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
@@ -581,6 +581,33 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
     plt.quiver(a[valid,0],a[valid,1],a[valid,2],a[valid,3],color='b',width=0.001,headwidth=3,**kw)
     plt.draw()
+
+
+def get_field_shape(image_size, window_size, overlap):
+    """Compute the shape of the resulting flow field.
+    Given the image size, the interrogation window size and
+    the overlap size, it is possible to calculate the number
+    of rows and columns of the resulting flow field.
+    Parameters
+    ----------
+    image_size: two elements tuple
+        a two dimensional tuple for the pixel size of the image
+        first element is number of rows, second element is
+        the number of columns.
+    window_size: int
+        the size of the interrogation window.
+    overlap: int
+        the number of pixel by which two adjacent interrogation
+        windows overlap.
+    Returns
+    -------
+    field_shape : two elements tuple
+        the shape of the resulting flow field
+    """
+
+    return ((image_size[0] - window_size) // (window_size - overlap) + 1,
+            (image_size[1] - window_size) // (window_size - overlap) + 1)
+
 
 
 def get_coordinates(image_size, window_size, overlap):
@@ -628,7 +655,7 @@ def get_coordinates(image_size, window_size, overlap):
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         '''
 
-        field_shape = pyprocess.get_field_shape(image_size, window_size, overlap)
+        field_shape = get_field_shape(image_size, window_size, overlap)
 
         # compute grid coordinates of the interrogation window centers
         x = np.arange(field_shape[1])*(window_size-overlap) + (window_size)/2.0

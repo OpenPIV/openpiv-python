@@ -24,52 +24,59 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-
-
-
-def get_coordinates(image_size, window_size, overlap):
+def get_coordinates(image_size, search_area_size, window_size, overlap):
     """Compute the x, y coordinates of the centers of the interrogation windows.
 
     Parameters
     ----------
     image_size: two elements tuple
-        a two dimensional tuple for the pixel size of the image
-        first element is number of rows, second element is
-        the number of columns.
+        a three dimensional tuple for the pixel size of the image
 
-    window_size: int
-        the size of the interrogation windows.
+    window_size: tuple
+        the size of the interrogation window.
 
-    overlap: int
+    search_area_size: tuple
+        the size of the search area window.
+
+    overlap: tuple
         the number of pixel by which two adjacent interrogation
         windows overlap.
 
 
     Returns
     -------
-    x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the
+    x : 23 np.ndarray
+        a three dimensional array containing the x coordinates of the
         interrogation window centers, in pixels.
 
-    y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the
+    y : 23 np.ndarray
+        a three dimensional array containing the y coordinates of the
+        interrogation window centers, in pixels.
+
+    z : 23 np.ndarray
+        a three dimensional array containing the y coordinates of the
         interrogation window centers, in pixels.
 
     """
 
     # get shape of the resulting flow field
-    field_shape = get_field_shape(image_size, window_size, overlap)
+    field_shape = get_field_shape(image_size, search_area_size, window_size, overlap)
 
-    # compute grid coordinates of the interrogation window centers
-    # compute grid coordinates of the interrogation window centers
-    x = np.arange(field_shape[1]) * (window_size[1] - overlap[1]) + window_size[1] / 2.0
-    y = np.arange(field_shape[0]) * (window_size[0] - overlap[0]) + window_size[0] / 2.0
+    # compute grid coordinates of the search area centers
+    x = np.arange(field_shape[1]) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1) / 2.0
+    y = np.arange(field_shape[0]) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1) / 2.0
+    z = np.arange(field_shape[2]) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1) / 2.0
 
-    z = np.arange(field_shape[2]) * (window_size[2] - overlap[2]) + window_size[2] / 2.0
+    # moving coordinates further to the center, so that the points at the extreme left/right or top/bottom
+    # have the same distance to the window edges. For simplicity only integer movements are allowed.
+    x += (image_size[1] - 1 - ((field_shape[1] - 1) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1))) // 2
+    y += (image_size[0] - 1 - ((field_shape[0] - 1) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1))) // 2
+    z += (image_size[2] - 1 - ((field_shape[2] - 1) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1))) // 2
+
     return np.meshgrid(x, y, z)
 
 
-def get_field_shape(image_size, window_size, overlap):
+def get_field_shape(image_size, search_area_size, window_size, overlap):
     """Compute the shape of the resulting flow field.
 
     Given the image size, the interrogation window size and
@@ -83,21 +90,24 @@ def get_field_shape(image_size, window_size, overlap):
         first element is number of rows, second element is
         the number of columns.
 
-    window_size: int
+    window_size: tuple
         the size of the interrogation window.
 
-    overlap: int
+    search_area_size: tuple
+        the size of the search area window.
+
+    overlap: tuple
         the number of pixel by which two adjacent interrogation
         windows overlap.
 
 
     Returns
     -------
-    field_shape : two elements tuple
+    field_shape : three elements tuple
         the shape of the resulting flow field
     """
 
-    return (np.array(image_size) - np.array(window_size)) // (np.array(window_size) - np.array(overlap)) + 1
+    return (np.array(image_size) - np.array(search_area_size)) // (np.array(window_size) - np.array(overlap)) + 1
 
 
 def find_first_peak(corr):
@@ -130,8 +140,8 @@ def find_second_peak(corr, i=None, j=None, z=None, width=2):
     corr: np.ndarray
           the correlation map.
 
-    i,j : ints
-          row and column location of the first peak.
+    i,j,z : ints
+          row, column and layer location of the first peak.
 
     width : int
         the half size of the region around the first correlation
@@ -411,7 +421,7 @@ def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
     # check the inputs for validity
     search_area_size = [ws if x == 0 or x is None else x for x, ws in zip(search_area_size, window_size)]
 
-    if any((np.array(window_size) - np.array(overlap)) < 0):
+    if any((np.array(window_size) - np.array(overlap)) <= 0):
         raise ValueError('Overlap has to be smaller than the window_size')
 
     if any((np.array(search_area_size) - np.array(window_size)) < 0):
@@ -429,7 +439,7 @@ def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
 def extended_search_area_piv3D(
         frame_a, frame_b,
         window_size,
-        overlap=0,
+        overlap=(0, 0, 0),
         dt=(1.0, 1.0, 1.0),
         search_area_size=None,
         corr_method='fft',
@@ -516,8 +526,8 @@ def extended_search_area_piv3D(
         a three dimensional array containing the w velocity component,
         in pixels/seconds.
 
-    sig2noise : 2d np.ndarray, ( optional: only if sig2noise_method is not None )
-        a two dimensional array the signal to noise ratio for each
+    sig2noise : 3d np.ndarray, (optional: only if sig2noise_method is not None)
+        a three dimensional array the signal to noise ratio for each
         window pair.
 
     """
@@ -526,7 +536,7 @@ def extended_search_area_piv3D(
     window_size, overlap, search_area_size = check_input(window_size, overlap, search_area_size, frame_a, frame_b)
 
     # get field shape
-    field_shape = get_field_shape((frame_a.shape), window_size, overlap)
+    field_shape = get_field_shape(frame_a.shape, search_area_size, window_size, overlap)
 
     u = np.zeros(field_shape)
     v = np.zeros(field_shape)
@@ -536,45 +546,58 @@ def extended_search_area_piv3D(
     if sig2noise_method is not None:
         sig2noise = np.zeros(field_shape)
 
+    # shift for x and y coordinates of the search area windows so that the centers of search area windows have
+    # the same distances to the image edge at all sides. For simplicity only shifts by integers are allowed
+    x_centering = (frame_a.shape[1] - 1 - ((field_shape[1] - 1) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1))) // 2
+    y_centering = (frame_a.shape[0] - 1 - ((field_shape[0] - 1) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1))) // 2
+    z_centering = (frame_a.shape[2] - 1 - ((field_shape[2] - 1) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1))) // 2
+
     # loop over the interrogation windows
     # i, j are the row, column indices of the center of each interrogation
     # window
     for k in range(field_shape[0]):
-        # range(range(search_area_size/2, frame_a.shape[0] - search_area_size/2, window_size - overlap ):
         for m in range(field_shape[1]):
-            # range(search_area_size/2, frame_a.shape[1] - search_area_size/2 , window_size - overlap ):
             for l in range(field_shape[2]):
-                # Select first the largest window, work like usual from the top left corner
-                # the left edge goes as:
-                # e.g. 0, (search_area_size - overlap), 2*(search_area_size - overlap),....
 
-                il = k * (search_area_size[0] - overlap[0])
-                ir = il + search_area_size[0]
+                # centers of search area. (window_size - overlap) defines the distance between each center
+                # and (search_area_size - 1)/2.0 moves the center points away from the left or top image edge
+                y = k * (window_size[0] - overlap[0]) + (search_area_size[0] - 1) / 2.0
+                x = m * (window_size[1] - overlap[1]) + (search_area_size[1] - 1) / 2.0
+                z = l * (window_size[2] - overlap[2]) + (search_area_size[2] - 1) / 2.0
 
-                # same for top-bottom
-                jt = m * (search_area_size[1] - overlap[1])
-                jb = jt + search_area_size[1]
+                # moving the coordinates a bit to the center, to guarantee that the distance of a extreme
+                # point at the image edges is symmetric all all edges
+                x += x_centering
+                y += y_centering
+                z += z_centering
 
-                # same for front-back
-                jf = l * (search_area_size[2] - overlap[2])
-                jba = jf + search_area_size[2]
+                # left, right, top, bottom, front, back indices of the search area edges
+                # note that x - (search_area_size +/- 1)/2  always returns an integer due to the definition of x and y
+                # see also "get_coordinates()"
+                il = int(y - (search_area_size[0] - 1) / 2.0)
+                ir = int(y + (search_area_size[0] + 1) / 2.0)
+                it = int(x - (search_area_size[1] - 1) / 2.0)
+                ib = int(x + (search_area_size[1] + 1) / 2.0)
+                ifr = int(z - (search_area_size[2] - 1) / 2.0)
+                iba = int(z + (search_area_size[2] + 1) / 2.0)
+                # picking the search area from frame b
+                window_b = frame_b[il:ir, it:ib, ifr:iba]
 
-                # pick up the window in the second image
-                window_b = frame_b[il:ir, jt:jb, jf:jba]
+                # left, right, top, bottom, front, back indices of the interrogation window
+                # Sometimes the interrogation window cannot be placed in the middle of the search area, e.g.
+                # in the case of window_size=3 search_area_size=4. In this case the interrogation window
+                # is shifted 0.5 pixels to the left/top, which is achieved by rounding the indices
+                #  down during the int() conversion
+                il = int(y - (window_size[0] - 1) / 2)
+                ir = int(y + (window_size[0] + 1) / 2)
+                it = int(x - (window_size[1] - 1) / 2)
+                ib = int(x + (window_size[1] + 1) / 2)
+                ifr = int(z - (window_size[2] - 1) / 2)
+                iba = int(z + (window_size[2] + 1) / 2)
+                # picking the interrogation window from frame a
+                window_a = frame_a[il:ir, it:ib, ifr:iba]
 
-                # now shift the left corner of the smaller window inside the larger one
-                il += (search_area_size[0] - window_size[0]) // 2
-                # and it's right side is just a window_size apart
-                ir = il + window_size[0]
-                # same same
-                jt += (search_area_size[1] - window_size[1]) // 2
-                jb = jt + window_size[1]
-                jf += (search_area_size[2] - window_size[2]) // 2
-                jba = jf + window_size[2]
-
-                window_a = frame_a[il:ir, jt:jb, jf:jba]
-
-                if np.any(window_a) and np.any(window_b):
+                if np.any(window_a):
                     corr = correlate_windows(window_a, window_b,
                                              corr_method=corr_method,
                                              nfftx=nfftx, nffty=nffty, nfftz=nfftz)
@@ -599,4 +622,3 @@ def extended_search_area_piv3D(
         return u / dt[0], v / dt[1], w / dt[2], sig2noise
     else:
         return u / dt[0], v / dt[1], w / dt[2]
-

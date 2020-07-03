@@ -95,5 +95,5 @@ def test_piv_vs_extended_search():
         assert(np.allclose(u,u1))
         assert(np.allclose(v,v1))
     except ImportError:
-        raise warning(" Probably Cython or a compiler was not installed, failed to import process ")
+        raise warnings.warn(" Probably Cython or a compiler was not installed, failed to import process ")
 

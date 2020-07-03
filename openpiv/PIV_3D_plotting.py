@@ -10,8 +10,10 @@ from itertools import chain
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def scatter_3D(a, cmap="jet", sca_args={}, control="color", size=60):
+def scatter_3D(a, cmap="jet", sca_args=None, control="color", size=60):
     # default arguments for the quiver plot. can be overwritten by quiv_args
+    if not isinstance(sca_args,dict):
+        sca_args = {}
     scatter_args = {"alpha": 1}
     scatter_args.update(sca_args)
 
@@ -25,7 +27,7 @@ def scatter_3D(a, cmap="jet", sca_args={}, control="color", size=60):
 
     if control == "color":
         # make cmap
-        cbound = [0, np.nanmax(a)]
+        cbound = [np.nanmin(a), np.nanmax(a)]
         # create normalized color map for arrows
         norm = matplotlib.colors.Normalize(vmin=cbound[0], vmax=cbound[1])  # 10 ) #cbound[1] ) #)
         sm = matplotlib.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -39,8 +41,8 @@ def scatter_3D(a, cmap="jet", sca_args={}, control="color", size=60):
         plt.colorbar(sm)
 
     if control == "alpha":
-        # untested####
-        col = [(0, 0, 1, x / np.max(z)) for x in np.ravel(z)]
+        # untested #
+        colors = [(0, 0, 1, x / np.max(z)) for x in np.ravel(z)]
         ax.scatter(x, y, z, c=colors, s=size, **scatter_args)
         plt.show()
 
@@ -86,6 +88,8 @@ def explode(data):
 
 
 def plot_3D_alpha(data):
+    # plotting each voxel as a slightly smaller block with transparency depending
+    # on the data value
     # following "https://matplotlib.org/3.1.1/gallery/mplot3d/voxels_numpy_logo.html"
 
     col = np.zeros((data.shape[0], data.shape[1], data.shape[2], 4))
@@ -119,32 +123,80 @@ def plot_3D_alpha(data):
     plt.show()
 
 
-def quiver_3D(u, v, w, x=None, y=None, z=None, image_dim=None, mask_filtered=None, filter_def=0, filter_reg=(1, 1, 1),
-              cmap="jet", quiv_args={}, cbound=None):
-    # filter_def filters values with smaler absolute deformation
-    # nans are also removed
-    # setting the filter to <0 will probably mess up the arrow colors
-    # filter_reg filters every n-th value, separate for x, y, z axis
-    # you can also provide your own mask with mask_filtered !!! make sure to filter out arrows with zero total deformation!!!!
-    # other wise the arrows are not colored correctly
-    # use indices for x,y,z axis as default - can be specified by x,y,z
+def quiver_3D(u, v, w, x=None, y=None, z=None, mask_filtered=None, filter_def=0, filter_reg=(1, 1, 1),
+              cmap="jet", quiv_args=None, vmin=None, vmax=None):
+    """ Displaying 3D deformation fields vector arrows
+
+       Parameters
+       ----------
+        u,v,w: 3d ndarray or lists
+            arrays or list with deformation in x,y and z direction
+
+        x,y,z: 3d ndarray or lists
+             Arrays or list with deformation the coordinates of the deformations.
+             Must match the dimensions of the u,v qnd w. If not provided x,y and z are created
+             with np.indices(u.shape)
+
+        mask_filtered, boolean 3d ndarray or 1d ndarray
+             Array, or list with same dimensions as the deformations. Defines the area where deformations are drawn
+        filter_def: float
+             Filter that prevents the display of deformations arrows with length < filter_def
+        filter_reg: tuple
+             Filter that prevents the display of every i-th deformations arrows separatly alon each axis.
+             filter_reg=(2,2,2) means that only every second arrow along x,y z axis is displayed leading to
+             a total reduction of displayed arrows by a factor of 8.
+        cmap: string
+             matplotlib colorbar that defines the coloring of the arrow
+        quiv_args: dict
+            Dictionary with kwargs passed on to the matplotlib quiver function.
+
+        vmin,vmax: float
+            Upper and lower bounds for the colormap. Works like vmin and vmax in plt.imshow().
+
+       Returns
+       -------
+        fig: matploltib figure object
+
+        ax: mattplotlib axes object
+            the holding the main 3D quiver plot
+
+       """
 
     # default arguments for the quiver plot. can be overwritten by quiv_args
     quiver_args = {"normalize": False, "alpha": 0.8, "pivot": 'tail', "linewidth": 1, "length": 20}
-    quiver_args.update(quiv_args)
-    if not isinstance(image_dim, (list, tuple, np.ndarray)):
-        image_dim = np.array(u.shape)
+    if isinstance(quiv_args, dict):
+        quiver_args.update(quiv_args)
 
+    # generating coordinates if not provided
     if x is None:
-        x, y, z = np.indices(u.shape) * (np.array(image_dim) / np.array(u.shape))[:, np.newaxis, np.newaxis, np.newaxis]
-    else:
-        x, y, z = np.array([x, y, z]) * (np.array(image_dim) / np.array(u.shape))[:, np.newaxis]
+        # if you provide deformations as a list
+        if len(u.shape) == 1:
+            x, y, z = [np.indices(u.shape)[0] for i in range(3)]
+        # if you provide deformations as an array
+        elif len(u.shape) == 3:
+            x, y, z = np.indices(u.shape)
+        else:
+            raise ValueError(
+                "displacement data has wrong number of dimensions (%s). Use 1d array, list, or 3d array." % str(
+                    len(u.shape)))
 
+    # conversion to array
+    x, y, z = np.array([x, y, z])
+
+    # filtering arrows for the display
     deformation = np.sqrt(u ** 2 + v ** 2 + w ** 2)
     if not isinstance(mask_filtered, np.ndarray):
         mask_filtered = deformation > filter_def
-        if isinstance(filter_reg, tuple):
-            mask_filtered[::filter_reg[0], ::filter_reg[1], ::filter_reg[2]] *= True
+        if isinstance(filter_reg, list):
+            show_only = np.zeros(u.shape).astype(bool)
+            if len(filter_reg) == 1:
+                show_only[::filter_reg[0]] = True
+            elif len(filter_reg) == 3:
+                show_only[::filter_reg[0], ::filter_reg[1], ::filter_reg[2]] = True
+            else:
+                raise ValueError(
+                    "filter_reg data has wrong length (%s). Use list with length 1 or 3." % str(len(filter_reg.shape)))
+            mask_filtered = np.logical_and(mask_filtered, show_only)
 
     xf = x[mask_filtered]
     yf = y[mask_filtered]
@@ -154,11 +206,8 @@ def quiver_3D(u, v, w, x=None, y=None, z=None, image_dim=None, mask_filtered=Non
     wf = w[mask_filtered]
     df = deformation[mask_filtered]
 
-    # make cmap
-    if not cbound:
-        cbound = [0, np.nanmax(df)]
     # create normalized color map for arrows
-    norm = matplotlib.colors.Normalize(vmin=cbound[0], vmax=cbound[1])  # 10 ) #cbound[1] ) #)
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
     sm = matplotlib.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cm = matplotlib.cm.get_cmap(cmap)
@@ -167,11 +216,11 @@ def quiver_3D(u, v, w, x=None, y=None, z=None, image_dim=None, mask_filtered=Non
     colors = [c for c, d in zip(colors, df) if d > 0] + list(chain(*[[c, c] for c, d in zip(colors, df) if d > 0]))
     # colors in ax.quiver 3d is really fucked up/ will probably change with updates:
     # requires list with: first len(u) entries define the colors of the shaft, then the next len(u)*2 entries define
-    # the color ofleft and right arrow head side in alternating order. Try for example:
+    # the color of left and right arrow head side in alternating order. Try for example:
     # colors = ["red" for i in range(len(cf))] + list(chain(*[["blue", "yellow"] for i in range(len(cf))]))
-    # to see this effect
-    # BUT WAIT THERS MORE: zeor length arrows are apparently filtered out in the matplolib with out filtering the color list appropriately
-    # so we have to do this our selfs as well
+    # to see this effect.
+    # BUT WAIT THERE'S MORE: zero length arrows are apparently filtered out in the matplolib with out
+    # filtering the color list appropriately so we have to do this ourselfs as well
 
     # plotting
     fig = plt.figure()
@@ -189,4 +238,5 @@ def quiver_3D(u, v, w, x=None, y=None, z=None, image_dim=None, mask_filtered=Non
     ax.w_xaxis.set_pane_color((0.2, 0.2, 0.2, 1.0))
     ax.w_yaxis.set_pane_color((0.2, 0.2, 0.2, 1.0))
     ax.w_zaxis.set_pane_color((0.2, 0.2, 0.2, 1.0))
-    return fig
+
+    return fig, ax

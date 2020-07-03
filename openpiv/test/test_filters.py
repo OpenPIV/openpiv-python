@@ -35,30 +35,34 @@ def test_gaussian():
     assert(np.allclose(vf,np.array([[ 0.37682989,  0.24420622,  0.04491922],
         [ 0.24420622,  0.42174911,  0.24420622],
         [ 0.04491922,  0.24420622,  0.37682989]])))
-        
+
+
 def test_replace_nans():
     """ test of NaNs inpainting """
-    u = np.nan*np.ones((5,5))
-    u[2,2] = 1
-    replace_nans(u,2,1e-3)
-    assert(~np.all(np.isnan(u)))
-    v = np.ones((9,9))
-    v[1:-1,1:-1] = np.nan
-    u = v.copy()
-    replace_nans(u,1,1e-3,method='disk')
-    assert(np.sum(np.isnan(u)) == 9) # central core is nan
-    u = v.copy()
-    replace_nans(u,2,1e-3,method='disk')
-    assert(np.allclose(np.ones((9,9)),u))
-    
-    
+
+    u = np.nan * np.ones((5, 5))
+    u[2, 2] = 1
+    u = replace_nans(u, 2, 1e-3)
+    assert (~np.all(np.isnan(u)))
+
+    u = np.ones((9, 9))
+    u[1:-1, 1:-1] = np.nan
+    u = replace_nans(u, 1, 1e-3, method='disk')
+    assert (np.sum(np.isnan(u)) == 9)  # central core is nan
+
+    u = np.ones((9, 9))
+    u[1:-1, 1:-1] = np.nan
+    u = replace_nans(u, 2, 1e-3, method='disk')
+    assert (np.allclose(np.ones((9, 9)), u))
+
+
 def test_replace_outliers():
     """ test of replacing outliers """
-    v = np.ones((9,9))
-    v[1:-1,1:-1] = np.nan
+    v = np.ones((9, 9))
+    v[1:-1, 1:-1] = np.nan
     u = v.copy()
-    uf,vf = filters.replace_outliers(u,v)
-    assert(np.sum(np.isnan(u))==7**2)
-    assert(np.allclose(np.ones((9,9)),uf))
+    uf, vf = filters.replace_outliers(u, v)
 
-    
+    assert (np.sum(np.isnan(u)) == 7 ** 2)
+    assert (np.allclose(np.ones((9, 9)), uf))
+
