@@ -7,9 +7,9 @@ jupyter:
       format_version: '1.2'
       jupytext_version: 1.5.0
   kernelspec:
-    display_name: Python [conda env:openpiv-3d] *
+    display_name: Python [conda env:test] *
     language: python
-    name: conda-env-openpiv-3d-py
+    name: conda-env-test-py
 ---
 
 ## OpenPIV tutorial of all test cases
