@@ -35,8 +35,7 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    pip install cython numpy 
-    pip install openpiv --pre
+    pip install openpiv
 
 `--pre` because sometimes we push pre-releases
 
@@ -60,10 +59,6 @@ Or for the global installation, use:
 
     python setup.py install 
 
-
-### Latest developments
-
-Latest developments go into @alexlib repository <https://github.com/alexlib/openpiv-python>
 
 ## Documentation
 
