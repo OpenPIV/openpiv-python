@@ -8,11 +8,9 @@ import numpy
 
 
 extensions = [
-    Extension("openpiv.process",["./openpiv/process.pyx"],include_dirs = [numpy.get_include()]),
-    Extension("openpiv.lib",["./openpiv/lib.pyx"], include_dirs = [numpy.get_include()])
-    ]
+    Extension("openpiv.process",["./openpiv/process.pyx"],include_dirs = [numpy.get_include()])]
 
-extensions = cythonize(extensions,include_path = [numpy.get_include()])
+extensions = cythonize(extensions, include_path = [numpy.get_include()])
 
 
 # read the contents of your README file
@@ -24,7 +22,7 @@ with open(path.join(this_directory, 'README.md')) as f:
 
 setup(
     name = "OpenPIV",
-    version ='0.22.1',
+    version ='0.22.2',
     cmdclass = {'build_ext': build_ext},
     ext_modules = extensions,
     packages=find_packages(),

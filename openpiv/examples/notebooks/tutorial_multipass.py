@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.5.0
 #   kernelspec:
-#     display_name: Python [conda env:openpiv] *
+#     display_name: Python [conda env:openpiv]
 #     language: python
 #     name: conda-env-openpiv-py
 # ---
