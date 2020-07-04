@@ -77,6 +77,7 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [Multipass tutorial with WiDiM](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
 5. [Multipass with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/window_deformation_comparison.ipynb)
 6. [Multiple sets in one notebook](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/all_test_cases_sample.ipynb)
+7. [3D PIV](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/openpiv_3D_test.ipynb)
 
 
 ## Contributors
