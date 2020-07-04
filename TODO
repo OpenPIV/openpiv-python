@@ -9,28 +9,6 @@
     should rapidly understand what OpenPiv is capable of. They
     should feel as comfortable as possible on the first `impact`.
     
-    A downloads section should be added. This will contain the releases
-    example code and example images.
-    
-    Prepare source distributions for various platform.
-    
-    Decide where to store OpenPiv-Python website,
-    wheter on openpiv.net/python or on Alex github page. 
-    Maybe it is better on the former, for gerater flexibility. 
-    
-    However it seems that the openpiv python documentation
-    page is growing fast. Maybe it is better to put clear links
-    on openpiv.net to point to three pages for python, matlab, c++.
-    
-    
-+ flow field validation algorithms
-    - local median validation
-    - local mean validation
-    - others?
-    
-+ iterative image deformation algorithms
-
-+ image-preprocessing, ( filters, masking )
 
 + hdf5 output
 
