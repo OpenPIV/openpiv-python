@@ -1,7 +1,8 @@
 # OpenPIV
 [![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
 ![Build and upload to PyPI](https://github.com/OpenPIV/openpiv-python/workflows/Build%20and%20upload%20to%20PyPI/badge.svg)
-[![DOI](https://zenodo.org/badge/4213/OpenPIV/openpiv-python.svg)](https://zenodo.org/badge/latestdoi/4213/OpenPIV/openpiv-python)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3930343.svg)](https://doi.org/10.5281/zenodo.3930343)
+
 
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/version.svg)](https://anaconda.org/conda-forge/openpiv)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/platforms.svg)](https://anaconda.org/conda-forge/openpiv)
@@ -35,10 +36,8 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
-    pip install cython numpy 
-    pip install openpiv --pre
+    pip install openpiv
 
-`--pre` because sometimes we push pre-releases
 
 ## Or `conda` 
 
@@ -61,10 +60,6 @@ Or for the global installation, use:
     python setup.py install 
 
 
-### Latest developments
-
-Latest developments go into @alexlib repository <https://github.com/alexlib/openpiv-python>
-
 ## Documentation
 
 The OpenPIV documentation is available on the project web page at <http://openpiv.readthedocs.org>
@@ -77,6 +72,7 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 4. [Multipass tutorial with WiDiM](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/tutorial_multipass.ipynb)
 5. [Multipass with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/window_deformation_comparison.ipynb)
 6. [Multiple sets in one notebook](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/all_test_cases_sample.ipynb)
+7. [3D PIV](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/openpiv_3D_test.ipynb)
 
 
 ## Contributors
@@ -91,6 +87,7 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 8. [Cecyl Curry](http://github.com/leycec)
 9. [Theo Käufer](http://github.com/TKaeufer)
 10. [Andreas Bauer](https://github.com/AndreasBauerGit)
+11. [David Bohringer](https://github.com/davidbhr)
 
 
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
