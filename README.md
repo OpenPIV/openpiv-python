@@ -38,6 +38,7 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
     pip install openpiv
 
+`--pre` because sometimes we push pre-releases
 
 ## Or `conda` 
 
