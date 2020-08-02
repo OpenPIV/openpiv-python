@@ -765,8 +765,8 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
             for J in range(Ncol[K]):
                 
                 #compute xb, yb:
-                F[K,I,J,2]=np.floor(F[K,I,J,0]+F[K,I,J,6])#xb=xa+dpx
-                F[K,I,J,3]=np.floor(F[K,I,J,1]+F[K,I,J,7])#yb=yb+dpy
+                F[K,I,J,2]=F[K,I,J,0]+F[K,I,J,6]#xb=xa+dpx
+                F[K,I,J,3]=F[K,I,J,1]+F[K,I,J,7]#yb=yb+dpy
                 #look for corrupted window (ie. going outside of the picture) and relocate them with 0 displacement:
                 if F[K,I,J,2] + W[K]/2 > pic_size[0]-1 or F[K,I,J,2] - W[K]/2 < 0: #if corrupted on x-axis do:
                     F[K,I,J,2]=F[K,I,J,0]#xb=x
@@ -920,11 +920,11 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
             # pbar.update(100*I/Nrow[K+1])
             for J in range(Ncol[K+1]):
                 if Nrow[K+1]==Nrow[K] and Ncol[K+1]==Ncol[K]:
-                    F[K+1,I,J,6] = F[K,I,J,4]#dpx_k+1 = dx_k 
-                    F[K+1,I,J,7] = F[K,I,J,5]#dpy_k+1 = dy_k
+                    F[K+1,I,J,6] = np.floor(F[K,I,J,4])#dpx_k+1 = dx_k
+                    F[K+1,I,J,7] = np.floor(F[K,I,J,5])#dpy_k+1 = dy_k
                 else:#interpolate if dimensions do not agree
-                    F[K+1,I,J,6] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 4)
-                    F[K+1,I,J,7] = interpolate_surroundings(F,Nrow,Ncol,K,I,J, 5)
+                    F[K+1,I,J,6] = np.floor(interpolate_surroundings(F,Nrow,Ncol,K,I,J, 4))
+                    F[K+1,I,J,7] = np.floor(interpolate_surroundings(F,Nrow,Ncol,K,I,J, 5))
         # pbar.finish()
         print("..[DONE] -----> going to iteration ",K+1)
         print(" ")
