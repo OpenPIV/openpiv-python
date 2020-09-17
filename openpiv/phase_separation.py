@@ -301,7 +301,7 @@ def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, openi
         See Kalitov & Longmire, 2002 for more information.
     """
     # n[i,j] = Number of particles with size of i and rounded brightness of j
-    n = np.zeros((MAX_PARTICLE_SIZE, 255), dtype=np.uint8)
+    n = np.zeros((MAX_PARTICLE_SIZE+1, 256), dtype=np.uint8)
 
     # Get Object Pixels
     object_pixels = khalitov_longmire_get_object_pixels(original_image, blur_kernel_size, I_sat, opening_ksize)
@@ -319,7 +319,7 @@ def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, openi
         n[size_array[i], rounded_brightness[i]] += 1
 
     # Calculate total signal density map:
-    SIZE, BRIGHTNESS = np.meshgrid(range(0, 255), range(0, MAX_PARTICLE_SIZE))
+    SIZE, BRIGHTNESS = np.meshgrid(range(0, 256), range(0, MAX_PARTICLE_SIZE+1))
     with np.errstate(divide='ignore'):
         density_map = np.log10(SIZE * BRIGHTNESS * n)
     density_map[ np.isneginf(density_map) ] = 0
@@ -359,7 +359,9 @@ def khalitov_longmire_get_object_pixels(original_image, blur_kernel_size=1, I_sa
 
     # Transform to log space
     I = np.float32(original_image)
-    Ln_I = np.log(I)
+    with np.errstate(divide='ignore'):
+        Ln_I = np.log(I)
+    Ln_I[ np.isneginf(Ln_I) ] = 0
 
     # Calculate second directional derivatives
     X_deriv2 = scipy.ndimage.convolve(Ln_I,np.asarray([
