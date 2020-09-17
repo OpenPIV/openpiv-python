@@ -168,14 +168,15 @@ def khalitov_longmire(original_image, big_particles_criteria, small_particles_cr
 
     opening_ksize : int
         Stencil width for opening operation used to remove tiny regions from object pixels.
+        Set to -1 to skip opening.
 
     Returns
     -------
     big_particles_img : np.ndarray
-        Extracted mask image of the phase with bigger particles (dispersed phase)
+        Extracted image of the phase with bigger particles (dispersed phase)
 
     small_particles_img : np.ndarray
-        Extracted mask image of the phase with smaller particles (carrier phase)
+        Extracted image of the phase with smaller particles (carrier phase)
     """
     # Calculate object pixels using 2nd derivative criteria
     object_pixels = khalitov_longmire_get_object_pixels(original_image, blur_kernel_size, I_sat, opening_ksize)
@@ -209,20 +210,24 @@ def khalitov_longmire(original_image, big_particles_criteria, small_particles_cr
     if 'max_brightness' in small_particles_criteria:
         is_region_a_small_particle &= (regions_brightness_array < small_particles_criteria['max_brightness'])
 
-    # Generate big particles image
-    big_particles_img = np.zeros(original_image.shape, dtype=np.uint8)
+    # Generate big particles mask
+    big_particles_mask = np.zeros(original_image.shape, dtype=np.uint8)
     for i in range(0, N):
         if is_region_a_big_particle[i]:
-            big_particles_img[ labels_image == i ] = 255
+            big_particles_mask[ labels_image == i ] = 1
 
-    # Generate unidentifed particles image (for efficiency reasons)
-    unindentified_particles_img = np.zeros(original_image.shape, dtype=np.uint8)
+    # Generate unidentifed particles mask (for efficiency reasons)
+    unindentified_particles_mask = np.zeros(original_image.shape, dtype=np.uint8)
     for i in range(0, N):
         if (not is_region_a_big_particle[i]) and (not is_region_a_small_particle[i]):
-            unindentified_particles_img[ labels_image == i ] = 255
+            unindentified_particles_mask[ labels_image == i ] = 1
 
-    # Generate small particles image
-    small_particles_img = object_pixels - big_particles_img - unindentified_particles_img
+    # Generate small particles mask
+    small_particles_mask = object_pixels - big_particles_mask - unindentified_particles_mask
+
+    # Generate final grayscale images
+    big_particles_img = big_particles_mask * original_image
+    small_particles_img = small_particles_mask * original_image
 
     return big_particles_img, small_particles_img
 
@@ -250,6 +255,7 @@ def get_particles_size_array(original_image, blur_kernel_size=1, I_sat=230, open
 
     opening_ksize : int
         Stencil width for opening operation used to remove tiny regions from object pixels.
+        Set to -1 to skip opening.
 
     Returns
     -------
@@ -290,6 +296,7 @@ def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, openi
 
     opening_ksize : int
         Stencil width for opening operation used to remove tiny regions from object pixels.
+        Set to -1 to skip opening.
 
     MAX_PARTICLE_SIZE : int
         Particle area upper limit (Y-axis max in the map) in pixels.
@@ -350,7 +357,7 @@ def khalitov_longmire_get_object_pixels(original_image, blur_kernel_size=1, I_sa
     if (blur_kernel_size % 2 != 1):
         raise Exception("Blur kernel size must be an odd number.")
 
-    if (opening_ksize % 2 != 1):
+    if (opening_ksize > 1) and (opening_ksize % 2 != 1):
         raise Exception("Opening kernel size must be an odd number.")
 
     # Pre-processing box blur
@@ -387,10 +394,11 @@ def khalitov_longmire_get_object_pixels(original_image, blur_kernel_size=1, I_sa
 
     # Apply conditions for object pixels
     object_pixels = ( (X_deriv2 < 0) & (Y_deriv2 < 0) & (D45_deriv2 < 0) & (D135_deriv2 < 0) ) | (I > I_sat)
-    object_pixels_uint8 = 255 * np.uint8(object_pixels)
+    object_pixels_uint8 = np.uint8(object_pixels)
 
     # Apply opening filter to remove noisy dots
-    kernel = disk((opening_ksize-1)/2)
-    object_pixels_uint8 = opening(object_pixels_uint8, kernel)
+    if opening_ksize > 1:
+        kernel = disk((opening_ksize-1)/2)
+        object_pixels_uint8 = opening(object_pixels_uint8, kernel)
 
     return object_pixels_uint8
