@@ -2,6 +2,7 @@ import numpy.lib.stride_tricks
 import numpy as np
 from numpy.fft import rfftn, irfftn
 from numpy import ma
+from tqdm import tqdm
 
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
@@ -555,7 +556,7 @@ def extended_search_area_piv3D(
     # loop over the interrogation windows
     # i, j are the row, column indices of the center of each interrogation
     # window
-    for k in range(field_shape[0]):
+    for k in tqdm(range(field_shape[0])):
         for m in range(field_shape[1]):
             for l in range(field_shape[2]):
 

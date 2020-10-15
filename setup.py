@@ -42,7 +42,8 @@ setup(
         'scipy',
         'natsort',
         'GitPython',
-        'pytest'
+        'pytest',
+		'tqdm'
     ],
     classifiers = [
         # PyPI-specific version type. The number specified here is a magic constant
