@@ -33,9 +33,9 @@ def test_piv():
     """
     frame_a, frame_b = create_pair(image_size=32)
     u, v, w = extended_search_area_piv3D(frame_a, frame_b, window_size=(10, 10, 10), search_area_size=(10, 10, 10))
-    assert (dist(u, 3) < threshold)
-    assert (dist(v, -2) < threshold)
-    assert (dist(w, -1) < threshold)
+    assert (dist(u, -3) < threshold)
+    assert (dist(v, 2) < threshold)
+    assert (dist(w, 1) < threshold)
 
 
 def test_piv_extended_search_area():
@@ -45,6 +45,6 @@ def test_piv_extended_search_area():
     """
     frame_a, frame_b = create_pair(image_size=32)
     u, v, w = extended_search_area_piv3D(frame_a, frame_b, window_size=(10, 10, 10), search_area_size=(15, 15, 15))
-    assert (dist(u, 3) < threshold)
-    assert (dist(v, -2) < threshold)
-    assert (dist(w, -1) < threshold)
+    assert (dist(u, -3) < threshold)
+    assert (dist(v, 2) < threshold)
+    assert (dist(w, 1) < threshold)

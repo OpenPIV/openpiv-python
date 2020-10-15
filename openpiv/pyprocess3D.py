@@ -611,7 +611,7 @@ def extended_search_area_piv3D(
                     z -= (search_area_size[2] + window_size[2] - 1) // 2
 
                     # get displacements, apply coordinate system definition
-                    u[k, m, l], v[k, m, l], w[k, m, l] = -col, row, z
+                    u[k, m, l], v[k, m, l], w[k, m, l] = col, -row, -z
 
                     # get signal to noise ratio
                     if sig2noise_method is not None:
