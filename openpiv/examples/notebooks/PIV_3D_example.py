@@ -189,7 +189,7 @@ for i, im in enumerate(images):
 
 # %%
 # 3D PIV
-u, v, w, sig2noise = extended_search_area_piv3D(alive, relax, window_size=window_size, overlap=overlap,
+u, v, w, sig2noise = extended_search_area_piv3D(relax, alive, window_size=window_size, overlap=overlap,
                                                 search_area_size=search_area, dt=(1 / du, 1 / dv, 1 / dw),
                                                 subpixel_method='gaussian',
                                                 sig2noise_method='peak2peak',
