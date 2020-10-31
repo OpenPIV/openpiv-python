@@ -78,10 +78,10 @@ with ::
     python setup.py build_ext --inplace 
     
 
-Having problems?
-================
+Experience problems?
+====================
 If you encountered some issues, found difficult to install OpenPIV following these instructions
-please register and write to openpiv-users@googlegroups.com , so that we can help you and 
+please register and write on our Google groups forum https://groups.google.com/g/openpiv-users , so that we can help you and 
 improve this page!
 
 
