@@ -17,13 +17,10 @@ development, to ease the use for those users who don't have python skills.
 
 ## Warning
 
-The OpenPIV python version is still in beta state. This means that
+The OpenPIV python version is still in its *beta* state. This means that
 it still might have some bugs and the API may change. However, testing and contributing
 is very welcome, especially if you can contribute with new algorithms and features.
 
-Development is currently done on a Linux/Mac OSX environment, but as soon as possible 
-Windows will be tested. If you have access to one of these platforms
-please test the code. 
 
 ## Test it without installation
 Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in your browser with zero installation:
@@ -88,6 +85,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 9. [Theo Käufer](http://github.com/TKaeufer)
 10. [Andreas Bauer](https://github.com/AndreasBauerGit)
 11. [David Bohringer](https://github.com/davidbhr)
+12. [Erich Zimmer](https://github.com/ErichZimmer)
+13. [Peter Vennemann](https://github.com/eguvep)
 
 
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
