@@ -407,10 +407,8 @@ def first_pass(
     in a 3d array with number of interrogation window *window_size*window_size
     this way is much faster then using a loop"""
 
-    correlation = correlate_windows(
-        cor_win_1, cor_win_2, window_size,
-        correlation_method=correlation_method
-    )
+    correlation = correlate_windows(cor_win_1, cor_win_2,
+                                    correlation_method=correlation_method)
     "do the correlation"
     # create a dummy for the loop to fill
     disp = np.zeros((np.size(correlation, 0), 2))

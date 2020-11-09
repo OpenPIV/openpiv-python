@@ -183,7 +183,7 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                         
             # compute correlation map 
             if any(window_a.flatten()):
-                corr = correlate_windows( search_area, window_a, nfftx=nfftx, nffty=nffty )
+                corr = correlate_windows(search_area, window_a)
                 c = CorrelationFunction( corr )
             
                 # find subpixel approximation of the peak center
@@ -647,7 +647,7 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                         window_b[L,M]=frame_b[np.int(F[K,I,J,2] - W[K]/2 + L), \
                                             np.int(F[K,I,J,3] - W[K]/2 + M)]
                 #perform correlation of the two windows
-                corr = correlate_windows( window_b, window_a, nfftx=nfftx, nffty=nffty )
+                corr = correlate_windows( window_b, window_a)
                 c = CorrelationFunction( corr )
                 F[K,I,J,12] = c.sig2noise_ratio( sig2noise_method, width )#compute sig2noise
                 i_peak, j_peak = c.subpixel_peak_position( subpixel_method )#get peak position

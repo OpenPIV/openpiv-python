@@ -471,6 +471,32 @@ def fft_correlate(window_a, window_b):
     return corr
 
 
+def fft_correlate_strided_images(image_a, image_b):
+    """ FFT based cross correlation
+    of two images with multiple views of np.stride_tricks()
+    
+    The 2D FFT should be applied to the last two axes (-2,-1) and the
+    zero axis is the number of the interrogation window
+
+    This should also work out of the box for rectangular windows.
+
+    Parameters
+    ----------
+    image_a : 3d np.ndarray, first dimension is the number of windows,
+        and two last dimensions are interrogation windows of the first image
+    image_b : similar
+    """
+    s1 = np.array(image_a.shape[-2:])
+    s2 = np.array(image_b.shape[-2:])
+    size = s1 + s2 - 1
+    fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+    fslice = tuple([slice(0,image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
+    f2a = rfft2(image_a, fsize, axes=(-2,-1))
+    f2b = rfft2(image_b[::-1, ::-1], fsize, axes=(-2,-1))
+    corr = irfft2(f2a * f2b, axes=(-2,-1)).real[fslice]
+    return corr
+
+
 def zero_pad(window):
     """ Zero pads the interrogation window to double size
     Inputs:
@@ -569,7 +595,7 @@ def normalize_intensity(window):
         the interrogation window array, with mean value equal to zero.
 
     """
-    return np.clip(window - window.mean(), 0)
+    return np.clip(window - window.mean(), 0, np.inf)
 
 
 def extended_search_area_piv(
@@ -753,9 +779,7 @@ def extended_search_area_piv(
                 corr = correlate_windows(
                     window_a,
                     window_b,
-                    correlation_method=correlation_method,
-                    nfftx=nfftx,
-                    nffty=nffty,
+                    correlation_method=correlation_method
                 )
                 #                 plt.figure()
                 #                 plt.contourf(corr)
