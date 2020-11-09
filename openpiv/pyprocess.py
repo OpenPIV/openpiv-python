@@ -102,8 +102,8 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
 def get_field_shape(image_size, search_area_size, window_size, overlap):
     """Compute the shape of the resulting flow field.
 
-    Given the image size, the interrogation window size, the search_area size
-    and the overlap size, it is possible to calculate the number
+    Given the image size, the interrogation window size and
+    the overlap size, it is possible to calculate the number
     of rows and columns of the resulting flow field.
 
     Parameters
@@ -113,31 +113,24 @@ def get_field_shape(image_size, search_area_size, window_size, overlap):
         first element is number of rows, second element is
         the number of columns.
 
-    search_area_size: int
-        the size of the search area window.
-
-    window_size: int
+    window_size: tuple
         the size of the interrogation window.
 
-    overlap: int
+    search_area_size: tuple
+        the size of the search area window.
+
+    overlap: tuple
         the number of pixel by which two adjacent interrogation
         windows overlap.
 
 
     Returns
     -------
-    field_shape : two elements tuple
+    field_shape : three elements tuple
         the shape of the resulting flow field
-
-
-    If the method is not extended search, supply search_area_size
     """
 
-    return (
-        (image_size[0] - search_area_size) // (window_size - overlap) + 1,
-        (image_size[1] - search_area_size) // (window_size - overlap) + 1,
-    )
-
+    return (np.array(image_size) - np.array(search_area_size)) // (np.array(window_size) - np.array(overlap)) + 1
 
 def moving_window_array(array, window_size, overlap):
     """
@@ -570,11 +563,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
         # and slice only the relevant part
         corr = fft_correlate(zero_pad(window_a), zero_pad(window_b))[fslice]
     elif correlation_method == "direct":
-        corr = convolve2d(
-            normalize_intensity(window_a),
-            normalize_intensity(window_b[::-1, ::-1]),
-            "full",
-        )
+        corr = convolve2d(window_a, window_b[::-1, ::-1],"full")
     else:
         raise ValueError("method is not implemented")
 
