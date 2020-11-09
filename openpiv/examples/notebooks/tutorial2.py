@@ -40,7 +40,7 @@ tools.save(x, y, u, v, mask, 'exp1_001_extended.txt' )
 
 # %%
 # %%time
-u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, corr_method='fft', window_size=24, overlap=12, dt=0.02, sig2noise_method='peak2peak' )
+u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, correlation_method='fft', window_size=24, overlap=12, dt=0.02, sig2noise_method='peak2peak' )
 x, y = pyprocess.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
 u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 2.5 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2.5)
@@ -49,7 +49,7 @@ tools.save(x, y, u, v, mask, 'exp1_001_fft.txt' )
 
 # %%
 # %%time 
-u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, corr_method='direct', window_size=24, overlap=12, dt=0.02, sig2noise_method='peak2peak' )
+u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, correlation_method='direct', window_size=24, overlap=12, dt=0.02, sig2noise_method='peak2peak' )
 x, y = pyprocess.get_coordinates( image_size=frame_a.shape, window_size=24, overlap=12 )
 u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 2.5 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2.5)

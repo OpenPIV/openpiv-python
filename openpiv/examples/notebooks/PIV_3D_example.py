@@ -74,7 +74,7 @@ search_area = (5, 5, 5)
 # %%
 u, v, w, sig2noise = extended_search_area_piv3D(shape1, shape2, window_size=window_size, overlap=overlap,
                                                 search_area_size=search_area, subpixel_method='gaussian',
-                                                sig2noise_method='peak2peak', corr_method="fft",
+                                                sig2noise_method='peak2peak', correlation_method="fft",
                                                 width=2)
 
 # %%

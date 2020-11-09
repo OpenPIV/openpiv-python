@@ -9,6 +9,7 @@ Created on Fri Oct  4 14:33:21 2019
 import numpy as np
 import openpiv.windef as windef
 from test_process import create_pair
+from openpiv.pyprocess import get_field_shape
 
 frame_a, frame_b = create_pair(image_size=1024)
 

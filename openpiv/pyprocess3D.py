@@ -324,7 +324,7 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
     return sig2noise
 
 
-def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=None, nfftz=None):
+def correlate_windows(window_a, window_b, correlation_method='fft', nfftx=None, nffty=None, nfftz=None):
     """Compute correlation function between two interrogation windows.
 
     The correlation function can be computed by using the correlation
@@ -338,7 +338,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     window_b : 2d np.ndarray
         a two dimensions array for the second interrogation window.
 
-    corr_method   : string
+    correlation_method   : string
         one method is currently implemented: 'fft'.
 
     nfftx   : int
@@ -368,7 +368,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     It leads to inconsistency of the output
     """
 
-    if corr_method == 'fft':
+    if correlation_method == 'fft':
         window_b = np.conj(window_b[::-1, ::-1, ::-1])
         if nfftx is None:
             nfftx = nextpower2(window_b.shape[0] + window_a.shape[0])
@@ -386,7 +386,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
                     :window_b.shape[1] + window_a.shape[1],
                     :window_b.shape[2] + window_a.shape[2]]
         return corr
-    # elif corr_method == 'direct':
+    # elif correlation_method == 'direct':
     #     return convolve2d(normalize_intensity(window_a),
     #                       normalize_intensity(window_b[::-1, ::-1, ::-1]), 'full')
     else:
@@ -443,7 +443,7 @@ def extended_search_area_piv3D(
         overlap=(0, 0, 0),
         dt=(1.0, 1.0, 1.0),
         search_area_size=None,
-        corr_method='fft',
+        correlation_method='fft',
         subpixel_method='gaussian',
         sig2noise_method=None,
         width=2,
@@ -477,7 +477,7 @@ def extended_search_area_piv3D(
     dt : tuple
         the time delay separating the two frames [default: 1.0].
 
-    corr_method : string
+    correlation_method : string
         only one method is currently implemented: 'fft'
 
     subpixel_method : string
@@ -600,7 +600,7 @@ def extended_search_area_piv3D(
 
                 if np.any(window_a):
                     corr = correlate_windows(window_a, window_b,
-                                             corr_method=corr_method,
+                                             correlation_method=correlation_method,
                                              nfftx=nfftx, nffty=nffty, nfftz=nfftz)
 
                     # get subpixel approximation for peak position row and column index
