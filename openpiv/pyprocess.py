@@ -582,7 +582,9 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
 
 
 def normalize_intensity(window):
-    """Normalize interrogation window by removing the mean value.
+    """Normalize interrogation window or strided image of many windows, 
+       by removing the mean intensity value per window and clipping the
+       negative values to zero
 
     Parameters
     ----------
@@ -595,7 +597,8 @@ def normalize_intensity(window):
         the interrogation window array, with mean value equal to zero.
 
     """
-    return np.clip(window - window.mean(), 0, np.inf)
+    window -= window.mean(axis=(-2,-1),keepdims=True)
+    return np.clip(window, 0, np.inf)
 
 
 def extended_search_area_piv(
