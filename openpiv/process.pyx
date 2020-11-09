@@ -8,7 +8,8 @@ from scipy.signal import convolve
 import time
 import openpiv
 import warnings
-from progressbar import *
+from openpiv.pyprocess import get_field_shape
+from openpiv.pyprocess import correlate_windows
 
 cimport numpy as np
 cimport cython
@@ -141,7 +142,8 @@ def extended_search_area_piv( np.ndarray[DTYPEi_t, ndim=2] frame_a,
     cdef int n_cols, n_rows
     
     # get field shape
-    n_rows, n_cols = get_field_shape( (frame_a.shape[0], frame_a.shape[1]), window_size, overlap )
+    n_rows, n_cols = get_field_shape( (frame_a.shape[0], frame_a.shape[1]), 
+                                      window_size, window_size, overlap )
     
     # define arrays
     cdef np.ndarray[DTYPEi_t, ndim=2] window_a = np.zeros([window_size, window_size], dtype=DTYPEi)
@@ -618,8 +620,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         #a simple progress bar
         # widgets = ['Computing the displacements : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
         #    ' ', ETA(), ' ', FileTransferSpeed()]
-        # pbar = ProgressBar(widgets=widgets, maxval=100)
-        # pbar.start()
         residual = 0
         for I in range(Nrow[K]):#run through interpolations locations
             # pbar.update(100*I/Nrow[K])#progress update
@@ -685,8 +685,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
                 print(" ")
                 # widgets = ['Validation : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
            # ' ', ETA(), ' ', FileTransferSpeed()]
-                # pbar = ProgressBar(widgets=widgets, maxval=100)
-                # pbar.start()
                 for I in range(Nrow[K]):#run through locations
                     # pbar.update(100*I/Nrow[K])                    
                     for J in range(Ncol[K]):
@@ -775,8 +773,6 @@ def WiDIM( np.ndarray[DTYPEi_t, ndim=2] frame_a,
         print(" ")
         # widgets = ['Performing interpolations : ', Percentage(), ' ', Bar(marker='-',left='[',right=']'),
         #    ' ', ETA(), ' ', FileTransferSpeed()]
-        # pbar = ProgressBar(widgets=widgets, maxval=100)
-        # pbar.start()
         for I in range(Nrow[K+1]):
             # pbar.update(100*I/Nrow[K+1])
             for J in range(Ncol[K+1]):

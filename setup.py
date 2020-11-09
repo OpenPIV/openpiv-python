@@ -38,7 +38,6 @@ setup(
         'imageio',
         'matplotlib>=3',
         'scikit-image',
-        'progressbar2',
         'scipy',
         'natsort',
         'GitPython',
