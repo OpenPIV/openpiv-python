@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def get_coordinates_3D(image_size, search_area_size, window_size, overlap):
+def get_coordinates(image_size, search_area_size, window_size, overlap):
     """Compute the x, y coordinates of the centers of the interrogation windows.
 
     Parameters
@@ -78,24 +78,9 @@ def get_coordinates_3D(image_size, search_area_size, window_size, overlap):
 
 
 
-def find_first_peak(corr):
-    """
-    Find row and column indices of the first correlation peak.
-
-    Parameters
-    ----------
-    corr : np.ndarray
-        the correlation map
-
-    Returns
-    -------
-
-    """
-
-    return np.unravel_index(np.argmax(corr), corr.shape), corr.max()
 
 
-def find_second_peak(corr, i=None, j=None, z=None, width=2):
+def find_second_peak_3D(corr, i=None, j=None, z=None, width=2):
     """
     Find the value of the second largest peak.
 
@@ -266,7 +251,7 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
     # now compute signal to noise ratio
     if sig2noise_method == 'peak2peak':
         # find second peak height
-        (peak1_i, peak1_j, peak1_z), corr_max2 = find_second_peak(
+        (peak1_i, peak1_j, peak1_z), corr_max2 = find_second_peak_3D(
             corr, peak1_i, peak1_j, peak1_z, width=width)
 
         # if it's an empty interrogation window

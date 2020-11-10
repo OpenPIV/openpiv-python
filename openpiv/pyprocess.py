@@ -177,23 +177,10 @@ def find_first_peak(corr):
 
     Returns
     -------
-    i : int
-        the row index of the correlation peak
-
-    j : int
-        the column index of the correlation peak
-
-    corr_max1 : int
-        the value of the correlation peak
 
     """
-    ind = corr.argmax()
-    s = corr.shape[1]
 
-    i = ind // s
-    j = ind % s
-
-    return i, j, corr.max()
+    return np.unravel_index(np.argmax(corr), corr.shape), corr.max()
 
 
 def find_second_peak(corr, i=None, j=None, width=2):
@@ -714,13 +701,11 @@ def extended_search_area_piv(
     # the same distances to the image edge at all sides. For simplicity only
     # shifts by integers are allowed
     x_centering = (
-        frame_a.shape[1]
-        - 1
+        frame_a.shape[1] - 1
         - ((n_cols - 1) * (window_size - overlap) + (search_area_size - 1))
     ) // 2
     y_centering = (
-        frame_a.shape[0]
-        - 1
+        frame_a.shape[0] - 1
         - ((n_rows - 1) * (window_size - overlap) + (search_area_size - 1))
     ) // 2
 

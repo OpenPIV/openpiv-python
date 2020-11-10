@@ -333,13 +333,6 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
         frame, ((y + vt, x + ut,)), order=interpolation_order, mode="nearest"
     )
     # deform the image by using the map coordinates function
-    """This spline interpolation is doing the image deformation. This one
-    likes meshgrids
-    new grid is defined by the old grid + the displacement.
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
-    This function returns the deformed image.
-    """
-    # print('stop')
     return frame_def
 
 
