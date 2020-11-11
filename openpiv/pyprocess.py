@@ -111,13 +111,13 @@ def get_field_shape(image_size, search_area_size, window_size, overlap):
     image_size: two elements tuple
         a two dimensional tuple for the pixel size of the image
         first element is number of rows, second element is
-        the number of columns.
-
-    window_size: tuple
-        the size of the interrogation window.
+        the number of columns, easy to obtain using .shape
 
     search_area_size: tuple
         the size of the search area window.
+
+    window_size: tuple
+        the size of the interrogation window.
 
     overlap: tuple
         the number of pixel by which two adjacent interrogation
@@ -129,8 +129,10 @@ def get_field_shape(image_size, search_area_size, window_size, overlap):
     field_shape : three elements tuple
         the shape of the resulting flow field
     """
+    field_shape = (np.array(image_size) - np.array(search_area_size)) // \
+                  (np.array(window_size) - np.array(overlap)) + 1
+    return field_shape
 
-    return (np.array(image_size) - np.array(search_area_size)) // (np.array(window_size) - np.array(overlap)) + 1
 
 def moving_window_array(array, window_size, overlap):
     """
@@ -359,12 +361,12 @@ def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
     """
 
     # compute first peak position
-    peak1_i, peak1_j, corr_max1 = find_first_peak(corr)
+    (peak1_i, peak1_j), corr_max1 = find_first_peak(corr)
 
     # now compute signal to noise ratio
     if sig2noise_method == "peak2peak":
         # find second peak height
-        peak2_i, peak2_j, corr_max2 = find_second_peak(
+        (peak2_i, peak2_j), corr_max2 = find_second_peak(
             corr, peak1_i, peak1_j, width=width
         )
 
@@ -454,7 +456,7 @@ def fft_correlate(window_a, window_b):
 def fft_correlate_strided_images(image_a, image_b):
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
-    
+
     The 2D FFT should be applied to the last two axes (-2,-1) and the
     zero axis is the number of the interrogation window
 
@@ -470,10 +472,11 @@ def fft_correlate_strided_images(image_a, image_b):
     s2 = np.array(image_b.shape[-2:])
     size = s1 + s2 - 1
     fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-    fslice = tuple([slice(0,image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
-    f2a = rfft2(image_a, fsize, axes=(-2,-1))
-    f2b = rfft2(image_b[::-1, ::-1], fsize, axes=(-2,-1))
-    corr = irfft2(f2a * f2b, axes=(-2,-1)).real[fslice]
+    fslice = tuple([slice(0, image_a.shape[0])] +
+                   [slice(0, int(sz)) for sz in size])
+    f2a = rfft2(image_a, fsize, axes=(-2, -1))
+    f2b = rfft2(image_b[::-1, ::-1], fsize, axes=(-2, -1))
+    corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
     return corr
 
 
@@ -550,7 +553,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
         # and slice only the relevant part
         corr = fft_correlate(zero_pad(window_a), zero_pad(window_b))[fslice]
     elif correlation_method == "direct":
-        corr = convolve2d(window_a, window_b[::-1, ::-1],"full")
+        corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
     else:
         raise ValueError("method is not implemented")
 
@@ -558,7 +561,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
 
 
 def normalize_intensity(window):
-    """Normalize interrogation window or strided image of many windows, 
+    """Normalize interrogation window or strided image of many windows,
        by removing the mean intensity value per window and clipping the
        negative values to zero
 
@@ -573,7 +576,7 @@ def normalize_intensity(window):
         the interrogation window array, with mean value equal to zero.
 
     """
-    window -= window.mean(axis=(-2,-1),keepdims=True)
+    window -= window.mean(axis=(-2, -1), keepdims=True)
     return np.clip(window, 0, np.inf)
 
 
