@@ -13,11 +13,7 @@ from scipy.interpolate import RectBivariateSpline
 from openpiv.tools import imread, Multiprocesser, save, display_vector_field
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
-from openpiv.pyprocess import (
-    extended_search_area_piv,
-    get_coordinates,
-    get_field_shape
-)
+from openpiv.pyprocess import extended_search_area_piv, get_coordinates, get_field_shape
 from openpiv import smoothn
 import matplotlib.pyplot as plt
 
@@ -54,12 +50,10 @@ def piv(settings):
             frame_b = frame_b
         else:
             frame_a = frame_a[
-                settings.ROI[0]: settings.ROI[1],
-                settings.ROI[2]: settings.ROI[3]
+                settings.ROI[0] : settings.ROI[1], settings.ROI[2] : settings.ROI[3]
             ]
             frame_b = frame_b[
-                settings.ROI[0]: settings.ROI[1],
-                settings.ROI[2]: settings.ROI[3]
+                settings.ROI[0] : settings.ROI[1], settings.ROI[2] : settings.ROI[3]
             ]
         if settings.dynamic_masking_method == "edge" or "intensity":
             frame_a = preprocess.dynamic_masking(
@@ -138,8 +132,7 @@ def piv(settings):
                 and settings.do_sig2noise_validation is True
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, sig2noise_ratio,
-                    threshold=settings.sig2noise_threshold
+                    u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_g + mask_m + mask_s + mask_s2n
             else:
@@ -245,8 +238,7 @@ def piv(settings):
         u = u / settings.dt
         v = v / settings.dt
         "scales the results pixel-> meter"
-        x, y, u, v = scaling.uniform(
-            x, y, u, v, scaling_factor=settings.scaling_factor)
+        x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor=settings.scaling_factor)
         "save to a file"
         save(
             x,
@@ -419,14 +411,15 @@ def first_pass(
         sig2noise_method = None  # this indicates to get out nans
 
     u, v, s2n = extended_search_area_piv(
-                                    frame_a, frame_b,
-                                    window_size=window_size,
-                                    overlap=overlap,
-                                    search_area_size=window_size,
-                                    width=sig2noise_mask,
-                                    subpixel_method=subpixel_method,
-                                    sig2noise_method=sig2noise_method
-                                    )
+        frame_a,
+        frame_b,
+        window_size=window_size,
+        overlap=overlap,
+        search_area_size=window_size,
+        width=sig2noise_mask,
+        subpixel_method=subpixel_method,
+        sig2noise_method=sig2noise_method,
+    )
 
     shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
     u = u.reshape(shapes)
@@ -584,22 +577,21 @@ def multipass_img_deform(
         frame_b, x, y, u_pre, v_pre, interpolation_order=interpolation_order
     )
 
-    if do_sig2noise is True and \
-            current_iteration == iterations and \
-            iterations != 1:
+    if do_sig2noise is True and current_iteration == iterations and iterations != 1:
         sig2noise_method = sig2noise_method
     else:
         sig2noise_method = None
 
     u, v, s2n = extended_search_area_piv(
-                                    frame_a, frame_b_deform,
-                                    window_size=window_size,
-                                    overlap=overlap,
-                                    search_area_size=window_size,
-                                    width=sig2noise_mask,
-                                    subpixel_method=subpixel_method,
-                                    sig2noise_method=sig2noise_method
-                                    )
+        frame_a,
+        frame_b_deform,
+        window_size=window_size,
+        overlap=overlap,
+        search_area_size=window_size,
+        width=sig2noise_mask,
+        subpixel_method=subpixel_method,
+        sig2noise_method=sig2noise_method,
+    )
 
     shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
     u = u.reshape(shapes)

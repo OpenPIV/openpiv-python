@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from openpiv.lib import replace_nans
 import numpy as np
 from scipy.signal import convolve
-  
-    
-def _gaussian_kernel( half_width=1 ):
+
+
+def _gaussian_kernel(half_width=1):
     """A normalized 2D Gaussian kernel array
     
     Parameters
@@ -44,9 +44,10 @@ def _gaussian_kernel( half_width=1 ):
     
     """
     size = int(half_width)
-    x, y = np.mgrid[-half_width:half_width+1, -half_width:half_width+1]
-    g = np.exp(-(x**2/float(half_width)+y**2/float(half_width)))
+    x, y = np.mgrid[-half_width : half_width + 1, -half_width : half_width + 1]
+    g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
     return g / g.sum()
+
 
 def gaussian_kernel(sigma, truncate=4.0):
     """
@@ -56,16 +57,16 @@ def gaussian_kernel(sigma, truncate=4.0):
     sigma = float(sigma)
     radius = int(truncate * sigma + 0.5)
 
-    x, y = np.mgrid[-radius:radius+1, -radius:radius+1]
-    sigma = sigma**2
+    x, y = np.mgrid[-radius : radius + 1, -radius : radius + 1]
+    sigma = sigma ** 2
 
-    k = 2*np.exp(-0.5 * (x**2 + y**2) / sigma)
+    k = 2 * np.exp(-0.5 * (x ** 2 + y ** 2) / sigma)
     k = k / np.sum(k)
 
     return k
 
 
-def gaussian( u, v, half_width=1) :
+def gaussian(u, v, half_width=1):
     """Smooths the velocity field with a Gaussian kernel.
     
     Parameters
@@ -89,13 +90,15 @@ def gaussian( u, v, half_width=1) :
         the smoothed v velocity component field    
         
     """
-    g = _gaussian_kernel( half_width=half_width )
-    uf = convolve( u, g, mode='same')
-    vf = convolve( v, g, mode='same')
+    g = _gaussian_kernel(half_width=half_width)
+    uf = convolve(u, g, mode="same")
+    vf = convolve(v, g, mode="same")
     return uf, vf
 
 
-def replace_outliers( u, v, w=None, method='localmean', max_iter=5, tol=1e-3, kernel_size=1):
+def replace_outliers(
+    u, v, w=None, method="localmean", max_iter=5, tol=1e-3, kernel_size=1
+):
     """Replace invalid vectors in an velocity field using an iterative image inpainting algorithm.
     
     The algorithm is the following:
@@ -141,14 +144,17 @@ def replace_outliers( u, v, w=None, method='localmean', max_iter=5, tol=1e-3, ke
         the smoothed w velocity component field, where invalid vectors have been replaced
         
     """
-    uf = replace_nans(u, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size)
-    vf = replace_nans(v, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size)
+    uf = replace_nans(
+        u, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size
+    )
+    vf = replace_nans(
+        v, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size
+    )
 
     if isinstance(w, np.ndarray):
-        wf = replace_nans(w, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size)
+        wf = replace_nans(
+            w, method=method, max_iter=max_iter, tol=tol, kernel_size=kernel_size
+        )
         return uf, vf, wf
 
     return uf, vf
-
-
-

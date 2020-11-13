@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def replace_nans(array, max_iter, tol, kernel_size=2, method='disk'):
+def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
     """Replace NaN elements in an array using an iterative image inpainting algorithm.
 
@@ -71,16 +71,18 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method='disk'):
 
     # generating the kernel
     kernel = np.zeros([2 * kernel_size + 1] * len(array.shape), dtype=int)
-    if method == 'localmean':
+    if method == "localmean":
         kernel += 1
-    elif method == 'disk':
+    elif method == "disk":
         dist, dist_inv = get_dist(kernel, kernel_size)
         kernel[dist <= kernel_size] = 1
-    elif method == 'distance':
+    elif method == "distance":
         dist, dist_inv = get_dist(kernel, kernel_size)
         kernel[dist <= kernel_size] = dist_inv[dist <= kernel_size]
     else:
-        raise ValueError('method not valid. Should be one of `localmean`, `disk` or `distance`.')
+        raise ValueError(
+            "method not valid. Should be one of `localmean`, `disk` or `distance`."
+        )
 
     # list of kernel array indices
     # kernel_indices = np.indices(kernel.shape)
@@ -103,15 +105,26 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method='disk'):
 
         # for each NaN element
         for k in range(n_nans):
-            ind = nan_indices[k] #2 or 3 indices indicating the position of a nan element
+            ind = nan_indices[
+                k
+            ]  # 2 or 3 indices indicating the position of a nan element
             # init to 0.0
             replaced_new[k] = 0.0
 
             # generating a list of indices of the convolution window in the array
-            slice_indices = np.array(np.meshgrid(*[range(i-kernel_size, i+kernel_size+1) for i in ind]))
+            slice_indices = np.array(
+                np.meshgrid(*[range(i - kernel_size, i + kernel_size + 1) for i in ind])
+            )
 
             # identifying all indices strictly inside the image edges:
-            in_mask = np.array([np.logical_and(slice_indices[i] < array.shape[i], slice_indices[i] >= 0) for i in range(n_dim)])
+            in_mask = np.array(
+                [
+                    np.logical_and(
+                        slice_indices[i] < array.shape[i], slice_indices[i] >= 0
+                    )
+                    for i in range(n_dim)
+                ]
+            )
             # logical and over x,y (and z) indices
             in_mask = np.prod(in_mask, axis=0).astype(bool)
 
@@ -156,7 +169,9 @@ def get_dist(kernel, kernel_size):
 
     if len(kernel.shape) == 3:
         xs, ys, zs = np.indices(kernel.shape)
-        dist = np.sqrt((ys - kernel_size) ** 2 + (xs - kernel_size) ** 2 + (zs - kernel_size) ** 2)
+        dist = np.sqrt(
+            (ys - kernel_size) ** 2 + (xs - kernel_size) ** 2 + (zs - kernel_size) ** 2
+        )
         dist_inv = np.sqrt(3) * kernel_size - dist
 
     return dist, dist_inv

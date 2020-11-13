@@ -25,8 +25,6 @@ def piv():
 
     """
 
-
-
     import imageio
     import numpy as np
     import matplotlib.pyplot as plt
@@ -38,51 +36,45 @@ def piv():
 
     import matplotlib.animation as animation
 
-
-
-
     # if im1 is None and im2 is None:
-    im1 = pkg.resource_filename('openpiv','examples/test5/frame_a.tif')
-    im2 = pkg.resource_filename('openpiv','examples/test5/frame_b.tif')
-
+    im1 = pkg.resource_filename("openpiv", "examples/test5/frame_a.tif")
+    im2 = pkg.resource_filename("openpiv", "examples/test5/frame_b.tif")
 
     frame_a = imageio.imread(im1)
     frame_b = imageio.imread(im2)
-    
-    frame_a[0:32,512-32:] = 255
 
+    frame_a[0:32, 512 - 32 :] = 255
 
     images = []
-    images.extend([frame_a,frame_b])
+    images.extend([frame_a, frame_b])
 
-
-    fig,ax  = plt.subplots()
+    fig, ax = plt.subplots()
 
     # ims is a list of lists, each row is a list of artists to draw in the
     # current frame; here we are just animating one artist, the image, in
     # each frame
     ims = []
     for i in range(2):
-        im = ax.imshow(images[i%2], animated=True, cmap=plt.cm.gray)
+        im = ax.imshow(images[i % 2], animated=True, cmap=plt.cm.gray)
         ims.append([im])
 
     _ = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=0)
     plt.show()
 
     # import os
-    
-    u, v = process.extended_search_area_piv(frame_a.astype(np.int32),frame_b.astype(np.int32),window_size=32,overlap=16)
-    x, y = process.get_coordinates( image_size=frame_a.shape, 
-                               window_size=32, overlap=16)
 
-    fig,ax = plt.subplots(1,2,figsize=(11,8))
-    ax[0].imshow(frame_a,cmap=plt.get_cmap('gray'),alpha=0.8,origin='upper')
-    ax[0].quiver(x,y,u,v,scale=50,color='r')
-    
-    ax[1].quiver(x,y,u,v,scale=50,color='b')
+    u, v = process.extended_search_area_piv(
+        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, overlap=16
+    )
+    x, y = process.get_coordinates(image_size=frame_a.shape, window_size=32, overlap=16)
+
+    fig, ax = plt.subplots(1, 2, figsize=(11, 8))
+    ax[0].imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
+    ax[0].quiver(x, y, u, v, scale=50, color="r")
+
+    ax[1].quiver(x, y, u, v, scale=50, color="b")
     ax[1].set_aspect(1.1)
     ax[1].invert_yaxis()
     plt.show()
 
-    return x,y,u,v
-    
+    return x, y, u, v

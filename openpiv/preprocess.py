@@ -25,7 +25,7 @@ from skimage.filters import sobel, rank, threshold_otsu
 import numpy as np
 
 
-def dynamic_masking(image,method='edges',filter_size=7,threshold=0.005):
+def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     """ Dynamically masks out the objects in the PIV images
     
     Parameters
@@ -66,19 +66,18 @@ def dynamic_masking(image,method='edges',filter_size=7,threshold=0.005):
     # stretch the histogram
     image = exposure.rescale_intensity(img_as_float(image), in_range=(0, 1))
     # blur the image, low-pass
-    blurback = img_as_ubyte(gaussian_filter(image,filter_size))
-    if method == 'edges':
+    blurback = img_as_ubyte(gaussian_filter(image, filter_size))
+    if method == "edges":
         # identify edges
         edges = sobel(blurback)
-        blur_edges = gaussian_filter(edges,21)
-        # create the boolean mask 
-        bw = (blur_edges > threshold)
+        blur_edges = gaussian_filter(edges, 21)
+        # create the boolean mask
+        bw = blur_edges > threshold
         bw = img_as_ubyte(binary_fill_holes(bw))
         imcopy -= blurback
         imcopy[bw] = 0.0
-    elif method == 'intensity':
-        background = gaussian_filter(median_filter(image,filter_size),filter_size)
+    elif method == "intensity":
+        background = gaussian_filter(median_filter(image, filter_size), filter_size)
         imcopy[background > threshold_otsu(background)] = 0
 
-        
-    return imcopy #image
+    return imcopy  # image

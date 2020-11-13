@@ -58,9 +58,7 @@ def get_coordinates(image_size, search_area_size, overlap=0):
     """
 
     # get shape of the resulting flow field
-    field_shape = get_field_shape(
-        image_size, search_area_size, overlap
-        )
+    field_shape = get_field_shape(image_size, search_area_size, overlap)
 
     # compute grid coordinates of the search area window centers
     # compute grid coordinates of the search area window centers
@@ -80,18 +78,12 @@ def get_coordinates(image_size, search_area_size, overlap=0):
     x += (
         image_size[1]
         - 1
-        - (
-            (field_shape[1] - 1) * (search_area_size - overlap)
-            + (search_area_size - 1)
-        )
+        - ((field_shape[1] - 1) * (search_area_size - overlap) + (search_area_size - 1))
     ) // 2
     y += (
         image_size[0]
         - 1
-        - (
-            (field_shape[0] - 1) * (search_area_size - overlap)
-            + (search_area_size - 1)
-        )
+        - ((field_shape[0] - 1) * (search_area_size - overlap) + (search_area_size - 1))
     ) // 2
 
     return np.meshgrid(x, y)
@@ -125,8 +117,9 @@ def get_field_shape(image_size, search_area_size, overlap):
     field_shape : three elements tuple
         the shape of the resulting flow field
     """
-    field_shape = (np.array(image_size) - np.array(search_area_size)) // \
-                  (np.array(search_area_size) - np.array(overlap)) + 1
+    field_shape = (np.array(image_size) - np.array(search_area_size)) // (
+        np.array(search_area_size) - np.array(overlap)
+    ) + 1
     return field_shape
 
 
@@ -270,8 +263,8 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     subp_peak_position = np.zeros((1, 2))
 
     # check inputs
-    if subpixel_method not in ('gaussian', 'centroid', 'parabolic'):
-        raise ValueError(f'Method not implemented {subpixel_method}')
+    if subpixel_method not in ("gaussian", "centroid", "parabolic"):
+        raise ValueError(f"Method not implemented {subpixel_method}")
 
     # the peak locations
     (peak1_i, peak1_j), _ = find_first_peak(corr)
@@ -286,33 +279,20 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     cu = corr[peak1_i, peak1_j + 1]
 
     # gaussian fit
-    if (
-        np.any(np.array([c, cl, cr, cd, cu]) < 0)
-        and subpixel_method == "gaussian"
-    ):
+    if np.any(np.array([c, cl, cr, cd, cu]) < 0) and subpixel_method == "gaussian":
         subpixel_method = "centroid"
 
     # try:
     if subpixel_method == "centroid":
         subp_peak_position = (
-            ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr)
-            / (cl + c + cr),
-            ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu)
-            / (cd + c + cu),
+            ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr) / (cl + c + cr),
+            ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu) / (cd + c + cu),
         )
 
     elif subpixel_method == "gaussian":
         subp_peak_position = (
-            peak1_i
-            + (
-                (log(cl) - log(cr))
-                / (2 * log(cl) - 4 * log(c) + 2 * log(cr))
-            ),
-            peak1_j
-            + (
-                (log(cd) - log(cu))
-                / (2 * log(cd) - 4 * log(c) + 2 * log(cu))
-            ),
+            peak1_i + ((log(cl) - log(cr)) / (2 * log(cl) - 4 * log(c) + 2 * log(cr))),
+            peak1_j + ((log(cd) - log(cu)) / (2 * log(cd) - 4 * log(c) + 2 * log(cu))),
         )
 
     elif subpixel_method == "parabolic":
@@ -321,11 +301,11 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
             peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
         )
 
-#     except BaseException:
-#         subp_peak_position = default_peak_position
+    #     except BaseException:
+    #         subp_peak_position = default_peak_position
 
-#     except IndexError:
-#         subp_peak_position = default_peak_position
+    #     except IndexError:
+    #         subp_peak_position = default_peak_position
 
     return subp_peak_position
 
@@ -367,11 +347,13 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
             # compute first peak position
             (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)
 
-            condition = (corr_max1[i] < 1e-3 or
-                         peak1_i == 0 or
-                         peak1_j == corr.shape[0] or
-                         peak1_j == 0 or
-                         peak1_j == corr.shape[1])
+            condition = (
+                corr_max1[i] < 1e-3
+                or peak1_i == 0
+                or peak1_j == corr.shape[0]
+                or peak1_j == 0
+                or peak1_j == corr.shape[1]
+            )
 
             if condition:
                 # return zero, since we have no signal.
@@ -383,11 +365,13 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                     corr, peak1_i, peak1_j, width=width
                 )
 
-                condition = (corr_max2 == 0 or
-                             peak2_i == 0 or
-                             peak2_j == corr.shape[0] or
-                             peak2_j == 0 or
-                             peak2_j == corr.shape[1])                
+                condition = (
+                    corr_max2 == 0
+                    or peak2_i == 0
+                    or peak2_j == corr.shape[0]
+                    or peak2_j == 0
+                    or peak2_j == corr.shape[1]
+                )
                 if condition:  # mark failed peak2
                     corr_max2 = np.nan
 
@@ -398,19 +382,21 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
             # compute first peak position
             (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)
 
-            condition = (corr_max1[i] < 1e-3 or
-                         peak1_i == 0 or
-                         peak1_j == corr.shape[0] or
-                         peak1_j == 0 or
-                         peak1_j == corr.shape[1])
+            condition = (
+                corr_max1[i] < 1e-3
+                or peak1_i == 0
+                or peak1_j == corr.shape[0]
+                or peak1_j == 0
+                or peak1_j == corr.shape[1]
+            )
 
             if condition:
                 # return zero, since we have no signal.
                 # no point to get the second peak, save time
                 sig2noise[i] = 0.0
-                
+
         # find means of all the correlation maps
-        corr_max2 = corr.mean(axis=(-2, -1))
+        corr_max2 = np.abs(correlation.mean(axis=(-2, -1)))
         corr_max2[corr_max2 == 0] = np.nan  # mark failed ones
 
         sig2noise = corr_max1 / corr_max2
@@ -492,8 +478,7 @@ def fft_correlate_strided_images(image_a, image_b):
     s2 = np.array(image_b.shape[-2:])
     size = s1 + s2 - 1
     fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-    fslice = tuple([slice(0, image_a.shape[0])] +
-                   [slice(0, int(sz)) for sz in size])
+    fslice = tuple([slice(0, image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
     f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
     corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
@@ -599,9 +584,8 @@ def normalize_intensity(window):
         extra low/high
     """
     window = window.astype(np.float32)
-    window = window - window.mean(axis=(-2, -1),
-                                  keepdims=True, dtype=np.float32)
-    window = window/(1.96*np.std(window, dtype=np.float32))
+    window = window - window.mean(axis=(-2, -1), keepdims=True, dtype=np.float32)
+    window = window / (1.96 * np.std(window, dtype=np.float32))
     return np.clip(window, -1, 1)
 
 
@@ -615,7 +599,7 @@ def extended_search_area_piv(
     correlation_method="fft",
     subpixel_method="gaussian",
     sig2noise_method=None,
-    width=2
+    width=2,
 ):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
@@ -729,9 +713,7 @@ def extended_search_area_piv(
         raise ValueError("window size cannot be larger than the image")
 
     # get field shape
-    n_rows, n_cols = get_field_shape(
-        frame_a.shape, search_area_size, overlap
-    )
+    n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     # We implement the new vectorized code
     frame_a = normalize_intensity(frame_a)
@@ -750,8 +732,7 @@ def extended_search_area_piv(
     if search_area_size > window_size:
         mask = np.zeros((search_area_size, search_area_size))
         pad = np.int((search_area_size - window_size) / 2)
-        mask[slice(pad, search_area_size-pad),
-             slice(pad, search_area_size-pad)] = 1
+        mask[slice(pad, search_area_size - pad), slice(pad, search_area_size - pad)] = 1
         mask = np.broadcast_to(mask, aa.shape)
         aa *= mask
 
@@ -760,12 +741,12 @@ def extended_search_area_piv(
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
-        sig2noise = sig2noise_ratio(corr, 
-                                    sig2noise_method=sig2noise_method, 
-                                    width=width)
+        sig2noise = sig2noise_ratio(
+            corr, sig2noise_method=sig2noise_method, width=width
+        )
     else:
         sig2noise = np.full_like(u, np.nan)
-    
+
     return u / dt, v / dt, sig2noise
 
 
@@ -789,9 +770,9 @@ def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):
 
     for k in range(n_rows):
         for m in range(n_cols):
-            row, col = find_subpixel_peak_position(corr[k*n_cols+m, :, :])
-            row -= (2*search_area_size - 1) // 2
-            col -= (2*search_area_size - 1) // 2
+            row, col = find_subpixel_peak_position(corr[k * n_cols + m, :, :])
+            row -= (2 * search_area_size - 1) // 2
+            col -= (2 * search_area_size - 1) // 2
 
             # get displacements, apply coordinate system definition
             u[k, m], v[k, m] = -col, row

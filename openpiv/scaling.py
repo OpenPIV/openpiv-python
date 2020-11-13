@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 
 
-def uniform( x, y, u, v, scaling_factor ):
+def uniform(x, y, u, v, scaling_factor):
     """
     Apply an uniform scaling
     
@@ -51,4 +51,9 @@ def uniform( x, y, u, v, scaling_factor ):
     v : 2d np.ndarray
         
     """
-    return x/scaling_factor, y/scaling_factor, u/scaling_factor, v/scaling_factor
+    return (
+        x / scaling_factor,
+        y / scaling_factor,
+        u / scaling_factor,
+        v / scaling_factor,
+    )
