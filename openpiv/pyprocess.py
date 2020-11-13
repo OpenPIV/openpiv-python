@@ -99,7 +99,7 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
     return np.meshgrid(x, y)
 
 
-def get_field_shape(image_size, search_area_size, window_size, overlap):
+def get_field_shape(image_size, search_area_size, overlap):
     """Compute the shape of the resulting flow field.
 
     Given the image size, the interrogation window size and
@@ -114,10 +114,8 @@ def get_field_shape(image_size, search_area_size, window_size, overlap):
         the number of columns, easy to obtain using .shape
 
     search_area_size: tuple
-        the size of the search area window.
-
-    window_size: tuple
-        the size of the interrogation window.
+        the size of the interrogation windows (if equal in frames A, B) or 
+        the search area (in frame B), the largest  of the two
 
     overlap: tuple
         the number of pixel by which two adjacent interrogation
@@ -130,9 +128,8 @@ def get_field_shape(image_size, search_area_size, window_size, overlap):
         the shape of the resulting flow field
     """
     field_shape = (np.array(image_size) - np.array(search_area_size)) // \
-                  (np.array(window_size) - np.array(overlap)) + 1
+                  (np.array(search_area_size) - np.array(overlap)) + 1
     return field_shape
-
 
 def moving_window_array(array, window_size, overlap):
     """
