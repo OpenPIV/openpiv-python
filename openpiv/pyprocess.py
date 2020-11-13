@@ -219,7 +219,7 @@ def find_second_peak(corr, i=None, j=None, width=2):
     """
 
     if i is None or j is None:
-        i, j, tmp = find_first_peak(corr)
+        (i, j), tmp = find_first_peak(corr)
 
     # create a masked view of the corr
     tmp = corr.view(ma.MaskedArray)
@@ -233,9 +233,9 @@ def find_second_peak(corr, i=None, j=None, width=2):
     jini = max(0, j - width)
     jfin = min(j + width + 1, corr.shape[1])
     tmp[iini:ifin, jini:jfin] = ma.masked
-    i, j, corr_max2 = find_first_peak(tmp)
+    (i, j), corr_max2 = find_first_peak(tmp)
 
-    return i, j, corr_max2
+    return (i, j), corr_max2
 
 
 def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
@@ -269,65 +269,70 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # initialization
     # default_peak_position = (np.floor(corr.shape[0] / 2.),
     # np.floor(corr.shape[1] / 2.))
-    default_peak_position = (0, 0)
+    # default_peak_position = np.array([0,0])
+    
+    subp_peak_position = np.zeros((1,2))
+    
+    # check inputs
+    if subpixel_method not in ('gaussian', 'centroid', 'parabolic'):
+        raise ValueError(f'Method not implemented {subpixel_method}')
 
     # the peak locations
-    peak1_i, peak1_j, dummy = find_first_peak(corr)
+    (peak1_i, peak1_j), dummy = find_first_peak(corr)
+    
+    # import pdb; pdb.set_trace()
 
-    try:
-        # the peak and its neighbours: left, right, down, up
-        c = corr[peak1_i, peak1_j]
-        cl = corr[peak1_i - 1, peak1_j]
-        cr = corr[peak1_i + 1, peak1_j]
-        cd = corr[peak1_i, peak1_j - 1]
-        cu = corr[peak1_i, peak1_j + 1]
+#   try:
+    # the peak and its neighbours: left, right, down, up
+    c = corr[peak1_i, peak1_j]
+    cl = corr[peak1_i - 1, peak1_j]
+    cr = corr[peak1_i + 1, peak1_j]
+    cd = corr[peak1_i, peak1_j - 1]
+    cu = corr[peak1_i, peak1_j + 1]
 
-        # gaussian fit
-        if (
-            np.any(np.array([c, cl, cr, cd, cu]) < 0)
-            and subpixel_method == "gaussian"
-        ):
-            subpixel_method = "centroid"
+    # gaussian fit
+    if (
+        np.any(np.array([c, cl, cr, cd, cu]) < 0)
+        and subpixel_method == "gaussian"
+    ):
+        subpixel_method = "centroid"
 
-        try:
-            if subpixel_method == "centroid":
-                subp_peak_position = (
-                    ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr)
-                    / (cl + c + cr),
-                    ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu)
-                    / (cd + c + cu),
-                )
+    # try:
+    if subpixel_method == "centroid":
+        subp_peak_position = (
+            ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr)
+            / (cl + c + cr),
+            ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu)
+            / (cd + c + cu),
+        )
 
-            elif subpixel_method == "gaussian":
-                subp_peak_position = (
-                    peak1_i
-                    + (
-                        (log(cl) - log(cr))
-                        / (2 * log(cl) - 4 * log(c) + 2 * log(cr))
-                    ),
-                    peak1_j
-                    + (
-                        (log(cd) - log(cu))
-                        / (2 * log(cd) - 4 * log(c) + 2 * log(cu))
-                    ),
-                )
+    elif subpixel_method == "gaussian":
+        subp_peak_position = (
+            peak1_i
+            + (
+                (log(cl) - log(cr))
+                / (2 * log(cl) - 4 * log(c) + 2 * log(cr))
+            ),
+            peak1_j
+            + (
+                (log(cd) - log(cu))
+                / (2 * log(cd) - 4 * log(c) + 2 * log(cu))
+            ),
+        )
 
-            elif subpixel_method == "parabolic":
-                subp_peak_position = (
-                    peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
-                    peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
-                )
+    elif subpixel_method == "parabolic":
+        subp_peak_position = (
+            peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
+            peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
+        )
 
-        except BaseException:
-            subp_peak_position = default_peak_position
+#     except BaseException:
+#         subp_peak_position = default_peak_position
 
-    except IndexError:
-        subp_peak_position = default_peak_position
+#     except IndexError:
+#         subp_peak_position = default_peak_position
 
-    return (
-        subp_peak_position[0] - default_peak_position[0],
-        subp_peak_position[1] - default_peak_position[1],
-    )
+    return subp_peak_position
 
 
 def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
@@ -456,7 +461,7 @@ def fft_correlate(window_a, window_b):
 def fft_correlate_strided_images(image_a, image_b):
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
-
+    
     The 2D FFT should be applied to the last two axes (-2,-1) and the
     zero axis is the number of the interrogation window
 
@@ -475,7 +480,7 @@ def fft_correlate_strided_images(image_a, image_b):
     fslice = tuple([slice(0, image_a.shape[0])] +
                    [slice(0, int(sz)) for sz in size])
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
-    f2b = rfft2(image_b[::-1, ::-1], fsize, axes=(-2, -1))
+    f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
     corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
     return corr
 
@@ -537,6 +542,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
     # first we remove the mean to normalize contrast and intensity
     # the background level which is take as a mean of the image
     # is subtracted
+    # import pdb; pdb.set_trace()
     window_a = normalize_intensity(window_a)
     window_b = normalize_intensity(window_b)
 
@@ -573,11 +579,13 @@ def normalize_intensity(window):
     Returns
     -------
     window :  2d np.ndarray
-        the interrogation window array, with mean value equal to zero.
-
+        the interrogation window array, with mean value equal to zero and intensity
+        normalized to -1 +1 and clipped if some pixels are extra low/high
     """
-    window -= window.mean(axis=(-2, -1), keepdims=True)
-    return np.clip(window, 0, np.inf)
+    window = window.astype(np.float32)
+    window = window - window.mean(axis=(-2, -1), keepdims=True, dtype=np.float32)
+    window = window/(1.96*np.std(window, dtype=np.float32))
+    return np.clip(window, -1, 1)
 
 
 def extended_search_area_piv(
