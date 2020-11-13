@@ -32,7 +32,8 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
     x, y = get_coordinates(a.shape, search_area_size=search_area_size,
                            overlap=overlap)
 
-    save(x, y, vel[0], vel[1], np.zeros_like(vel[0]), 'tmp.txt')
+    save(x, y, vel[0], vel[1], np.zeros_like(vel[0]),
+         np.zeros_like(vel[0]), 'tmp.txt')
     fig, ax = plt.subplots(figsize=(6,6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     fig.savefig('./tmp.png')

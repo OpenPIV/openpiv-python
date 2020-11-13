@@ -8,9 +8,9 @@ Created on Fri Oct  4 14:33:21 2019
 
 import numpy as np
 import openpiv.windef as windef
-from test_process import create_pair
+from test_process import create_pair, shift_u, shift_v
 
-frame_a, frame_b = create_pair(image_size=32)
+frame_a, frame_b = create_pair(image_size=64)
 
 # this test are created only to test the displacement evaluation of the
 # function the validation methods are not tested here ant therefore
@@ -32,9 +32,9 @@ def test_first_pass_circ():
         sig2noise_method="peak2peak",
         sig2noise_mask=2,
     )
-    # print u,v
-    assert np.max(np.abs(u - 3)) < 0.1
-    assert np.max(np.abs(v + 2)) < 0.1
+    print("\n", x, y, u, v, s2n)
+    assert np.max(np.abs(u - shift_u)) < 0.2
+    assert np.max(np.abs(v - shift_v)) < 0.2
 
 
 def test_multi_pass_circ():

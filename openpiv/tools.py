@@ -104,7 +104,7 @@ def display_vector_field(filename, on_img=False, image_name='None',
     if widim is True:
         a[:, 1] = a[:, 1].max() - a[:, 1]
         
-    invalid = a[:, 4].astype('bool')  # mask
+    invalid = a[:, 5].astype('bool')  # mask is now 5, sig2noise is 4
     # fig.canvas.set_window_title('Vector field, 
     #       '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
@@ -293,58 +293,70 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     return list_bound
 
 
-
-
-
-
-
-
-def save( x, y, u, v, mask, filename, fmt='%8.4f', delimiter='\t' ):
+def save(x, y, u, v, sig2noise_ratio, mask,
+         filename, fmt="%8.4f", delimiter="\t"):
     """Save flow field to an ascii file.
-    
+
     Parameters
     ----------
     x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the 
+        a two dimensional array containing the x coordinates of the
         interrogation window centers, in pixels.
-        
+
     y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the 
+        a two dimensional array containing the y coordinates of the
         interrogation window centers, in pixels.
-        
+
     u : 2d np.ndarray
         a two dimensional array containing the u velocity components,
         in pixels/seconds.
-        
+
     v : 2d np.ndarray
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
-        
+
     mask : 2d np.ndarray
         a two dimensional boolen array where elements corresponding to
         invalid vectors are True.
-        
+
     filename : string
         the path of the file where to save the flow field
-        
+
     fmt : string
         a format string. See documentation of numpy.savetxt
         for more details.
-    
+
     delimiter : string
         character separating columns
-        
+
     Examples
     --------
-    
-    >>> openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f', delimiter='\t')
-    
+
+    openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f',
+                        delimiter='\t')
+
     """
     # build output array
-    out = np.vstack( [m.ravel() for m in [x, y, u, v, mask] ] )
-            
+    out = np.vstack([m.ravel() for m in [x, y, u, v, sig2noise_ratio, mask]])
+
     # save data to file.
-    np.savetxt( filename, out.T, fmt=fmt, delimiter=delimiter )
+    np.savetxt(
+        filename,
+        out.T,
+        fmt=fmt,
+        delimiter=delimiter,
+        header="x"
+        + delimiter
+        + "y"
+        + delimiter
+        + "u"
+        + delimiter
+        + "v"
+        + delimiter
+        + "s2n"
+        + delimiter
+        + "mask",
+    )
 
 def display( message ):
     """Display a message to standard output.

@@ -383,7 +383,7 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                     corr, peak1_i, peak1_j, width=width
                 )
 
-                condition = (corr_max2[i] == 0 or
+                condition = (corr_max2 == 0 or
                              peak2_i == 0 or
                              peak2_j == corr.shape[0] or
                              peak2_j == 0 or
@@ -391,7 +391,7 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                 if condition:  # mark failed peak2
                     corr_max2 = np.nan
 
-                sig2noise[i] = corr_max1 / corr_max2
+                sig2noise[i] = corr_max1[i] / corr_max2
 
     elif sig2noise_method == "peak2mean":  # only one loop
         for i, corr in enumerate(correlation):
@@ -733,104 +733,7 @@ def extended_search_area_piv(
         frame_a.shape, search_area_size, overlap
     )
 
-    # create empty arrays for deformation in x and y direction
-    # u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
-
-    # if we want sig2noise information, allocate memory
-    if sig2noise_method is not None:
-        sig2noise = np.zeros((n_rows, n_cols))
-
-    # shift for x and y coordinates of the search area windows so that the
-    # centers of search area windows have
-    # the same distances to the image edge at all sides. For simplicity only
-    # shifts by integers are allowed
-    # x_centering = (
-    #     frame_a.shape[1] - 1
-    #     - ((n_cols - 1) * (search_area_size - overlap) +
-    #       (search_area_size-1))
-    # ) // 2
-    # y_centering = (
-    #     frame_a.shape[0] - 1
-    #     - ((n_rows - 1) * (search_area_size - overlap) +
-    #       (search_area_size - 1))
-    # ) // 2
-
-    # first we take all the old loop code into comments
-    # in the next clean up we will remove it
-    """
-    # iterate through interrogation widows and search areas
-    for k in range(n_rows):
-        for m in range(n_cols):
-
-            # centers of search area. (window_size - overlap) defines the
-            # distance between each center
-            # and (search_area_size - 1)/2.0 moves the center points away from
-            # the left or top image edge
-            y = k * (search_area_size - overlap) + (search_area_size - 1) / 2.0
-            x = m * (search_area_size - overlap) + (search_area_size - 1) / 2.0
-
-            # moving the coordinates a bit to the center, to guarantee that
-            # the distance
-            #  of a extreme point at the image edges is symmetric all all edges
-            x += x_centering
-            y += y_centering
-
-            # left, right, top, bottom indices of the search area edges
-            # note that x - (search_area_size +/- 1)/2  always returns an
-            # integer due to the definition of x and y
-            # see also "get_coordinates()"
-            il = int(y - (search_area_size - 1) / 2.0)
-            ir = int(y + (search_area_size + 1) / 2.0)
-            it = int(x - (search_area_size - 1) / 2.0)
-            ib = int(x + (search_area_size + 1) / 2.0)
-            # picking the search area from frame b
-            window_b = frame_b[il:ir, it:ib]
-
-            # left, right, top, bottom indices of the interrogation window
-            # Sometimes the interrogation window cannot be placed in the
-            # middle of the search area, e.g.
-            # in the case of window_size=3 search_area_size=4. In this case
-            # the interrogation window
-            # is shifted 0.5 pixels to the left/top, which is achieved by
-            # rounding
-            # the indices down during the int() conversion
-            il = int(y - (window_size - 1) / 2)
-            ir = int(y + (window_size + 1) / 2)
-            it = int(x - (window_size - 1) / 2)
-            ib = int(x + (window_size + 1) / 2)
-            # picking the interrogation window from frame a
-            window_a = frame_a[il:ir, it:ib]
-
-            if np.any(window_a):
-                corr = correlate_windows(
-                    window_a,
-                    window_b,
-                    correlation_method=correlation_method
-                )
-                #                 plt.figure()
-                #                 plt.contourf(corr)
-                #                 plt.show()
-                # get subpixel approximation for peak position row and column
-                # index
-                row, col = find_subpixel_peak_position(
-                    corr, subpixel_method=subpixel_method
-                )
-
-                row -= (2*search_area_size - 1) // 2
-                col -= (2*search_area_size - 1) // 2
-
-                print(row, col)
-
-                # get displacements, apply coordinate system definition
-                u[k, m], v[k, m] = -col, row
-
-                # get signal to noise ratio
-                if sig2noise_method is not None:
-                    sig2noise[k, m] = sig2noise_ratio(
-                        corr, sig2noise_method=sig2noise_method, width=width
-                    )
-    """
-    # Second we implement the new vectorized code
+    # We implement the new vectorized code
     frame_a = normalize_intensity(frame_a)
     frame_b = normalize_intensity(frame_b)
 
@@ -857,9 +760,13 @@ def extended_search_area_piv(
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
-        return u / dt, v / dt, sig2noise
+        sig2noise = sig2noise_ratio(corr, 
+                                    sig2noise_method=sig2noise_method, 
+                                    width=width)
     else:
-        return u / dt, v / dt
+        sig2noise = np.full_like(u, np.nan)
+    
+    return u / dt, v / dt, sig2noise
 
 
 def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):

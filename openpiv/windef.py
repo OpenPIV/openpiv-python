@@ -14,12 +14,12 @@ from openpiv.tools import imread, Multiprocesser
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
 from openpiv.pyprocess import (
+    extended_search_area_piv,
     correlate_windows,
     get_coordinates,
     get_field_shape,
     moving_window_array,
-    find_subpixel_peak_position,
-    sig2noise_ratio
+    find_subpixel_peak_position
 )
 from openpiv import smoothn
 import matplotlib.pyplot as plt
@@ -394,40 +394,51 @@ def first_pass(
 
     """
 
-    cor_win_1 = moving_window_array(frame_a, window_size, overlap)
-    cor_win_2 = moving_window_array(frame_b, window_size, overlap)
-    """Filling the interrogation window. They windows are arranged
-    in a 3d array with number of interrogation window *window_size*window_size
-    this way is much faster then using a loop"""
+    # Alex: in windef_refactoring we created a pyprocess.py that holds
+    # all the vectorized solutions from windef, using the same principles
+    # now the first_pass is just wraping the extended_search_piv
 
-    correlation = correlate_windows(cor_win_1, cor_win_2,
-                                    correlation_method=correlation_method)
-    "do the correlation"
-    # create a dummy for the loop to fill
-    disp = np.zeros((np.size(correlation, 0), 2))
-    for i in range(0, np.size(correlation, 0)):
-        """ determine the displacment on subpixel level """
-        disp[i, :] = find_subpixel_peak_position(
-            correlation[i, :, :], subpixel_method=subpixel_method
-        )
-    "this loop is doing the displacment evaluation for each window "
+
+    # We replace this part with 
+
+    # cor_win_1 = moving_window_array(frame_a, window_size, overlap)
+    # cor_win_2 = moving_window_array(frame_b, window_size, overlap)
+    # """Filling the interrogation window. They windows are arranged
+    # in a 3d array with number of interrogation window *window_size*window_size
+    # this way is much faster then using a loop"""
+
+    # correlation = correlate_windows(cor_win_1, cor_win_2,
+    #                                 correlation_method=correlation_method)
+    # "do the correlation"
+    # # create a dummy for the loop to fill
+    # disp = np.zeros((np.size(correlation, 0), 2))
+    # for i in range(0, np.size(correlation, 0)):
+    #     """ determine the displacment on subpixel level """
+    #     disp[i, :] = find_subpixel_peak_position(
+    #         correlation[i, :, :], subpixel_method=subpixel_method
+    #     )
+    # "this loop is doing the displacment evaluation for each window "
+
+    if do_sig2noise is True and iterations == 1:
+        sig2noise_method = None  # this indicates to get out nans
+
+    u, v, s2n = extended_search_area_piv(
+                                    frame_a, frame_b,
+                                    window_size=window_size,
+                                    overlap=overlap,
+                                    search_area_size=window_size,
+                                    width=sig2noise_mask,
+                                    subpixel_method=subpixel_method,
+                                    sig2noise_method=sig2noise_method
+                                    )
 
     shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
-    u = disp[:, 1].reshape(shapes)
-    v = -disp[:, 0].reshape(shapes)
-    "reshaping the interrogation window to vector field shape"
-
+    u = u.reshape(shapes)
+    v = v.reshape(shapes)
+    s2n = s2n.reshape(shapes)
     x, y = get_coordinates(frame_a.shape, window_size, overlap)
-    "get coordinates for to map the displacement"
-    if do_sig2noise is True and iterations == 1:
-        sig2noise_ratio = sig2noise_ratio(
-            correlation, sig2noise_method=sig2noise_method,
-            width=sig2noise_mask
-        )
-        sig2noise_ratio = sig2noise_ratio.reshape(shapes)
-    else:
-        sig2noise_ratio = np.full_like(u, np.nan)
-    return x, y, u, v, sig2noise_ratio
+
+    return x, y, u, v, s2n
 
 
 def multipass_img_deform(
@@ -639,273 +650,9 @@ def multipass_img_deform(
     return x, y, u, v, sig2noise_ratio, mask
 
 
-def save(x, y, u, v, sig2noise_ratio, mask,
-         filename, fmt="%8.4f", delimiter="\t"):
-    """Save flow field to an ascii file.
-
-    Parameters
-    ----------
-    x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the
-        interrogation window centers, in pixels.
-
-    y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the
-        interrogation window centers, in pixels.
-
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity components,
-        in pixels/seconds.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity components,
-        in pixels/seconds.
-
-    mask : 2d np.ndarray
-        a two dimensional boolen array where elements corresponding to
-        invalid vectors are True.
-
-    filename : string
-        the path of the file where to save the flow field
-
-    fmt : string
-        a format string. See documentation of numpy.savetxt
-        for more details.
-
-    delimiter : string
-        character separating columns
-
-    Examples
-    --------
-
-    openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f',
-                        delimiter='\t')
-
-    """
-    # build output array
-    out = np.vstack([m.ravel() for m in [x, y, u, v, sig2noise_ratio, mask]])
-
-    # save data to file.
-    np.savetxt(
-        filename,
-        out.T,
-        fmt=fmt,
-        delimiter=delimiter,
-        header="x"
-        + delimiter
-        + "y"
-        + delimiter
-        + "u"
-        + delimiter
-        + "v"
-        + delimiter
-        + "s2n"
-        + delimiter
-        + "mask",
-    )
 
 
-def display_vector_field(
-    filename,
-    on_img=False,
-    image_name="None",
-    window_size=32,
-    scaling_factor=1,
-    skiprows=1,
-    **kw
-):
-    """ Displays quiver plot of the data stored in the file
 
-
-    Parameters
-    ----------
-    filename :  string
-        the absolute path of the text file
-
-    on_img : Bool, optional
-        if True, display the vector field on top of the image provided by
-        image_name
-
-    image_name : string, optional
-        path to the image to plot the vector field onto when on_img is True
-
-    window_size : int, optional
-        when on_img is True, provide the interogation window size to fit the
-        background image to the vector field
-
-    scaling_factor : float, optional
-        when on_img is True, provide the scaling factor to scale the
-        background image to the vector field
-
-    Key arguments   : (additional parameters, optional)
-        *scale*: [None | float]
-        *width*: [None | float]
-
-
-    See also:
-    ---------
-    matplotlib.pyplot.quiver
-
-
-    Examples
-    --------
-    --- only vector field
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100,
-                                            width=0.0025)
-
-    --- vector field on top of image
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True,
-                                            image_name='exp1_001_a.bmp',
-                                            window_size=32, scaling_factor=70,
-                                            scale=100, width=0.0025)
-
-    """
-
-    a = np.loadtxt(filename)
-    fig = plt.figure()
-    if on_img:  # plot a background image
-        im = fig.imread(image_name)
-        im = fig.negative(im)  # plot negative of the image for more clarity
-        fig.imsave("neg.tif", im)
-        im = fig.imread("neg.tif")
-        xmax = np.amax(a[:, 0]) + window_size / (2 * scaling_factor)
-        ymax = np.amax(a[:, 1]) + window_size / (2 * scaling_factor)
-        plt.imshow(
-            im, origin="lower", cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax]
-        )
-    invalid = a[:, 5].astype("bool")
-    fig.canvas.set_window_title(
-        "Vector field, " + str(np.count_nonzero(invalid)) + " wrong vectors"
-    )
-    valid = ~invalid
-    plt.quiver(
-        a[invalid, 0],
-        a[invalid, 1],
-        a[invalid, 2],
-        a[invalid, 3],
-        color="r",
-        width=0.001,
-        headwidth=3,
-        **kw
-    )
-    plt.quiver(
-        a[valid, 0],
-        a[valid, 1],
-        a[valid, 2],
-        a[valid, 3],
-        color="b",
-        width=0.001,
-        headwidth=3,
-        **kw
-    )
-    plt.draw()
-
-
-# def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
-#     """
-#         Find subpixel approximation of the correlation peak.
-
-#         This function returns a subpixels approximation of the correlation
-#         peak by using one of the several methods available. If requested,
-#         the function also returns the signal to noise ratio level evaluated
-#         from the correlation map.
-
-#         Parameters
-#         ----------
-#         corr : np.ndarray
-#             the correlation map.
-
-#         subpixel_method : string
-#              one of the following methods to estimate subpixel location of the
-#              peak:
-#              'centroid' [replaces default if correlation map is negative],
-#              'gaussian' [default if correlation map is positive],
-#              'parabolic'.
-
-#         Returns
-#         -------
-#         subp_peak_position : two elements tuple
-#             the fractional row and column indices for the sub-pixel
-#             approximation of the correlation peak.
-#         """
-
-#     # initialization
-#     default_peak_position = (
-#         np.floor(corr.shape[0] / 2.0),
-#         np.floor(corr.shape[1] / 2.0),
-#     )
-#     """this calculates the default peak position (peak of the autocorrelation).
-#         It is window_size/2. It needs to be subtracted to from the peak found
-#         to determine the displacment
-#         """
-#     # default_peak_position = (0,0)
-
-#     # the peak locations
-#     peak1_i, peak1_j, dummy = find_first_peak(corr)
-#     """
-#         The find_first_peak function returns the coordinates of the
-#         correlation peak and the value of the peak. Here only the
-#         coordinates are needed.
-#         """
-
-#     try:
-#         # the peak and its neighbours: left, right, down, up
-#         c = corr[peak1_i, peak1_j]
-#         cl = corr[peak1_i - 1, peak1_j]
-#         cr = corr[peak1_i + 1, peak1_j]
-#         cd = corr[peak1_i, peak1_j - 1]
-#         cu = corr[peak1_i, peak1_j + 1]
-
-#         # gaussian fit
-#         if np.any(np.array([c, cl, cr, cd, cu]) <
-#                   0) and subpixel_method == "gaussian":
-#             subpixel_method = "centroid"
-
-#         try:
-#             if subpixel_method == "centroid":
-#                 subp_peak_position = (
-#                     ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr)
-#                     / (cl + c + cr),
-#                     ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu)
-#                     / (cd + c + cu),
-#                 )
-
-#             elif subpixel_method == "gaussian":
-#                 subp_peak_position = (
-#                     peak1_i
-#                     + (
-#                         (np.log(cl) - np.log(cr))
-#                         / (2 * np.log(cl) - 4 * np.log(c) + 2 * np.log(cr))
-#                     ),
-#                     peak1_j
-#                     + (
-#                         (np.log(cd) - np.log(cu))
-#                         / (2 * np.log(cd) - 4 * np.log(c) + 2 * np.log(cu))
-#                     ),
-#                 )
-
-#             elif subpixel_method == "parabolic":
-#                 subp_peak_position = (
-#                     peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
-#                     peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
-#                 )
-
-#         except BaseException:
-#             subp_peak_position = default_peak_position
-
-#     except IndexError:
-#         subp_peak_position = default_peak_position
-
-#         """This block is looking for the neighbouring pixels. The sub-pixel
-#             position is calculated based one
-#             the correlation values. Different methods can be choosen.
-
-#             This function returns the displacement in u and v
-#             """
-#     return (
-#         subp_peak_position[0] - default_peak_position[0],
-#         subp_peak_position[1] - default_peak_position[1],
-#     )
 
 
 class Settings(object):
