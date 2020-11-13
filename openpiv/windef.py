@@ -419,7 +419,7 @@ def first_pass(
     #     )
     # "this loop is doing the displacment evaluation for each window "
 
-    if do_sig2noise is True and iterations == 1:
+    if do_sig2noise is False or iterations != 1:
         sig2noise_method = None  # this indicates to get out nans
 
     u, v, s2n = extended_search_area_piv(
@@ -468,9 +468,9 @@ def multipass_img_deform(
     interpolation_order=3,
 ):
     """
-    First pass of the PIV evaluation.
+    Multi pass of the PIV evaluation.
 
-    This function does the PIV evaluation of the first pass. It returns
+    This function does the PIV evaluation of the second and other passes. It returns
     the coordinates of the interrogation window centres, the displacment
     u and v for each interrogation window as well as the mask which indicates
     wether the displacement vector was interpolated or not.
@@ -560,60 +560,61 @@ def multipass_img_deform(
     """
 
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
+
     "calculate the y and y coordinates of the interrogation window centres"
+    """The interpolation function dont like meshgrids as input. Hence, the
+    edges must be extracted to provide the sufficient input. x_old and y_old
+    are the coordinates of the old grid. x_int and y_int are the coordinates
+    of the new grid"""
+
     y_old = y_old[:, 0]
     y_old = y_old[::-1]
     x_old = x_old[0, :]
     y_int = y[:, 0]
     y_int = y_int[::-1]
     x_int = x[0, :]
-    """The interpolation function dont like meshgrids as input. Hence, the
-    edges must be extracted to provide the sufficient input. x_old and y_old
-    are the coordinates of the old grid. x_int and y_int are the coordinates
-    of the new grid"""
 
+    # interpolating the displacements from the old grid onto the new grid
+    # y befor x because of numpy works row major
     ip = RectBivariateSpline(y_old, x_old, u_old)
     u_pre = ip(y_int, x_int)
+    
     ip2 = RectBivariateSpline(y_old, x_old, v_old)
     v_pre = ip2(y_int, x_int)
-    """ interpolating the displacements from the old grid onto the new grid
-    y befor x because of numpy works row major
-    """
 
+
+    # this one is doing the image deformation (see above)
     frame_b_deform = frame_interpolation(
         frame_b, x, y, u_pre, -v_pre, interpolation_order=interpolation_order
     )
-    """this one is doing the image deformation (see above)"""
 
-    cor_win_1 = moving_window_array(frame_a, window_size, overlap)
-    cor_win_2 = moving_window_array(
-        frame_b_deform, window_size, overlap)
-    """Filling the interrogation window. They windows are arranged
-    in a 3d array with number of interrogation window *window_size*window_size
-    this way is much faster then using a loop"""
+    if do_sig2noise is True and \
+            current_iteration == iterations and \
+            iterations != 1:
+        sig2noise_method=sig2noise_method
+    else:
+        sig2noise_method = None
 
-    correlation = correlate_windows(
-        cor_win_1, cor_win_2, window_size,
-        correlation_method=correlation_method
-    )
-    "do the correlation"
-    disp = np.zeros((np.size(correlation, 0), 2))
-    for i in range(0, np.size(correlation, 0)):
-        """ determine the displacment on subpixel level  """
-        disp[i, :] = find_subpixel_peak_position(
-            correlation[i, :, :], subpixel_method=subpixel_method
-        )
-    "this loop is doing the displacment evaluation for each window "
+    u, v, s2n = extended_search_area_piv(
+                                    frame_a, frame_b_deform,
+                                    window_size=window_size,
+                                    overlap=overlap,
+                                    search_area_size=window_size,
+                                    width=sig2noise_mask,
+                                    subpixel_method=subpixel_method,
+                                    sig2noise_method=sig2noise_method
+                                    )
 
-    "reshaping the interrogation window to vector field shape"
-    shapes = np.array(get_field_shape(np.shape(frame_a), window_size, overlap))
-    u = disp[:, 1].reshape(shapes)
-    v = -disp[:, 0].reshape(shapes)
+    shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
+    u = u.reshape(shapes)
+    v = v.reshape(shapes)
+    s2n = s2n.reshape(shapes)
 
-    "adding the recent displacment on to the displacment of the previous pass"
-    u = u + u_pre
-    v = v + v_pre
-    "validation using gloabl limits and local median"
+    # adding the recent displacment on to the displacment of the previous pass
+    u += u_pre
+    v += v_pre
+
+    # validation using gloabl limits and local median
     u, v, mask_g = validation.global_val(u, v, MinMaxU, MinMaxV)
     u, v, mask_s = validation.global_std(u, v, std_threshold=std_threshold)
     u, v, mask_m = validation.local_median_val(
@@ -623,12 +624,14 @@ def multipass_img_deform(
         v_threshold=median_threshold,
         size=median_size,
     )
+
+    # adding masks to add the effect of alle the validations
     mask = mask_g + mask_m + mask_s
-    "adding masks to add the effect of alle the validations"
+
     # mask=np.zeros_like(u)
-    "filter to replace the values that where marked by the validation"
+    # filter to replace the values that where marked by the validation
     if current_iteration != iterations:
-        "filter to replace the values that where marked by the validation"
+        # filter to replace the values that where marked by the validation
         u, v = filters.replace_outliers(
             u,
             v,
@@ -636,23 +639,8 @@ def multipass_img_deform(
             max_iter=max_filter_iteration,
             kernel_size=filter_kernel_size,
         )
-    if do_sig2noise is True and \
-            current_iteration == iterations and \
-            iterations != 1:
-        sig2noise_ratio = sig2noise_ratio_function(
-            correlation, sig2noise_method=sig2noise_method,
-            width=sig2noise_mask
-        )
-        sig2noise_ratio = sig2noise_ratio.reshape(shapes)
-    else:
-        sig2noise_ratio = np.full_like(u, np.nan)
 
-    return x, y, u, v, sig2noise_ratio, mask
-
-
-
-
-
+    return x, y, u, v, s2n, mask
 
 
 class Settings(object):

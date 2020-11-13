@@ -92,3 +92,7 @@ def test_process_extended_search_area():
                   search_area_size=32, dt=1, overlap=0)
     # assert(np.max(np.abs(u[:-1,:-1]-3)+np.abs(v[:-1,:-1]+2)) <= 0.3)
     assert (dist(u, shift_u) + dist(v, shift_v)) < 2 * threshold
+
+
+def test_sig2noise_ratio():
+    return False
