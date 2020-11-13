@@ -274,11 +274,10 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
         raise ValueError(f'Method not implemented {subpixel_method}')
 
     # the peak locations
-    (peak1_i, peak1_j), dummy = find_first_peak(corr)
+    (peak1_i, peak1_j), _ = find_first_peak(corr)
 
     # import pdb; pdb.set_trace()
 
-#   try:
     # the peak and its neighbours: left, right, down, up
     c = corr[peak1_i, peak1_j]
     cl = corr[peak1_i - 1, peak1_j]
@@ -331,7 +330,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     return subp_peak_position
 
 
-def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
+def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
     """
     Computes the signal to noise ratio from the correlation map.
 
@@ -341,8 +340,8 @@ def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
 
     Parameters
     ----------
-    corr : 2d np.ndarray
-        the correlation map.
+    corr : 3d np.ndarray
+        the correlation maps of the image pair, concatenated along 0th axis
 
     sig2noise_method: string
         the method for evaluating the signal to noise ratio value from
@@ -356,56 +355,76 @@ def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
 
     Returns
     -------
-    sig2noise : float
-        the signal to noise ratio from the correlation map.
+    sig2noise : np.array
+        the signal to noise ratios from the correlation maps.
 
     """
-
-    # compute first peak position
-    (peak1_i, peak1_j), corr_max1 = find_first_peak(corr)
-
-    # now compute signal to noise ratio
+    sig2noise = np.zeros(correlation.shape[0])
+    corr_max1 = np.zeros(correlation.shape[0])
+    corr_max2 = np.zeros(correlation.shape[0])
     if sig2noise_method == "peak2peak":
-        # find second peak height
-        (peak2_i, peak2_j), corr_max2 = find_second_peak(
-            corr, peak1_i, peak1_j, width=width
-        )
+        for i, corr in enumerate(correlation):
+            # compute first peak position
+            (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)
 
-        # if it's an empty interrogation window
-        # if the image is lacking particles, totally black it will correlate
-        # to very low value, but not zero
-        # if the first peak is on the borders, the correlation map is also
-        # wrong
-        if corr_max1 < 1e-3 or (
-            peak1_i == 0
-            or peak1_j == corr.shape[0]
-            or peak1_j == 0
-            or peak1_j == corr.shape[1]
-            or peak2_i == 0
-            or peak2_j == corr.shape[0]
-            or peak2_j == 0
-            or peak2_j == corr.shape[1]
-        ):
-            # return zero, since we have no signal.
-            return 0.0
+            condition = (corr_max1[i] < 1e-3 or
+                         peak1_i == 0 or
+                         peak1_j == corr.shape[0] or
+                         peak1_j == 0 or
+                         peak1_j == corr.shape[1])
 
-    elif sig2noise_method == "peak2mean":
-        # find mean of the correlation map
-        corr_max2 = corr.mean()
+            if condition:
+                # return zero, since we have no signal.
+                # no point to get the second peak, save time
+                sig2noise[i] = 0.0
+            else:
+                # find second peak height
+                (peak2_i, peak2_j), corr_max2 = find_second_peak(
+                    corr, peak1_i, peak1_j, width=width
+                )
+
+                condition = (corr_max2[i] == 0 or
+                             peak2_i == 0 or
+                             peak2_j == corr.shape[0] or
+                             peak2_j == 0 or
+                             peak2_j == corr.shape[1])                
+                if condition:  # mark failed peak2
+                    corr_max2 = np.nan
+
+                sig2noise[i] = corr_max1 / corr_max2
+
+    elif sig2noise_method == "peak2mean":  # only one loop
+        for i, corr in enumerate(correlation):
+            # compute first peak position
+            (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)
+
+            condition = (corr_max1[i] < 1e-3 or
+                         peak1_i == 0 or
+                         peak1_j == corr.shape[0] or
+                         peak1_j == 0 or
+                         peak1_j == corr.shape[1])
+
+            if condition:
+                # return zero, since we have no signal.
+                # no point to get the second peak, save time
+                sig2noise[i] = 0.0
+                
+        # find means of all the correlation maps
+        corr_max2 = corr.mean(axis=(-2, -1))
+        corr_max2[corr_max2 == 0] = np.nan  # mark failed ones
+
+        sig2noise = corr_max1 / corr_max2
 
     else:
         raise ValueError("wrong sig2noise_method")
 
-    # avoid dividing by zero
-    try:
-        sig2noise = corr_max1 / corr_max2
-    except ValueError:
-        sig2noise = np.inf
+    # sig2noise is zero for all failed ones
+    sig2noise[np.isnan(sig2noise)] = 0.0
 
     return sig2noise
 
 
-def fft_correlate(window_a, window_b):
+def fft_correlate_windows(window_a, window_b):
     """ FFT based cross correlation
     it is a so-called linear convolution based,
     since we increase the size of the FFT to
@@ -545,7 +564,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
     # this is not really circular one, as we pad a bit to get fast 2D FFT,
     # see fft_correlate for implementation
     if correlation_method in ("circular", "fft"):
-        corr = fft_correlate(window_a, window_b)
+        corr = fft_correlate_windows(window_a, window_b)
     elif correlation_method == "linear":
         # save the original size:
         s1 = np.array(window_a.shape)
@@ -553,7 +572,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
         size = s1 + s2 - 1
         fslice = tuple([slice(0, int(sz)) for sz in size])
         # and slice only the relevant part
-        corr = fft_correlate(zero_pad(window_a), zero_pad(window_b))[fslice]
+        corr = fft_correlate_windows(zero_pad(window_a), zero_pad(window_b))[fslice]
     elif correlation_method == "direct":
         corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
     else:
@@ -834,7 +853,7 @@ def extended_search_area_piv(
         aa *= mask
 
     corr = fft_correlate_strided_images(aa, bb)
-    u, v = correlation_to_velocity(corr, n_rows, n_cols, search_area_size)
+    u, v = correlation_to_displacement(corr, n_rows, n_cols, search_area_size)
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
@@ -843,7 +862,20 @@ def extended_search_area_piv(
         return u / dt, v / dt
 
 
-def correlation_to_velocity(corr, n_rows, n_cols, search_area_size=32):
+def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):
+    """
+    Correlation maps are converted to displacement for each interrogation window
+    using the convention that the size of the correlation map is 2N -1 where
+    N is the size of the largest interrogation window (in frame B) that is 
+    called search_area_size
+    Inputs:
+        corr : 3D nd.array
+            contains output of the fft_correlate_strided_images
+        n_rows, n_cols : number of interrogation windows, output of the
+            get_field_shape
+        search_area_size : int
+            size of the interrogation window in frame B (>= IW in frame A)
+    """
     # iterate through interrogation widows and search areas
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))

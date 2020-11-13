@@ -14,6 +14,7 @@ shift_v = 4
 def dist(u, shift):
     return np.mean(np.abs(u - shift))
 
+
 def create_pair(image_size=32, u=shift_u, v=shift_v):
     """ creates a pair of images with a roll/shift """
     frame_a = np.zeros((image_size, image_size))
@@ -27,15 +28,17 @@ def create_pair(image_size=32, u=shift_u, v=shift_v):
     frame_b = np.roll(np.roll(frame_a, u, axis=1), v, axis=0)
     return frame_a.astype(np.int32), frame_b.astype(np.int32)
 
+
 def test_piv():
     """test of the simplest PIV run
     default window_size = 32
     """
     frame_a, frame_b = create_pair(image_size=64)
     u, v = piv(frame_a, frame_b, window_size=64)
-    print(u,v)
+    # print(u, v)
     assert dist(u, shift_u) < threshold
     assert dist(v, -shift_v) < threshold
+
 
 def test_piv_smaller_window():
     """ test of the search area larger than the window """
@@ -43,6 +46,7 @@ def test_piv_smaller_window():
     u, v = piv(frame_a, frame_b, window_size=16, search_area_size=32)
     assert dist(u, -3) < threshold
     assert dist(v, 2) < threshold
+
 
 def test_extended_search_area():
     """ test of the extended area PIV with larger image """
@@ -52,12 +56,14 @@ def test_extended_search_area():
 
     assert (dist(u, shift_u) + dist(v, -shift_v)) < 2 * threshold
 
+
 def test_extended_search_area_overlap():
     """ test of the extended area PIV with different overlap """
     frame_a, frame_b = create_pair(image_size=64)
     u, v = piv(frame_a, frame_b,
                window_size=16, search_area_size=32, overlap=8)
     assert (dist(u, shift_u) + dist(v, -shift_v)) < 2 * threshold
+
 
 def test_extended_search_area_sig2noise():
     """ test of the extended area PIV with sig2peak """
@@ -71,9 +77,11 @@ def test_extended_search_area_sig2noise():
     )
     assert (dist(u, shift_u) + dist(v, -shift_v)) < 2 * threshold
 
+
 def test_process_extended_search_area():
     """ test of the extended area PIV from Cython """
     frame_a, frame_b = create_pair(image_size=64)
-    u, v = piv(frame_a, frame_b, window_size=16, search_area_size=32, dt=1, overlap=0)
+    u, v = piv(frame_a, frame_b, window_size=16, 
+               search_area_size=32, dt=1, overlap=0)
     # assert(np.max(np.abs(u[:-1,:-1]-3)+np.abs(v[:-1,:-1]+2)) <= 0.3)
     assert (dist(u, shift_u) + dist(v, -shift_v)) < 2 * threshold
