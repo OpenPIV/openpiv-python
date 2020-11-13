@@ -43,3 +43,4 @@ OpenPIV.egg-info
 *.ipynb_checkpoints*
 .vscode/settings.json
 *.so
+tmp.png

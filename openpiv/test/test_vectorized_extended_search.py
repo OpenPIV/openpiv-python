@@ -4,7 +4,7 @@
 # In[ ]:
 
 
-# test the idea of vectorized cross correlation for 
+# test the idea of vectorized cross correlation for
 # strided images, rectangular windows and extended search area
 # in one function
 
@@ -28,9 +28,9 @@ from openpiv.pyprocess import moving_window_array, normalize_intensity
 
 
 def fft_correlate_strided_images(image_a, image_b):
-    """ FFT based cross correlation
+    """FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
-    
+
     The 2D FFT should be applied to the last two axes (-2,-1) and the
     zero axis is the number of the interrogation window
 
@@ -46,9 +46,9 @@ def fft_correlate_strided_images(image_a, image_b):
     s2 = np.array(image_b.shape[-2:])
     size = s1 + s2 - 1
     fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-    fslice = tuple([slice(0, image_a.shape[0])] +                    [slice(0, int(sz)) for sz in size])
+    fslice = tuple([slice(0, image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
-    f2b = rfft2(image_b[:,::-1, ::-1], fsize, axes=(-2, -1))
+    f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
     corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
     return corr
 
@@ -56,9 +56,9 @@ def fft_correlate_strided_images(image_a, image_b):
 # In[5]:
 
 
-# let's make two images of 32 x 32 pixels 
-a = np.random.rand(64,64)
-b = np.roll(a,(-3,2))
+# let's make two images of 32 x 32 pixels
+a = np.random.rand(64, 64)
+b = np.roll(a, (-3, 2))
 
 
 # In[6]:
@@ -80,7 +80,7 @@ bb = moving_window_array(normalize_intensity(b), window_size, overlap)
 # In[8]:
 
 
-c = fft_correlate_strided_images(aa,bb)
+c = fft_correlate_strided_images(aa, bb)
 
 
 # In[9]:
@@ -104,14 +104,14 @@ bb = moving_window_array(b, search_size, overlap)
 # In[11]:
 
 
-mask = np.zeros((search_size,search_size))
+mask = np.zeros((search_size, search_size))
 pad = np.int((search_size - window_size) / 2)
 
 
 # In[12]:
 
 
-mask[pad:-pad,pad:-pad] = 1
+mask[pad:-pad, pad:-pad] = 1
 
 
 # In[13]:
@@ -125,46 +125,36 @@ mask = np.broadcast_to(mask, aa.shape)
 
 # make it use only a small window inside a larger window
 plt.figure()
-plt.imshow(aa[-1,:,:],cmap=plt.cm.gray)
+plt.imshow(aa[-1, :, :], cmap=plt.cm.gray)
 
-aa = aa*mask
+aa = aa * mask
 
 plt.figure()
-plt.imshow(aa[-1,:,:],cmap=plt.cm.gray)
+plt.imshow(aa[-1, :, :], cmap=plt.cm.gray)
 
 
 # In[15]:
 
 
-c1 = fft_correlate_strided_images(aa,bb)
+c1 = fft_correlate_strided_images(aa, bb)
 
 
 # In[16]:
 
 
-plt.contourf(c[-1,:,:])
+plt.contourf(c[-1, :, :])
 
 
 # In[17]:
 
 
-plt.contourf(c1[-1,:,:])
+plt.contourf(c1[-1, :, :])
 
 
 # In[ ]:
 
 
-
-
-
 # In[ ]:
 
 
-
-
-
 # In[ ]:
-
-
-
-

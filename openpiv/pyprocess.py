@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def get_coordinates(image_size, search_area_size, window_size, overlap):
+def get_coordinates(image_size, search_area_size, overlap=0):
     """Compute the x, y coordinates of the centers of the interrogation windows.
 
     Parameters
@@ -37,12 +37,10 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
         the number of columns.
 
     search_area_size: int
-        the size of the search area windows.
+        the size of the search area windows, sometimes it's equal to
+        the interrogation window size in both frames A and B
 
-    window_size: int
-        the size of the interrogation windows.
-
-    overlap: int
+    overlap: int = 0 (default is no overlap)
         the number of pixel by which two adjacent interrogation
         windows overlap.
 
@@ -61,17 +59,17 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
 
     # get shape of the resulting flow field
     field_shape = get_field_shape(
-        image_size, search_area_size, window_size, overlap
-    )
+        image_size, search_area_size, overlap
+        )
 
     # compute grid coordinates of the search area window centers
     # compute grid coordinates of the search area window centers
     x = (
-        np.arange(field_shape[1]) * (window_size - overlap)
+        np.arange(field_shape[1]) * (search_area_size - overlap)
         + (search_area_size - 1) / 2.0
     )
     y = (
-        np.arange(field_shape[0]) * (window_size - overlap)
+        np.arange(field_shape[0]) * (search_area_size - overlap)
         + (search_area_size - 1) / 2.0
     )
 
@@ -83,7 +81,7 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
         image_size[1]
         - 1
         - (
-            (field_shape[1] - 1) * (window_size - overlap)
+            (field_shape[1] - 1) * (search_area_size - overlap)
             + (search_area_size - 1)
         )
     ) // 2
@@ -91,7 +89,7 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
         image_size[0]
         - 1
         - (
-            (field_shape[0] - 1) * (window_size - overlap)
+            (field_shape[0] - 1) * (search_area_size - overlap)
             + (search_area_size - 1)
         )
     ) // 2
@@ -114,8 +112,8 @@ def get_field_shape(image_size, search_area_size, overlap):
         the number of columns, easy to obtain using .shape
 
     search_area_size: tuple
-        the size of the interrogation windows (if equal in frames A, B) or 
-        the search area (in frame B), the largest  of the two
+        the size of the interrogation windows (if equal in frames A,B)
+        or the search area (in frame B), the largest  of the two
 
     overlap: tuple
         the number of pixel by which two adjacent interrogation
@@ -130,6 +128,7 @@ def get_field_shape(image_size, search_area_size, overlap):
     field_shape = (np.array(image_size) - np.array(search_area_size)) // \
                   (np.array(search_area_size) - np.array(overlap)) + 1
     return field_shape
+
 
 def moving_window_array(array, window_size, overlap):
     """
@@ -267,16 +266,16 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # default_peak_position = (np.floor(corr.shape[0] / 2.),
     # np.floor(corr.shape[1] / 2.))
     # default_peak_position = np.array([0,0])
-    
-    subp_peak_position = np.zeros((1,2))
-    
+
+    subp_peak_position = np.zeros((1, 2))
+
     # check inputs
     if subpixel_method not in ('gaussian', 'centroid', 'parabolic'):
         raise ValueError(f'Method not implemented {subpixel_method}')
 
     # the peak locations
     (peak1_i, peak1_j), dummy = find_first_peak(corr)
-    
+
     # import pdb; pdb.set_trace()
 
 #   try:
@@ -458,7 +457,7 @@ def fft_correlate(window_a, window_b):
 def fft_correlate_strided_images(image_a, image_b):
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
-    
+
     The 2D FFT should be applied to the last two axes (-2,-1) and the
     zero axis is the number of the interrogation window
 
@@ -576,11 +575,13 @@ def normalize_intensity(window):
     Returns
     -------
     window :  2d np.ndarray
-        the interrogation window array, with mean value equal to zero and intensity
-        normalized to -1 +1 and clipped if some pixels are extra low/high
+        the interrogation window array, with mean value equal to zero and
+        intensity normalized to -1 +1 and clipped if some pixels are
+        extra low/high
     """
     window = window.astype(np.float32)
-    window = window - window.mean(axis=(-2, -1), keepdims=True, dtype=np.float32)
+    window = window - window.mean(axis=(-2, -1),
+                                  keepdims=True, dtype=np.float32)
     window = window/(1.96*np.std(window, dtype=np.float32))
     return np.clip(window, -1, 1)
 
@@ -595,9 +596,7 @@ def extended_search_area_piv(
     correlation_method="fft",
     subpixel_method="gaussian",
     sig2noise_method=None,
-    width=2,
-    nfftx=0,
-    nffty=0,
+    width=2
 ):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
@@ -694,11 +693,11 @@ def extended_search_area_piv(
 
     # get field shape
     n_rows, n_cols = get_field_shape(
-        frame_a.shape, search_area_size, window_size, overlap
+        frame_a.shape, search_area_size, overlap
     )
 
     # create empty arrays for deformation in x and y direction
-    u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
+    # u, v = np.zeros((n_rows, n_cols)), np.zeros((n_rows, n_cols))
 
     # if we want sig2noise information, allocate memory
     if sig2noise_method is not None:
@@ -708,15 +707,19 @@ def extended_search_area_piv(
     # centers of search area windows have
     # the same distances to the image edge at all sides. For simplicity only
     # shifts by integers are allowed
-    x_centering = (
-        frame_a.shape[1] - 1
-        - ((n_cols - 1) * (window_size - overlap) + (search_area_size - 1))
-    ) // 2
-    y_centering = (
-        frame_a.shape[0] - 1
-        - ((n_rows - 1) * (window_size - overlap) + (search_area_size - 1))
-    ) // 2
+    # x_centering = (
+    #     frame_a.shape[1] - 1
+    #     - ((n_cols - 1) * (search_area_size - overlap) + (search_area_size - 1))
+    # ) // 2
+    # y_centering = (
+    #     frame_a.shape[0] - 1
+    #     - ((n_rows - 1) * (search_area_size - overlap) + (search_area_size - 1))
+    # ) // 2
 
+
+    # first we take all the old loop code into comments
+    # in the next clean up we will remove it
+    """
     # iterate through interrogation widows and search areas
     for k in range(n_rows):
         for m in range(n_cols):
@@ -725,8 +728,8 @@ def extended_search_area_piv(
             # distance between each center
             # and (search_area_size - 1)/2.0 moves the center points away from
             # the left or top image edge
-            y = k * (window_size - overlap) + (search_area_size - 1) / 2.0
-            x = m * (window_size - overlap) + (search_area_size - 1) / 2.0
+            y = k * (search_area_size - overlap) + (search_area_size - 1) / 2.0
+            x = m * (search_area_size - overlap) + (search_area_size - 1) / 2.0
 
             # moving the coordinates a bit to the center, to guarantee that
             # the distance
@@ -775,8 +778,10 @@ def extended_search_area_piv(
                     corr, subpixel_method=subpixel_method
                 )
 
-                row -= (search_area_size + window_size - 1) // 2
-                col -= (search_area_size + window_size - 1) // 2
+                row -= (2*search_area_size - 1) // 2
+                col -= (2*search_area_size - 1) // 2
+
+                print(row, col)
 
                 # get displacements, apply coordinate system definition
                 u[k, m], v[k, m] = -col, row
@@ -786,12 +791,55 @@ def extended_search_area_piv(
                     sig2noise[k, m] = sig2noise_ratio(
                         corr, sig2noise_method=sig2noise_method, width=width
                     )
+    """
+    # Second we implement the new vectorized code
+    frame_a = normalize_intensity(frame_a)
+    frame_b = normalize_intensity(frame_b)
+    
+    aa = moving_window_array(frame_a, search_area_size, overlap)
+    bb = moving_window_array(frame_b, search_area_size, overlap)
+
+    # for the case of extended seearch, the window size is smaller than
+    # the search_area_size. In order to keep it all vectorized the 
+    # approach is to use the interrogation window in both 
+    # frames of the same size of search_area_asize, 
+    # but mask out the region around
+    # the interrogation window in the frame A
+
+    if search_area_size > window_size:
+        mask = np.zeros((search_area_size, search_area_size))
+        pad = np.int((search_area_size - window_size) / 2)
+        mask[slice(pad, search_area_size-pad), slice(pad, search_area_size-pad)] = 1
+        mask = np.broadcast_to(mask, aa.shape)
+        aa *= mask
+
+    corr = fft_correlate_strided_images(aa, bb)
+    u, v = correlation_to_velocity(corr, n_rows, n_cols, search_area_size)
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
         return u / dt, v / dt, sig2noise
     else:
         return u / dt, v / dt
+
+
+def correlation_to_velocity(corr, n_rows, n_cols, search_area_size=32):
+    # iterate through interrogation widows and search areas
+    u = np.zeros((n_rows, n_cols))
+    v = np.zeros((n_rows, n_cols))
+    
+    for k in range(n_rows):
+        for m in range(n_cols):
+            
+            row, col = find_subpixel_peak_position(corr[k*n_cols+m,:,:])
+            
+            row -= (2*search_area_size - 1) // 2
+            col -= (2*search_area_size - 1) // 2
+
+            # get displacements, apply coordinate system definition
+            u[k, m], v[k, m] = -col, row
+            
+    return (u,v)
 
 
 def nextpower2(i):
