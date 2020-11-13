@@ -10,16 +10,13 @@ import os
 import numpy as np
 import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
-from openpiv.tools import imread, Multiprocesser
+from openpiv.tools import imread, Multiprocesser, save, display_vector_field
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
 from openpiv.pyprocess import (
     extended_search_area_piv,
-    correlate_windows,
     get_coordinates,
-    get_field_shape,
-    moving_window_array,
-    find_subpixel_peak_position
+    get_field_shape
 )
 from openpiv import smoothn
 import matplotlib.pyplot as plt
@@ -398,13 +395,12 @@ def first_pass(
     # all the vectorized solutions from windef, using the same principles
     # now the first_pass is just wraping the extended_search_piv
 
-
-    # We replace this part with 
+    # We replace this part with the extended_search
 
     # cor_win_1 = moving_window_array(frame_a, window_size, overlap)
     # cor_win_2 = moving_window_array(frame_b, window_size, overlap)
     # """Filling the interrogation window. They windows are arranged
-    # in a 3d array with number of interrogation window *window_size*window_size
+    # in a 3d array with number of interrogation windows
     # this way is much faster then using a loop"""
 
     # correlation = correlate_windows(cor_win_1, cor_win_2,
@@ -470,9 +466,10 @@ def multipass_img_deform(
     """
     Multi pass of the PIV evaluation.
 
-    This function does the PIV evaluation of the second and other passes. It returns
-    the coordinates of the interrogation window centres, the displacment
-    u and v for each interrogation window as well as the mask which indicates
+    This function does the PIV evaluation of the second and other passes.
+    It returns the coordinates of the interrogation window centres,
+    the displacement u, v for each interrogation window as well as
+    the mask which indicates
     wether the displacement vector was interpolated or not.
 
 
@@ -578,10 +575,9 @@ def multipass_img_deform(
     # y befor x because of numpy works row major
     ip = RectBivariateSpline(y_old, x_old, u_old)
     u_pre = ip(y_int, x_int)
-    
+
     ip2 = RectBivariateSpline(y_old, x_old, v_old)
     v_pre = ip2(y_int, x_int)
-
 
     # this one is doing the image deformation (see above)
     frame_b_deform = frame_interpolation(
@@ -591,7 +587,7 @@ def multipass_img_deform(
     if do_sig2noise is True and \
             current_iteration == iterations and \
             iterations != 1:
-        sig2noise_method=sig2noise_method
+        sig2noise_method = sig2noise_method
     else:
         sig2noise_method = None
 
@@ -692,7 +688,7 @@ if __name__ == "__main__":
     )  # if longer than n iteration the rest is ignored
     # The overlap of the interroagtion window for each pass.
     settings.overlap = (64, 32, 16)  # This is 50% overlap
-    # Has to be a value with base two. In general window size/2 is a good   
+    # Has to be a value with base two. In general window size/2 is a good
     # choice.
     # methode used for subpixel interpolation:
     # 'gaussian','centroid','parabolic'
