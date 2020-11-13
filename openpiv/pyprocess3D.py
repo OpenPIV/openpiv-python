@@ -3,6 +3,7 @@ import numpy as np
 from numpy.fft import rfftn, irfftn
 from numpy import ma
 from tqdm import tqdm
+from openpiv.pyprocess import get_field_shape, find_first_peak
 
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
@@ -61,7 +62,7 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
     """
 
     # get shape of the resulting flow field
-    field_shape = get_field_shape(image_size, search_area_size, window_size, overlap)
+    field_shape = get_field_shape(image_size, search_area_size, overlap)
 
     # compute grid coordinates of the search area centers
     x = np.arange(field_shape[1]) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1) / 2.0
@@ -489,7 +490,7 @@ def extended_search_area_piv3D(
     window_size, overlap, search_area_size = check_input(window_size, overlap, search_area_size, frame_a, frame_b)
 
     # get field shape
-    field_shape = get_field_shape(frame_a.shape, search_area_size, window_size, overlap)
+    field_shape = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     u = np.zeros(field_shape)
     v = np.zeros(field_shape)

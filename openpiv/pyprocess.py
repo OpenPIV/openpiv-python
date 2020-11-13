@@ -676,6 +676,24 @@ def extended_search_area_piv(
         a two dimensional array the signal to noise ratio for each
         window pair.
 
+
+    The implementation of the one-step direct correlation with different
+    size of the interrogation window and the search area. The increased
+    size of the search areas cope with the problem of loss of pairs due
+    to in-plane motion, allowing for a smaller interrogation window size,
+    without increasing the number of outlier vectors.
+
+    See:
+
+    Particle-Imaging Techniques for Experimental Fluid Mechanics
+
+    Annual Review of Fluid Mechanics
+    Vol. 23: 261-304 (Volume publication date January 1991)
+    DOI: 10.1146/annurev.fl.23.010191.001401
+
+    originally implemented in process.pyx in Cython and converted to
+    a NumPy vectorized solution in pyprocess.py
+
     """
 
     # check the inputs for validity
@@ -709,13 +727,14 @@ def extended_search_area_piv(
     # shifts by integers are allowed
     # x_centering = (
     #     frame_a.shape[1] - 1
-    #     - ((n_cols - 1) * (search_area_size - overlap) + (search_area_size - 1))
+    #     - ((n_cols - 1) * (search_area_size - overlap) +
+    #       (search_area_size-1))
     # ) // 2
     # y_centering = (
     #     frame_a.shape[0] - 1
-    #     - ((n_rows - 1) * (search_area_size - overlap) + (search_area_size - 1))
+    #     - ((n_rows - 1) * (search_area_size - overlap) +
+    #       (search_area_size - 1))
     # ) // 2
-
 
     # first we take all the old loop code into comments
     # in the next clean up we will remove it
@@ -795,21 +814,22 @@ def extended_search_area_piv(
     # Second we implement the new vectorized code
     frame_a = normalize_intensity(frame_a)
     frame_b = normalize_intensity(frame_b)
-    
+
     aa = moving_window_array(frame_a, search_area_size, overlap)
     bb = moving_window_array(frame_b, search_area_size, overlap)
 
     # for the case of extended seearch, the window size is smaller than
-    # the search_area_size. In order to keep it all vectorized the 
-    # approach is to use the interrogation window in both 
-    # frames of the same size of search_area_asize, 
+    # the search_area_size. In order to keep it all vectorized the
+    # approach is to use the interrogation window in both
+    # frames of the same size of search_area_asize,
     # but mask out the region around
     # the interrogation window in the frame A
 
     if search_area_size > window_size:
         mask = np.zeros((search_area_size, search_area_size))
         pad = np.int((search_area_size - window_size) / 2)
-        mask[slice(pad, search_area_size-pad), slice(pad, search_area_size-pad)] = 1
+        mask[slice(pad, search_area_size-pad),
+             slice(pad, search_area_size-pad)] = 1
         mask = np.broadcast_to(mask, aa.shape)
         aa *= mask
 
@@ -827,19 +847,17 @@ def correlation_to_velocity(corr, n_rows, n_cols, search_area_size=32):
     # iterate through interrogation widows and search areas
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
-    
+
     for k in range(n_rows):
         for m in range(n_cols):
-            
-            row, col = find_subpixel_peak_position(corr[k*n_cols+m,:,:])
-            
+            row, col = find_subpixel_peak_position(corr[k*n_cols+m, :, :])
             row -= (2*search_area_size - 1) // 2
             col -= (2*search_area_size - 1) // 2
 
             # get displacements, apply coordinate system definition
             u[k, m], v[k, m] = -col, row
-            
-    return (u,v)
+
+    return (u, v)
 
 
 def nextpower2(i):

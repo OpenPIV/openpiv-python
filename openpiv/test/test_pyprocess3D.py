@@ -4,7 +4,7 @@ import numpy as np
 from skimage.util import random_noise
 from skimage import img_as_ubyte
 
-import warnings
+# import warnings
 
 threshold = 0.1
 

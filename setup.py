@@ -8,7 +8,7 @@ import numpy
 
 
 extensions = [
-    Extension("openpiv.process", ["./openpiv/process.pyx"],
+    Extension("openpiv.widim", ["./openpiv/widim.pyx"],
               include_dirs=[numpy.get_include()])]
 
 extensions = cythonize(extensions, include_path=[numpy.get_include()])
