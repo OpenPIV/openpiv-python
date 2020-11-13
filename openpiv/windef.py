@@ -308,7 +308,7 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
     """
     frame = frame.astype(np.float32)
     y1 = y[:, 0]  # extract first coloumn from meshgrid
-    y1 = y1[::-1]  # flip
+    # y1 = y1[::-1]  # flip
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(0, np.size(frame[0, :]), 1)  # extract the image grid
     side_y = np.arange(0, np.size(frame[:, 0]), 1)
@@ -565,23 +565,23 @@ def multipass_img_deform(
     of the new grid"""
 
     y_old = y_old[:, 0]
-    y_old = y_old[::-1]
+    # y_old = y_old[::-1]
     x_old = x_old[0, :]
     y_int = y[:, 0]
-    y_int = y_int[::-1]
+    # y_int = y_int[::-1]
     x_int = x[0, :]
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
-    ip = RectBivariateSpline(y_old, x_old, u_old)
+    ip = RectBivariateSpline(y_old, x_old, u_old, kx=2, ky=2)
     u_pre = ip(y_int, x_int)
 
-    ip2 = RectBivariateSpline(y_old, x_old, v_old)
+    ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
 
     # this one is doing the image deformation (see above)
     frame_b_deform = frame_interpolation(
-        frame_b, x, y, u_pre, -v_pre, interpolation_order=interpolation_order
+        frame_b, x, y, u_pre, v_pre, interpolation_order=interpolation_order
     )
 
     if do_sig2noise is True and \
@@ -608,7 +608,7 @@ def multipass_img_deform(
 
     # adding the recent displacment on to the displacment of the previous pass
     u += u_pre
-    v += v_pre
+    v -= v_pre
 
     # validation using gloabl limits and local median
     u, v, mask_g = validation.global_val(u, v, MinMaxU, MinMaxV)

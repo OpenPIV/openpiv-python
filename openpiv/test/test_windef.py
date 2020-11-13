@@ -87,8 +87,8 @@ def test_multi_pass_circ():
         )
 
     print("\n", x, y, u, v, s2n)
-    assert np.max(np.abs(u - shift_u)) < threshold and np.any(u != u_old)
-    assert np.max(np.abs(v - shift_v)) < threshold and np.any(v != v_old)
+    assert np.mean(np.abs(u - shift_u)) < threshold and np.any(u != u_old)
+    assert np.mean(np.abs(v - shift_v)) < threshold and np.any(v != v_old)
     # the second condition is to check if the multipass is done.
     # It need's a little numerical inaccuracy.
 
@@ -109,8 +109,8 @@ def test_first_pass_lin():
         sig2noise_mask=2,
     )
     print("\n", x, y, u, v, s2n)
-    assert np.max(np.abs(u - shift_u)) < threshold
-    assert np.max(np.abs(v - shift_v)) < threshold
+    assert np.mean(np.abs(u - shift_u)) < threshold
+    assert np.mean(np.abs(v - shift_v)) < threshold
 
 
 def test_multi_pass_lin():
@@ -163,8 +163,8 @@ def test_multi_pass_lin():
         )
 
     print("\n", x, y, u, v, s2n)
-    assert np.max(np.abs(u - shift_u)) < threshold and np.any(u != u_old)
-    assert np.max(np.abs(v - shift_v)) < threshold and np.any(v != v_old)
+    assert np.mean(np.abs(u - shift_u)) < threshold and np.any(u != u_old)
+    assert np.mean(np.abs(v - shift_v)) < threshold and np.any(v != v_old)
 
     # the second condition is to check if the multipass is done.
     # It need's a little numerical inaccuracy.
