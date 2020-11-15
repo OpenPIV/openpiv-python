@@ -16,7 +16,7 @@ This is absolutely not a comprehensive guide of git development, and it is only 
 2) Set up a github account.
 3) Clone OpenPiv repository using::
 
-    git clone http://github.com/alexlib/openpiv-python.git
+    git clone http://github.com/openpiv/openpiv-python.git
     
 4) create a branch `new_feature` where you implement your new feature.
 5) Fix, change, implement, document code, ...
@@ -28,18 +28,18 @@ This is absolutely not a comprehensive guide of git development, and it is only 
 
 11) Create another branch for a new feature.
 
-Which language can i use?
+Which language can I use?
 -------------------------
 As a general rule, we use Python where it does not make any difference with code speed. In those situations where Python speed is
 the bottleneck, we have some possibilities, depending on your skills and background. If something has to be written from scratch
-use the first language from the following which you are confortable with: cython, c, c++, fortran. If you have existing, debugged, tested code that
+use the first language from the following which you are confortable with: Cython, C, C++, FORTRAN. If you have existing, debugged, tested code that
 you would like to share, then no problem. We accept it, whichever language may be written in!
 
-Things OpenPiv currently needs, (in order of importance)
+Things OpenPIV currently needs, (in order of importance)
 --------------------------------------------------------
-* The implementation of advanced processing algorithms
-* Good documentations
+* Good documentation (in progress)
+* The implementation of advanced processing algorithms (in progress)
 * Flow field filtering and validation functions
-* Cython wrappers for c/c++ codes.
-* a good graphical user interface
+* Cython wrappers for C/C++ codes.
+* A good graphical user interface (in progress)
 
