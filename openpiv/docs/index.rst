@@ -25,9 +25,9 @@ Contents:
    :titlesonly:
    
 
+   src/piv_basics
    src/installation_instruction
    src/developers
-   src/tutorial
    src/tutorial1
    src/api_reference
    src/faq
