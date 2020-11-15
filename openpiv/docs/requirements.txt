@@ -1,2 +1,6 @@
 cython>=0.20
 numpy>=1.9
+sphinx
+recommonmark
+ipykernel
+nbsphinx

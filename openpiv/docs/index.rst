@@ -7,7 +7,7 @@ OpenPIV: a python package for PIV image analysis.
 =================================================
 
 OpenPIV is a effort of scientists to deliver a tool for the analysis of PIV images
-using state-of-the-art algorithms. Openpiv is released under the 
+using state-of-the-art algorithms. OpenPIV is released under the 
 `GPL Licence <http://en.wikipedia.org/wiki/GNU_General_Public_License>`_,
 which means that the source code is freely available for users to study, copy, modify
 and improve. Because of its permissive licence, you are welcome to download and try 
@@ -28,8 +28,10 @@ Contents:
    src/installation_instruction
    src/developers
    src/tutorial
+   src/tutorial1
    src/api_reference
    src/faq
+
    
 
 Indices and tables
