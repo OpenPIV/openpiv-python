@@ -3,6 +3,7 @@
 Created on Fri Oct  4 14:04:04 2019
 
 @author: Theo
+@modified: Alex, Erich
 """
 
 
@@ -13,7 +14,8 @@ from scipy.interpolate import RectBivariateSpline
 from openpiv.tools import imread, Multiprocesser, save, display_vector_field
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
-from openpiv.pyprocess import extended_search_area_piv, get_coordinates, get_field_shape
+from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
+                                get_field_shape
 from openpiv import smoothn
 import matplotlib.pyplot as plt
 
@@ -50,10 +52,12 @@ def piv(settings):
             frame_b = frame_b
         else:
             frame_a = frame_a[
-                settings.ROI[0] : settings.ROI[1], settings.ROI[2] : settings.ROI[3]
+                settings.ROI[0]:settings.ROI[1],
+                settings.ROI[2]:settings.ROI[3]
             ]
             frame_b = frame_b[
-                settings.ROI[0] : settings.ROI[1], settings.ROI[2] : settings.ROI[3]
+                settings.ROI[0]:settings.ROI[1],
+                settings.ROI[2]:settings.ROI[3]
             ]
         if settings.dynamic_masking_method == "edge" or "intensity":
             frame_a = preprocess.dynamic_masking(
@@ -132,7 +136,8 @@ def piv(settings):
                 and settings.do_sig2noise_validation is True
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
+                    u, v, sig2noise_ratio,
+                    threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_g + mask_m + mask_s + mask_s2n
             else:
@@ -238,7 +243,8 @@ def piv(settings):
         u = u / settings.dt
         v = v / settings.dt
         "scales the results pixel-> meter"
-        x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor=settings.scaling_factor)
+        x, y, u, v = scaling.uniform(x, y, u, v,
+                                     scaling_factor=settings.scaling_factor)
         "save to a file"
         save(
             x,
@@ -286,42 +292,73 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
-    """This one is doing the image deformation also known as window deformation
-    Therefore, the pixel values of the old image are interpolated on a new
-    grid that is defined by the grid of the previous pass and the displacment
-    evaluated by the previous pass
+
+def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
     """
-    """
-    The interpolation function dont like meshgrids as input. Hence, the the
-    edges must be extracted to provide the sufficient input, also the y
-    coordinates need to be inverted since the image origin is in the upper
-    left corner and the y-axis goes downwards. The x-axis goes to the right.
+    Deform an image by window deformation where a new grid is defined based
+    on the grid and displacements of the previous pass and pixel values are
+    interpolated onto the new grid.
+
+    Parameters
+    ----------
+    frame : 2d np.ndarray, dtype=np.int32
+        an two dimensions array of integers containing grey levels of
+        the first frame.
+
+    x : 2d np.ndarray
+        a two dimensional array containing the x coordinates of the
+        interrogation window centers, in pixels.
+
+    y : 2d np.ndarray
+        a two dimensional array containing the y coordinates of the
+        interrogation window centers, in pixels.
+
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component,
+        in pixels/seconds.
+
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component,
+        in pixels/seconds.
+
+    interpolation_order: scalar
+        the degree of the frame interpolation (deformation) of the mesh
+
+    kx : scalar
+         the degree of the interpolation of the B-splines over the x-axis
+         of a rectangular mesh
+
+    ky : scalar
+         the degree of the interpolation of the B-splines over the
+         y-axis of a rectangular mesh
+
+    Returns
+    -------
+    frame_def:
+        a deformed image based on the meshgrid and displacements of the
+        previous pass
     """
     frame = frame.astype(np.float32)
     y1 = y[:, 0]  # extract first coloumn from meshgrid
-    # y1 = y1[::-1]  # flip
+    #  y1 = y1[::-1]  # flip
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(0, np.size(frame[0, :]), 1)  # extract the image grid
     side_y = np.arange(0, np.size(frame[:, 0]), 1)
 
-    # interpolate the diplacement on the image grid
-    ip = RectBivariateSpline(y1, x1, u)
-    # the way how to use the interpolation functions differs
+    # interpolating displacements onto a new meshgrid
+    ip = RectBivariateSpline(y1, x1, u, kx=kx, ky=ky)
     ut = ip(side_y, side_x)
-    # from matlab
-    ip2 = RectBivariateSpline(y1, x1, v)
+    # the way how to use the interpolation functions differs from matlab
+
+    ip2 = RectBivariateSpline(y1, x1, v, kx=kx, ky=ky)
     vt = ip2(side_y, side_x)
 
-    """This lines are interpolating the displacement from the interrogation window
-    grid onto the image grid. The result is displacment meshgrid with the size
-    of the image.
-    """
+    # deform the image by using the map coordinates function
+    # (old grid + displacement)
     x, y = np.meshgrid(side_x, side_y)  # create a meshgrid
     frame_def = scn.map_coordinates(
-        frame, ((y + vt, x + ut,)), order=interpolation_order, mode="nearest"
-    )
-    # deform the image by using the map coordinates function
+        frame, ((y+vt, x+ut,)), order=interpolation_order, mode='nearest')
+
     return frame_def
 
 
@@ -573,11 +610,15 @@ def multipass_img_deform(
     v_pre = ip2(y_int, x_int)
 
     # this one is doing the image deformation (see above)
-    frame_b_deform = frame_interpolation(
+    frame_b_deform = deform_windows(
         frame_b, x, y, u_pre, v_pre, interpolation_order=interpolation_order
     )
 
-    if do_sig2noise is True and current_iteration == iterations and iterations != 1:
+    if (
+        do_sig2noise is True and
+        current_iteration == iterations and
+        iterations != 1
+    ):
         sig2noise_method = sig2noise_method
     else:
         sig2noise_method = None
