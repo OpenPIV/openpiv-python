@@ -1,4 +1,4 @@
-from openpiv import tools, scaling, process, validation, filters,preprocess
+from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,20 +29,20 @@ search_area_size = 64 # pixels
 frame_rate = 40 # fps
 
 # process again with the masked images, for comparison# process once with the original images
-u, v, sig2noise = process.extended_search_area_piv(
+u, v, sig2noise = pyprocess.extended_search_area_piv(
                                                        frame_a.astype(np.int32) , frame_b.astype(np.int32), 
                                                        window_size = window_size,
                                                        overlap = overlap, 
                                                        dt=1./frame_rate, 
                                                        search_area_size = search_area_size, 
                                                        sig2noise_method = 'peak2peak')
-x, y = process.get_coordinates( image_size = frame_a.shape, window_size = window_size, overlap = overlap )
+x, y = pyprocess.get_coordinates( image_size = frame_a.shape, search_area_size = search_area_size, overlap = overlap )
 u, v, mask = validation.global_val( u, v, (-300.,300.),(-300.,300.))
 u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, mask, 'test.txt', fmt='%9.6f', delimiter='\t')
+tools.save(x, y, u, v, sig2noise, mask, 'test.txt', fmt='%9.6f', delimiter='\t')
 tools.display_vector_field('test.txt', scale=50, width=0.002)
 
 
@@ -64,19 +64,19 @@ plt.imshow(np.c_[masked_a,masked_b],cmap='gray')
 # Process the masked cropped image and see the OpenPIV result:
 
 # process again with the masked images, for comparison# process once with the original images
-u, v, sig2noise = process.extended_search_area_piv(
+u, v, sig2noise = pyprocess.extended_search_area_piv(
                                                        masked_a.astype(np.int32) , masked_b.astype(np.int32), 
                                                        window_size = window_size,
                                                        overlap = overlap, 
                                                        dt=1./frame_rate, 
                                                        search_area_size = search_area_size, 
                                                        sig2noise_method = 'peak2peak')
-x, y = process.get_coordinates( image_size = masked_a.shape, window_size = window_size, overlap = overlap )
+x, y = pyprocess.get_coordinates( image_size = masked_a.shape, search_area_size = search_area_size, overlap = overlap )
 u, v, mask = validation.global_val( u, v, (-300.,300.),(-300.,300.))
 u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1)
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, mask, 'test_masked.txt', fmt='%9.6f', delimiter='\t')
+tools.save(x, y, u, v, sig2noise, mask, 'test_masked.txt', fmt='%9.6f', delimiter='\t')
 tools.display_vector_field('test_masked.txt', scale=50, width=0.002)
 
