@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def get_coordinates(image_size, search_area_size, overlap=0):
+def get_coordinates(image_size, search_area_size, overlap):
     """Compute the x, y coordinates of the centers of the interrogation windows.
 
     Parameters
@@ -58,7 +58,9 @@ def get_coordinates(image_size, search_area_size, overlap=0):
     """
 
     # get shape of the resulting flow field
-    field_shape = get_field_shape(image_size, search_area_size, overlap)
+    field_shape = get_field_shape(image_size,
+                                  search_area_size,
+                                  overlap)
 
     # compute grid coordinates of the search area window centers
     # compute grid coordinates of the search area window centers
@@ -78,12 +80,13 @@ def get_coordinates(image_size, search_area_size, overlap=0):
     x += (
         image_size[1]
         - 1
-        - ((field_shape[1] - 1) * (search_area_size - overlap) + (search_area_size - 1))
+        - ((field_shape[1] - 1) * (search_area_size - overlap) +
+            (search_area_size - 1))
     ) // 2
     y += (
-        image_size[0]
-        - 1
-        - ((field_shape[0] - 1) * (search_area_size - overlap) + (search_area_size - 1))
+        image_size[0] - 1
+        - ((field_shape[0] - 1) * (search_area_size - overlap) +
+           (search_area_size - 1))
     ) // 2
 
     return np.meshgrid(x, y)
