@@ -262,8 +262,8 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # default_peak_position = (np.floor(corr.shape[0] / 2.),
     # np.floor(corr.shape[1] / 2.))
     # default_peak_position = np.array([0,0])
-
-    subp_peak_position = np.zeros((1, 2))
+    eps = 1e-7
+    subp_peak_position = (0.0, 0.0)
 
     # check inputs
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
@@ -275,34 +275,47 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # import pdb; pdb.set_trace()
 
     # the peak and its neighbours: left, right, down, up
-    c = corr[peak1_i, peak1_j]
-    cl = corr[peak1_i - 1, peak1_j]
-    cr = corr[peak1_i + 1, peak1_j]
-    cd = corr[peak1_i, peak1_j - 1]
-    cu = corr[peak1_i, peak1_j + 1]
+    # but we have to make sure that peak is not at the border
+    # @ErichZimmer noticed this bug for the small windows
 
-    # gaussian fit
-    if np.any(np.array([c, cl, cr, cd, cu]) < 0) and subpixel_method == "gaussian":
-        subpixel_method = "centroid"
+    if ((peak1_i == 0) | (peak1_i == corr.shape[0]-1) |
+       (peak1_j == 0) | (peak1_j == corr.shape[1]-1)):
+        return subp_peak_position
+    else:
+        corr += eps  # prevents log(0) = nan if "gaussian" is used (notebook)
+        c = corr[peak1_i, peak1_j]
+        cl = corr[peak1_i - 1, peak1_j]
+        cr = corr[peak1_i + 1, peak1_j]
+        cd = corr[peak1_i, peak1_j - 1]
+        cu = corr[peak1_i, peak1_j + 1]
 
-    # try:
-    if subpixel_method == "centroid":
-        subp_peak_position = (
-            ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr) / (cl + c + cr),
-            ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu) / (cd + c + cu),
-        )
+        # gaussian fit
+        if np.logical_and(np.any(np.array([c, cl, cr, cd, cu]) < 0),
+                          subpixel_method == "gaussian"):
+            subpixel_method = "parabolic"
 
-    elif subpixel_method == "gaussian":
-        subp_peak_position = (
-            peak1_i + ((log(cl) - log(cr)) / (2 * log(cl) - 4 * log(c) + 2 * log(cr))),
-            peak1_j + ((log(cd) - log(cu)) / (2 * log(cd) - 4 * log(c) + 2 * log(cu))),
-        )
+        # try:
+        if subpixel_method == "centroid":
+            subp_peak_position = (
+                ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr) /
+                (cl + c + cr),
+                ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu) /
+                (cd + c + cu),
+            )
 
-    elif subpixel_method == "parabolic":
-        subp_peak_position = (
-            peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
-            peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
-        )
+        elif subpixel_method == "gaussian":
+            subp_peak_position = (
+                peak1_i + ((log(cl) - log(cr)) / (2 * log(cl) - 4 * log(c) +
+                           2 * log(cr))),
+                peak1_j + ((log(cd) - log(cu)) / (2 * log(cd) - 4 * log(c) +
+                           2 * log(cu))),
+            )
+
+        elif subpixel_method == "parabolic":
+            subp_peak_position = (
+                peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
+                peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
+            )
 
     #     except BaseException:
     #         subp_peak_position = default_peak_position
@@ -310,7 +323,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     #     except IndexError:
     #         subp_peak_position = default_peak_position
 
-    return subp_peak_position
+        return subp_peak_position
 
 
 def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
@@ -481,7 +494,8 @@ def fft_correlate_strided_images(image_a, image_b):
     s2 = np.array(image_b.shape[-2:])
     size = s1 + s2 - 1
     fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-    fslice = tuple([slice(0, image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
+    fslice = tuple([slice(0, image_a.shape[0])] +
+                   [slice(0, int(sz)) for sz in size])
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
     f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
     corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
@@ -560,7 +574,8 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
         size = s1 + s2 - 1
         fslice = tuple([slice(0, int(sz)) for sz in size])
         # and slice only the relevant part
-        corr = fft_correlate_windows(zero_pad(window_a), zero_pad(window_b))[fslice]
+        corr = fft_correlate_windows(zero_pad(window_a),
+                                     zero_pad(window_b))[fslice]
     elif correlation_method == "direct":
         corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
     else:
@@ -587,7 +602,8 @@ def normalize_intensity(window):
         extra low/high
     """
     window = window.astype(np.float32)
-    window = window - window.mean(axis=(-2, -1), keepdims=True, dtype=np.float32)
+    window = window - window.mean(axis=(-2, -1),
+                                  keepdims=True, dtype=np.float32)
     window = window / (1.96 * np.std(window, dtype=np.float32))
     return np.clip(window, -1, 1)
 
@@ -735,7 +751,8 @@ def extended_search_area_piv(
     if search_area_size > window_size:
         mask = np.zeros((search_area_size, search_area_size))
         pad = np.int((search_area_size - window_size) / 2)
-        mask[slice(pad, search_area_size - pad), slice(pad, search_area_size - pad)] = 1
+        mask[slice(pad, search_area_size - pad),
+             slice(pad, search_area_size - pad)] = 1
         mask = np.broadcast_to(mask, aa.shape)
         aa *= mask
 
@@ -749,7 +766,7 @@ def extended_search_area_piv(
         )
     else:
         sig2noise = np.full_like(u, np.nan)
-        
+
     sig2noise = sig2noise.reshape(n_rows, n_cols)
 
     return u / dt, v / dt, sig2noise
@@ -757,10 +774,10 @@ def extended_search_area_piv(
 
 def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):
     """
-    Correlation maps are converted to displacement for each interrogation window
-    using the convention that the size of the correlation map is 2N -1 where
-    N is the size of the largest interrogation window (in frame B) that is 
-    called search_area_size
+    Correlation maps are converted to displacement for each interrogation
+    window using the convention that the size of the correlation map
+    is 2N -1 where N is the size of the largest interrogation window
+    (in frame B) that is called search_area_size
     Inputs:
         corr : 3D nd.array
             contains output of the fft_correlate_strided_images
