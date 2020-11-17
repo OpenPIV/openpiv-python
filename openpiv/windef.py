@@ -11,13 +11,14 @@ import os
 import numpy as np
 import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
+import matplotlib.pyplot as plt
+
 from openpiv.tools import imread, Multiprocesser, save, display_vector_field
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
-                                get_field_shape
+    get_field_shape
 from openpiv import smoothn
-import matplotlib.pyplot as plt
 
 
 def piv(settings):
@@ -199,6 +200,7 @@ def piv(settings):
                 v,
                 correlation_method=settings.correlation_method,
                 subpixel_method=settings.subpixel_method,
+                deformation_method=settings.deformation_method,
                 do_sig2noise=settings.extract_sig2noise,
                 sig2noise_method=settings.sig2noise_method,
                 sig2noise_mask=settings.sig2noise_mask,
@@ -292,8 +294,8 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-
-def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
+def create_deformation_field(
+        frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -352,12 +354,58 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
 
     ip2 = RectBivariateSpline(y1, x1, v, kx=kx, ky=ky)
     vt = ip2(side_y, side_x)
+    x, y = np.meshgrid(side_x, side_y)
+    return x, y, ut, vt
 
-    # deform the image by using the map coordinates function
-    # (old grid + displacement)
-    x, y = np.meshgrid(side_x, side_y)  # create a meshgrid
+
+def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
+    """
+    Deform an image by window deformation where a new grid is defined based
+    on the grid and displacements of the previous pass and pixel values are
+    interpolated onto the new grid.
+
+    Parameters
+    ----------
+    frame : 2d np.ndarray, dtype=np.int32
+        an two dimensions array of integers containing grey levels of
+        the first frame.
+
+    x : 2d np.ndarray
+        a two dimensional array containing the x coordinates of the
+        interrogation window centers, in pixels.
+
+    y : 2d np.ndarray
+        a two dimensional array containing the y coordinates of the
+        interrogation window centers, in pixels.
+
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component,
+        in pixels/seconds.
+
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component,
+        in pixels/seconds.
+
+    interpolation_order: scalar
+        the degree of the frame interpolation (deformation) of the mesh
+
+    kx : scalar
+         the degree of the interpolation of the B-splines over the x-axis
+         of a rectangular mesh
+
+    ky : scalar
+         the degree of the interpolation of the B-splines over the
+         y-axis of a rectangular mesh
+
+    Returns
+    -------
+    frame_def:
+        a deformed image based on the meshgrid and displacements of the
+        previous pass
+    """
+    x, y, ut, vt = create_deformation_field(frame, x, y, u, v, kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
-        frame, ((y+vt, x+ut,)), order=interpolation_order, mode='nearest')
+        frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
 
     return frame_def
 
@@ -480,6 +528,7 @@ def multipass_img_deform(
     v_old,
     correlation_method="circular",
     subpixel_method="gaussian",
+    deformation_method="symmetric",
     do_sig2noise=False,
     sig2noise_method="peak2peak",
     sig2noise_mask=2,
@@ -608,11 +657,25 @@ def multipass_img_deform(
 
     ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
-
-    # this one is doing the image deformation (see above)
-    frame_b_deform = deform_windows(
-        frame_b, x, y, u_pre, v_pre, interpolation_order=interpolation_order
-    )
+    # I added another method to the windowdeformation, 'symmetric' splits the
+    # onto both frames, takes more effort due to additional interpolation,
+    # however should deliver better results
+    if deformation_method == "symmetric":
+        # this one is doing the image deformation (see above)
+        x_new, y_new, ut, vt = create_deformation_field(
+            frame_a, x, y, u_pre, v_pre)
+        frame_a = scn.map_coordinates(
+            frame_a, ((y_new - vt / 2, x_new - ut / 2)),
+            order=interpolation_order, mode='nearest')
+        frame_b = scn.map_coordinates(
+            frame_b, ((y_new + vt / 2, x_new + ut / 2)),
+            order=interpolation_order, mode='nearest')
+    elif deformation_method == "second image":
+        frame_b = deform_windows(
+            frame_b, x, y, u_pre, v_pre,
+            interpolation_order=interpolation_order)
+    else:
+        raise Exception("Deformation method is not valid.")
 
     if (
         do_sig2noise is True and
@@ -625,7 +688,7 @@ def multipass_img_deform(
 
     u, v, s2n = extended_search_area_piv(
         frame_a,
-        frame_b_deform,
+        frame_b,
         window_size=window_size,
         overlap=overlap,
         search_area_size=window_size,
@@ -693,8 +756,8 @@ if __name__ == "__main__":
     # Root name of the output Folder for Result Files
     settings.save_folder_suffix = "Test_4"
     # Format and Image Sequence
-    settings.frame_pattern_a = "exp1_001_a.bmp"
-    settings.frame_pattern_b = "exp1_001_b.bmp"
+    settings.frame_pattern_a = 'exp1_001_a.bmp'
+    settings.frame_pattern_b = 'exp1_001_b.bmp'
 
     "Region of interest"
     # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full' for
@@ -711,7 +774,7 @@ if __name__ == "__main__":
 
     "Processing Parameters"
     settings.correlation_method = "circular"  # 'circular' or 'linear'
-    settings.iterations = 1  # select the number of PIV passes
+    settings.iterations = 3  # select the number of PIV passes
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2
     settings.windowsizes = (
@@ -726,6 +789,9 @@ if __name__ == "__main__":
     # methode used for subpixel interpolation:
     # 'gaussian','centroid','parabolic'
     settings.subpixel_method = "gaussian"
+    # 'symmetric' or 'second image', 'symmetric' splits the deformation
+    # both images, while 'second image' does only deform the second image.
+    settings.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
     # order of the image interpolation for the window deformation
     settings.interpolation_order = 3
     settings.scaling_factor = 1  # scaling factor pixel/meter
