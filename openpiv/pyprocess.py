@@ -737,6 +737,8 @@ def extended_search_area_piv(
     n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     # We implement the new vectorized code
+    frame_a = frame_a.astype('float32')  #normalize_intensity(frame_a)
+    frame_b = frame_b.astype('float32')  #normalize_intensity(frame_b)
 
     aa = moving_window_array(frame_a, search_area_size, overlap)
     bb = moving_window_array(frame_b, search_area_size, overlap)
