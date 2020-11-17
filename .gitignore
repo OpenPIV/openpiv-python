@@ -44,3 +44,5 @@ OpenPIV.egg-info
 .vscode/settings.json
 *.so
 tmp.png
+openpiv/examples/notebooks/all_test_cases_sample.py
+openpiv/examples/notebooks/window_deformation_comparison.py
