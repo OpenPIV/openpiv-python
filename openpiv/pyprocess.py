@@ -490,6 +490,8 @@ def fft_correlate_strided_images(image_a, image_b):
         and two last dimensions are interrogation windows of the first image
     image_b : similar
     """
+    image_a=normalize_intensity(image_a)
+    image_b=normalize_intensity(image_b)
     s1 = np.array(image_a.shape[-2:])
     s2 = np.array(image_b.shape[-2:])
     size = s1 + s2 - 1
@@ -499,7 +501,7 @@ def fft_correlate_strided_images(image_a, image_b):
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
     f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
     corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
-    return corr
+    return corr/(s1[0]*s1[1])
 
 
 def zero_pad(window):
@@ -604,8 +606,8 @@ def normalize_intensity(window):
     window = window.astype(np.float32)
     window = window - window.mean(axis=(-2, -1),
                                   keepdims=True, dtype=np.float32)
-    window = window / (1.96 * np.std(window, dtype=np.float32))
-    return np.clip(window, -1, 1)
+    window = window /  np.std(window, axis=(-2, -1),keepdims=True, dtype=np.float32)
+    return window
 
 
 def extended_search_area_piv(
@@ -735,8 +737,6 @@ def extended_search_area_piv(
     n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     # We implement the new vectorized code
-    frame_a = normalize_intensity(frame_a)
-    frame_b = normalize_intensity(frame_b)
 
     aa = moving_window_array(frame_a, search_area_size, overlap)
     bb = moving_window_array(frame_b, search_area_size, overlap)
