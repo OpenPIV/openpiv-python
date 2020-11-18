@@ -29,10 +29,10 @@ def piv():
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from openpiv import process
+    from openpiv import pyprocess
     import pkg_resources as pkg
 
-    import numpy as np
+    # import numpy as np
 
     import matplotlib.animation as animation
 
@@ -63,18 +63,20 @@ def piv():
 
     # import os
 
-    u, v = process.extended_search_area_piv(
-        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, overlap=16
+    vel = pyprocess.extended_search_area_piv(
+        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, 
+        overlap=16
     )
-    x, y = process.get_coordinates(image_size=frame_a.shape, window_size=32, overlap=16)
+    x, y = pyprocess.get_coordinates(image_size=frame_a.shape, 
+                                     search_area_size=32, overlap=16)
 
     fig, ax = plt.subplots(1, 2, figsize=(11, 8))
     ax[0].imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
-    ax[0].quiver(x, y, u, v, scale=50, color="r")
+    ax[0].quiver(x, y, vel[0], vel[1], scale=50, color="r")
 
-    ax[1].quiver(x, y, u, v, scale=50, color="b")
+    ax[1].quiver(x, y, vel[0], vel[1], scale=50, color="b")
     ax[1].set_aspect(1.1)
     ax[1].invert_yaxis()
     plt.show()
 
-    return x, y, u, v
+    return x, y, vel[0], vel[1]
