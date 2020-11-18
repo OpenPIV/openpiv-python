@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def simple_piv(im1, im2):
+def simple_piv(im1, im2, plot=True):
     """
     Simplest PIV run on the pair of images using default settings
 
@@ -35,21 +35,22 @@ def simple_piv(im1, im2):
     (TIF is preferable, whatever imageio can read)
 
     """
-
-    frame_a = tools.imread(im1)
-    frame_b = tools.imread(im2)
+    if isinstance(im1, str):
+        im1 = tools.imread(im1)
+        im2 = tools.imread(im2)
 
     vel = pyprocess.extended_search_area_piv(
-        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32,
+        im1.astype(np.int32), im2.astype(np.int32), window_size=32,
         overlap=16, search_area_size=64
     )
-    x, y = pyprocess.get_coordinates(image_size=frame_a.shape,
+    x, y = pyprocess.get_coordinates(image_size=im1.shape,
                                      search_area_size=64, overlap=16)
 
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
-    ax.quiver(x, y, vel[0], vel[1], scale=50, color="r")
-    plt.show()
+    if plot:
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.imshow(im1, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
+        ax.quiver(x, y, vel[0], vel[1], scale=50, color="r")
+        plt.show()
 
     return x, y, vel[0], vel[1]
 
