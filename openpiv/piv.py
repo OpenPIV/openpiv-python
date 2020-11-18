@@ -1,3 +1,13 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+from openpiv import pyprocess, tools
+import pkg_resources as pkg
+
+# import numpy as np
+
+import matplotlib.animation as animation
+
 """This module contains image processing routines that improve
 images prior to PIV processing."""
 
@@ -16,34 +26,51 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def piv_example():
+def simple_piv(im1, im2):
     """
     Simplest PIV run on the pair of images using default settings
 
-    piv(im1,im2) will create a tmp.vec file with the vector filed in pix/dt (dt=1) from 
-    two images, im1,im2 provided as full path filenames (TIF is preferable, whatever imageio can read)
+    piv(im1,im2) will create a tmp.vec file with the vector filed in pix/dt
+    (dt=1) from two images, im1,im2 provided as full path filenames
+    (TIF is preferable, whatever imageio can read)
 
     """
 
-    import imageio
-    import numpy as np
-    import matplotlib.pyplot as plt
+    frame_a = tools.imread(im1)
+    frame_b = tools.imread(im2)
 
-    from openpiv import pyprocess
-    import pkg_resources as pkg
+    vel = pyprocess.extended_search_area_piv(
+        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32,
+        overlap=16, search_area_size=64
+    )
+    x, y = pyprocess.get_coordinates(image_size=frame_a.shape,
+                                     search_area_size=64, overlap=16)
 
-    # import numpy as np
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
+    ax.quiver(x, y, vel[0], vel[1], scale=50, color="r")
+    plt.show()
 
-    import matplotlib.animation as animation
+    return x, y, vel[0], vel[1]
 
+
+def piv_example():
+    """
+    PIV example uses examples/test5 vortex PIV data to show the main principles
+
+    piv(im1,im2) will create a tmp.vec file with the vector filed in pix/dt
+    (dt=1) from two images, im1,im2 provided as full path filenames
+    (TIF is preferable)
+
+    """
     # if im1 is None and im2 is None:
     im1 = pkg.resource_filename("openpiv", "examples/test5/frame_a.tif")
     im2 = pkg.resource_filename("openpiv", "examples/test5/frame_b.tif")
 
-    frame_a = imageio.imread(im1)
-    frame_b = imageio.imread(im2)
+    frame_a = tools.imread(im1)
+    frame_b = tools.imread(im2)
 
-    frame_a[0:32, 512 - 32 :] = 255
+    frame_a[0:32, 512 - 32:] = 255
 
     images = []
     images.extend([frame_a, frame_b])
@@ -58,17 +85,19 @@ def piv_example():
         im = ax.imshow(images[i % 2], animated=True, cmap=plt.cm.gray)
         ims.append([im])
 
-    _ = animation.ArtistAnimation(fig, ims, interval=200, blit=False, repeat_delay=0)
+    _ = animation.ArtistAnimation(fig, ims, interval=200, blit=False,
+                                  repeat_delay=0)
     plt.show()
 
     # import os
 
     vel = pyprocess.extended_search_area_piv(
-        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32, 
-        overlap=16
+        frame_a.astype(np.int32), frame_b.astype(np.int32), window_size=32,
+        search_area_size=64,
+        overlap=8
     )
-    x, y = pyprocess.get_coordinates(image_size=frame_a.shape, 
-                                     search_area_size=32, overlap=16)
+    x, y = pyprocess.get_coordinates(image_size=frame_a.shape,
+                                     search_area_size=64, overlap=8)
 
     fig, ax = plt.subplots(1, 2, figsize=(11, 8))
     ax[0].imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8, origin="upper")
