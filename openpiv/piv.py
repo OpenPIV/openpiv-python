@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def piv():
+def piv_example():
     """
     Simplest PIV run on the pair of images using default settings
 
