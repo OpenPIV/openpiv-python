@@ -27,23 +27,29 @@ settings.dynamic_masking_threshold = 0.005
 settings.dynamic_masking_filter_size = 7
 
 'Processing Parameters'
-settings.correlation_method='circular'  # 'circular' or 'linear'
-settings.iterations = 3  # select the number of PIV passes
-# add the interroagtion window size for each pass. 
-# For the moment, it should be a power of 2 
-settings.windowsizes = (64, 32, 16) # if longer than n iteration the rest is ignored
+settings.correlation_method = 'circular'  # 'circular' or 'linear'
+settings.iterations = 2  # select the number of PIV passes
+# add the interroagtion window size for each pass.
+# For the moment, it should be a power of 2
+# if longer than n iteration the rest is ignored
+settings.windowsizes = (64, 32, 16)
 # The overlap of the interroagtion window for each pass.
-settings.overlap = (32, 16, 8) # This is 50% overlap
+settings.overlap = (32, 16, 8)  # This is 50% overlap
 # Has to be a value with base two. In general window size/2 is a good choice.
 # methode used for subpixel interpolation: 'gaussian','centroid','parabolic'
 settings.subpixel_method = 'gaussian'
+# 'symmetric' or 'second image', 'symmetric' splits the deformation on bot images
+# while 'second image' does only deform the second image.
+settings.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
 # order of the image interpolation for the window deformation
 settings.interpolation_order = 3
 settings.scaling_factor = 1  # scaling factor pixel/meter
 settings.dt = 1  # time between to frames (in seconds)
 'Signal to noise ratio options (only for the last pass)'
-# It is possible to decide if the S/N should be computed (for the last pass) or not
-settings.extract_sig2noise = True  # 'True' or 'False' (only for the last pass)
+# It is possible to decide if the S/N should be computed (for the last
+# pass) or not
+# 'True' or 'False' (only for the last pass)
+settings.extract_sig2noise = False
 # method used to calculate the signal to noise ratio 'peak2peak' or 'peak2mean'
 settings.sig2noise_method = 'peak2peak'
 # select the width of the masked to masked out pixels next to the main peak
@@ -66,19 +72,19 @@ settings.std_threshold = 7  # threshold of the std validation
 # The third filter is the median test (not normalized at the moment)
 settings.median_threshold = 3  # threshold of the median validation
 # On the last iteration, an additional validation can be done based on the S/N.
-settings.median_size=1 #defines the size of the local median
+settings.median_size = 1  # defines the size of the local median
 'Validation based on the signal to noise ratio'
 # Note: only available when extract_sig2noise==True and only for the last
 # pass of the interrogation
 # Enable the signal to noise ratio validation. Options: True or False
-settings.do_sig2noise_validation = True # This is time consuming
+settings.do_sig2noise_validation = False  # This is time consuming
 # minmum signal to noise ratio that is need for a valid vector
 settings.sig2noise_threshold = 1.2
 'Outlier replacement or Smoothing options'
 # Replacment options for vectors which are masked as invalid by the validation
-settings.replace_vectors = True # Enable the replacment. Chosse: True or False
-settings.smoothn=True #Enables smoothing of the displacemenet field
-settings.smoothn_p=0.5 # This is a smoothing parameter
+settings.replace_vectors = True  # Enable the replacment. Chosse: True or False
+settings.smoothn = True  # Enables smoothing of the displacemenet field
+settings.smoothn_p = 0.5  # This is a smoothing parameter
 # select a method to replace the outliers: 'localmean', 'disk', 'distance'
 settings.filter_method = 'localmean'
 # maximum iterations performed to replace the outliers

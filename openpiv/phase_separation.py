@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 import scipy.ndimage
-from skimage.morphology import disk, erosion , dilation, opening
+from skimage.morphology import disk, erosion, dilation, opening
 from skimage.measure import label
 
 
-def opening_method( original_image, kernel_size, iterations=1, thresh_factor=1.1 ):
+def opening_method(original_image, kernel_size, iterations=1, thresh_factor=1.1):
     """Extract separated images based on particle size.
 
     This method uses an *erosion* filter followed by a *dilation* (aka *opening*), to remove
@@ -59,24 +59,24 @@ def opening_method( original_image, kernel_size, iterations=1, thresh_factor=1.1
         Extracted image of the phase with smaller particles (carrier phase)
 
     """
-    if (kernel_size % 2 != 1):
+    if kernel_size % 2 != 1:
         raise Exception("kernel_size must be an odd number")
 
     # Apply opening filter, resulting big particles image
-    kernel = disk((kernel_size-1)/2)
+    kernel = disk((kernel_size - 1) / 2)
     temp_image = original_image
-    for _ in range (0, iterations):
+    for _ in range(0, iterations):
         temp_image = erosion(temp_image, kernel)
-    for _ in range (0, iterations):
+    for _ in range(0, iterations):
         temp_image = dilation(temp_image, kernel)
     big_particles_img = temp_image
 
     # Find local average intensity
     averaging_kernel_size = 3 * kernel_size
-    local_average = scipy.ndimage.gaussian_filter( original_image, averaging_kernel_size )
+    local_average = scipy.ndimage.gaussian_filter(original_image, averaging_kernel_size)
 
     # Find big particles mask
-    mask = np.where( big_particles_img >= thresh_factor * local_average, 0, 1 )
+    mask = np.where(big_particles_img >= thresh_factor * local_average, 0, 1)
 
     # Estimate local background intensity (used to replace big particles)
     ## Normalized convolution is used to approximate local background intensity from the original image.
@@ -84,16 +84,22 @@ def opening_method( original_image, kernel_size, iterations=1, thresh_factor=1.1
     ## See http://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/PIRODDI1/NormConv/NormConv.html
     ## Uniform filter is used for efficiency, due to the large kernel size.
     estimated_background_intensity = np.divide(
-        scipy.ndimage.uniform_filter( mask * original_image, averaging_kernel_size ),
-        scipy.ndimage.uniform_filter( mask.astype(np.float64), averaging_kernel_size ),
-        where = scipy.ndimage.uniform_filter( mask.astype(np.float64), averaging_kernel_size ) != 0,
-        out = np.zeros_like(original_image, dtype=np.float64)
+        scipy.ndimage.uniform_filter(mask * original_image, averaging_kernel_size),
+        scipy.ndimage.uniform_filter(mask.astype(np.float64), averaging_kernel_size),
+        where=scipy.ndimage.uniform_filter(
+            mask.astype(np.float64), averaging_kernel_size
+        )
+        != 0,
+        out=np.zeros_like(original_image, dtype=np.float64),
     ).astype(np.uint8)
 
     # Generate small particles image
-    small_particles_img = np.where( mask > 0, original_image, estimated_background_intensity )
+    small_particles_img = np.where(
+        mask > 0, original_image, estimated_background_intensity
+    )
 
     return big_particles_img, small_particles_img
+
 
 def median_filter_method(original_image, kernel_size):
     """Extract separated images using a median filter
@@ -121,16 +127,25 @@ def median_filter_method(original_image, kernel_size):
         Extracted image of the phase with smaller particles (carrier phase)
     """
 
-    if (kernel_size % 2 != 1):
+    if kernel_size % 2 != 1:
         raise Exception("kernel_size must be an odd number.")
 
-    big_particles_img = scipy.ndimage.median_filter( original_image, kernel_size )
-    small_particles_img = np.where( original_image > big_particles_img, original_image - big_particles_img, 0 )
+    big_particles_img = scipy.ndimage.median_filter(original_image, kernel_size)
+    small_particles_img = np.where(
+        original_image > big_particles_img, original_image - big_particles_img, 0
+    )
 
     return big_particles_img, small_particles_img
 
 
-def khalitov_longmire(original_image, big_particles_criteria, small_particles_criteria, blur_kernel_size=1, I_sat=230, opening_ksize=3):
+def khalitov_longmire(
+    original_image,
+    big_particles_criteria,
+    small_particles_criteria,
+    blur_kernel_size=1,
+    I_sat=230,
+    opening_ksize=3,
+):
     """Extract separated images using the method proposed by Khalitov & Longmire, 2002.
     
     For detailed information see:
@@ -179,51 +194,74 @@ def khalitov_longmire(original_image, big_particles_criteria, small_particles_cr
         Extracted image of the phase with smaller particles (carrier phase)
     """
     # Calculate object pixels using 2nd derivative criteria
-    object_pixels = khalitov_longmire_get_object_pixels(original_image, blur_kernel_size, I_sat, opening_ksize)
+    object_pixels = khalitov_longmire_get_object_pixels(
+        original_image, blur_kernel_size, I_sat, opening_ksize
+    )
 
     # Find connected components & corresponding data
-    N, labels_image, regions_size_array, regions_brightness_array = khalitov_longmire_analyse_particle_segments(original_image, object_pixels)
+    (
+        N,
+        labels_image,
+        regions_size_array,
+        regions_brightness_array,
+    ) = khalitov_longmire_analyse_particle_segments(original_image, object_pixels)
 
     # Apply criteria to regions
 
     ## Big particles
-    is_region_a_big_particle = (regions_size_array > big_particles_criteria['min_size'])
+    is_region_a_big_particle = regions_size_array > big_particles_criteria["min_size"]
 
-    if 'max_size' in big_particles_criteria:
-        is_region_a_big_particle &= (regions_size_array < big_particles_criteria['max_size'])
+    if "max_size" in big_particles_criteria:
+        is_region_a_big_particle &= (
+            regions_size_array < big_particles_criteria["max_size"]
+        )
 
-    if 'min_brightness' in big_particles_criteria:
-        is_region_a_big_particle &= (regions_brightness_array > big_particles_criteria['min_brightness'])
+    if "min_brightness" in big_particles_criteria:
+        is_region_a_big_particle &= (
+            regions_brightness_array > big_particles_criteria["min_brightness"]
+        )
 
-    if 'max_brightness' in big_particles_criteria:
-        is_region_a_big_particle &= (regions_brightness_array < big_particles_criteria['max_brightness'])
+    if "max_brightness" in big_particles_criteria:
+        is_region_a_big_particle &= (
+            regions_brightness_array < big_particles_criteria["max_brightness"]
+        )
 
     ## Small particles
-    is_region_a_small_particle = (regions_size_array < small_particles_criteria['max_size'])
+    is_region_a_small_particle = (
+        regions_size_array < small_particles_criteria["max_size"]
+    )
 
-    if 'min_size' in small_particles_criteria:
-        is_region_a_small_particle &= (regions_size_array > small_particles_criteria['min_size'])
+    if "min_size" in small_particles_criteria:
+        is_region_a_small_particle &= (
+            regions_size_array > small_particles_criteria["min_size"]
+        )
 
-    if 'min_brightness' in small_particles_criteria:
-        is_region_a_small_particle &= (regions_brightness_array > small_particles_criteria['min_brightness'])
+    if "min_brightness" in small_particles_criteria:
+        is_region_a_small_particle &= (
+            regions_brightness_array > small_particles_criteria["min_brightness"]
+        )
 
-    if 'max_brightness' in small_particles_criteria:
-        is_region_a_small_particle &= (regions_brightness_array < small_particles_criteria['max_brightness'])
+    if "max_brightness" in small_particles_criteria:
+        is_region_a_small_particle &= (
+            regions_brightness_array < small_particles_criteria["max_brightness"]
+        )
 
     # Generate big particles mask
     big_particles_mask = np.zeros(original_image.shape, dtype=np.uint8)
     for i in range(0, N):
         if is_region_a_big_particle[i]:
-            big_particles_mask[ labels_image == i ] = 1
+            big_particles_mask[labels_image == i] = 1
 
     # Generate unidentifed particles mask (for efficiency reasons)
     unindentified_particles_mask = np.zeros(original_image.shape, dtype=np.uint8)
     for i in range(0, N):
         if (not is_region_a_big_particle[i]) and (not is_region_a_small_particle[i]):
-            unindentified_particles_mask[ labels_image == i ] = 1
+            unindentified_particles_mask[labels_image == i] = 1
 
     # Generate small particles mask
-    small_particles_mask = object_pixels - big_particles_mask - unindentified_particles_mask
+    small_particles_mask = (
+        object_pixels - big_particles_mask - unindentified_particles_mask
+    )
 
     # Generate final grayscale images
     big_particles_img = big_particles_mask * original_image
@@ -232,7 +270,9 @@ def khalitov_longmire(original_image, big_particles_criteria, small_particles_cr
     return big_particles_img, small_particles_img
 
 
-def get_particles_size_array(original_image, blur_kernel_size=1, I_sat=230, opening_ksize=3):
+def get_particles_size_array(
+    original_image, blur_kernel_size=1, I_sat=230, opening_ksize=3
+):
     """Returns the array of particle image areas in pixels.
 
     Used as a quick means to set size limits in Kalitov-Longmire method.
@@ -263,15 +303,25 @@ def get_particles_size_array(original_image, blur_kernel_size=1, I_sat=230, open
         Array of length N, containing areas of particle regions number 0 to N in pixels.
     """
     # Calculate object pixels using 2nd derivative criteria
-    object_pixels = khalitov_longmire_get_object_pixels(original_image, blur_kernel_size, I_sat, opening_ksize)
+    object_pixels = khalitov_longmire_get_object_pixels(
+        original_image, blur_kernel_size, I_sat, opening_ksize
+    )
 
     # Find connected components & corresponding data
-    _, _, size_array, _ = khalitov_longmire_analyse_particle_segments(original_image, object_pixels)
+    _, _, size_array, _ = khalitov_longmire_analyse_particle_segments(
+        original_image, object_pixels
+    )
 
     return size_array
 
 
-def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, opening_ksize=3, MAX_PARTICLE_SIZE=400):
+def get_size_brightness_map(
+    original_image,
+    blur_kernel_size=1,
+    I_sat=230,
+    opening_ksize=3,
+    MAX_PARTICLE_SIZE=400,
+):
     """Returns the size-brightness map.
 
     Used as an advanced means to set size and brightness limits in Kalitov-Longmire method.
@@ -308,13 +358,17 @@ def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, openi
         See Kalitov & Longmire, 2002 for more information.
     """
     # n[i,j] = Number of particles with size of i and rounded brightness of j
-    n = np.zeros((MAX_PARTICLE_SIZE+1, 256), dtype=np.uint8)
+    n = np.zeros((MAX_PARTICLE_SIZE + 1, 256), dtype=np.uint8)
 
     # Get Object Pixels
-    object_pixels = khalitov_longmire_get_object_pixels(original_image, blur_kernel_size, I_sat, opening_ksize)
-    
+    object_pixels = khalitov_longmire_get_object_pixels(
+        original_image, blur_kernel_size, I_sat, opening_ksize
+    )
+
     # Find connected components & corresponding data
-    N, _, size_array, brightness_array = khalitov_longmire_analyse_particle_segments(original_image, object_pixels)
+    N, _, size_array, brightness_array = khalitov_longmire_analyse_particle_segments(
+        original_image, object_pixels
+    )
 
     # Round brightness
     rounded_brightness = np.uint8(np.round(brightness_array))
@@ -326,35 +380,39 @@ def get_size_brightness_map(original_image, blur_kernel_size=1, I_sat=230, openi
         n[size_array[i], rounded_brightness[i]] += 1
 
     # Calculate total signal density map:
-    SIZE, BRIGHTNESS = np.meshgrid(range(0, 256), range(0, MAX_PARTICLE_SIZE+1))
-    with np.errstate(divide='ignore'):
+    SIZE, BRIGHTNESS = np.meshgrid(range(0, 256), range(0, MAX_PARTICLE_SIZE + 1))
+    with np.errstate(divide="ignore"):
         density_map = np.log10(SIZE * BRIGHTNESS * n)
-    density_map[ np.isneginf(density_map) ] = 0
+    density_map[np.isneginf(density_map)] = 0
     return density_map
 
 
 def khalitov_longmire_analyse_particle_segments(original_image, object_pixels):
-    """Private function"""    
+    """Private function"""
     # Find connected components
-    label_image , N = label( object_pixels, connectivity=1, return_num=True )
+    label_image, N = label(object_pixels, connectivity=1, return_num=True)
 
     # Integrate 1 over regions
-    size_array = scipy.ndimage.sum( 1, label_image, index=range(0, N+1) )
+    size_array = scipy.ndimage.sum(1, label_image, index=range(0, N + 1))
     size_array = np.uint16(size_array)
 
     # Integrate intensity over regions
-    total_light_array = scipy.ndimage.sum( original_image, label_image , index=range(0, N+1) )
+    total_light_array = scipy.ndimage.sum(
+        original_image, label_image, index=range(0, N + 1)
+    )
     total_light_array = np.float64(total_light_array)
 
     brightness_array = total_light_array / size_array
 
     # Drop background region (index 0)
-    return N, label_image-1, size_array[1:], brightness_array[1:]
+    return N, label_image - 1, size_array[1:], brightness_array[1:]
 
 
-def khalitov_longmire_get_object_pixels(original_image, blur_kernel_size=1, I_sat=230, opening_ksize=3):
+def khalitov_longmire_get_object_pixels(
+    original_image, blur_kernel_size=1, I_sat=230, opening_ksize=3
+):
     """Private function"""
-    if (blur_kernel_size % 2 != 1):
+    if blur_kernel_size % 2 != 1:
         raise Exception("Blur kernel size must be an odd number.")
 
     if (opening_ksize > 1) and (opening_ksize % 2 != 1):
@@ -362,43 +420,37 @@ def khalitov_longmire_get_object_pixels(original_image, blur_kernel_size=1, I_sa
 
     # Pre-processing box blur
     if blur_kernel_size > 0:
-        original_image = scipy.ndimage.uniform_filter( original_image, blur_kernel_size )
+        original_image = scipy.ndimage.uniform_filter(original_image, blur_kernel_size)
 
     # Transform to log space
     I = np.float32(original_image)
-    with np.errstate(divide='ignore'):
+    with np.errstate(divide="ignore"):
         Ln_I = np.log(I)
-    Ln_I[ np.isneginf(Ln_I) ] = 0
+    Ln_I[np.isneginf(Ln_I)] = 0
 
     # Calculate second directional derivatives
-    X_deriv2 = scipy.ndimage.convolve(Ln_I,np.asarray([
-        [0, 0, 0],
-        [1, -2, 1],
-        [0, 0, 0]
-    ]))
-    Y_deriv2 = scipy.ndimage.convolve(Ln_I, np.asarray([
-        [0, 1, 0],
-        [0, -2, 0],
-        [0, 1, 0]
-    ]))
-    D45_deriv2 = scipy.ndimage.convolve(Ln_I, np.asarray([
-        [0, 0, 1],
-        [0, -2, 0],
-        [1, 0, 0]
-    ])) # 0.707 coeff is ignored as we're only interested in sign of the result.
-    D135_deriv2 = scipy.ndimage.convolve(Ln_I, np.asarray([
-        [1, 0, 0],
-        [0, -2, 0],
-        [0, 0, 1]
-    ])) # 0.707 coeff is ignored as we're only interested in sign of the result.
+    X_deriv2 = scipy.ndimage.convolve(
+        Ln_I, np.asarray([[0, 0, 0], [1, -2, 1], [0, 0, 0]])
+    )
+    Y_deriv2 = scipy.ndimage.convolve(
+        Ln_I, np.asarray([[0, 1, 0], [0, -2, 0], [0, 1, 0]])
+    )
+    D45_deriv2 = scipy.ndimage.convolve(
+        Ln_I, np.asarray([[0, 0, 1], [0, -2, 0], [1, 0, 0]])
+    )  # 0.707 coeff is ignored as we're only interested in sign of the result.
+    D135_deriv2 = scipy.ndimage.convolve(
+        Ln_I, np.asarray([[1, 0, 0], [0, -2, 0], [0, 0, 1]])
+    )  # 0.707 coeff is ignored as we're only interested in sign of the result.
 
     # Apply conditions for object pixels
-    object_pixels = ( (X_deriv2 < 0) & (Y_deriv2 < 0) & (D45_deriv2 < 0) & (D135_deriv2 < 0) ) | (I > I_sat)
+    object_pixels = (
+        (X_deriv2 < 0) & (Y_deriv2 < 0) & (D45_deriv2 < 0) & (D135_deriv2 < 0)
+    ) | (I > I_sat)
     object_pixels_uint8 = np.uint8(object_pixels)
 
     # Apply opening filter to remove noisy dots
     if opening_ksize > 1:
-        kernel = disk((opening_ksize-1)/2)
+        kernel = disk((opening_ksize - 1) / 2)
         object_pixels_uint8 = opening(object_pixels_uint8, kernel)
 
     return object_pixels_uint8

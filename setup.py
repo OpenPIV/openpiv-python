@@ -1,4 +1,4 @@
-import os
+from os import path
 
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
@@ -8,23 +8,23 @@ import numpy
 
 
 extensions = [
-    Extension("openpiv.process",["./openpiv/process.pyx"],include_dirs = [numpy.get_include()])]
+    Extension("openpiv.widim", ["./openpiv/widim.pyx"],
+              include_dirs=[numpy.get_include()])]
 
-extensions = cythonize(extensions, include_path = [numpy.get_include()])
+extensions = cythonize(extensions, include_path=[numpy.get_include()])
 
 
 # read the contents of your README file
-from os import path
 this_directory = path.abspath(path.dirname(__file__))
-#with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+# with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 with open(path.join(this_directory, 'README.md')) as f:
     long_description = f.read()
 
 setup(
-    name = "OpenPIV",
-    version ='0.22.3',
-    cmdclass = {'build_ext': build_ext},
-    ext_modules = extensions,
+    name="OpenPIV",
+    version='0.23.0',
+    cmdclass={'build_ext': build_ext},
+    ext_modules=extensions,
     packages=find_packages(),
     include_package_data=True,
     setup_requires=[
@@ -34,20 +34,21 @@ setup(
     ],
     install_requires=[
         'cython>=0.29.14',
-        'numpy',            
+        'numpy',
         'imageio',
         'matplotlib>=3',
         'scikit-image',
-        'progressbar2',
         'scipy',
         'natsort',
         'GitPython',
         'pytest',
-		'tqdm'
+        'tqdm'
     ],
-    classifiers = [
-        # PyPI-specific version type. The number specified here is a magic constant
-        # with no relation to this application's version numbering scheme. *sigh*
+    classifiers=[
+        # PyPI-specific version type. The number specified here is a magic
+        # constant
+        # with no relation to this application's version numbering scheme.
+        # *sigh*
         'Development Status :: 4 - Beta',
 
         # Sublist of all supported Python versions.
@@ -67,6 +68,6 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
     ],
-    long_description=long_description,
-    long_description_content_type='text/markdown'
+    # long_description=long_description,
+    # long_description_content_type='text/markdown'
 )

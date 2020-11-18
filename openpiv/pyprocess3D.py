@@ -3,6 +3,7 @@ import numpy as np
 from numpy.fft import rfftn, irfftn
 from numpy import ma
 from tqdm import tqdm
+from openpiv.pyprocess import get_field_shape, find_first_peak
 
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
@@ -61,74 +62,53 @@ def get_coordinates(image_size, search_area_size, window_size, overlap):
     """
 
     # get shape of the resulting flow field
-    field_shape = get_field_shape(image_size, search_area_size, window_size, overlap)
+    field_shape = get_field_shape(image_size, search_area_size, overlap)
 
     # compute grid coordinates of the search area centers
-    x = np.arange(field_shape[1]) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1) / 2.0
-    y = np.arange(field_shape[0]) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1) / 2.0
-    z = np.arange(field_shape[2]) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1) / 2.0
+    x = (
+        np.arange(field_shape[1]) * (window_size[1] - overlap[1])
+        + (search_area_size[1] - 1) / 2.0
+    )
+    y = (
+        np.arange(field_shape[0]) * (window_size[0] - overlap[0])
+        + (search_area_size[0] - 1) / 2.0
+    )
+    z = (
+        np.arange(field_shape[2]) * (window_size[2] - overlap[2])
+        + (search_area_size[2] - 1) / 2.0
+    )
 
     # moving coordinates further to the center, so that the points at the extreme left/right or top/bottom
     # have the same distance to the window edges. For simplicity only integer movements are allowed.
-    x += (image_size[1] - 1 - ((field_shape[1] - 1) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1))) // 2
-    y += (image_size[0] - 1 - ((field_shape[0] - 1) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1))) // 2
-    z += (image_size[2] - 1 - ((field_shape[2] - 1) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1))) // 2
+    x += (
+        image_size[1]
+        - 1
+        - (
+            (field_shape[1] - 1) * (window_size[1] - overlap[1])
+            + (search_area_size[1] - 1)
+        )
+    ) // 2
+    y += (
+        image_size[0]
+        - 1
+        - (
+            (field_shape[0] - 1) * (window_size[0] - overlap[0])
+            + (search_area_size[0] - 1)
+        )
+    ) // 2
+    z += (
+        image_size[2]
+        - 1
+        - (
+            (field_shape[2] - 1) * (window_size[2] - overlap[2])
+            + (search_area_size[2] - 1)
+        )
+    ) // 2
 
     return np.meshgrid(x, y, z)
 
 
-def get_field_shape(image_size, search_area_size, window_size, overlap):
-    """Compute the shape of the resulting flow field.
-
-    Given the image size, the interrogation window size and
-    the overlap size, it is possible to calculate the number
-    of rows and columns of the resulting flow field.
-
-    Parameters
-    ----------
-    image_size: two elements tuple
-        a two dimensional tuple for the pixel size of the image
-        first element is number of rows, second element is
-        the number of columns.
-
-    window_size: tuple
-        the size of the interrogation window.
-
-    search_area_size: tuple
-        the size of the search area window.
-
-    overlap: tuple
-        the number of pixel by which two adjacent interrogation
-        windows overlap.
-
-
-    Returns
-    -------
-    field_shape : three elements tuple
-        the shape of the resulting flow field
-    """
-
-    return (np.array(image_size) - np.array(search_area_size)) // (np.array(window_size) - np.array(overlap)) + 1
-
-
-def find_first_peak(corr):
-    """
-    Find row and column indices of the first correlation peak.
-
-    Parameters
-    ----------
-    corr : np.ndarray
-        the correlation map
-
-    Returns
-    -------
-
-    """
-
-    return np.unravel_index(np.argmax(corr), corr.shape), corr.max()
-
-
-def find_second_peak(corr, i=None, j=None, z=None, width=2):
+def find_second_peak_3D(corr, i=None, j=None, z=None, width=2):
     """
     Find the value of the second largest peak.
 
@@ -187,7 +167,7 @@ def find_second_peak(corr, i=None, j=None, z=None, width=2):
     return (i, j, z), corr_max2
 
 
-def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
+def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     """
     Find subpixel approximation of the correlation peak.
 
@@ -232,28 +212,49 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
         cb = corr[peak1_i, peak1_j, peak1_z + 1]
 
         # gaussian fit
-        if np.any(np.array([c, cl, cr, cd, cu, cf, cb]) < 0) and subpixel_method == 'gaussian':
-            subpixel_method = 'centroid'
+        if (
+            np.any(np.array([c, cl, cr, cd, cu, cf, cb]) < 0)
+            and subpixel_method == "gaussian"
+        ):
+            subpixel_method = "centroid"
 
         try:
-            if subpixel_method == 'centroid':
+            if subpixel_method == "centroid":
                 subp_peak_position = (
-                    ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr) / (cl + c + cr),
-                    ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu) / (cd + c + cu),
-                    ((peak1_z - 1) * cf + peak1_z * c + (peak1_z + 1) * cb) / (cf + c + cb))
+                    ((peak1_i - 1) * cl + peak1_i * c + (peak1_i + 1) * cr)
+                    / (cl + c + cr),
+                    ((peak1_j - 1) * cd + peak1_j * c + (peak1_j + 1) * cu)
+                    / (cd + c + cu),
+                    ((peak1_z - 1) * cf + peak1_z * c + (peak1_z + 1) * cb)
+                    / (cf + c + cb),
+                )
 
-            elif subpixel_method == 'gaussian':
-                with numpy.errstate(divide='ignore'):
+            elif subpixel_method == "gaussian":
+                with numpy.errstate(divide="ignore"):
                     subp_peak_position = (
-                        peak1_i + ((np.log(cl) - np.log(cr)) / (2 * np.log(cl) - 4 * np.log(c) + 2 * np.log(cr))),
-                        peak1_j + ((np.log(cd) - np.log(cu)) / (2 * np.log(cd) - 4 * np.log(c) + 2 * np.log(cu))),
-                        peak1_z + ((np.log(cf) - np.log(cb)) / (2 * np.log(cf) - 4 * np.log(c) + 2 * np.log(cb)))
+                        peak1_i
+                        + (
+                            (np.log(cl) - np.log(cr))
+                            / (2 * np.log(cl) - 4 * np.log(c) + 2 * np.log(cr))
+                        ),
+                        peak1_j
+                        + (
+                            (np.log(cd) - np.log(cu))
+                            / (2 * np.log(cd) - 4 * np.log(c) + 2 * np.log(cu))
+                        ),
+                        peak1_z
+                        + (
+                            (np.log(cf) - np.log(cb))
+                            / (2 * np.log(cf) - 4 * np.log(c) + 2 * np.log(cb))
+                        ),
                     )
 
-            elif subpixel_method == 'parabolic':
-                subp_peak_position = (peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
-                                      peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
-                                      peak1_z + (cf - cb) / (2 * cf - 4 * c + 2 * cb))
+            elif subpixel_method == "parabolic":
+                subp_peak_position = (
+                    peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
+                    peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
+                    peak1_z + (cf - cb) / (2 * cf - 4 * c + 2 * cb),
+                )
         except:
             subp_peak_position = default_peak_position
 
@@ -263,7 +264,7 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
     return np.array(subp_peak_position) - np.array(default_peak_position)
 
 
-def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
+def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
     """
     Computes the signal to noise ratio from the correlation map.
 
@@ -297,23 +298,29 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
     (peak1_i, peak1_j, peak1_z), corr_max1 = find_first_peak(corr)
 
     # now compute signal to noise ratio
-    if sig2noise_method == 'peak2peak':
+    if sig2noise_method == "peak2peak":
         # find second peak height
-        (peak1_i, peak1_j, peak1_z), corr_max2 = find_second_peak(
-            corr, peak1_i, peak1_j, peak1_z, width=width)
+        (peak1_i, peak1_j, peak1_z), corr_max2 = find_second_peak_3D(
+            corr, peak1_i, peak1_j, peak1_z, width=width
+        )
 
         # if it's an empty interrogation window
         # if the image is lacking particles, totally black it will correlate to very low value, but not zero
         # if the first peak is on the borders, the correlation map is also wrong
-        if corr_max1 < 1e-3 or any([x == 0 or x == corr.shape[i] for i, x in enumerate([peak1_i, peak1_j, peak1_z])]):
+        if corr_max1 < 1e-3 or any(
+            [
+                x == 0 or x == corr.shape[i]
+                for i, x in enumerate([peak1_i, peak1_j, peak1_z])
+            ]
+        ):
             return 0.0
 
-    elif sig2noise_method == 'peak2mean':
+    elif sig2noise_method == "peak2mean":
         # find mean of the correlation map
         corr_max2 = corr.mean()
 
     else:
-        raise ValueError('wrong sig2noise_method')
+        raise ValueError("wrong sig2noise_method")
 
     # avoid dividing by zero
     try:
@@ -324,7 +331,9 @@ def sig2noise_ratio(corr, sig2noise_method='peak2peak', width=2):
     return sig2noise
 
 
-def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=None, nfftz=None):
+def correlate_windows(
+    window_a, window_b, correlation_method="fft", nfftx=None, nffty=None, nfftz=None
+):
     """Compute correlation function between two interrogation windows.
 
     The correlation function can be computed by using the correlation
@@ -338,7 +347,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     window_b : 2d np.ndarray
         a two dimensions array for the second interrogation window.
 
-    corr_method   : string
+    correlation_method   : string
         one method is currently implemented: 'fft'.
 
     nfftx   : int
@@ -368,7 +377,7 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
     It leads to inconsistency of the output
     """
 
-    if corr_method == 'fft':
+    if correlation_method == "fft":
         window_b = np.conj(window_b[::-1, ::-1, ::-1])
         if nfftx is None:
             nfftx = nextpower2(window_b.shape[0] + window_a.shape[0])
@@ -377,20 +386,20 @@ def correlate_windows(window_a, window_b, corr_method='fft', nfftx=None, nffty=N
         if nfftz is None:
             nfftz = nextpower2(window_b.shape[2] + window_a.shape[2])
 
-        f2a = rfftn(normalize_intensity(window_a),
-                    s=(nfftx, nffty, nfftz))
-        f2b = rfftn(normalize_intensity(window_b),
-                    s=(nfftx, nffty, nfftz))
+        f2a = rfftn(normalize_intensity(window_a), s=(nfftx, nffty, nfftz))
+        f2b = rfftn(normalize_intensity(window_b), s=(nfftx, nffty, nfftz))
         corr = irfftn(f2a * f2b).real
-        corr = corr[:window_a.shape[0] + window_b.shape[0],
-                    :window_b.shape[1] + window_a.shape[1],
-                    :window_b.shape[2] + window_a.shape[2]]
+        corr = corr[
+            : window_a.shape[0] + window_b.shape[0],
+            : window_b.shape[1] + window_a.shape[1],
+            : window_b.shape[2] + window_a.shape[2],
+        ]
         return corr
-    # elif corr_method == 'direct':
+    # elif correlation_method == 'direct':
     #     return convolve2d(normalize_intensity(window_a),
     #                       normalize_intensity(window_b[::-1, ::-1, ::-1]), 'full')
     else:
-        raise ValueError('method is not implemented')
+        raise ValueError("method is not implemented")
 
 
 def normalize_intensity(window):
@@ -420,34 +429,40 @@ def nextpower2(i):
 
 def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
     # check the inputs for validity
-    search_area_size = [ws if x == 0 or x is None else x for x, ws in zip(search_area_size, window_size)]
+    search_area_size = [
+        ws if x == 0 or x is None else x for x, ws in zip(search_area_size, window_size)
+    ]
 
     if any((np.array(window_size) - np.array(overlap)) <= 0):
-        raise ValueError('Overlap has to be smaller than the window_size')
+        raise ValueError("Overlap has to be smaller than the window_size")
 
     if any((np.array(search_area_size) - np.array(window_size)) < 0):
-        raise ValueError('Search size cannot be smaller than the window_size')
+        raise ValueError("Search size cannot be smaller than the window_size")
 
     if any([ws > ims for ws, ims in zip(window_size, frame_a.shape)]):
-        raise ValueError('window size cannot be larger than the image')
+        raise ValueError("window size cannot be larger than the image")
 
     if any([ims_a != ims_b for ims_a, ims_b in zip(frame_a.shape, frame_b.shape)]):
-        raise ValueError('frame a and frame b have different sizes.')
+        raise ValueError("frame a and frame b have different sizes.")
 
     return window_size, overlap, search_area_size
 
 
 def extended_search_area_piv3D(
-        frame_a, frame_b,
-        window_size,
-        overlap=(0, 0, 0),
-        dt=(1.0, 1.0, 1.0),
-        search_area_size=None,
-        corr_method='fft',
-        subpixel_method='gaussian',
-        sig2noise_method=None,
-        width=2,
-        nfftx=None, nffty=None, nfftz=None):
+    frame_a,
+    frame_b,
+    window_size,
+    overlap=(0, 0, 0),
+    dt=(1.0, 1.0, 1.0),
+    search_area_size=None,
+    correlation_method="fft",
+    subpixel_method="gaussian",
+    sig2noise_method=None,
+    width=2,
+    nfftx=None,
+    nffty=None,
+    nfftz=None,
+):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
     in the second frame is larger than the interrogation window size in the
@@ -477,7 +492,7 @@ def extended_search_area_piv3D(
     dt : tuple
         the time delay separating the two frames [default: 1.0].
 
-    corr_method : string
+    correlation_method : string
         only one method is currently implemented: 'fft'
 
     subpixel_method : string
@@ -534,10 +549,12 @@ def extended_search_area_piv3D(
     """
 
     # checking if the input is correct
-    window_size, overlap, search_area_size = check_input(window_size, overlap, search_area_size, frame_a, frame_b)
+    window_size, overlap, search_area_size = check_input(
+        window_size, overlap, search_area_size, frame_a, frame_b
+    )
 
     # get field shape
-    field_shape = get_field_shape(frame_a.shape, search_area_size, window_size, overlap)
+    field_shape = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     u = np.zeros(field_shape)
     v = np.zeros(field_shape)
@@ -549,9 +566,30 @@ def extended_search_area_piv3D(
 
     # shift for x and y coordinates of the search area windows so that the centers of search area windows have
     # the same distances to the image edge at all sides. For simplicity only shifts by integers are allowed
-    x_centering = (frame_a.shape[1] - 1 - ((field_shape[1] - 1) * (window_size[1] - overlap[1]) + (search_area_size[1] - 1))) // 2
-    y_centering = (frame_a.shape[0] - 1 - ((field_shape[0] - 1) * (window_size[0] - overlap[0]) + (search_area_size[0] - 1))) // 2
-    z_centering = (frame_a.shape[2] - 1 - ((field_shape[2] - 1) * (window_size[2] - overlap[2]) + (search_area_size[2] - 1))) // 2
+    x_centering = (
+        frame_a.shape[1]
+        - 1
+        - (
+            (field_shape[1] - 1) * (window_size[1] - overlap[1])
+            + (search_area_size[1] - 1)
+        )
+    ) // 2
+    y_centering = (
+        frame_a.shape[0]
+        - 1
+        - (
+            (field_shape[0] - 1) * (window_size[0] - overlap[0])
+            + (search_area_size[0] - 1)
+        )
+    ) // 2
+    z_centering = (
+        frame_a.shape[2]
+        - 1
+        - (
+            (field_shape[2] - 1) * (window_size[2] - overlap[2])
+            + (search_area_size[2] - 1)
+        )
+    ) // 2
 
     # loop over the interrogation windows
     # i, j are the row, column indices of the center of each interrogation
@@ -599,12 +637,19 @@ def extended_search_area_piv3D(
                 window_a = frame_a[il:ir, it:ib, ifr:iba]
 
                 if np.any(window_a):
-                    corr = correlate_windows(window_a, window_b,
-                                             corr_method=corr_method,
-                                             nfftx=nfftx, nffty=nffty, nfftz=nfftz)
+                    corr = correlate_windows(
+                        window_a,
+                        window_b,
+                        correlation_method=correlation_method,
+                        nfftx=nfftx,
+                        nffty=nffty,
+                        nfftz=nfftz,
+                    )
 
                     # get subpixel approximation for peak position row and column index
-                    row, col, z = find_subpixel_peak_position(corr, subpixel_method=subpixel_method)
+                    row, col, z = find_subpixel_peak_position(
+                        corr, subpixel_method=subpixel_method
+                    )
 
                     row -= (search_area_size[0] + window_size[0] - 1) // 2
                     col -= (search_area_size[1] + window_size[1] - 1) // 2
@@ -616,7 +661,8 @@ def extended_search_area_piv3D(
                     # get signal to noise ratio
                     if sig2noise_method is not None:
                         sig2noise[k, m, l] = sig2noise_ratio(
-                            corr, sig2noise_method=sig2noise_method, width=width)
+                            corr, sig2noise_method=sig2noise_method, width=width
+                        )
 
     # return output if user wanted sig2noise information
     if sig2noise_method is not None:

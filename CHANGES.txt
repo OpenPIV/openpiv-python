@@ -5,3 +5,4 @@ v0.17, July 1, 2014  -- Fixed the bug in lib.pyx of different casting of np.int3
 v0.18  Aug. 8, 2014 -- small updates to the tutorial-part1, MANIFEST.IN, readme and install files
 ...
 v0.22.3 Sep. 22, 2020 -- @erfan-mtr added two-phase extension, see phase_separation.ipynb for the demo
+v0.22.4 Nov, 2020 -- windef refactoring : no more process.pyx, everything in pyprocess.py, numpy vectorized correlation version from windef moved to pyprocess, get_field_shape has less arguments (it's a backward compatability problem, it breaks stuff), new tests, new documentation settings with Jupyter notebook and markdown inserts, tools.save requires also sig2noise column, as in windef, frame_interpolation is now deform_windows with optionaly kx,ky, 

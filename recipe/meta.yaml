@@ -20,7 +20,6 @@ requirements:
     - scipy
     - matplotlib
     - scikit-image
-    - progressbar2
     - future
 
 test:

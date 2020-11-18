@@ -15,10 +15,10 @@ def test_dynamic_masking(display_images=False):
     # imsave('moon.png',img)
     # it's a moon on a starry night
     test_directory = os.path.split(os.path.abspath(__file__))[0]
-    img = rgb2gray(rgba2rgb(imread(os.path.join(test_directory, 'moon.png'))))
-    img1 = dynamic_masking(img_as_float(img), method='intensity')
-    assert(np.allclose(img[80:84, 80:84], 0.86908039))  # non-zero image
-    assert(np.allclose(img1[80:84, 80:84], 0.0))  # not it's black
+    img = rgb2gray(rgba2rgb(imread(os.path.join(test_directory, "moon.png"))))
+    img1 = dynamic_masking(img_as_float(img), method="intensity")
+    assert np.allclose(img[80:84, 80:84], 0.86908039)  # non-zero image
+    assert np.allclose(img1[80:84, 80:84], 0.0)  # not it's black
 
     if display_images:
         fig, ax = plt.subplots(1, 2)
