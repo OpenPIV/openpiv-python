@@ -604,8 +604,10 @@ def normalize_intensity(window):
     window = window.astype(np.float32)
     window = window - window.mean(axis=(-2, -1),
                                   keepdims=True, dtype=np.float32)
-    window = window / (1.96 * np.std(window, dtype=np.float32))
-    return np.clip(window, -1, 1)
+    window /= np.std(window, keepdims=True, dtype=np.float32)
+    # return np.clip(window, -1, 1)
+    return window
+
 
 
 def extended_search_area_piv(

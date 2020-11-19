@@ -1,9 +1,9 @@
 package:
   name: openpiv
-  version: "0.21.7"
+  version: "0.23.0"
 
 source:
-  git_rev: 0.21.7
+  git_rev: 0.23.0
   git_url: https://github.com/openpiv/openpiv-python.git
 
 requirements:
@@ -20,7 +20,6 @@ requirements:
     - scipy
     - matplotlib
     - scikit-image
-    - future
 
 test:
   imports:
