@@ -619,6 +619,7 @@ def extended_search_area_piv(
     subpixel_method="gaussian",
     sig2noise_method=None,
     width=2,
+    normalize_intensity=False
 ):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
@@ -735,8 +736,9 @@ def extended_search_area_piv(
     n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     # We implement the new vectorized code
-    frame_a = normalize_intensity(frame_a)
-    frame_b = normalize_intensity(frame_b)
+    if normalize_intensity is True:
+        frame_a = normalize_intensity(frame_a)
+        frame_b = normalize_intensity(frame_b)
 
     aa = moving_window_array(frame_a, search_area_size, overlap)
     bb = moving_window_array(frame_b, search_area_size, overlap)
