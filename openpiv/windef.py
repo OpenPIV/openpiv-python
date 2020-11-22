@@ -16,6 +16,7 @@ from openpiv import smoothn
 from openpiv.pyprocess import sig2noise_ratio as sig2noise_ratio_function
 from openpiv.pyprocess import get_field_shape, get_coordinates
 from openpiv.tools import display_vector_field, save
+from openpiv.pyprocess import normalize_intensity
 from openpiv.pyprocess import find_subpixel_peak_position
 import matplotlib.pyplot as plt
 
@@ -182,11 +183,16 @@ def correlation_func(cor_win_1, cor_win_2, window_size,correlation_method='circu
     That means no zero-padding is done
     the .real is to cut off possible imaginary parts that remains due to finite numerical accuarcy
      '''
+
+
+    corr_win_1 = normalize_intensity(cor_win_1)
+    corr_win_2 = normalize_intensity(cor_win_2)
+ 
     if correlation_method=='linear':
-        cor_win_1 = cor_win_1-cor_win_1.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
-        cor_win_2 = cor_win_2-cor_win_2.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
-        cor_win_1[cor_win_1<0]=0
-        cor_win_2[cor_win_2<0]=0
+        # cor_win_1 = cor_win_1-cor_win_1.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
+        # cor_win_2 = cor_win_2-cor_win_2.mean(axis=(1,2)).reshape(cor_win_1.shape[0],1,1)
+        # cor_win_1[cor_win_1<0]=0
+        # cor_win_2[cor_win_2<0]=0
 
      
         corr = fftshift(irfft2(np.conj(rfft2(cor_win_1,s=(2*window_size,2*window_size))) *
@@ -286,6 +292,7 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
 
     cor_win_1 = pyprocess.moving_window_array(frame_a, window_size, overlap)
     cor_win_2 = pyprocess.moving_window_array(frame_b, window_size, overlap)
+
     '''Filling the interrogation window. They windows are arranged
     in a 3d array with number of interrogation window *window_size*window_size
     this way is much faster then using a loop'''
@@ -440,6 +447,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     cor_win_1 = pyprocess.moving_window_array(frame_a, window_size, overlap)
     cor_win_2 = pyprocess.moving_window_array(
         frame_b_deform, window_size, overlap)
+
     '''Filling the interrogation window. They windows are arranged
     in a 3d array with number of interrogation window *window_size*window_size
     this way is much faster then using a loop'''
