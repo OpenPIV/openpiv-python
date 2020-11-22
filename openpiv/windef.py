@@ -40,6 +40,7 @@ def piv(settings):
         " read images into numpy arrays"
         frame_a = imread(os.path.join(settings.filepath_images, file_a))
         frame_b = imread(os.path.join(settings.filepath_images, file_b))
+        #frame_b=(frame_b*-1)+255
 
         # Miguel: I just had a quick look, and I do not understand the reason
         # for this step.
@@ -82,6 +83,7 @@ def piv(settings):
             settings.overlap[0],
             settings.iterations,
             correlation_method=settings.correlation_method,
+            normalized_correlation=settings.normalized_correlation,
             subpixel_method=settings.subpixel_method,
             do_sig2noise=settings.extract_sig2noise,
             sig2noise_method=settings.sig2noise_method,
@@ -199,6 +201,7 @@ def piv(settings):
                 u,
                 v,
                 correlation_method=settings.correlation_method,
+                normalized_correlation=settings.normalized_correlation,
                 subpixel_method=settings.subpixel_method,
                 deformation_method=settings.deformation_method,
                 do_sig2noise=settings.extract_sig2noise,
@@ -417,6 +420,7 @@ def first_pass(
     overlap,
     iterations,
     correlation_method="circular",
+    normalized_correlation=True,
     subpixel_method="gaussian",
     do_sig2noise=False,
     sig2noise_method="peak2peak",
@@ -444,6 +448,15 @@ def first_pass(
 
     overlap : int
         the overlap of the interrogation window, typically it is window_size/2
+
+    correlation_method : string
+        one of the two methods implemented: 'circular' or 'linear'
+        [default: 'circular']
+
+    normalized_correlation : string
+        decides wetehr normalized correlation is done or not: True or False
+        [default: True].
+
 
     subpixel_method: string
         the method used for the subpixel interpolation.
@@ -501,6 +514,8 @@ def first_pass(
         window_size=window_size,
         overlap=overlap,
         search_area_size=window_size,
+        correlation_method=correlation_method,
+        normalized_correlation=normalized_correlation,
         width=sig2noise_mask,
         subpixel_method=subpixel_method,
         sig2noise_method=sig2noise_method,
@@ -527,6 +542,7 @@ def multipass_img_deform(
     u_old,
     v_old,
     correlation_method="circular",
+    normalized_correlation=True,
     subpixel_method="gaussian",
     deformation_method="symmetric",
     do_sig2noise=False,
@@ -577,6 +593,15 @@ def multipass_img_deform(
 
     v_old : 2d np.ndarray
         the v displacement of the vector field of the previous pass
+    
+    correlation_method : string
+        one of the two methods implemented: 'circular' or 'linear'
+        [default: 'circular'].
+        
+    normalized_correlation : string
+        decides wetehr normalized correlation is done or not: True or False
+        [default: True].
+
 
     subpixel_method: string
         the method used for the subpixel interpolation.
@@ -774,6 +799,7 @@ if __name__ == "__main__":
 
     "Processing Parameters"
     settings.correlation_method = "circular"  # 'circular' or 'linear'
+    settings.normalized_correlation=True
     settings.iterations = 3  # select the number of PIV passes
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2

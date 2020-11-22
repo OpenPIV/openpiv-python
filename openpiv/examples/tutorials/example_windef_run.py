@@ -28,7 +28,10 @@ settings.dynamic_masking_filter_size = 7
 
 'Processing Parameters'
 settings.correlation_method = 'circular'  # 'circular' or 'linear'
-settings.iterations = 2  # select the number of PIV passes
+# If True the zero-normalized cross-correlation is performed,
+#the corrlation values for normalized correlation are in range of -1 to 1
+settings.normalized_correlation= False
+settings.iterations = 3 # select the number of PIV passes
 # add the interroagtion window size for each pass.
 # For the moment, it should be a power of 2
 # if longer than n iteration the rest is ignored
@@ -68,9 +71,9 @@ settings.validation_first_pass = True
 settings.MinMax_U_disp = (-30, 30)
 settings.MinMax_V_disp = (-30, 30)
 # The second filter is based on the global STD threshold
-settings.std_threshold = 7  # threshold of the std validation
+settings.std_threshold = 50  # threshold of the std validation
 # The third filter is the median test (not normalized at the moment)
-settings.median_threshold = 3  # threshold of the median validation
+settings.median_threshold = 10  # threshold of the median validation
 # On the last iteration, an additional validation can be done based on the S/N.
 settings.median_size = 1  # defines the size of the local median
 'Validation based on the signal to noise ratio'
@@ -95,7 +98,7 @@ settings.filter_kernel_size = 2  # kernel size for the localmean method
 settings.save_plot = False
 # Choose wether you want to see the vectorfield or not :True or False
 settings.show_plot = True
-settings.scale_plot = 200  # select a value to scale the quiver plot of the vectorfield
+settings.scale_plot = 300  # select a value to scale the quiver plot of the vectorfield
 # run the script with the given settings
 
 windef.piv(settings)

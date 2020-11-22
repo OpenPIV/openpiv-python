@@ -1,6 +1,6 @@
 import numpy.lib.stride_tricks
 import numpy as np
-from numpy.fft import rfft2, irfft2
+from numpy.fft import rfft2, irfft2, fftshift
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
@@ -124,6 +124,31 @@ def get_field_shape(image_size, search_area_size, overlap):
         np.array(search_area_size) - np.array(overlap)
     ) + 1
     return field_shape
+
+# def get_field_shape_2(image_size, window_size, overlap):
+#     """Compute the shape of the resulting flow field.
+#     Given the image size, the interrogation window size and
+#     the overlap size, it is possible to calculate the number
+#     of rows and columns of the resulting flow field.
+#     Parameters
+#     ----------
+#     image_size: two elements tuple
+#         a two dimensional tuple for the pixel size of the image
+#         first element is number of rows, second element is
+#         the number of columns.
+#     window_size: int
+#         the size of the interrogation window.
+#     overlap: int
+#         the number of pixel by which two adjacent interrogation
+#         windows overlap.
+#     Returns
+#     -------
+#     field_shape : two elements tuple
+#         the shape of the resulting flow field
+#     """
+
+#     return ((image_size[0] - window_size) // (window_size - overlap) + 1,
+#             (image_size[1] - window_size) // (window_size - overlap) + 1)
 
 
 def moving_window_array(array, window_size, overlap):
@@ -475,7 +500,7 @@ def fft_correlate_windows(window_a, window_b):
     return corr
 
 
-def fft_correlate_strided_images(image_a, image_b):
+def fft_correlate_strided_images(image_a, image_b,correlation_method="circular", normalized_correlation=True):
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
 
@@ -488,21 +513,40 @@ def fft_correlate_strided_images(image_a, image_b):
     ----------
     image_a : 3d np.ndarray, first dimension is the number of windows,
         and two last dimensions are interrogation windows of the first image
+        
     image_b : similar
+    
+    correlation_method : string
+        one of the three methods implemented: 'circulare', 'linear' or 'direct',
+        [default: 'circular].
+        
+    normalized_correlation : string
+        decides wetehr normalized correlation is done or not: True or False
+        [default: True].
     """
-    image_a=normalize_intensity(image_a)
-    image_b=normalize_intensity(image_b)
+    if normalized_correlation == True:
+        image_a=normalize_intensity(image_a)
+        image_b=normalize_intensity(image_b)
     s1 = np.array(image_a.shape[-2:])
     s2 = np.array(image_b.shape[-2:])
-    size = s1 + s2 - 1
-    fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-    fslice = tuple([slice(0, image_a.shape[0])] +
-                   [slice(0, int(sz)) for sz in size])
-    f2a = rfft2(image_a, fsize, axes=(-2, -1))
-    f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
-    corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
-    return corr/(s1[0]*s1[1])
+    if correlation_method == "linear":
+        size = s1 + s2 - 1
+        fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+        fslice = tuple([slice(0, image_a.shape[0])] +
+                        [slice(0, int(sz)) for sz in size])
+        f2a = rfft2(image_a, fsize, axes=(-2, -1))
+        f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
+        corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
+    elif correlation_method == "circular" :  
+        corr = fftshift(irfft2(np.conj(rfft2(image_a)) *
+                              rfft2(image_b)).real, axes=(-1, -2))
+    else:
+        print("method is not implemented!")
+    if normalized_correlation==True:
+        corr=corr/(s1[0]*s1[1])
+        corr=np.clip(corr,-1,1)
 
+    return corr
 
 def zero_pad(window):
     """ Zero pads the interrogation window to double size
@@ -562,12 +606,12 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
     # the background level which is take as a mean of the image
     # is subtracted
     # import pdb; pdb.set_trace()
-    window_a = normalize_intensity(window_a)
-    window_b = normalize_intensity(window_b)
+    # window_a = normalize_intensity(window_a)
+    # window_b = normalize_intensity(window_b)
 
     # this is not really circular one, as we pad a bit to get fast 2D FFT,
     # see fft_correlate for implementation
-    if correlation_method in ("circular", "fft"):
+    if correlation_method in ( "fft"):
         corr = fft_correlate_windows(window_a, window_b)
     elif correlation_method == "linear":
         # save the original size:
@@ -587,9 +631,9 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
 
 
 def normalize_intensity(window):
-    """Normalize interrogation window or strided image of many windows,
-       by removing the mean intensity value per window and clipping the
-       negative values to zero
+    """First step off the zero-normalized cross correlation.
+    This function subtracts the interrogation windows mean and divids the
+    interrogation window by the standard devaiton of the intensity.
 
     Parameters
     ----------
@@ -599,9 +643,8 @@ def normalize_intensity(window):
     Returns
     -------
     window :  2d np.ndarray
-        the interrogation window array, with mean value equal to zero and
-        intensity normalized to -1 +1 and clipped if some pixels are
-        extra low/high
+        the interrogation window array, with subtacted mean and divided by the
+        standard deviation
     """
     window = window.astype(np.float32)
     window = window - window.mean(axis=(-2, -1),
@@ -617,7 +660,8 @@ def extended_search_area_piv(
     overlap=0,
     dt=1.0,
     search_area_size=0,
-    correlation_method="fft",
+    correlation_method="circular",
+    normalized_correlation=True,
     subpixel_method="gaussian",
     sig2noise_method=None,
     width=2,
@@ -653,8 +697,12 @@ def extended_search_area_piv(
         the time delay separating the two frames [default: 1.0].
 
     correlation_method : string
-        one of the two methods implemented: 'fft' or 'direct',
-        [default: 'fft'].
+        one of the three methods implemented: 'circulare', 'linear' or 'direct',
+        [default: 'circular'].
+        
+    normalized_correlation : string
+        decides wetehr normalized correlation is done or not: True or False
+        [default: True].
 
     subpixel_method : string
          one of the following methods to estimate subpixel location of the
@@ -739,6 +787,7 @@ def extended_search_area_piv(
     # We implement the new vectorized code
     frame_a = frame_a.astype('float32')  #normalize_intensity(frame_a)
     frame_b = frame_b.astype('float32')  #normalize_intensity(frame_b)
+    
 
     aa = moving_window_array(frame_a, search_area_size, overlap)
     bb = moving_window_array(frame_b, search_area_size, overlap)
@@ -758,8 +807,20 @@ def extended_search_area_piv(
         mask = np.broadcast_to(mask, aa.shape)
         aa *= mask
 
-    corr = fft_correlate_strided_images(aa, bb)
-    u, v = correlation_to_displacement(corr, n_rows, n_cols, search_area_size)
+    corr = fft_correlate_strided_images(aa, bb,correlation_method=correlation_method,normalized_correlation=normalized_correlation)
+    u, v = correlation_to_displacement(corr, n_rows, n_cols, search_area_size=search_area_size,correlation_method=correlation_method)
+    disp = np.zeros((np.size(corr, 0), 2))
+    for i in range(0, np.size(corr, 0)):
+        ''' determine the displacment on subpixel level  '''
+        disp[i, :] = find_subpixel_peak_position(
+            corr[i, :, :], subpixel_method=subpixel_method)
+    'this loop is doing the displacment evaluation for each window '
+
+    'reshaping the interrogation window to vector field shape'
+    # shapes = np.array(get_field_shape(np.shape(frame_a), window_size, overlap))
+    # u = disp[:, 1].reshape(shapes)
+    # v = -disp[:, 0].reshape(shapes)
+
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
@@ -774,7 +835,7 @@ def extended_search_area_piv(
     return u / dt, v / dt, sig2noise
 
 
-def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):
+def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32, correlation_method='circular'):
     """
     Correlation maps are converted to displacement for each interrogation
     window using the convention that the size of the correlation map
@@ -783,24 +844,37 @@ def correlation_to_displacement(corr, n_rows, n_cols, search_area_size=32):
     Inputs:
         corr : 3D nd.array
             contains output of the fft_correlate_strided_images
+            
         n_rows, n_cols : number of interrogation windows, output of the
             get_field_shape
+            
         search_area_size : int
             size of the interrogation window in frame B (>= IW in frame A)
+        
+        correlation_method : string
+            determines the used correlation method
     """
     # iterate through interrogation widows and search areas
     u = np.zeros((n_rows, n_cols))
     v = np.zeros((n_rows, n_cols))
-
-    for k in range(n_rows):
-        for m in range(n_cols):
-            row, col = find_subpixel_peak_position(corr[k * n_cols + m, :, :])
-            row -= (2 * search_area_size - 1) // 2
-            col -= (2 * search_area_size - 1) // 2
-
-            # get displacements, apply coordinate system definition
-            u[k, m], v[k, m] = -col, row
-
+    if correlation_method in ("linear", "direct"):
+        for k in range(n_rows):
+            for m in range(n_cols):
+                row, col = find_subpixel_peak_position(corr[k * n_cols + m, :, :])
+                row -= (2 * search_area_size - 1) // 2
+                col -= (2 * search_area_size - 1) // 2
+        
+                # get displacements, apply coordinate system definition
+                u[k, m], v[k, m] = -col, row
+    elif correlation_method =='circular':
+        for k in range(n_rows):
+            for m in range(n_cols):
+                row, col = find_subpixel_peak_position(corr[k * n_cols + m, :, :])
+                row -= search_area_size // 2
+                col -= search_area_size // 2
+        
+                # get displacements, apply coordinate system definition
+                u[k, m], v[k, m] = col, -row    
     return (u, v)
 
 
