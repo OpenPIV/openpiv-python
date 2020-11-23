@@ -305,11 +305,14 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
             )
 
         elif subpixel_method == "gaussian":
+            nom1 = log(cl) - log(cr)
+            den1 = 2 * log(cl) - 4 * log(c) + 2 * log(cr)
+            nom2 = log(cd) - log(cu)
+            den2 = 2 * log(cd) - 4 * log(c) + 2 * log(cu)
+
             subp_peak_position = (
-                peak1_i + ((log(cl) - log(cr)) / (2 * log(cl) - 4 * log(c) +
-                           2 * log(cr))),
-                peak1_j + ((log(cd) - log(cu)) / (2 * log(cd) - 4 * log(c) +
-                           2 * log(cu))),
+                peak1_i + np.divide(nom1, den1, out = np.zeros(1), where=(den1 != 0.0))[0],
+                peak1_j + np.divide(nom2, den2, out = np.zeros(1), where=(den2 != 0.0))[0],
             )
 
         elif subpixel_method == "parabolic":
@@ -468,8 +471,9 @@ def fft_correlate_strided_images(image_a, image_b,
         # have to be normalized, mainly because of zero padding
         size = s1 + s2 - 1
         fsize = 2 ** np.ceil(np.log2(size)).astype(int)
-        fslice = tuple([slice(0, image_a.shape[0])] +
-                        [slice(int(sz)//2, 3*int(sz)//2) for sz in s2])
+        fslice = (slice(0, image_a.shape[0]),
+                       slice((fsize[0]-s1[0])//2,(fsize[0]+s1[0])//2),
+                       slice((fsize[1]-s1[1])//2,(fsize[1]+s1[1])//2))
         f2a = rfft2(image_a, fsize, axes=(-2,-1)).conj()
         f2b = rfft2(image_b, fsize, axes=(-2,-1))
         corr = fftshift(irfft2(f2a * f2b).real,axes=(-2, -1))[fslice]
@@ -505,8 +509,108 @@ def normalize_intensity(window):
     window = window.astype(np.float32)
     window -= window.mean(axis=(-2, -1),
                                    keepdims=True, dtype=np.float32)
-    window /= np.std(window, axis=(-2,-1), keepdims=True, dtype=np.float32)
-    return window
+    tmp = window.std(axis=(-2,-1),keepdims=True)
+    window = np.divide(window, tmp, out=np.zeros_like(window), where=tmp!=0)
+    return np.clip(window,0,window.max())
+
+
+def correlate_windows(window_a, window_b, correlation_method="fft"):
+    """Compute correlation function between two interrogation windows.
+    The correlation function can be computed by using the correlation
+    theorem to speed up the computation.
+    Parameters
+    ----------
+    window_a : 2d np.ndarray
+        a two dimensions array for the first interrogation window,
+    window_b : 2d np.ndarray
+        a two dimensions array for the second interrogation window.
+    correlation_method : string, methods currently implemented:
+            'circular' - FFT based without zero-padding
+            'linear' -  FFT based with zero-padding
+            'direct' -  linear convolution based
+            Default is 'fft', which is much faster.
+    Returns
+    -------
+    corr : 2d np.ndarray
+        a two dimensions array for the correlation function.
+    Note that due to the wish to use 2^N windows for faster FFT
+    we use a slightly different convention for the size of the
+    correlation map. The theory says it is M+N-1, and the
+    'direct' method gets this size out
+    the FFT-based method returns M+N size out, where M is the window_size
+    and N is the search_area_size
+    It leads to inconsistency of the output
+    """
+
+    # first we remove the mean to normalize contrast and intensity
+    # the background level which is take as a mean of the image
+    # is subtracted
+    # import pdb; pdb.set_trace()
+    window_a = normalize_intensity(window_a)
+    window_b = normalize_intensity(window_b)
+
+    # this is not really circular one, as we pad a bit to get fast 2D FFT,
+    # see fft_correlate for implementation
+    if correlation_method in ("circular", "fft"):
+        corr = fft_correlate_windows(window_a, window_b)
+    elif correlation_method == "linear":
+        # save the original size:
+        s1 = np.array(window_a.shape)
+        s2 = np.array(window_b.shape)
+        size = s1 + s2 - 1
+        fslice = tuple([slice(0, int(sz)) for sz in size])
+        # and slice only the relevant part
+        corr = fft_correlate_windows(zero_pad(window_a),
+                                     zero_pad(window_b))[fslice]
+    elif correlation_method == "direct":
+        corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
+    else:
+        raise ValueError("method is not implemented")
+
+    return corr
+
+
+def fft_correlate_windows(window_a, window_b):
+    """ FFT based cross correlation
+    it is a so-called linear convolution based,
+    since we increase the size of the FFT to
+    reduce the edge effects.
+    This should also work out of the box for rectangular windows.
+    Parameters
+    ----------
+    window_a : 2d np.ndarray
+        a two dimensions array for the first interrogation window,
+    window_b : 2d np.ndarray
+        a two dimensions array for the second interrogation window.
+    # from Stackoverflow:
+    from scipy import linalg
+    import numpy as np
+    # works for rectangular windows as well
+    x = [[1 , 0 , 0 , 0] , [0 , -1 , 0 , 0] , [0 , 0 , 3 , 0] ,
+        [0 , 0 , 0 , 1], [0 , 0 , 0 , 1]]
+    x = np.array(x,dtype=np.float)
+    y = [[4 , 5] , [3 , 4]]
+    y = np.array(y)
+    print ("conv:" ,  signal.convolve2d(x , y , 'full'))
+    s1 = np.array(x.shape)
+    s2 = np.array(y.shape)
+    size = s1 + s2 - 1
+    fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+    fslice = tuple([slice(0, int(sz)) for sz in size])
+    new_x = np.fft.fft2(x , fsize)
+    new_y = np.fft.fft2(y , fsize)
+    result = np.fft.ifft2(new_x*new_y)[fslice].copy()
+    print("fft for my method:" , np.array(result.real, np.int32))
+    """
+    s1 = np.array(window_a.shape)
+    s2 = np.array(window_b.shape)
+    size = s1 + s2 - 1
+    fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+    fslice = tuple([slice(0, int(sz)) for sz in size])
+    f2a = rfft2(window_a, fsize)
+    f2b = rfft2(window_b[::-1, ::-1], fsize)
+    corr = irfft2(f2a * f2b).real[fslice]
+    return corr
 
 
 def extended_search_area_piv(
@@ -655,6 +759,12 @@ def extended_search_area_piv(
     # the interrogation window in the frame A
 
     if search_area_size > window_size:
+        # before masking with zeros we need to remove 
+        # edges
+        
+        aa = normalize_intensity(aa)
+        bb = normalize_intensity(bb)
+
         mask = np.zeros((search_area_size, search_area_size)).astype(aa.dtype)
         pad = np.int((search_area_size - window_size) / 2)
         mask[slice(pad, search_area_size - pad),

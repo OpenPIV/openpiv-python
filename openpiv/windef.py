@@ -657,8 +657,6 @@ def multipass_img_deform(
 
     """
 
-    print(f"multipass {correlation_method},{normalized_correlation}")
-
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
 
     "calculate the y and y coordinates of the interrogation window centres"
