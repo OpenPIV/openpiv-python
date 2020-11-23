@@ -43,7 +43,7 @@ def _gaussian_kernel(half_width=1):
    
     
     """
-    size = int(half_width)
+    # size = int(half_width)
     x, y = np.mgrid[-half_width : half_width + 1, -half_width : half_width + 1]
     g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
     return g / g.sum()
@@ -157,4 +157,4 @@ def replace_outliers(
         )
         return uf, vf, wf
 
-    return uf, vf
+    return (uf, vf)

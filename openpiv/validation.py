@@ -177,7 +177,7 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.3):
         w[ind] = np.nan
         return u, v, w, ind
 
-    return u, v, ind
+    return (u, v, ind)
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
