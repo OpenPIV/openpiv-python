@@ -655,7 +655,7 @@ def extended_search_area_piv(
     # the interrogation window in the frame A
 
     if search_area_size > window_size:
-        mask = np.zeros((search_area_size, search_area_size))
+        mask = np.zeros((search_area_size, search_area_size)).astype(aa.dtype)
         pad = np.int((search_area_size - window_size) / 2)
         mask[slice(pad, search_area_size - pad),
              slice(pad, search_area_size - pad)] = 1

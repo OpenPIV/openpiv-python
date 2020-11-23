@@ -28,7 +28,10 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
 
     vel = extended_search_area_piv(a, b, window_size,
                                    search_area_size=search_area_size,
-                                   overlap=overlap)
+                                   overlap=overlap,
+                                   correlation_method='linear',
+                                   normalized_correlation=True)
+                                   
     x, y = get_coordinates(a.shape, search_area_size=search_area_size,
                            overlap=overlap)
 
