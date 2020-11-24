@@ -40,6 +40,7 @@ def display_vector_field(
     scaling_factor=1,
     widim=False,
     ax=None,
+    width=0.0025,
     **kw
 ):
     """ Displays quiver plot of the data stored in the file 
@@ -116,9 +117,9 @@ def display_vector_field(
     #       '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
     ax.quiver(
-        a[invalid, 0], a[invalid, 1], a[invalid, 2], a[invalid, 3], color="r", **kw
+        a[invalid, 0], a[invalid, 1], a[invalid, 2], a[invalid, 3], color="r", width=width, **kw
     )
-    ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color="b", **kw)
+    ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color="b", width=width,**kw)
     #     if on_img is False:
     ax.invert_yaxis()
 

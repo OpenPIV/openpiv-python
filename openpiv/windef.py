@@ -86,6 +86,7 @@ def piv(settings):
             do_sig2noise=settings.extract_sig2noise,
             sig2noise_method=settings.sig2noise_method,
             sig2noise_mask=settings.sig2noise_mask,
+            normalized_correlation=settings.normalized_correlation
         )
 
         "validation using gloabl limits and std and local median"
@@ -136,7 +137,7 @@ def piv(settings):
                 and settings.iterations == 1
                 and settings.do_sig2noise_validation is True
             ):
-                u, v, mask_s2n = validation.sig2noise_val(
+                (u, v, mask_s2n) = validation.sig2noise_val(
                     u, v, sig2noise_ratio,
                     threshold=settings.sig2noise_threshold
                 )
@@ -145,7 +146,7 @@ def piv(settings):
                 mask = mask + mask_g + mask_m + mask_s
         "filter to replace the values that where marked by the validation"
         if settings.iterations > 1:
-            u, v = filters.replace_outliers(
+            (u, v) = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -161,7 +162,7 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
         elif settings.iterations == 1 and settings.replace_vectors is True:
-            u, v = filters.replace_outliers(
+            (u, v) = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -170,7 +171,7 @@ def piv(settings):
             )
             "adding masks to add the effect of all the validations"
             if settings.smoothn is True:
-                u, v = filters.replace_outliers(
+                (u, v) = filters.replace_outliers(
                     u,
                     v,
                     method=settings.filter_method,
@@ -213,6 +214,7 @@ def piv(settings):
                 max_filter_iteration=settings.max_filter_iteration,
                 filter_kernel_size=settings.filter_kernel_size,
                 interpolation_order=settings.interpolation_order,
+                normalized_correlation=settings.normalized_correlation
             )
             # If the smoothing is active, we do it at each pass
             if settings.smoothn is True:
@@ -403,7 +405,10 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
-    x, y, ut, vt = create_deformation_field(frame, x, y, u, v, kx=kx, ky=ky)
+    x, y, ut, vt = create_deformation_field(frame, 
+                                            x, y, u, v, 
+                                            interpolation_order=interpolation_order,
+                                            kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
         frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
 
@@ -417,6 +422,7 @@ def first_pass(
     overlap,
     iterations,
     correlation_method="circular",
+    normalized_correlation=False,
     subpixel_method="gaussian",
     do_sig2noise=False,
     sig2noise_method="peak2peak",
@@ -504,6 +510,8 @@ def first_pass(
         width=sig2noise_mask,
         subpixel_method=subpixel_method,
         sig2noise_method=sig2noise_method,
+        correlation_method=correlation_method,
+        normalized_correlation=normalized_correlation
     )
 
     shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
@@ -527,6 +535,7 @@ def multipass_img_deform(
     u_old,
     v_old,
     correlation_method="circular",
+    normalized_correlation=False,
     subpixel_method="gaussian",
     deformation_method="symmetric",
     do_sig2noise=False,
@@ -632,6 +641,19 @@ def multipass_img_deform(
     mask : 2d np.array
         array containg the mask values (bool) which contains information if
         the vector was filtered
+
+    correlation_method : string 
+        default is "circular", another option is "linear" see the 
+        fft_correlate_strided_images for details
+        "circular" is faster, without zero padding
+        "linear" requires normalized_correlation to remove zeros on the edges
+        and zero-pads the interrogation windows before correlation
+
+    normalized_correlation : boolean,
+        if True, the interrogation window mean intensity is subtracted, 
+        the intensity is normalized by the standard deviation to create
+        more or less similar interrogation windows and 
+        the correlation itself is later normalized to the 0..1 range
 
     """
 
@@ -774,6 +796,7 @@ if __name__ == "__main__":
 
     "Processing Parameters"
     settings.correlation_method = "circular"  # 'circular' or 'linear'
+    settings.normalized_correlation = False
     settings.iterations = 3  # select the number of PIV passes
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2

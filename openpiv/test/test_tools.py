@@ -22,13 +22,16 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
     a = imread(file_a)
     b = imread(file_b)
     
-    window_size = 16
-    overlap = 8
-    search_area_size = 32
+    window_size = 32
+    overlap = 16
+    search_area_size = 40
 
     vel = extended_search_area_piv(a, b, window_size,
                                    search_area_size=search_area_size,
-                                   overlap=overlap)
+                                   overlap=overlap,
+                                   correlation_method='circular',
+                                   normalized_correlation=False)
+                                   
     x, y = get_coordinates(a.shape, search_area_size=search_area_size,
                            overlap=overlap)
 
