@@ -405,10 +405,11 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
-    x, y, ut, vt = create_deformation_field(frame, 
-                                            x, y, u, v, 
-                                            interpolation_order=interpolation_order,
-                                            kx=kx, ky=ky)
+    x, y, ut, vt = \
+        create_deformation_field(frame,
+                                 x, y, u, v,
+                                 interpolation_order=interpolation_order,
+                                 kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
         frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
 
@@ -642,17 +643,17 @@ def multipass_img_deform(
         array containg the mask values (bool) which contains information if
         the vector was filtered
 
-    correlation_method : string 
-        default is "circular", another option is "linear" see the 
+    correlation_method : string
+        default is "circular", another option is "linear" see the
         fft_correlate_strided_images for details
         "circular" is faster, without zero padding
         "linear" requires normalized_correlation to remove zeros on the edges
         and zero-pads the interrogation windows before correlation
 
     normalized_correlation : boolean,
-        if True, the interrogation window mean intensity is subtracted, 
+        if True, the interrogation window mean intensity is subtracted,
         the intensity is normalized by the standard deviation to create
-        more or less similar interrogation windows and 
+        more or less similar interrogation windows and
         the correlation itself is later normalized to the 0..1 range
 
     """

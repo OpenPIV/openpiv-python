@@ -24,40 +24,41 @@ from scipy.ndimage import median_filter
 
 def global_val(u, v, u_thresholds, v_thresholds):
     """Eliminate spurious vectors with a global threshold.
-    
+
     This validation method tests for the spatial consistency of the data
-    and outliers vector are replaced with Nan (Not a Number) if at 
-    least one of the two velocity components is out of a specified global range.
-    
+    and outliers vector are replaced with Nan (Not a Number) if at
+    least one of the two velocity components is out of a specified global
+    range.
+
     Parameters
     ----------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component.
-        
+
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component.
-        
+
     u_thresholds: two elements tuple
         u_thresholds = (u_min, u_max). If ``u<u_min`` or ``u>u_max``
         the vector is treated as an outlier.
-        
+
     v_thresholds: two elements tuple
         ``v_thresholds = (v_min, v_max)``. If ``v<v_min`` or ``v>v_max``
         the vector is treated as an outlier.
-        
+
     Returns
     -------
     u : 2d np.ndarray
-        a two dimensional array containing the u velocity component, 
+        a two dimensional array containing the u velocity component,
         where spurious vectors have been replaced by NaN.
-        
+
     v : 2d np.ndarray
-        a two dimensional array containing the v velocity component, 
+        a two dimensional array containing the v velocity component,
         where spurious vectors have been replaced by NaN.
-        
-    mask : boolean 2d np.ndarray 
+
+    mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
-        
+
     """
 
     np.warnings.filterwarnings("ignore")
@@ -77,39 +78,39 @@ def global_val(u, v, u_thresholds, v_thresholds):
 
 
 def global_std(u, v, std_threshold=3):
-    """Eliminate spurious vectors with a global threshold defined by the standard deviation
-    
+    """Eliminate spurious vectors with a global threshold defined by the
+    standard deviation
+
     This validation method tests for the spatial consistency of the data
     and outliers vector are replaced with NaN (Not a Number) if at least
     one of the two velocity components is out of a specified global range.
-    
+
     Parameters
     ----------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component.
-        
+
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component.
-        
+
     std_threshold: float
-        If the length of the vector (actually the sum of squared components) is 
-        larger than std_threshold times standard deviation of the flow field, 
+        If the length of the vector (actually the sum of squared components) is
+        larger than std_threshold times standard deviation of the flow field,
         then the vector is treated as an outlier. [default = 3]
-        
-        
+
     Returns
     -------
     u : 2d np.ndarray
-        a two dimensional array containing the u velocity component, 
+        a two dimensional array containing the u velocity component,
         where spurious vectors have been replaced by NaN.
-        
+
     v : 2d np.ndarray
-        a two dimensional array containing the v velocity component, 
+        a two dimensional array containing the v velocity component,
         where spurious vectors have been replaced by NaN.
-        
-    mask : boolean 2d np.ndarray 
+
+    mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
-        
+
     """
 
     vel_magnitude = u ** 2 + v ** 2
@@ -168,7 +169,8 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
 
     References
     ----------
-    R. D. Keane and R. J. Adrian, Measurement Science & Technology,1990, 1, 1202-1215.
+    R. D. Keane and R. J. Adrian, Measurement Science & Technology, 1990,
+        1, 1202-1215.
 
     """
 
@@ -176,48 +178,52 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
 
     u[ind] = np.nan
     v[ind] = np.nan
+
+    mask = np.zeros(u.shape, dtype=bool)
+    mask[ind] = True
+
     if isinstance(w, np.ndarray):
         w[ind] = np.nan
-        return u, v, w, ind
+        return u, v, w, mask
 
-    return u, v, ind
+    return u, v, mask
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
     """Eliminate spurious vectors with a local median threshold.
-    
+
     This validation method tests for the spatial consistency of the data.
     Vectors are classified as outliers and replaced with Nan (Not a Number) if
-    the absolute difference with the local median is greater than a user 
+    the absolute difference with the local median is greater than a user
     specified threshold. The median is computed for both velocity components.
-    
+
     Parameters
     ----------
     u : 2d np.ndarray
         a two dimensional array containing the u velocity component.
-        
+
     v : 2d np.ndarray
         a two dimensional array containing the v velocity component.
-        
+
     u_threshold : float
         the threshold value for component u
-        
+
     v_threshold : float
         the threshold value for component v
-        
+
     Returns
     -------
     u : 2d np.ndarray
-        a two dimensional array containing the u velocity component, 
+        a two dimensional array containing the u velocity component,
         where spurious vectors have been replaced by NaN.
-        
+
     v : 2d np.ndarray
-        a two dimensional array containing the v velocity component, 
+        a two dimensional array containing the v velocity component,
         where spurious vectors have been replaced by NaN.
-        
-    mask : boolean 2d np.ndarray 
+
+    mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
-        
+
     """
 
     um = median_filter(u, size=2 * size + 1)
