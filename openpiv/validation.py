@@ -124,49 +124,52 @@ def global_std(u, v, std_threshold=3):
     return u, v, mask
 
 
-def sig2noise_val(u, v, sig2noise, w=None, threshold=1.3):
+def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
-    
+
     Replace spurious vectors with zero if signal to noise ratio
     is below a specified threshold.
-    
+
     Parameters
     ----------
     u : 2d or 3d np.ndarray
         a two or three dimensional array containing the u velocity component.
-        
+
     v : 2d or 3d np.ndarray
         a two or three dimensional array containing the v velocity component.
-        
+
     sig2noise : 2d np.ndarray
         a two or three dimensional array containing the value  of the signal to
         noise ratio from cross-correlation function.
     w : 2d or 3d np.ndarray
-        a two or three dimensional array containing the w (in z-direction) velocity component.
+        a two or three dimensional array containing the w (in z-direction)
+        velocity component.
+
     threshold: float
         the signal to noise ratio threshold value.
-        
+
     Returns
     -------
     u : 2d or 3d np.ndarray
         a two or three dimensional array containing the u velocity component,
         where spurious vectors have been replaced by NaN.
-        
+
     v : 2d or 3d  np.ndarray
         a two or three dimensional array containing the v velocity component,
         where spurious vectors have been replaced by NaN.
 
     w : 2d or 3d  np.ndarray
-        optional, a two or three dimensional array containing the w (in z-direction) velocity component.
-        where spurious vectors have been replaced by NaN.
-        
-    mask : boolean 2d np.ndarray 
+        optional, a two or three dimensional array containing the w
+        (in z-direction) velocity component, where spurious vectors
+        have been replaced by NaN.
+
+    mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
-    
+
     References
     ----------
     R. D. Keane and R. J. Adrian, Measurement Science & Technology,1990, 1, 1202-1215.
-    
+
     """
 
     ind = sig2noise < threshold
@@ -177,7 +180,7 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.3):
         w[ind] = np.nan
         return u, v, w, ind
 
-    return (u, v, ind)
+    return u, v, ind
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
