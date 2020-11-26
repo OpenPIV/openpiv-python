@@ -475,32 +475,8 @@ def first_pass(
 
     """
 
-    # Alex: in windef_refactoring we created a pyprocess.py that holds
-    # all the vectorized solutions from windef, using the same principles
-    # now the first_pass is just wraping the extended_search_piv
-
-    # We replace this part with the extended_search
-
-    # cor_win_1 = moving_window_array(frame_a, window_size, overlap)
-    # cor_win_2 = moving_window_array(frame_b, window_size, overlap)
-    # """Filling the interrogation window. They windows are arranged
-    # in a 3d array with number of interrogation windows
-    # this way is much faster then using a loop"""
-
-    # correlation = correlate_windows(cor_win_1, cor_win_2,
-    #                                 correlation_method=correlation_method)
-    # "do the correlation"
-    # # create a dummy for the loop to fill
-    # disp = np.zeros((np.size(correlation, 0), 2))
-    # for i in range(0, np.size(correlation, 0)):
-    #     """ determine the displacment on subpixel level """
-    #     disp[i, :] = find_subpixel_peak_position(
-    #         correlation[i, :, :], subpixel_method=subpixel_method
-    #     )
-    # "this loop is doing the displacment evaluation for each window "
-
-    if do_sig2noise is False or iterations != 1:
-        sig2noise_method = None  # this indicates to get out nans
+#     if do_sig2noise is False or iterations != 1:
+#         sig2noise_method = None  # this indicates to get out nans
 
     u, v, s2n = extended_search_area_piv(
         frame_a,

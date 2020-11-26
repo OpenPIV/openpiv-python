@@ -87,10 +87,10 @@ def global_std(u, v, std_threshold=3):
 
     Parameters
     ----------
-    u : 2d np.ndarray
+    u : 2d masked np.ndarray
         a two dimensional array containing the u velocity component.
 
-    v : 2d np.ndarray
+    v : 2d masked np.ndarray
         a two dimensional array containing the v velocity component.
 
     std_threshold: float
@@ -112,8 +112,14 @@ def global_std(u, v, std_threshold=3):
         a boolean array. True elements corresponds to outliers.
 
     """
+    # both previous nans and masked regions are not 
+    # participating in the magnitude comparison
 
-    vel_magnitude = u ** 2 + v ** 2
+    if isinstance(u, np.ma.MaskedArray):
+        vel_magnitude = u.data ** 2 + v.data ** 2
+    else:
+        vel_magnitude = u ** 2 + v ** 2
+
     ind = vel_magnitude > std_threshold * np.std(vel_magnitude)
 
     u[ind] = np.nan

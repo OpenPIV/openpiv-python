@@ -257,6 +257,8 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     subp_peak_position : two elements tuple
         the fractional row and column indices for the sub-pixel
         approximation of the correlation peak.
+        If the first peak is on the border of the correlation map
+        or any other problem, the returned result is a tuple of NaNs.
     """
 
     # initialization
@@ -265,7 +267,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # default_peak_position = np.array([0,0])
     eps = 1e-7
     # subp_peak_position = tuple(np.floor(np.array(corr.shape)/2))
-    subp_peak_position = (np.nan, np.nan) # any wrong position will mark nan
+    subp_peak_position = (np.nan, np.nan)  # any wrong position will mark nan
 
     # check inputs
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
@@ -323,7 +325,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
                 peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
                 peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
             )
-            
+
         return subp_peak_position
 
 
@@ -478,10 +480,10 @@ def fft_correlate_strided_images(image_a, image_b,
                                rfft2(image_b)).real, axes=(-2, -1))
     else:
         print("method is not implemented!")
-        
+
     if normalized_correlation:
-        corr = corr/(s2[0]*s2[1]) # for extended search area
-        corr = np.clip(corr,0,1)
+        corr = corr/(s2[0]*s2[1])  # for extended search area
+        corr = np.clip(corr, 0, 1)
     return corr
 
 
