@@ -4,7 +4,6 @@ from numpy.fft import rfft2, irfft2, fftshift
 from numpy import ma
 from scipy.signal import convolve2d
 from numpy import log
-import matplotlib.pyplot as plt
 
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
@@ -168,7 +167,8 @@ def find_first_peak(corr):
     Parameters
     ----------
     corr : np.ndarray
-        the correlation map
+        the correlation map fof the strided images (N,K,M) where
+        N is the number of windows, KxM is the interrogation window size
 
     Returns
     -------
@@ -264,7 +264,8 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     # np.floor(corr.shape[1] / 2.))
     # default_peak_position = np.array([0,0])
     eps = 1e-7
-    subp_peak_position = tuple(np.floor(np.array(corr.shape)/2))
+    # subp_peak_position = tuple(np.floor(np.array(corr.shape)/2))
+    subp_peak_position = (np.nan, np.nan) # any wrong position will mark nan
 
     # check inputs
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
@@ -311,8 +312,10 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
             den2 = 2 * log(cd) - 4 * log(c) + 2 * log(cu)
 
             subp_peak_position = (
-                peak1_i + np.divide(nom1, den1, out = np.zeros(1), where=(den1 != 0.0))[0],
-                peak1_j + np.divide(nom2, den2, out = np.zeros(1), where=(den2 != 0.0))[0],
+                peak1_i + np.divide(nom1, den1, out=np.zeros(1),
+                                    where=(den1 != 0.0))[0],
+                peak1_j + np.divide(nom2, den2, out=np.zeros(1),
+                                    where=(den2 != 0.0))[0],
             )
 
         elif subpixel_method == "parabolic":
@@ -320,13 +323,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
                 peak1_i + (cl - cr) / (2 * cl - 4 * c + 2 * cr),
                 peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
             )
-
-    #     except BaseException:
-    #         subp_peak_position = default_peak_position
-
-    #     except IndexError:
-    #         subp_peak_position = default_peak_position
-
+            
         return subp_peak_position
 
 
@@ -430,7 +427,6 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
     return sig2noise
 
 
-
 def fft_correlate_strided_images(image_a, image_b,
                                  correlation_method="circular", 
                                  normalized_correlation=True):
@@ -443,43 +439,43 @@ def fft_correlate_strided_images(image_a, image_b,
     ----------
     image_a : 3d np.ndarray, first dimension is the number of windows,
         and two last dimensions are interrogation windows of the first image
-        
+
     image_b : similar
-    
+
     correlation_method : string
-        one of the three methods implemented: 'circulare', 'linear' or 'direct',
+        one of the three methods implemented: 'circular' or 'linear'
         [default: 'circular].
-        
+
     normalized_correlation : string
         decides wetehr normalized correlation is done or not: True or False
         [default: True].
     """
-    
+
     if normalized_correlation:
         # remove the effect of stronger laser or 
         # longer exposure for frame B
         # image_a = match_histograms(image_a, image_b) 
-            
+
         # remove mean background, normalize to 0..1 range
         image_a = normalize_intensity(image_a)
         image_b = normalize_intensity(image_b)
-        
+
     s1 = np.array(image_a.shape[-2:])
     s2 = np.array(image_b.shape[-2:])
-    
+
     if correlation_method == "linear":
         # have to be normalized, mainly because of zero padding
         size = s1 + s2 - 1
         fsize = 2 ** np.ceil(np.log2(size)).astype(int)
         fslice = (slice(0, image_a.shape[0]),
-                       slice((fsize[0]-s1[0])//2,(fsize[0]+s1[0])//2),
-                       slice((fsize[1]-s1[1])//2,(fsize[1]+s1[1])//2))
-        f2a = rfft2(image_a, fsize, axes=(-2,-1)).conj()
-        f2b = rfft2(image_b, fsize, axes=(-2,-1))
-        corr = fftshift(irfft2(f2a * f2b).real,axes=(-2, -1))[fslice]
+                  slice((fsize[0]-s1[0])//2, (fsize[0]+s1[0])//2),
+                  slice((fsize[1]-s1[1])//2, (fsize[1]+s1[1])//2))
+        f2a = rfft2(image_a, fsize, axes=(-2, -1)).conj()
+        f2b = rfft2(image_b, fsize, axes=(-2, -1))
+        corr = fftshift(irfft2(f2a * f2b).real, axes=(-2, -1))[fslice]
     elif correlation_method == "circular":          
-        corr = fftshift(irfft2(rfft2(image_a).conj()*
-                              rfft2(image_b)).real, axes=(-2, -1))
+        corr = fftshift(irfft2(rfft2(image_a).conj() *
+                               rfft2(image_b)).real, axes=(-2, -1))
     else:
         print("method is not implemented!")
         
@@ -814,10 +810,9 @@ def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"
         for m in range(n_cols):
             # look at studying_correlations.ipynb
             # the find_subpixel_peak_position returns
-            # 
-            peak = np.array(find_subpixel_peak_position(corr[k * n_cols + m, :, :],
-                                        subpixel_method=subpixel_method)) -\
-                                        default_peak_position
+            peak = np.array(find_subpixel_peak_position(corr[k*n_cols+m, :, :],
+                            subpixel_method=subpixel_method)) -\
+                            default_peak_position
 
             # get displacements, apply coordinate system definition
             # peak is returned in the form of the image shift
