@@ -60,7 +60,7 @@ def piv(settings):
                 settings.ROI[0]:settings.ROI[1],
                 settings.ROI[2]:settings.ROI[3]
             ]
-        if settings.dynamic_masking_method == "edge" or "intensity":
+        if settings.dynamic_masking_method in ("edge","intensity"):
             frame_a = preprocess.dynamic_masking(
                 frame_a,
                 method=settings.dynamic_masking_method,
