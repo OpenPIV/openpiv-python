@@ -44,6 +44,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
       array : 2d or 3d np.ndarray
           an array containing NaN elements that have to be replaced
+          if array is a masked array (numpy.ma.MaskedArray), then 
+          the mask is reapplied after the replacement
 
       max_iter : int
           the number of iterations

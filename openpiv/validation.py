@@ -237,8 +237,12 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     """
     # make a copy of the data without the masked region, fill it also with 
-    # NaN and then use generic filter with nanmean 
+    # NaN and then use generic filter with nanmean
+    # 
 
+    u = np.ma.MaskedArray(u)
+    v = np.ma.MaskedArray(v)
+    
     # kernel footprint
     f = np.ones((2*size+1, 2*size+1))
 
