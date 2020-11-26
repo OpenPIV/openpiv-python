@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import numpy as np
-from scipy.ndimage import median_filter
+from scipy.ndimage import generic_filter
 
 
 def global_val(u, v, u_thresholds, v_thresholds):
@@ -203,6 +203,11 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     the absolute difference with the local median is greater than a user
     specified threshold. The median is computed for both velocity components.
 
+    The image masked areas (obstacles, reflections) are marked as masked array:
+       u = np.ma.masked(u, mask = image_mask)
+    and it should not be replaced by the local median, but remain masked. 
+
+
     Parameters
     ----------
     u : 2d np.ndarray
@@ -231,9 +236,19 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
         a boolean array. True elements corresponds to outliers.
 
     """
+    # make a copy of the data without the masked region, fill it also with 
+    # NaN and then use generic filter with nanmean 
 
-    um = median_filter(u, size=2 * size + 1)
-    vm = median_filter(v, size=2 * size + 1)
+    # kernel footprint
+    f = np.ones((2*size+1, 2*size+1))
+
+    masked_u = np.where(~u.mask, u.data, np.nan)
+    masked_v = np.where(~v.mask, v.data, np.nan)
+
+    um = generic_filter(masked_u, np.nanmedian, mode='constant',
+                        cval=np.nan, footprint=f)
+    vm = generic_filter(masked_v, np.nanmedian, mode='constant',
+                        cval=np.nan, footprint=f)
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
