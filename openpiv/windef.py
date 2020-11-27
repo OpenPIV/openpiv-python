@@ -191,8 +191,8 @@ def piv(settings):
             x, y, u, v, sig2noise_ratio = multipass_img_deform(
                 frame_a,
                 frame_b,
-                settings.windowsizes[i - 1],
-                settings.overlap[i - 1],
+                settings.windowsizes[i],
+                settings.overlap[i],
                 settings.iterations,
                 i,
                 x,
@@ -208,6 +208,22 @@ def piv(settings):
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
+            mask = np.full_like(x,False,dtype=bool)
+            # validation every step
+            u, v, mask_g = validation.global_val(
+                u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
+            )
+            u, v, mask_s = validation.global_std(
+                u, v, std_threshold=settings.std_threshold
+            )
+            u, v, mask_m = validation.local_median_val(
+                u,
+                v,
+                u_threshold=settings.median_threshold,
+                v_threshold=settings.median_threshold,
+                size=settings.median_size,
+            )
+            mask = mask + mask_s + mask_m + mask_g
             # If the smoothing is active, we do it at each pass
             if settings.smoothn is True:
                 u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
@@ -216,25 +232,28 @@ def piv(settings):
                 v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
                     v, s=settings.smoothn_p
                 )
+            if (
+                settings.extract_sig2noise is True
+                and i == settings.iterations
+                and settings.iterations != 1
+                and settings.do_sig2noise_validation is True
+            ):
+                u, v, mask_s2n = validation.sig2noise_val(
+                    u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
+                )
+                mask = mask + mask_s2n
 
-        if (
-            settings.extract_sig2noise is True
-            and i == settings.iterations
-            and settings.iterations != 1
-            and settings.do_sig2noise_validation is True
-        ):
-            u, v, mask_s2n = validation.sig2noise_val(
-                u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
-            )
-            mask = mask + mask_s2n
-        if settings.replace_vectors is True:
-            u, v = filters.replace_outliers(
-                u,
-                v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size,
-            )
+            
+            # replace also every loop
+            if settings.replace_vectors is True:
+                u, v = filters.replace_outliers(
+                    u,
+                    v,
+                    method=settings.filter_method,
+                    max_iter=settings.max_filter_iteration,
+                    kernel_size=settings.filter_kernel_size,
+                )
+
         "pixel/frame->pixel/sec"
         u = u / settings.dt
         v = v / settings.dt
@@ -274,7 +293,7 @@ def piv(settings):
     save_path = os.path.join(
         settings.save_path,
         "Open_PIV_results_"
-        + str(settings.windowsizes[settings.iterations - 1])
+        + str(settings.windowsizes[settings.iterations-1])
         + "_"
         + settings.save_folder_suffix,
     )
@@ -510,7 +529,7 @@ def multipass_img_deform(
     sig2noise_method="peak2peak",
     sig2noise_mask=2,
     interpolation_order=1,
-    masked_coords=[],
+    mask_coords=[],
 ):
     """
     Multi pass of the PIV evaluation.
@@ -558,7 +577,7 @@ def multipass_img_deform(
     interpolation_order : int
         the order of the spline interpolation used for the image deformation
 
-    masked_coords : list of x,y coordinates (pixels) of the image mask, 
+    mask_coords : list of x,y coordinates (pixels) of the image mask, 
         default is an empty list
 
     Returns
@@ -598,8 +617,8 @@ def multipass_img_deform(
 
 
     # reapply the image mask to the new coordinates
-    if len(masked_coords) > 1:  # not an empty list means there is a mask
-        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], masked_coords)
+    if len(mask_coords) > 1:  # not an empty list means there is a mask
+        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
         mask = np.zeros_like(x,dtype=bool)
         mask.flat[xymask] = 1
 
@@ -615,7 +634,7 @@ def multipass_img_deform(
     ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
 
-    if len(masked_coords) > 1:
+    if len(mask_coords) > 1:
         u_pre = np.ma.masked_array(u_pre, mask=mask)
         v_pre = np.ma.masked_array(v_pre, mask=mask)
 
@@ -624,6 +643,7 @@ def multipass_img_deform(
     plt.quiver(x_old, y_old, u_old, v_old,color='b')
     plt.quiver(x_int, y_int, u_pre, v_pre,color='r')
     plt.gca().invert_yaxis()
+    plt.gca().set_aspect(1.)
 
     # @TKauefer added another method to the windowdeformation, 'symmetric' 
     # splits the onto both frames, takes more effort due to additional 
@@ -642,7 +662,7 @@ def multipass_img_deform(
         frame_b = scn.map_coordinates(
             frame_b, ((y_new + vt / 2, x_new + ut / 2)),
             order=interpolation_order, mode='nearest')
-    elif settings.deformation_method == "second image":
+    elif deformation_method == "second image":
         frame_b = deform_windows(
             frame_b, x, y, u_pre, v_pre,
             interpolation_order=interpolation_order)
@@ -694,7 +714,7 @@ def multipass_img_deform(
     v -= v_pre
 
     # reapply image mask just to be sure
-    if len(masked_coords) > 1:
+    if len(mask_coords) > 1:
         u = np.ma.masked_array(u, mask=mask)
         v = np.ma.masked_array(v, mask=mask)
 
@@ -703,6 +723,7 @@ def multipass_img_deform(
     plt.quiver(x_int, y_int, u, v,color='r')
     plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
     plt.gca().invert_yaxis()
+    plt.gca().set_aspect(1)
     
     return x, y, u, v, s2n
 

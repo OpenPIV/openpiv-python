@@ -512,61 +512,60 @@ def normalize_intensity(window):
     return np.clip(window,0,window.max())
 
 
-# TODO: remove in the next version
-# def correlate_windows(window_a, window_b, correlation_method="fft"):
-#     """Compute correlation function between two interrogation windows.
-#     The correlation function can be computed by using the correlation
-#     theorem to speed up the computation.
-#     Parameters
-#     ----------
-#     window_a : 2d np.ndarray
-#         a two dimensions array for the first interrogation window,
-#     window_b : 2d np.ndarray
-#         a two dimensions array for the second interrogation window.
-#     correlation_method : string, methods currently implemented:
-#             'circular' - FFT based without zero-padding
-#             'linear' -  FFT based with zero-padding
-#             'direct' -  linear convolution based
-#             Default is 'fft', which is much faster.
-#     Returns
-#     -------
-#     corr : 2d np.ndarray
-#         a two dimensions array for the correlation function.
-#     Note that due to the wish to use 2^N windows for faster FFT
-#     we use a slightly different convention for the size of the
-#     correlation map. The theory says it is M+N-1, and the
-#     'direct' method gets this size out
-#     the FFT-based method returns M+N size out, where M is the window_size
-#     and N is the search_area_size
-#     It leads to inconsistency of the output
-#     """
+def correlate_windows(window_a, window_b, correlation_method="fft"):
+    """Compute correlation function between two interrogation windows.
+    The correlation function can be computed by using the correlation
+    theorem to speed up the computation.
+    Parameters
+    ----------
+    window_a : 2d np.ndarray
+        a two dimensions array for the first interrogation window,
+    window_b : 2d np.ndarray
+        a two dimensions array for the second interrogation window.
+    correlation_method : string, methods currently implemented:
+            'circular' - FFT based without zero-padding
+            'linear' -  FFT based with zero-padding
+            'direct' -  linear convolution based
+            Default is 'fft', which is much faster.
+    Returns
+    -------
+    corr : 2d np.ndarray
+        a two dimensions array for the correlation function.
+    Note that due to the wish to use 2^N windows for faster FFT
+    we use a slightly different convention for the size of the
+    correlation map. The theory says it is M+N-1, and the
+    'direct' method gets this size out
+    the FFT-based method returns M+N size out, where M is the window_size
+    and N is the search_area_size
+    It leads to inconsistency of the output
+    """
 
-#     # first we remove the mean to normalize contrast and intensity
-#     # the background level which is take as a mean of the image
-#     # is subtracted
-#     # import pdb; pdb.set_trace()
-#     window_a = normalize_intensity(window_a)
-#     window_b = normalize_intensity(window_b)
+    # first we remove the mean to normalize contrast and intensity
+    # the background level which is take as a mean of the image
+    # is subtracted
+    # import pdb; pdb.set_trace()
+    window_a = normalize_intensity(window_a)
+    window_b = normalize_intensity(window_b)
 
-#     # this is not really circular one, as we pad a bit to get fast 2D FFT,
-#     # see fft_correlate for implementation
-#     if correlation_method in ("circular", "fft"):
-#         corr = fft_correlate_windows(window_a, window_b)
-#     elif correlation_method == "linear":
-#         # save the original size:
-#         s1 = np.array(window_a.shape)
-#         s2 = np.array(window_b.shape)
-#         size = s1 + s2 - 1
-#         fslice = tuple([slice(0, int(sz)) for sz in size])
-#         # and slice only the relevant part
-#         corr = fft_correlate_windows(zero_pad(window_a),
-#                                      zero_pad(window_b))[fslice]
-#     elif correlation_method == "direct":
-#         corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
-#     else:
-#         raise ValueError("method is not implemented")
+    # this is not really circular one, as we pad a bit to get fast 2D FFT,
+    # see fft_correlate for implementation
+    if correlation_method in ("circular", "fft"):
+        corr = fft_correlate_windows(window_a, window_b)
+    elif correlation_method == "linear":
+        # save the original size:
+        s1 = np.array(window_a.shape)
+        s2 = np.array(window_b.shape)
+        size = s1 + s2 - 1
+        fslice = tuple([slice(0, int(sz)) for sz in size])
+        # and slice only the relevant part
+        corr = fft_correlate_windows(zero_pad(window_a),
+                                     zero_pad(window_b))[fslice]
+    elif correlation_method == "direct":
+        corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
+    else:
+        raise ValueError("method is not implemented")
 
-#     return corr
+    return corr
 
 
 def fft_correlate_windows(window_a, window_b):
