@@ -138,7 +138,7 @@ def piv(settings):
                 and settings.iterations == 1
                 and settings.do_sig2noise_validation is True
             ):
-                (u, v, mask_s2n) = validation.sig2noise_val(
+                u, v, mask_s2n = validation.sig2noise_val(
                     u, v, sig2noise_ratio,
                     threshold=settings.sig2noise_threshold
                 )
@@ -147,7 +147,7 @@ def piv(settings):
                 mask = mask + mask_g + mask_m + mask_s
         "filter to replace the values that where marked by the validation"
         if settings.iterations > 1:
-            (u, v) = filters.replace_outliers(
+            u, v = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -163,7 +163,7 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
         elif settings.iterations == 1 and settings.replace_vectors is True:
-            (u, v) = filters.replace_outliers(
+            u, v = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -172,7 +172,7 @@ def piv(settings):
             )
             "adding masks to add the effect of all the validations"
             if settings.smoothn is True:
-                (u, v) = filters.replace_outliers(
+                u, v = filters.replace_outliers(
                     u,
                     v,
                     method=settings.filter_method,
@@ -188,7 +188,7 @@ def piv(settings):
 
         # "all the following passes"
         for i in range(1, settings.iterations):
-            x, y, u, v, sig2noise_ratio, mask = multipass_img_deform(
+            x, y, u, v, sig2noise_ratio = multipass_img_deform(
                 frame_a,
                 frame_b,
                 settings.windowsizes[i - 1],
@@ -205,14 +205,6 @@ def piv(settings):
                 do_sig2noise=settings.extract_sig2noise,
                 sig2noise_method=settings.sig2noise_method,
                 sig2noise_mask=settings.sig2noise_mask,
-                MinMaxU=settings.MinMax_U_disp,
-                MinMaxV=settings.MinMax_V_disp,
-                std_threshold=settings.std_threshold,
-                median_threshold=settings.median_threshold,
-                median_size=settings.median_size,
-                filter_method=settings.filter_method,
-                max_filter_iteration=settings.max_filter_iteration,
-                filter_kernel_size=settings.filter_kernel_size,
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
@@ -607,7 +599,7 @@ def multipass_img_deform(
 
     # reapply the image mask to the new coordinates
     if len(masked_coords) > 1:  # not an empty list means there is a mask
-        xymask = points_in_poly(np.c_[y.flatten(),x.flatten()],mask_coords)
+        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], masked_coords)
         mask = np.zeros_like(x,dtype=bool)
         mask.flat[xymask] = 1
 
@@ -646,14 +638,14 @@ def multipass_img_deform(
             frame_a, x, y, u_pre, v_pre)
         frame_a = scn.map_coordinates(
             frame_a, ((y_new - vt / 2, x_new - ut / 2)),
-            order=settings.interpolation_order, mode='nearest')
+            order=interpolation_order, mode='nearest')
         frame_b = scn.map_coordinates(
             frame_b, ((y_new + vt / 2, x_new + ut / 2)),
-            order=settings.interpolation_order, mode='nearest')
+            order=interpolation_order, mode='nearest')
     elif settings.deformation_method == "second image":
         frame_b = deform_windows(
             frame_b, x, y, u_pre, v_pre,
-            interpolation_order=settings.interpolation_order)
+            interpolation_order=interpolation_order)
     else:
         raise Exception("Deformation method is not valid.")
 
@@ -676,18 +668,18 @@ def multipass_img_deform(
     u, v, s2n = extended_search_area_piv(
         frame_a,
         frame_b,
-        window_size=settings.windowsizes[i],
-        overlap=settings.overlap[i],
-        width=settings.sig2noise_mask,
-        subpixel_method=settings.subpixel_method,
+        window_size=window_size,
+        overlap=overlap,
+        width=sig2noise_mask,
+        subpixel_method=subpixel_method,
         sig2noise_method=sig2noise_method,  # see the if ... test
         correlation_method=correlation_method,
         normalized_correlation=normalized_correlation,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape, 
-                                      settings.windowsizes[i], 
-                                      settings.overlap[i]))
+                                      window_size, 
+                                      overlap))
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)

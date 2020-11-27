@@ -59,7 +59,7 @@ def test_multi_pass_circ():
     v_old = v.copy()
     i = 1
     for i in range(1, iterations ):
-        x, y, u, v, s2n, mask = windef.multipass_img_deform(
+        x, y, u, v, s2n = windef.multipass_img_deform(
             frame_a,
             frame_b,
             window_size[i],
@@ -128,7 +128,7 @@ def test_multi_pass_lin():
     v_old = v.copy()
     i = 1
     for i in range(2, iterations + 1):
-        x, y, u, v, sn, m = windef.multipass_img_deform(
+        x, y, u, v, sn = windef.multipass_img_deform(
             frame_a,
             frame_b,
             window_size[i - 1],
