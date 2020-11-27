@@ -1,7 +1,9 @@
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
 from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
 from skimage.filters import sobel, rank, threshold_otsu
+from skimage.measure import find_contours, approximate_polygon
 import numpy as np
+import matplotlib.pyplot as plt
 
 """This module contains image processing routines that improve
 images prior to PIV processing."""
@@ -83,3 +85,40 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
         raise ValueError(f"method {method} is not implemented")
 
     return imcopy, mask
+
+
+
+
+def mask_coordinates(image_mask, tolerance=1.5, min_length=10):
+    """ Creates set of coordinates of polygons from the image mask
+    
+    Inputs:
+        mask : binary image of a mask.
+
+        [tolerance] : float - tolerance for approximate_polygons, default = 1.5
+
+        [min_length] : int - minimum length of the polygon, filters out 
+        the small polygons like noisy regions, default = 10
+    
+    Outputs:
+        mask_coord : list of mask coordinates in pixels
+    
+    Example:
+        # if masks of image A and B are slightly different:
+        image_mask = np.logical_and(image_mask_a, image_mask_b)
+        mask_coords = mask_coordinates(image_mask)
+        
+    """
+    
+    
+    plt.figure()
+    plt.imshow(image_mask)
+    for contour in find_contours(image_mask, 0):
+        coords = approximate_polygon(contour, tolerance=tolerance)
+        if len(coords) > min_length:
+            plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
+            mask_coords = coords.copy()
+            
+    return mask_coords
+
+

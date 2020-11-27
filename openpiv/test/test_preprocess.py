@@ -1,5 +1,5 @@
 import numpy as np
-from openpiv.preprocess import dynamic_masking
+from openpiv.preprocess import dynamic_masking, mask_coordinates
 from skimage import img_as_float
 from skimage.color import rgb2gray, rgba2rgb
 from skimage.io import imread
@@ -21,7 +21,11 @@ def test_dynamic_masking(display_images=False):
     assert np.allclose(img1[80:84, 80:84], 0.0)  # not it's black
 
     if display_images:
-        fig, ax = plt.subplots(1, 2)
+        _, ax = plt.subplots(1, 2)
         ax[0].imshow(img)
         ax[1].imshow(img1)  # see if the moon has gone
         plt.show()
+
+
+def test_mask_coordinates():
+    assert(False)  # it has to fail so we remember to make a test
