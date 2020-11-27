@@ -165,4 +165,4 @@ def replace_outliers(u, v, w=None, method="localmean",
         )
         return uf, vf, wf
 
-    return (uf, vf)
+    return uf, vf

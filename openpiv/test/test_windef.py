@@ -58,12 +58,12 @@ def test_multi_pass_circ():
     u_old = u.copy()
     v_old = v.copy()
     i = 1
-    for i in range(2, iterations + 1):
+    for i in range(1, iterations ):
         x, y, u, v, s2n, mask = windef.multipass_img_deform(
             frame_a,
             frame_b,
-            window_size[i - 1],
-            overlap[i - 1],
+            window_size[i],
+            overlap[i],
             iterations,
             i,
             x,
@@ -76,14 +76,6 @@ def test_multi_pass_circ():
             do_sig2noise=False,
             sig2noise_method="peak2peak",
             sig2noise_mask=2,
-            MinMaxU=(-100, 50),
-            MinMaxV=(-50, 50),
-            std_threshold=1000000,
-            median_threshold=200000,
-            median_size=1,
-            filter_method="localmean",
-            max_filter_iteration=10,
-            filter_kernel_size=2,
             interpolation_order=3,
         )
 
@@ -153,14 +145,6 @@ def test_multi_pass_lin():
             do_sig2noise=False,
             sig2noise_method="peak2peak",
             sig2noise_mask=2,
-            MinMaxU=(-100, 50),
-            MinMaxV=(-50, 50),
-            std_threshold=1000000,
-            median_threshold=200000,
-            median_size=1,
-            filter_method="localmean",
-            max_filter_iteration=10,
-            filter_kernel_size=2,
             interpolation_order=3,
         )
 

@@ -19,6 +19,7 @@ from openpiv import preprocess, scaling
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
 from openpiv import smoothn
+from skimage.measure import points_in_poly
 
 
 def piv(settings):
@@ -185,9 +186,8 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
 
-        i = 1
-        "all the following passes"
-        for i in range(2, settings.iterations + 1):
+        # "all the following passes"
+        for i in range(1, settings.iterations):
             x, y, u, v, sig2noise_ratio, mask = multipass_img_deform(
                 frame_a,
                 frame_b,
@@ -517,6 +517,7 @@ def multipass_img_deform(
     do_sig2noise=True,
     sig2noise_method="peak2peak",
     sig2noise_mask=2,
+    interpolation_order=1,
     masked_coords=[],
 ):
     """
@@ -588,10 +589,8 @@ def multipass_img_deform(
 
     """
 
-    y_old = y[:, 0]
-    x_old = x[0, :]
-    u_old = u.copy()
-    v_old = v.copy()
+    y_old = y_old[:, 0]
+    x_old = x_old[0, :]
     
     
     # calculate the y and y coordinates of the interrogation window centres. 
@@ -601,8 +600,8 @@ def multipass_img_deform(
     # of the new grid
     
     x, y = get_coordinates(np.shape(frame_a), 
-                           settings.windowsizes[current_iteration], 
-                           settings.overlap[current_interation])
+                           window_size, 
+                           overlap)
 
 
 
@@ -641,7 +640,7 @@ def multipass_img_deform(
     old_frame_a = frame_a.copy()
     old_frame_b = frame_b.copy()
 
-    if settings.deformation_method == "symmetric":
+    if deformation_method == "symmetric":
         # this one is doing the image deformation (see above)
         x_new, y_new, ut, vt = create_deformation_field(
             frame_a, x, y, u_pre, v_pre)
@@ -703,7 +702,7 @@ def multipass_img_deform(
     v -= v_pre
 
     # reapply image mask just to be sure
-    if len(mask_coords) > 1:
+    if len(masked_coords) > 1:
         u = np.ma.masked_array(u, mask=mask)
         v = np.ma.masked_array(v, mask=mask)
 
