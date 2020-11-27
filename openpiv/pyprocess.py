@@ -787,7 +787,7 @@ def extended_search_area_piv(
 
     sig2noise = sig2noise.reshape(n_rows, n_cols)
 
-    return u / dt, v / dt, sig2noise
+    return u/dt, v/dt, sig2noise
 
 
 def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"):
