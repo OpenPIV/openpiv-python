@@ -57,6 +57,9 @@ def test_multi_pass_circ():
     )
     u_old = u.copy()
     v_old = v.copy()
+    print("\n", x, y, u_old, v_old, s2n)
+    assert np.mean(np.abs(u_old - shift_u)) < threshold
+    assert np.mean(np.abs(v_old - shift_v)) < threshold
     for i in range(1, iterations ):
         x, y, u, v, s2n = windef.multipass_img_deform(
             frame_a,
@@ -125,6 +128,11 @@ def test_multi_pass_lin():
     )
     u_old = u.copy()
     v_old = v.copy()
+
+    print("\n", x, y, u_old, v_old, s2n)
+    assert np.mean(np.abs(u_old - shift_u)) < threshold
+    assert np.mean(np.abs(v_old - shift_v)) < threshold
+
     for i in range(1, iterations):
         x, y, u, v, sn = windef.multipass_img_deform(
             frame_a,

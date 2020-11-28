@@ -9,3 +9,8 @@ v0.22.4 Nov, 2020 -- windef refactoring : no more process.pyx, everything in pyp
 v0.23.0 - refactored windef.py, with the main functions moved to pyprocess.py
 v0.23.1 - fixed bugs in 0.23.0, new normalized_correlation, normalize_intensity, find_subpixel_position, new tests, new jupyter notebooks, see also 
             test_robustness
+v0.23.2 - added mask_coordinats to preprocess, allows to use dynamic_masking to create
+    image mask as well as a polygon that propagates into multi-process and validation
+    created new Jupyter notebook to test von Karman vortex street case and compare with PIVLab
+    breakes backward compatibility of windef with removing validation and filtering steps, to be compatible
+    with the first_pass. Both first_pass and multi_pass now apply filtering externally
