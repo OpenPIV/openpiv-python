@@ -89,7 +89,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
 
 
 
-def mask_coordinates(image_mask, tolerance=1.5, min_length=10):
+def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
     """ Creates set of coordinates of polygons from the image mask
     
     Inputs:
@@ -110,13 +110,15 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10):
         
     """
     
-    
-    plt.figure()
-    plt.imshow(image_mask)
+    mask_coords = []
+    if plot:
+        plt.figure()
+        plt.imshow(image_mask)
     for contour in find_contours(image_mask, 0):
         coords = approximate_polygon(contour, tolerance=tolerance)
         if len(coords) > min_length:
-            plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
+            if plot:
+                plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
             mask_coords = coords.copy()
             
     return mask_coords
