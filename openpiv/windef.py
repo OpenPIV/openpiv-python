@@ -638,12 +638,12 @@ def multipass_img_deform(
         u_pre = np.ma.masked_array(u_pre, mask=mask)
         v_pre = np.ma.masked_array(v_pre, mask=mask)
 
-    # TODO: remove
-    plt.figure()
-    plt.quiver(x_old, y_old, u_old, v_old,color='b')
-    plt.quiver(x_int, y_int, u_pre, v_pre,color='r')
-    plt.gca().invert_yaxis()
-    plt.gca().set_aspect(1.)
+    if settings.show_plot:
+        plt.figure()
+        plt.quiver(x_old, y_old, u_old, v_old,color='b')
+        plt.quiver(x_int, y_int, u_pre, v_pre,color='r')
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
 
     # @TKauefer added another method to the windowdeformation, 'symmetric' 
     # splits the onto both frames, takes more effort due to additional 
@@ -669,11 +669,11 @@ def multipass_img_deform(
     else:
         raise Exception("Deformation method is not valid.")
 
-    # TODO: remove
-    plt.figure()
-    plt.imshow(frame_a-old_frame_a)
-    plt.figure()
-    plt.imshow(frame_b-old_frame_b)
+    if settings.show_plot:
+        plt.figure()
+        plt.imshow(frame_a-old_frame_a)
+        plt.figure()
+        plt.imshow(frame_b-old_frame_b)
 
     if (
         do_sig2noise is True and  # and also the last one is optional? 
@@ -718,12 +718,12 @@ def multipass_img_deform(
         u = np.ma.masked_array(u, mask=mask)
         v = np.ma.masked_array(v, mask=mask)
 
-    # TODO: remove
-    plt.figure()
-    plt.quiver(x_int, y_int, u, v,color='r')
-    plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
-    plt.gca().invert_yaxis()
-    plt.gca().set_aspect(1)
+    if settings.show_plot:
+        plt.figure()
+        plt.quiver(x_int, y_int, u, v,color='r')
+        plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1)
     
     return x, y, u, v, s2n
 
