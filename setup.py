@@ -56,10 +56,9 @@ setup(
         'Programming Language :: Python :: 3.8',
 
         # Sublist of all supported platforms and environments.
-        'Environment :: Console',
-        'Environment :: MacOS X',
-        'Environment :: Win32 (MS Windows)',
-        'Environment :: X11 Applications',
+          'Operating System :: MacOS :: MacOS X',
+          'Operating System :: Microsoft :: Windows',
+          'Operating System :: POSIX',
 
         # Miscellaneous metadata.
         'Intended Audience :: Science/Research',
