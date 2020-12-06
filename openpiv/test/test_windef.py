@@ -134,7 +134,7 @@ def test_multi_pass_lin():
     assert np.mean(np.abs(v_old - shift_v)) < threshold
 
     for i in range(1, iterations):
-        x, y, u, v, sn = windef.multipass_img_deform(
+        x, y, u, v, _ = windef.multipass_img_deform(
             frame_a,
             frame_b,
             window_size[i],
