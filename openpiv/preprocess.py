@@ -1,3 +1,10 @@
+from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
+from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
+from skimage.filters import sobel, rank, threshold_otsu
+from skimage.measure import find_contours, approximate_polygon
+import numpy as np
+import matplotlib.pyplot as plt
+
 """This module contains image processing routines that improve
 images prior to PIV processing."""
 
@@ -19,48 +26,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
-from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
-from skimage.filters import sobel, rank, threshold_otsu
-import numpy as np
-
-
 def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
-    """ Dynamically masks out the objects in the PIV images
-    
+    """Dynamically masks out the objects in the PIV images
+
     Parameters
     ----------
     image: image
         a two dimensional array of uint16, uint8 or similar type
-        
+
     method: string
         'edges' or 'intensity':
-        'edges' method is used for relatively dark and sharp objects, with visible edges, on 
+        'edges' method is used for relatively dark and sharp objects, with visible edges, on
         dark backgrounds, i.e. low contrast
-        'intensity' method is useful for smooth bright objects or dark objects or vice versa, 
+        'intensity' method is useful for smooth bright objects or dark objects or vice versa,
         i.e. images with high contrast between the object and the background
-    
+
     filter_size: integer
         a scalar that defines the size of the Gaussian filter
-    
+
     threshold: float
         a value of the threshold to segment the background from the object
         default value: None, replaced by sckimage.filter.threshold_otsu value
-            
+
     Returns
     -------
     image : array of the same datatype as the incoming image with the object masked out
         as a completely black region(s) of zeros (integers or floats).
-    
-    
+
+
     Example
     --------
     frame_a  = openpiv.tools.imread( 'Camera1-001.tif' )
     imshow(frame_a) # original
-    
+
     frame_a = dynamic_masking(frame_a,method='edges',filter_size=7,threshold=0.005)
-    imshow(frame_a) # masked 
-        
+    imshow(frame_a) # masked
+
     """
     imcopy = np.copy(image)
     # stretch the histogram
@@ -72,12 +73,54 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
         edges = sobel(blurback)
         blur_edges = gaussian_filter(edges, 21)
         # create the boolean mask
-        bw = blur_edges > threshold
-        bw = img_as_ubyte(binary_fill_holes(bw))
+        mask = blur_edges > threshold
+        mask = img_as_ubyte(binary_fill_holes(mask))
         imcopy -= blurback
-        imcopy[bw] = 0.0
+        imcopy[mask] = 0
     elif method == "intensity":
         background = gaussian_filter(median_filter(image, filter_size), filter_size)
-        imcopy[background > threshold_otsu(background)] = 0
+        mask = background > threshold_otsu(background)
+        imcopy[mask] = 0
+    else:
+        raise ValueError(f"method {method} is not implemented")
 
-    return imcopy  # image
+    return imcopy, mask
+
+
+
+
+def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
+    """ Creates set of coordinates of polygons from the image mask
+    
+    Inputs:
+        mask : binary image of a mask.
+
+        [tolerance] : float - tolerance for approximate_polygons, default = 1.5
+
+        [min_length] : int - minimum length of the polygon, filters out 
+        the small polygons like noisy regions, default = 10
+    
+    Outputs:
+        mask_coord : list of mask coordinates in pixels
+    
+    Example:
+        # if masks of image A and B are slightly different:
+        image_mask = np.logical_and(image_mask_a, image_mask_b)
+        mask_coords = mask_coordinates(image_mask)
+        
+    """
+    
+    mask_coords = []
+    if plot:
+        plt.figure()
+        plt.imshow(image_mask)
+    for contour in find_contours(image_mask, 0):
+        coords = approximate_polygon(contour, tolerance=tolerance)
+        if len(coords) > min_length:
+            if plot:
+                plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
+            mask_coords = coords.copy()
+            
+    return mask_coords
+
+

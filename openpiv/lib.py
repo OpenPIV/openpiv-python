@@ -3,7 +3,8 @@ import numpy as np
 
 def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
-    """Replace NaN elements in an array using an iterative image inpainting algorithm.
+    """Replace NaN elements in an array using an iterative image inpainting
+        algorithm.
 
       The algorithm is the following:
 
@@ -12,8 +13,9 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
          depend on the method type. See Methods below.
 
       2) Several iterations are needed if there are adjacent NaN elements.
-         If this is the case, information is "spread" from the edges of the missing
-         regions iteratively, until the variation is below a certain threshold.
+         If this is the case, information is "spread" from the edges of the
+         missing regions iteratively, until the variation is below a certain
+         threshold.
 
       Methods:
 
@@ -42,6 +44,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
       array : 2d or 3d np.ndarray
           an array containing NaN elements that have to be replaced
+          if array is a masked array (numpy.ma.MaskedArray), then 
+          the mask is reapplied after the replacement
 
       max_iter : int
           the number of iterations
@@ -81,7 +85,7 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
         kernel[dist <= kernel_size] = dist_inv[dist <= kernel_size]
     else:
         raise ValueError(
-            "method not valid. Should be one of `localmean`, `disk` or `distance`."
+            "Known methods are: `localmean`, `disk` or `distance`."
         )
 
     # list of kernel array indices
@@ -101,7 +105,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
     # make several passes
     # until we reach convergence
     for it in range(max_iter):
-        # note: identifying new nan indices and looping other the new indices would give slightly different result
+        # note: identifying new nan indices and looping other the new indices
+        # would give slightly different result
 
         # for each NaN element
         for k in range(n_nans):
@@ -111,7 +116,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
             # init to 0.0
             replaced_new[k] = 0.0
 
-            # generating a list of indices of the convolution window in the array
+            # generating a list of indices of the convolution window in the 
+            # array
             slice_indices = np.array(
                 np.meshgrid(*[range(i - kernel_size, i + kernel_size + 1) for i in ind])
             )
@@ -120,7 +126,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
             in_mask = np.array(
                 [
                     np.logical_and(
-                        slice_indices[i] < array.shape[i], slice_indices[i] >= 0
+                        slice_indices[i] < array.shape[i],
+                        slice_indices[i] >= 0
                     )
                     for i in range(n_dim)
                 ]
@@ -157,7 +164,8 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
 
 def get_dist(kernel, kernel_size):
-    # generates a map of distances to the center of the kernel. This is later used to generate disk-shaped kernels and
+    # generates a map of distances to the center of the kernel. This is later
+    # used to generate disk-shaped kernels and
     # to fill in distance based weights
 
     if len(kernel.shape) == 2:
@@ -170,7 +178,9 @@ def get_dist(kernel, kernel_size):
     if len(kernel.shape) == 3:
         xs, ys, zs = np.indices(kernel.shape)
         dist = np.sqrt(
-            (ys - kernel_size) ** 2 + (xs - kernel_size) ** 2 + (zs - kernel_size) ** 2
+            (ys - kernel_size) ** 2 +
+            (xs - kernel_size) ** 2 +
+            (zs - kernel_size) ** 2
         )
         dist_inv = np.sqrt(3) * kernel_size - dist
 

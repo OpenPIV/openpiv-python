@@ -19,6 +19,7 @@ from openpiv import preprocess, scaling
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
 from openpiv import smoothn
+from skimage.measure import points_in_poly
 
 
 def piv(settings):
@@ -60,7 +61,7 @@ def piv(settings):
                 settings.ROI[0]:settings.ROI[1],
                 settings.ROI[2]:settings.ROI[3]
             ]
-        if settings.dynamic_masking_method == "edge" or "intensity":
+        if settings.dynamic_masking_method in ("edge","intensity"):
             frame_a = preprocess.dynamic_masking(
                 frame_a,
                 method=settings.dynamic_masking_method,
@@ -137,7 +138,7 @@ def piv(settings):
                 and settings.iterations == 1
                 and settings.do_sig2noise_validation is True
             ):
-                (u, v, mask_s2n) = validation.sig2noise_val(
+                u, v, mask_s2n = validation.sig2noise_val(
                     u, v, sig2noise_ratio,
                     threshold=settings.sig2noise_threshold
                 )
@@ -146,7 +147,7 @@ def piv(settings):
                 mask = mask + mask_g + mask_m + mask_s
         "filter to replace the values that where marked by the validation"
         if settings.iterations > 1:
-            (u, v) = filters.replace_outliers(
+            u, v = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -162,7 +163,7 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
         elif settings.iterations == 1 and settings.replace_vectors is True:
-            (u, v) = filters.replace_outliers(
+            u, v = filters.replace_outliers(
                 u,
                 v,
                 method=settings.filter_method,
@@ -171,7 +172,7 @@ def piv(settings):
             )
             "adding masks to add the effect of all the validations"
             if settings.smoothn is True:
-                (u, v) = filters.replace_outliers(
+                u, v = filters.replace_outliers(
                     u,
                     v,
                     method=settings.filter_method,
@@ -185,14 +186,13 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
 
-        i = 1
-        "all the following passes"
-        for i in range(2, settings.iterations + 1):
-            x, y, u, v, sig2noise_ratio, mask = multipass_img_deform(
+        # "all the following passes"
+        for i in range(1, settings.iterations):
+            x, y, u, v, sig2noise_ratio = multipass_img_deform(
                 frame_a,
                 frame_b,
-                settings.windowsizes[i - 1],
-                settings.overlap[i - 1],
+                settings.windowsizes[i],
+                settings.overlap[i],
                 settings.iterations,
                 i,
                 x,
@@ -205,17 +205,25 @@ def piv(settings):
                 do_sig2noise=settings.extract_sig2noise,
                 sig2noise_method=settings.sig2noise_method,
                 sig2noise_mask=settings.sig2noise_mask,
-                MinMaxU=settings.MinMax_U_disp,
-                MinMaxV=settings.MinMax_V_disp,
-                std_threshold=settings.std_threshold,
-                median_threshold=settings.median_threshold,
-                median_size=settings.median_size,
-                filter_method=settings.filter_method,
-                max_filter_iteration=settings.max_filter_iteration,
-                filter_kernel_size=settings.filter_kernel_size,
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
+            mask = np.full_like(x,False,dtype=bool)
+            # validation every step
+            u, v, mask_g = validation.global_val(
+                u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
+            )
+            u, v, mask_s = validation.global_std(
+                u, v, std_threshold=settings.std_threshold
+            )
+            u, v, mask_m = validation.local_median_val(
+                u,
+                v,
+                u_threshold=settings.median_threshold,
+                v_threshold=settings.median_threshold,
+                size=settings.median_size,
+            )
+            mask = mask + mask_s + mask_m + mask_g
             # If the smoothing is active, we do it at each pass
             if settings.smoothn is True:
                 u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
@@ -224,25 +232,28 @@ def piv(settings):
                 v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
                     v, s=settings.smoothn_p
                 )
+            if (
+                settings.extract_sig2noise is True
+                and i == settings.iterations
+                and settings.iterations != 1
+                and settings.do_sig2noise_validation is True
+            ):
+                u, v, mask_s2n = validation.sig2noise_val(
+                    u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
+                )
+                mask = mask + mask_s2n
 
-        if (
-            settings.extract_sig2noise is True
-            and i == settings.iterations
-            and settings.iterations != 1
-            and settings.do_sig2noise_validation is True
-        ):
-            u, v, mask_s2n = validation.sig2noise_val(
-                u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
-            )
-            mask = mask + mask_s2n
-        if settings.replace_vectors is True:
-            u, v = filters.replace_outliers(
-                u,
-                v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size,
-            )
+            
+            # replace also every loop
+            if settings.replace_vectors is True:
+                u, v = filters.replace_outliers(
+                    u,
+                    v,
+                    method=settings.filter_method,
+                    max_iter=settings.max_filter_iteration,
+                    kernel_size=settings.filter_kernel_size,
+                )
+
         "pixel/frame->pixel/sec"
         u = u / settings.dt
         v = v / settings.dt
@@ -282,7 +293,7 @@ def piv(settings):
     save_path = os.path.join(
         settings.save_path,
         "Open_PIV_results_"
-        + str(settings.windowsizes[settings.iterations - 1])
+        + str(settings.windowsizes[settings.iterations-1])
         + "_"
         + settings.save_folder_suffix,
     )
@@ -405,10 +416,11 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
-    x, y, ut, vt = create_deformation_field(frame, 
-                                            x, y, u, v, 
-                                            interpolation_order=interpolation_order,
-                                            kx=kx, ky=ky)
+    x, y, ut, vt = \
+        create_deformation_field(frame,
+                                 x, y, u, v,
+                                 interpolation_order=interpolation_order,
+                                 kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
         frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
 
@@ -474,32 +486,8 @@ def first_pass(
 
     """
 
-    # Alex: in windef_refactoring we created a pyprocess.py that holds
-    # all the vectorized solutions from windef, using the same principles
-    # now the first_pass is just wraping the extended_search_piv
-
-    # We replace this part with the extended_search
-
-    # cor_win_1 = moving_window_array(frame_a, window_size, overlap)
-    # cor_win_2 = moving_window_array(frame_b, window_size, overlap)
-    # """Filling the interrogation window. They windows are arranged
-    # in a 3d array with number of interrogation windows
-    # this way is much faster then using a loop"""
-
-    # correlation = correlate_windows(cor_win_1, cor_win_2,
-    #                                 correlation_method=correlation_method)
-    # "do the correlation"
-    # # create a dummy for the loop to fill
-    # disp = np.zeros((np.size(correlation, 0), 2))
-    # for i in range(0, np.size(correlation, 0)):
-    #     """ determine the displacment on subpixel level """
-    #     disp[i, :] = find_subpixel_peak_position(
-    #         correlation[i, :, :], subpixel_method=subpixel_method
-    #     )
-    # "this loop is doing the displacment evaluation for each window "
-
-    if do_sig2noise is False or iterations != 1:
-        sig2noise_method = None  # this indicates to get out nans
+#     if do_sig2noise is False or iterations != 1:
+#         sig2noise_method = None  # this indicates to get out nans
 
     u, v, s2n = extended_search_area_piv(
         frame_a,
@@ -522,7 +510,6 @@ def first_pass(
 
     return x, y, u, v, s2n
 
-
 def multipass_img_deform(
     frame_a,
     frame_b,
@@ -538,18 +525,11 @@ def multipass_img_deform(
     normalized_correlation=False,
     subpixel_method="gaussian",
     deformation_method="symmetric",
-    do_sig2noise=False,
+    do_sig2noise=True,
     sig2noise_method="peak2peak",
     sig2noise_mask=2,
-    MinMaxU=(-100, 50),
-    MinMaxV=(-50, 50),
-    std_threshold=5,
-    median_threshold=2,
-    median_size=1,
-    filter_method="localmean",
-    max_filter_iteration=10,
-    filter_kernel_size=2,
-    interpolation_order=3,
+    interpolation_order=1,
+    mask_coords=[],
 ):
     """
     Multi pass of the PIV evaluation.
@@ -557,8 +537,7 @@ def multipass_img_deform(
     This function does the PIV evaluation of the second and other passes.
     It returns the coordinates of the interrogation window centres,
     the displacement u, v for each interrogation window as well as
-    the mask which indicates
-    wether the displacement vector was interpolated or not.
+    the signal to noise ratio array (which is full of NaNs if opted out)
 
 
     Parameters
@@ -583,6 +562,7 @@ def multipass_img_deform(
 
     u_old : 2d np.ndarray
         the u displacement of the vector field of the previous pass
+        in case of the image mask - u_old and v_old are MaskedArrays
 
     v_old : 2d np.ndarray
         the v displacement of the vector field of the previous pass
@@ -594,35 +574,11 @@ def multipass_img_deform(
         'gaussian' [default if correlation map is positive],
         'parabolic'
 
-    MinMaxU : two elements tuple
-        sets the limits of the u displacment component
-        Used for validation.
-
-    MinMaxV : two elements tuple
-        sets the limits of the v displacment component
-        Used for validation.
-
-    std_threshold : float
-        sets the  threshold for the std validation
-
-    median_threshold : float
-        sets the threshold for the median validation
-
-    filter_method : string
-        the method used to replace the non-valid vectors
-        Methods:
-            'localmean',
-            'disk',
-            'distance',
-
-    max_filter_iteration : int
-        maximum of filter iterations to replace nans
-
-    filter_kernel_size : int
-        size of the kernel used for the filtering
-
     interpolation_order : int
         the order of the spline interpolation used for the image deformation
+
+    mask_coords : list of x,y coordinates (pixels) of the image mask, 
+        default is an empty list
 
     Returns
     -------
@@ -633,43 +589,41 @@ def multipass_img_deform(
         array containg the y coordinates of the interrogation window centres
 
     u : 2d np.array
-        array containing the u displacement for every interrogation window
+        array containing the horizontal displacement for every interrogation window
+        [pixels]
 
     u : 2d np.array
-        array containing the u displacement for every interrogation window
-
-    mask : 2d np.array
-        array containg the mask values (bool) which contains information if
-        the vector was filtered
-
-    correlation_method : string 
-        default is "circular", another option is "linear" see the 
-        fft_correlate_strided_images for details
-        "circular" is faster, without zero padding
-        "linear" requires normalized_correlation to remove zeros on the edges
-        and zero-pads the interrogation windows before correlation
-
-    normalized_correlation : boolean,
-        if True, the interrogation window mean intensity is subtracted, 
-        the intensity is normalized by the standard deviation to create
-        more or less similar interrogation windows and 
-        the correlation itself is later normalized to the 0..1 range
+        array containing the vertical displacement for every interrogation window
+        it returns values in [pixels]
+        
+    s2n : 2D np.array of signal to noise ratio values
 
     """
 
-    x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
-
-    "calculate the y and y coordinates of the interrogation window centres"
-    """The interpolation function dont like meshgrids as input. Hence, the
-    edges must be extracted to provide the sufficient input. x_old and y_old
-    are the coordinates of the old grid. x_int and y_int are the coordinates
-    of the new grid"""
-
     y_old = y_old[:, 0]
-    # y_old = y_old[::-1]
     x_old = x_old[0, :]
+    
+    
+    # calculate the y and y coordinates of the interrogation window centres. 
+    # The interpolation function dont like meshgrids as input. Hence, the
+    # edges must be extracted to provide the sufficient input. x_old and y_old
+    # are the coordinates of the old grid. x_int and y_int are the coordinates
+    # of the new grid
+    
+    x, y = get_coordinates(np.shape(frame_a), 
+                           window_size, 
+                           overlap)
+
+
+
+    # reapply the image mask to the new coordinates
+    if len(mask_coords) > 1:  # not an empty list means there is a mask
+        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+        mask = np.zeros_like(x,dtype=bool)
+        mask.flat[xymask] = 1
+
+
     y_int = y[:, 0]
-    # y_int = y_int[::-1]
     x_int = x[0, :]
 
     # interpolating the displacements from the old grid onto the new grid
@@ -679,9 +633,25 @@ def multipass_img_deform(
 
     ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
-    # I added another method to the windowdeformation, 'symmetric' splits the
-    # onto both frames, takes more effort due to additional interpolation,
-    # however should deliver better results
+
+    if len(mask_coords) > 1:
+        u_pre = np.ma.masked_array(u_pre, mask=mask)
+        v_pre = np.ma.masked_array(v_pre, mask=mask)
+
+    if settings.show_plot:
+        plt.figure()
+        plt.quiver(x_old, y_old, u_old, v_old,color='b')
+        plt.quiver(x_int, y_int, u_pre, v_pre,color='r')
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
+
+    # @TKauefer added another method to the windowdeformation, 'symmetric' 
+    # splits the onto both frames, takes more effort due to additional 
+    # interpolation however should deliver better results
+
+    old_frame_a = frame_a.copy()
+    old_frame_b = frame_b.copy()
+
     if deformation_method == "symmetric":
         # this one is doing the image deformation (see above)
         x_new, y_new, ut, vt = create_deformation_field(
@@ -699,62 +669,63 @@ def multipass_img_deform(
     else:
         raise Exception("Deformation method is not valid.")
 
+    if settings.show_plot:
+        plt.figure()
+        plt.imshow(frame_a-old_frame_a)
+        plt.figure()
+        plt.imshow(frame_b-old_frame_b)
+
     if (
-        do_sig2noise is True and
-        current_iteration == iterations and
-        iterations != 1
+        do_sig2noise is True and  # and also the last one is optional? 
+        current_iteration == iterations and  # so only the last one is applied?
+        iterations != 1  # we should not call multipass at all with 1 iteration
     ):
         sig2noise_method = sig2noise_method
     else:
         sig2noise_method = None
 
+    # so we use here default circular not normalized correlation:
     u, v, s2n = extended_search_area_piv(
         frame_a,
         frame_b,
         window_size=window_size,
         overlap=overlap,
-        search_area_size=window_size,
         width=sig2noise_mask,
         subpixel_method=subpixel_method,
-        sig2noise_method=sig2noise_method,
+        sig2noise_method=sig2noise_method,  # see the if ... test
+        correlation_method=correlation_method,
+        normalized_correlation=normalized_correlation,
     )
 
-    shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
+    shapes = np.array(get_field_shape(frame_a.shape, 
+                                      window_size, 
+                                      overlap))
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
+
+    #     plt.figure()
+    #     plt.quiver(x_int, y_int, u, v,color='r')
+    #     plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
+    #     plt.gca().invert_yaxis()
 
     # adding the recent displacment on to the displacment of the previous pass
     u += u_pre
     v -= v_pre
 
-    # validation using gloabl limits and local median
-    u, v, mask_g = validation.global_val(u, v, MinMaxU, MinMaxV)
-    u, v, mask_s = validation.global_std(u, v, std_threshold=std_threshold)
-    u, v, mask_m = validation.local_median_val(
-        u,
-        v,
-        u_threshold=median_threshold,
-        v_threshold=median_threshold,
-        size=median_size,
-    )
+    # reapply image mask just to be sure
+    if len(mask_coords) > 1:
+        u = np.ma.masked_array(u, mask=mask)
+        v = np.ma.masked_array(v, mask=mask)
 
-    # adding masks to add the effect of alle the validations
-    mask = mask_g + mask_m + mask_s
-
-    # mask=np.zeros_like(u)
-    # filter to replace the values that where marked by the validation
-    if current_iteration != iterations:
-        # filter to replace the values that where marked by the validation
-        u, v = filters.replace_outliers(
-            u,
-            v,
-            method=filter_method,
-            max_iter=max_filter_iteration,
-            kernel_size=filter_kernel_size,
-        )
-
-    return x, y, u, v, s2n, mask
+    if settings.show_plot:
+        plt.figure()
+        plt.quiver(x_int, y_int, u, v,color='r')
+        plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1)
+    
+    return x, y, u, v, s2n
 
 
 class Settings(object):

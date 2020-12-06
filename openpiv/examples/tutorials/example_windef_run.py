@@ -28,6 +28,7 @@ settings.dynamic_masking_filter_size = 7
 
 'Processing Parameters'
 settings.correlation_method = 'circular'  # 'circular' or 'linear'
+settings.normalized_correlation = False
 settings.iterations = 2  # select the number of PIV passes
 # add the interroagtion window size for each pass.
 # For the moment, it should be a power of 2
