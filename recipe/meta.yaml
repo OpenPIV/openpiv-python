@@ -14,13 +14,17 @@ requirements:
     - numpy
     - cython
     - requests
+    - matplotlib
+    - scipy
+    - pillow
+    - imageio
+    - tqdm
   run:
     - python
     - numpy
     - scipy
     - matplotlib
     - scikit-image
-    - future
 
 test:
   imports:
