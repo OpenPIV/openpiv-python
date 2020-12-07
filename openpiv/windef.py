@@ -20,6 +20,7 @@ from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
 from openpiv import smoothn
 from skimage.measure import points_in_poly
+from skimage.util import invert
 
 
 def piv(settings):
@@ -61,6 +62,11 @@ def piv(settings):
                 settings.ROI[0]:settings.ROI[1],
                 settings.ROI[2]:settings.ROI[3]
             ]
+        
+        if hasattr(settings, 'invert') and settings.invert is True:
+            frame_a = invert(frame_a)
+            frame_b = invert(frame_b)
+
         if settings.dynamic_masking_method in ("edge","intensity"):
             frame_a = preprocess.dynamic_masking(
                 frame_a,
