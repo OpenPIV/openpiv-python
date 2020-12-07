@@ -62,12 +62,12 @@ def piv(settings):
                 settings.ROI[0]:settings.ROI[1],
                 settings.ROI[2]:settings.ROI[3]
             ]
-        
+
         if hasattr(settings, 'invert') and settings.invert is True:
             frame_a = invert(frame_a)
             frame_b = invert(frame_b)
 
-        if settings.dynamic_masking_method in ("edge","intensity"):
+        if settings.dynamic_masking_method in ("edge", "intensity"):
             frame_a = preprocess.dynamic_masking(
                 frame_a,
                 method=settings.dynamic_masking_method,
@@ -214,7 +214,7 @@ def piv(settings):
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
-            mask = np.full_like(x,False,dtype=bool)
+            mask = np.full_like(x, False, dtype=bool)
             # validation every step
             u, v, mask_g = validation.global_val(
                 u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
@@ -245,11 +245,11 @@ def piv(settings):
                 and settings.do_sig2noise_validation is True
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, sig2noise_ratio, threshold=settings.sig2noise_threshold
+                    u, v, sig2noise_ratio,
+                    threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_s2n
 
-            
             # replace also every loop
             if settings.replace_vectors is True:
                 u, v = filters.replace_outliers(
@@ -516,6 +516,7 @@ def first_pass(
 
     return x, y, u, v, s2n
 
+
 def multipass_img_deform(
     frame_a,
     frame_b,
@@ -583,7 +584,7 @@ def multipass_img_deform(
     interpolation_order : int
         the order of the spline interpolation used for the image deformation
 
-    mask_coords : list of x,y coordinates (pixels) of the image mask, 
+    mask_coords : list of x,y coordinates (pixels) of the image mask,
         default is an empty list
 
     Returns
@@ -595,39 +596,35 @@ def multipass_img_deform(
         array containg the y coordinates of the interrogation window centres
 
     u : 2d np.array
-        array containing the horizontal displacement for every interrogation window
-        [pixels]
+        array containing the horizontal displacement for every interrogation
+        window [pixels]
 
     u : 2d np.array
-        array containing the vertical displacement for every interrogation window
-        it returns values in [pixels]
-        
+        array containing the vertical displacement for every interrogation
+        window it returns values in [pixels]
+
     s2n : 2D np.array of signal to noise ratio values
 
     """
 
     y_old = y_old[:, 0]
     x_old = x_old[0, :]
-    
-    
-    # calculate the y and y coordinates of the interrogation window centres. 
+
+    # calculate the y and y coordinates of the interrogation window centres.
     # The interpolation function dont like meshgrids as input. Hence, the
     # edges must be extracted to provide the sufficient input. x_old and y_old
     # are the coordinates of the old grid. x_int and y_int are the coordinates
     # of the new grid
-    
-    x, y = get_coordinates(np.shape(frame_a), 
-                           window_size, 
+
+    x, y = get_coordinates(np.shape(frame_a),
+                           window_size,
                            overlap)
-
-
 
     # reapply the image mask to the new coordinates
     if len(mask_coords) > 1:  # not an empty list means there is a mask
         xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-        mask = np.zeros_like(x,dtype=bool)
+        mask = np.zeros_like(x, dtype=bool)
         mask.flat[xymask] = 1
-
 
     y_int = y[:, 0]
     x_int = x[0, :]
@@ -651,8 +648,8 @@ def multipass_img_deform(
     #     plt.gca().invert_yaxis()
     #     plt.gca().set_aspect(1.)
 
-    # @TKauefer added another method to the windowdeformation, 'symmetric' 
-    # splits the onto both frames, takes more effort due to additional 
+    # @TKauefer added another method to the windowdeformation, 'symmetric'
+    # splits the onto both frames, takes more effort due to additional
     # interpolation however should deliver better results
 
     # old_frame_a = frame_a.copy()
@@ -682,7 +679,7 @@ def multipass_img_deform(
     #     plt.imshow(frame_b-old_frame_b)
 
     if (
-        do_sig2noise is True and  # and also the last one is optional? 
+        do_sig2noise is True and  # and also the last one is optional?
         current_iteration == iterations and  # so only the last one is applied?
         iterations != 1  # we should not call multipass at all with 1 iteration
     ):
@@ -703,8 +700,8 @@ def multipass_img_deform(
         normalized_correlation=normalized_correlation,
     )
 
-    shapes = np.array(get_field_shape(frame_a.shape, 
-                                      window_size, 
+    shapes = np.array(get_field_shape(frame_a.shape,
+                                      window_size,
                                       overlap))
     u = u.reshape(shapes)
     v = v.reshape(shapes)
@@ -730,12 +727,131 @@ def multipass_img_deform(
     #     plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
     #     plt.gca().invert_yaxis()
     #     plt.gca().set_aspect(1)
-    
+
     return x, y, u, v, s2n
 
 
 class Settings(object):
-    pass
+    def __init__(self):
+        # "Data related settings"
+        # Folder with the images to process
+        self.filepath_images = "."
+        # Folder for the outputs
+        self.save_path = "./res"
+        # Root name of the output Folder for Result Files
+        self.save_folder_suffix = "Test_4"
+        # Format and Image Sequence
+        self.frame_pattern_a = 'exp1_001_a.bmp'
+        self.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # "Region of interest"
+        # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
+        # for full image
+        self.ROI = "full"
+
+        # "Image preprocessing"
+        # 'None' for no masking, 'edges' for edges masking, 'intensity' for
+        # intensity masking
+        # WARNING: This part is under development so better not to use MASKS
+        self.dynamic_masking_method = "None"
+        self.dynamic_masking_threshold = 0.005
+        self.dynamic_masking_filter_size = 7
+
+        # "Processing Parameters"
+        self.correlation_method = "circular"  # 'circular' or 'linear'
+        self.normalized_correlation = False
+
+        # add the interroagtion window size for each pass.
+        # For the moment, it should be a power of 2
+        self.windowsizes = (
+            64,
+            32,
+            16,
+        )  # if longer than n iteration the rest is ignored
+        # The overlap of the interroagtion window for each pass.
+        self.overlap = (32, 16, 8)  # This is 50% overlap
+        # Has to be a value with base two. In general window size/2 is a good
+        # choice.
+
+        self.iterations = len(self.windowsizes)  # select the number of PIV
+        # passes
+
+        # methode used for subpixel interpolation:
+        # 'gaussian','centroid','parabolic'
+        self.subpixel_method = "gaussian"
+        # 'symmetric' or 'second image', 'symmetric' splits the deformation
+        # both images, while 'second image' does only deform the second image.
+        self.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
+        # order of the image interpolation for the window deformation
+        self.interpolation_order = 3
+        self.scaling_factor = 1  # scaling factor pixel/meter
+        self.dt = 1  # time between to frames (in seconds)
+
+        # "Signal to noise ratio options (only for the last pass)"
+        # It is possible to decide if the S/N should be computed (for the last
+        # pass) or not
+        # 'True' or 'False' (only for the last pass)
+        self.extract_sig2noise = False
+        # method used to calculate the signal to noise ratio 'peak2peak' or
+        # 'peak2mean'
+        self.sig2noise_method = "peak2peak"
+        # select the width of the masked to masked out pixels next to the main
+        # peak
+        self.sig2noise_mask = 2
+        # If extract_sig2noise==False the values in the signal to noise ratio
+        # output column are set to NaN
+
+        # "vector validation options"
+        # choose if you want to do validation of the first pass: True or False
+        self.validation_first_pass = True
+        # only effecting the first pass of the interrogation the following
+        # passes
+        # in the multipass will be validated
+
+        # "Validation Parameters"
+        # The validation is done at each iteration based on three filters.
+        # The first filter is based on the min/max ranges. Observe that these
+        # values are defined in
+        # terms of minimum and maximum displacement in pixel/frames.
+        self.MinMax_U_disp = (-30, 30)
+        self.MinMax_V_disp = (-30, 30)
+        # The second filter is based on the global STD threshold
+        self.std_threshold = 10  # threshold of the std validation
+        # The third filter is the median test (not normalized at the moment)
+        self.median_threshold = 3  # threshold of the median validation
+        # On the last iteration, an additional validation can be done based on
+        # the S/N.
+        self.median_size = 1  # defines the size of the local median
+
+        # "Validation based on the signal to noise ratio"
+        # Note: only available when extract_sig2noise==True and only for the
+        # last pass of the interrogation
+        # Enable the signal to noise ratio validation. Options: True or False
+        self.do_sig2noise_validation = False  # This is time consuming
+        # minmum signal to noise ratio that is need for a valid vector
+        self.sig2noise_threshold = 1.05
+
+        # "Outlier replacement or Smoothing options"
+        # Replacment options for vectors which are masked as invalid by the
+        # validation
+        # Choose: True or False
+        self.replace_vectors = True  # Enable the replacement.
+        self.smoothn = True  # Enables smoothing of the displacement field
+        self.smoothn_p = 0.5  # This is a smoothing parameter
+        # select a method to replace the outliers:
+        # 'localmean', 'disk', 'distance'
+        self.filter_method = "localmean"
+        # maximum iterations performed to replace the outliers
+        self.max_filter_iteration = 4
+        self.filter_kernel_size = 2  # kernel size for the localmean method
+
+        # "Output options"
+        # Select if you want to save the plotted vectorfield: True or False
+        self.save_plot = True
+        # Choose wether you want to see the vectorfield or not :True or False
+        self.show_plot = True
+        self.scale_plot = 100  # select a value to scale the quiver plot of
+        # the vectorfield run the script with the given settings
 
 
 if __name__ == "__main__":
