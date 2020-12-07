@@ -284,12 +284,12 @@ def piv(settings):
             plt.close("all")
             plt.ioff()
             Name = os.path.join(save_path, "Image_A%03d.png" % counter)
-            display_vector_field(
+            fig, _ = display_vector_field(
                 os.path.join(save_path, "field_A%03d.txt" % counter),
                 scale=settings.scale_plot,
             )
             if settings.save_plot is True:
-                plt.savefig(Name)
+                fig.savefig(Name)
             if settings.show_plot is True:
                 plt.show()
 
