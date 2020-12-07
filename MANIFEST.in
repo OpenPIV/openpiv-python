@@ -8,6 +8,7 @@ include TODO
 recursive-include openpiv/docs *
 recursive-include openpiv/examples *
 recursive-include openpiv/test *
+recursive-exclude openpiv/test/__pycache__ *
 
 recursive-include openpiv *.bmp
 recursive-include openpiv *.c
