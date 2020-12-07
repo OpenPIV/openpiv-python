@@ -9,6 +9,8 @@ recursive-include openpiv/docs *
 recursive-include openpiv/examples *
 recursive-include openpiv/test *
 recursive-exclude openpiv/test/__pycache__ *
+recursive-exclude openpiv/examples/notebooks/.ipynb_checkpoints *
+
 
 recursive-include openpiv *.bmp
 recursive-include openpiv *.c
@@ -18,5 +20,5 @@ recursive-include openpiv *.png
 recursive-include openpiv *.py
 recursive-include openpiv *.pyx
 recursive-include openpiv *.rst
-recursive-include openpiv *.tifinclude cysetuptools.py
+recursive-include openpiv *.tif
 include cysetuptools.py
