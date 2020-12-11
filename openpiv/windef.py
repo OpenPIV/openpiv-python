@@ -62,13 +62,13 @@ def piv(settings):
                 settings.ROI[2]:settings.ROI[3]
             ]
         if settings.dynamic_masking_method in ("edge","intensity"):
-            frame_a = preprocess.dynamic_masking(
+            frame_a, mask_a = preprocess.dynamic_masking(
                 frame_a,
                 method=settings.dynamic_masking_method,
                 filter_size=settings.dynamic_masking_filter_size,
                 threshold=settings.dynamic_masking_threshold,
             )
-            frame_b = preprocess.dynamic_masking(
+            frame_b, mask_b = preprocess.dynamic_masking(
                 frame_b,
                 method=settings.dynamic_masking_method,
                 filter_size=settings.dynamic_masking_filter_size,
@@ -89,6 +89,17 @@ def piv(settings):
             sig2noise_mask=settings.sig2noise_mask,
             normalized_correlation=settings.normalized_correlation
         )
+
+        " Image masking "
+        if hasattr(settings, 'image_mask') and settings.image_mask:
+            image_mask = np.logical_and(mask_a, mask_b)
+            mask_coords = preprocess.mask_coordinates(image_mask)
+            # mark those points on the grid of PIV inside the mask
+            xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+            tmp = np.zeros_like(x,dtype=bool)
+            tmp.flat[xymask] = True
+            u = np.ma.masked_array(u, mask=tmp)
+            v = np.ma.masked_array(v, mask=tmp)
 
         "validation using gloabl limits and std and local median"
         """MinMaxU : two elements tuple
