@@ -131,7 +131,7 @@ def global_std(u, v, std_threshold=3):
     return u, v, mask
 
 
-def s2n_val(u, v, s2n, w=None, threshold=1.05):
+def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
     Replace spurious vectors with zero if signal to noise ratio

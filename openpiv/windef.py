@@ -154,7 +154,7 @@ def piv(settings):
                 and settings.num_iterations == 1
                 and settings.do_sig2noise_validation is True
             ):
-                u, v, mask_s2n = validation.s2n_val(
+                u, v, mask_s2n = validation.sig2noise_val(
                     u, v, s2n,
                     threshold=settings.sig2noise_threshold
                 )
@@ -245,7 +245,7 @@ def piv(settings):
 
             if settings.do_sig2noise_validation is True:
 
-                u, v, mask_s2n = validation.s2n_val(
+                u, v, mask_s2n = validation.sig2noise_val(
                     u, v, s2n, threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_s2n
