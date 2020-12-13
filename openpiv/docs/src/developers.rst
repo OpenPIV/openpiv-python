@@ -47,9 +47,12 @@ Things OpenPIV currently needs, (in order of importance)
 How to test all the notebooks
 -----------------------------
 
-    conda install ipykernel
-    python -m ipykernel install --user --name openpiv --display-name="openpiv"
-    jupyter nbconvert --to html --ExecutePreprocessor.kernel_name=openpiv --execute *.ipynb
+    conda install ipykernel  
+    
+    python -m ipykernel install --user --name openpiv --display-name="openpiv"  
+    
+    jupyter nbconvert --to html --ExecutePreprocessor.kernel_name=openpiv --execute *.ipynb  
+    
 
 Then open the `openpiv/examples/notebooks` and check the HTML files. If one of those will fail, the error message will be in the command shell
 
