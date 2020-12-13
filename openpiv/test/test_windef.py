@@ -145,7 +145,7 @@ def test_invert():
     settings.normalized_correlation = 'True'
 
     settings.deformation_method = 'symmetric'
-    settings.iterations = 3  # select the number of PIV passes
+    settings.num_iterations = 3  # select the number of PIV passes
     # add the interroagtion window size for each pass. 
     # For the moment, it should be a power of 2 
     settings.windowsizes = (64, 32, 16)  # if longer than n iteration the rest is ignored
