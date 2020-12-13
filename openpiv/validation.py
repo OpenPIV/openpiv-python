@@ -131,7 +131,7 @@ def global_std(u, v, std_threshold=3):
     return u, v, mask
 
 
-def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
+def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
     Replace spurious vectors with zero if signal to noise ratio
@@ -145,7 +145,7 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
     v : 2d or 3d np.ndarray
         a two or three dimensional array containing the v velocity component.
 
-    sig2noise : 2d np.ndarray
+    s2n : 2d np.ndarray
         a two or three dimensional array containing the value  of the signal to
         noise ratio from cross-correlation function.
     w : 2d or 3d np.ndarray
@@ -180,7 +180,7 @@ def sig2noise_val(u, v, sig2noise, w=None, threshold=1.05):
 
     """
 
-    ind = sig2noise < threshold
+    ind = s2n < threshold
 
     u[ind] = np.nan
     v[ind] = np.nan

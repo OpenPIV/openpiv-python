@@ -74,7 +74,7 @@ def piv(settings):
                 filter_size=settings.dynamic_masking_filter_size,
                 threshold=settings.dynamic_masking_threshold,
             )
-            frame_b = preprocess.dynamic_masking(
+            frame_b, mask_b = preprocess.dynamic_masking(
                 frame_b,
                 method=settings.dynamic_masking_method,
                 filter_size=settings.dynamic_masking_filter_size,
@@ -82,12 +82,12 @@ def piv(settings):
             )
 
         # "first pass"
-        x, y, u, v, sig2noise_ratio = first_pass(
+        x, y, u, v, s2n = first_pass(
             frame_a,
             frame_b,
             settings.windowsizes[0],
             settings.overlap[0],
-            settings.iterations,
+            settings.num_iterations,
             correlation_method=settings.correlation_method,
             subpixel_method=settings.subpixel_method,
             do_sig2noise=settings.extract_sig2noise,
@@ -96,8 +96,21 @@ def piv(settings):
             normalized_correlation=settings.normalized_correlation
         )
 
-        "validation using gloabl limits and std and local median"
-        """MinMaxU : two elements tuple
+        # " Image masking "
+        if hasattr(settings, 'image_mask') and settings.image_mask:
+            image_mask = np.logical_and(mask_a, mask_b)
+            mask_coords = preprocess.mask_coordinates(image_mask)
+            # mark those points on the grid of PIV inside the mask
+            xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+            tmp = np.zeros_like(x,dtype=bool)
+            tmp.flat[xymask] = True
+            u = np.ma.masked_array(u, mask=tmp)
+            v = np.ma.masked_array(v, mask=tmp)
+
+        """
+        validation using gloabl limits and std and local median
+
+        MinMaxU : two elements tuple
             sets the limits of the u displacment component
             Used for validation.
 
@@ -122,7 +135,8 @@ def piv(settings):
             maximum of filter iterations to replace nans
 
         filter_kernel_size : int
-            size of the kernel used for the filtering"""
+            size of the kernel used for the filtering
+        """
 
         mask = np.full_like(x, False)
         if settings.validation_first_pass is True:
@@ -139,20 +153,24 @@ def piv(settings):
                 v_threshold=settings.median_threshold,
                 size=settings.median_size,
             )
+            mask = mask + mask_g + mask_m + mask_s
+
             if (
                 settings.extract_sig2noise is True
-                and settings.iterations == 1
+                and settings.num_iterations == 1
                 and settings.do_sig2noise_validation is True
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, sig2noise_ratio,
+                    u, v, s2n,
                     threshold=settings.sig2noise_threshold
                 )
-                mask = mask + mask_g + mask_m + mask_s + mask_s2n
-            else:
-                mask = mask + mask_g + mask_m + mask_s
-        "filter to replace the values that where marked by the validation"
-        if settings.iterations > 1:
+                mask += mask_s2n
+                
+        
+        # "filter to replace the values that where marked by the validation"
+        if settings.num_iterations == 1 and settings.replace_vectors is True:
+            # for multi-pass we cannot have holes in the data
+            # after the first pass
             u, v = filters.replace_outliers(
                 u,
                 v,
@@ -160,15 +178,7 @@ def piv(settings):
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
             )
-            "adding masks to add the effect of all the validations"
-            if settings.smoothn is True:
-                u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                    u, s=settings.smoothn_p
-                )
-                v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                    v, s=settings.smoothn_p
-                )
-        elif settings.iterations == 1 and settings.replace_vectors is True:
+        elif settings.num_iterations > 1: # don't even check if it's true or false
             u, v = filters.replace_outliers(
                 u,
                 v,
@@ -176,30 +186,31 @@ def piv(settings):
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
             )
-            "adding masks to add the effect of all the validations"
-            if settings.smoothn is True:
-                u, v = filters.replace_outliers(
-                    u,
-                    v,
-                    method=settings.filter_method,
-                    max_iter=settings.max_filter_iteration,
-                    kernel_size=settings.filter_kernel_size,
-                )
-                u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                    u, s=settings.smoothn_p
-                )
-                v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                    v, s=settings.smoothn_p
-                )
 
-        # "all the following passes"
-        for i in range(1, settings.iterations):
-            x, y, u, v, sig2noise_ratio = multipass_img_deform(
+            # "adding masks to add the effect of all the validations"
+        if settings.smoothn is True:
+            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
+                u, s=settings.smoothn_p
+            )
+            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
+                v, s=settings.smoothn_p
+            )
+
+        # plt.figure()
+        # plt.quiver(x,y,u,v)
+        # plt.gca().invert_yaxis()
+        # plt.title('after first pass')
+        # plt.show()
+    
+        """ Multi pass """
+        
+        for i in range(1, settings.num_iterations):
+            x, y, u, v, s2n = multipass_img_deform(
                 frame_a,
                 frame_b,
                 settings.windowsizes[i],
                 settings.overlap[i],
-                settings.iterations,
+                settings.num_iterations,
                 i,
                 x,
                 y,
@@ -214,6 +225,7 @@ def piv(settings):
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
+
             mask = np.full_like(x, False, dtype=bool)
             # validation every step
             u, v, mask_g = validation.global_val(
@@ -230,14 +242,33 @@ def piv(settings):
                 size=settings.median_size,
             )
             mask = mask + mask_s + mask_m + mask_g
+
+            if settings.do_sig2noise_validation is True:
+
+                u, v, mask_s2n = validation.sig2noise_val(
+                    u, v, s2n, threshold=settings.sig2noise_threshold
+                )
+                mask = mask + mask_s2n
+            
+            # we have to replace outliers
+            u, v = filters.replace_outliers(
+                u,
+                v,
+                method=settings.filter_method,
+                max_iter=settings.max_filter_iteration,
+                kernel_size=settings.filter_kernel_size,
+            )
+
             # If the smoothing is active, we do it at each pass
-            if settings.smoothn is True:
+            # but not the last one
+            if settings.smoothn is True and i < settings.num_iterations-1: 
                 u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
                     u, s=settings.smoothn_p
                 )
                 v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
                     v, s=settings.smoothn_p
                 )
+
             if (
                 settings.extract_sig2noise is True
                 and i == settings.iterations
@@ -251,35 +282,35 @@ def piv(settings):
                 mask = mask + mask_s2n
 
             # replace also every loop
-            if settings.replace_vectors is True:
-                u, v = filters.replace_outliers(
-                    u,
-                    v,
-                    method=settings.filter_method,
-                    max_iter=settings.max_filter_iteration,
-                    kernel_size=settings.filter_kernel_size,
-                )
+            u, v = filters.replace_outliers(
+                u,
+                v,
+                method=settings.filter_method,
+                max_iter=settings.max_filter_iteration,
+                kernel_size=settings.filter_kernel_size,
+            )
 
-        "pixel/frame->pixel/sec"
+        # "pixel/frame->pixel/sec"
         u = u / settings.dt
         v = v / settings.dt
-        "scales the results pixel-> meter"
+        
+        # "scales the results pixel-> meter"
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)
-        "save to a file"
+        
+        # "save to a file"
         save(
             x,
             y,
             u,
             v,
-            sig2noise_ratio,
+            s2n,
             mask,
             os.path.join(save_path, "field_A%03d.txt" % counter),
             delimiter="\t",
         )
-        "some messages to check if it is still alive"
-
-        "some other stuff that one might want to use"
+        
+        # "some other stuff that one might want to use"
         if settings.show_plot is True or settings.save_plot is True:
             plt.close("all")
             plt.ioff()
@@ -295,11 +326,11 @@ def piv(settings):
 
         print("Image Pair " + str(counter + 1))
 
-    "Below is code to read files and create a folder to store the results"
+    # "Below is code to read files and create a folder to store the results"
     save_path = os.path.join(
         settings.save_path,
         "Open_PIV_results_"
-        + str(settings.windowsizes[settings.iterations-1])
+        + str(settings.windowsizes[settings.num_iterations-1])
         + "_"
         + settings.save_folder_suffix,
     )
@@ -629,6 +660,7 @@ def multipass_img_deform(
     y_int = y[:, 0]
     x_int = x[0, :]
 
+
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
     ip = RectBivariateSpline(y_old, x_old, u_old, kx=2, ky=2)
@@ -644,8 +676,9 @@ def multipass_img_deform(
     # if settings.show_plot:
     #     plt.figure()
     #     plt.quiver(x_old, y_old, u_old, v_old,color='b')
-    #     plt.quiver(x_int, y_int, u_pre, v_pre,color='r')
+    #     plt.quiver(x_int, y_int, u_pre, v_pre,color='r',lw=2)
     #     plt.gca().invert_yaxis()
+    #     plt.title('inside deform')
     #     plt.gca().set_aspect(1.)
 
     # @TKauefer added another method to the windowdeformation, 'symmetric'
@@ -890,7 +923,7 @@ if __name__ == "__main__":
     "Processing Parameters"
     settings.correlation_method = "circular"  # 'circular' or 'linear'
     settings.normalized_correlation = False
-    settings.iterations = 3  # select the number of PIV passes
+    settings.num_iterations = 3  # select the number of PIV passes
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2
     settings.windowsizes = (
