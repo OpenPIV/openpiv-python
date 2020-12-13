@@ -1,7 +1,8 @@
 # OpenPIV
 [![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
 ![Build and upload to PyPI](https://github.com/OpenPIV/openpiv-python/workflows/Build%20and%20upload%20to%20PyPI/badge.svg)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3930343.svg)](https://doi.org/10.5281/zenodo.3930343)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4320056.svg)](https://doi.org/10.5281/zenodo.4320056)
+
 
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
 
