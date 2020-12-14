@@ -68,7 +68,7 @@ def piv(settings):
             frame_b = invert(frame_b)
 
         if settings.dynamic_masking_method in ("edge", "intensity"):
-            frame_a = preprocess.dynamic_masking(
+            frame_a, mask_a = preprocess.dynamic_masking(
                 frame_a,
                 method=settings.dynamic_masking_method,
                 filter_size=settings.dynamic_masking_filter_size,
