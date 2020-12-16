@@ -859,6 +859,7 @@ class Settings(object):
         # self.do_sig2noise_validation = False  # This is time consuming
         # minmum signal to noise ratio that is need for a valid vector
         self.sig2noise_threshold = 1.05
+        self.sig2noise_validate = True
 
         # "Outlier replacement or Smoothing options"
         # Replacment options for vectors which are masked as invalid by the
