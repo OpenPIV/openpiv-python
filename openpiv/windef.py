@@ -219,9 +219,9 @@ def piv(settings):
                 correlation_method=settings.correlation_method,
                 subpixel_method=settings.subpixel_method,
                 deformation_method=settings.deformation_method,
-                do_sig2noise=settings.extract_sig2noise,
                 sig2noise_method=settings.sig2noise_method,
                 sig2noise_mask=settings.sig2noise_mask,
+                sig2noise_threshold=settings.sig2noise_threshold,
                 interpolation_order=settings.interpolation_order,
                 normalized_correlation=settings.normalized_correlation
             )
@@ -243,8 +243,7 @@ def piv(settings):
             )
             mask = mask + mask_s + mask_m + mask_g
 
-            if settings.do_sig2noise_validation is True:
-
+            if settings.sig2noise_method is not None:
                 u, v, mask_s2n = validation.sig2noise_val(
                     u, v, s2n, threshold=settings.sig2noise_threshold
                 )
@@ -269,14 +268,15 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
 
-            if (
-                settings.extract_sig2noise is True
-                and i == settings.iterations
-                and settings.iterations != 1
-                and settings.do_sig2noise_validation is True
-            ):
+            # if (
+            #     settings.extract_sig2noise is True
+            #     and i == settings.iterations
+            #     and settings.iterations != 1
+            #     and settings.do_sig2noise_validation is True
+            # ):
+            if settings.sig2noise_method is not None:
                 u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, sig2noise_ratio,
+                    u, v, s2n,
                     threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_s2n
@@ -563,8 +563,8 @@ def multipass_img_deform(
     normalized_correlation=False,
     subpixel_method="gaussian",
     deformation_method="symmetric",
-    do_sig2noise=True,
     sig2noise_method="peak2peak",
+    sig2noise_threshold=1.0,
     sig2noise_mask=2,
     interpolation_order=1,
     mask_coords=[],
@@ -711,14 +711,10 @@ def multipass_img_deform(
     #     plt.figure()
     #     plt.imshow(frame_b-old_frame_b)
 
-    if (
-        do_sig2noise is True and  # and also the last one is optional?
-        current_iteration == iterations and  # so only the last one is applied?
-        iterations != 1  # we should not call multipass at all with 1 iteration
-    ):
-        sig2noise_method = sig2noise_method
-    else:
-        sig2noise_method = None
+    # if do_sig2noise is True 
+    #     sig2noise_method = sig2noise_method
+    # else:
+    #     sig2noise_method = None
 
     # so we use here default circular not normalized correlation:
     u, v, s2n = extended_search_area_piv(
@@ -728,7 +724,7 @@ def multipass_img_deform(
         overlap=overlap,
         width=sig2noise_mask,
         subpixel_method=subpixel_method,
-        sig2noise_method=sig2noise_method,  # see the if ... test
+        sig2noise_method=sig2noise_method,  # if it's None, it's not used
         correlation_method=correlation_method,
         normalized_correlation=normalized_correlation,
     )
@@ -827,7 +823,7 @@ class Settings(object):
         self.extract_sig2noise = False
         # method used to calculate the signal to noise ratio 'peak2peak' or
         # 'peak2mean'
-        self.sig2noise_method = "peak2peak"
+        self.sig2noise_method = "peak2peak" # or "peak2mean" or "None"
         # select the width of the masked to masked out pixels next to the main
         # peak
         self.sig2noise_mask = 2
@@ -860,7 +856,7 @@ class Settings(object):
         # Note: only available when extract_sig2noise==True and only for the
         # last pass of the interrogation
         # Enable the signal to noise ratio validation. Options: True or False
-        self.do_sig2noise_validation = False  # This is time consuming
+        # self.do_sig2noise_validation = False  # This is time consuming
         # minmum signal to noise ratio that is need for a valid vector
         self.sig2noise_threshold = 1.05
 

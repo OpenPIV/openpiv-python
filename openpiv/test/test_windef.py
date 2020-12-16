@@ -29,7 +29,6 @@ def test_first_pass_circ():
         iterations=1,
         correlation_method="circular",
         subpixel_method="gaussian",
-        do_sig2noise=True,
         sig2noise_method="peak2peak",
         sig2noise_mask=2,
     )
@@ -52,7 +51,6 @@ def test_multi_pass_circ():
         iterations,
         correlation_method="circular",
         subpixel_method="gaussian",
-        do_sig2noise=True,
         sig2noise_method="peak2peak",
         sig2noise_mask=2,
     )
@@ -76,7 +74,6 @@ def test_multi_pass_circ():
             correlation_method="circular",
             subpixel_method="gaussian",
             deformation_method="symmetric",
-            do_sig2noise=False,
             sig2noise_method="peak2peak",
             sig2noise_mask=2,
             interpolation_order=3,
@@ -100,7 +97,6 @@ def test_first_pass_lin():
         iterations=1,
         correlation_method="linear",
         subpixel_method="gaussian",
-        do_sig2noise=True,
         sig2noise_method="peak2peak",
         sig2noise_mask=2,
     )
@@ -160,9 +156,9 @@ def test_invert():
     settings.dt = 1  # time between to frames (in seconds)
     'Signal to noise ratio options (only for the last pass)'
     # It is possible to decide if the S/N should be computed (for the last pass) or not
-    settings.extract_sig2noise = True  # 'True' or 'False' (only for the last pass)
     # method used to calculate the signal to noise ratio 'peak2peak' or 'peak2mean'
     settings.sig2noise_method = 'peak2peak'
+    settings.sig2noise_threshold = 1.1
     # select the width of the masked to masked out pixels next to the main peak
     settings.sig2noise_mask = 2
     # If extract_sig2noise==False the values in the signal to noise ratio
@@ -187,11 +183,11 @@ def test_invert():
     'Validation based on the signal to noise ratio'
     # Note: only available when extract_sig2noise==True and only for the last
     # pass of the interrogation
+
     # Enable the signal to noise ratio validation. Options: True or False
-    settings.do_sig2noise_validation = False # This is time consuming
     # minmum signal to noise ratio that is need for a valid vector
-    settings.sig2noise_threshold = 1.2
-    'Outlier replacement or Smoothing options'
+    settings.sig2noise_threshold = 1.1
+    # 'Outlier replacement or Smoothing options'
     # Replacment options for vectors which are masked as invalid by the validation
     settings.replace_vectors = True  # Enable the replacment. Chosse: True or False
     settings.smoothn = True  # Enables smoothing of the displacemenet field
@@ -252,7 +248,6 @@ def test_multi_pass_lin():
             correlation_method="linear",
             subpixel_method="gaussian",
             deformation_method="symmetric",
-            do_sig2noise=False,
             sig2noise_method="peak2peak",
             sig2noise_mask=2,
             interpolation_order=3,
