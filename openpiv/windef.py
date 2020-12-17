@@ -344,8 +344,7 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-def create_deformation_field(
-        frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
+def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -386,16 +385,14 @@ def create_deformation_field(
 
     Returns
     -------
-    frame_def:
-        a deformed image based on the meshgrid and displacements of the
-        previous pass
+        x,y : new grid (after meshgrid)
+        u,v : deformation field
     """
-    frame = frame.astype(np.float32)
     y1 = y[:, 0]  # extract first coloumn from meshgrid
     #  y1 = y1[::-1]  # flip
     x1 = x[0, :]  # extract first row from meshgrid
-    side_x = np.arange(0, np.size(frame[0, :]), 1)  # extract the image grid
-    side_y = np.arange(0, np.size(frame[:, 0]), 1)
+    side_x = np.arange(frame.shape[0])  # extract the image grid
+    side_y = np.arange(frame.shape[1])
 
     # interpolating displacements onto a new meshgrid
     ip = RectBivariateSpline(y1, x1, u, kx=kx, ky=ky)
@@ -453,10 +450,10 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
+    frame = frame.astype(np.float32)
     x, y, ut, vt = \
         create_deformation_field(frame,
                                  x, y, u, v,
-                                 interpolation_order=interpolation_order,
                                  kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
         frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
