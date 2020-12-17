@@ -93,11 +93,19 @@ def piv(settings):
             image_mask = np.logical_and(mask_a, mask_b)
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
-            xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-            tmp = np.zeros_like(x,dtype=bool)
+            xymask = points_in_poly(np.c_[y.flatten(), x.flatten()],
+                                    mask_coords)
+            # convert to the mask of on the grid of x
+            tmp = np.zeros_like(x, dtype=bool)
             tmp.flat[xymask] = True
+
+            # mask the velocity
             u = np.ma.masked_array(u, mask=tmp)
             v = np.ma.masked_array(v, mask=tmp)
+        else:
+            mask_coords = []
+            u = np.ma.masked_array(u, mask=np.ma.nomask)
+            v = np.ma.masked_array(v, mask=np.ma.nomask)
 
         """
         validation using gloabl limits and std and local median
@@ -158,7 +166,6 @@ def piv(settings):
                 )
                 mask += mask_s2n
                 
-        
         # "filter to replace the values that where marked by the validation"
         if settings.num_iterations == 1 and settings.replace_vectors is True:
             # for multi-pass we cannot have holes in the data
@@ -200,22 +207,13 @@ def piv(settings):
             x, y, u, v, s2n = multipass_img_deform(
                 frame_a,
                 frame_b,
-                settings.windowsizes[i],
-                settings.overlap[i],
-                settings.num_iterations,
                 i,
                 x,
                 y,
                 u,
                 v,
-                correlation_method=settings.correlation_method,
-                subpixel_method=settings.subpixel_method,
-                deformation_method=settings.deformation_method,
-                sig2noise_method=settings.sig2noise_method,
-                sig2noise_mask=settings.sig2noise_mask,
-                sig2noise_threshold=settings.sig2noise_threshold,
-                interpolation_order=settings.interpolation_order,
-                normalized_correlation=settings.normalized_correlation
+                settings,
+                mask_coords=mask_coords
             )
 
             mask = np.full_like(x, False, dtype=bool)
@@ -543,24 +541,31 @@ def first_pass(frame_a, frame_b, settings):
 def multipass_img_deform(
     frame_a,
     frame_b,
-    window_size,
-    overlap,
-    iterations,
     current_iteration,
     x_old,
     y_old,
     u_old,
     v_old,
-    correlation_method="circular",
-    normalized_correlation=False,
-    subpixel_method="gaussian",
-    deformation_method="symmetric",
-    sig2noise_method="peak2peak",
-    sig2noise_threshold=1.0,
-    sig2noise_mask=2,
-    interpolation_order=1,
+    settings,
     mask_coords=[],
 ):
+    # window_size,
+    # overlap,
+    # iterations,
+    # current_iteration,
+    # x_old,
+    # y_old,
+    # u_old,
+    # v_old,
+    # correlation_method="circular",
+    # normalized_correlation=False,
+    # subpixel_method="gaussian",
+    # deformation_method="symmetric",
+    # sig2noise_method="peak2peak",
+    # sig2noise_threshold=1.0,
+    # sig2noise_mask=2,
+    # interpolation_order=1,
+
     """
     Multi pass of the PIV evaluation.
 
