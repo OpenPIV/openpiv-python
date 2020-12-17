@@ -85,15 +85,7 @@ def piv(settings):
         x, y, u, v, s2n = first_pass(
             frame_a,
             frame_b,
-            settings.windowsizes[0],
-            settings.overlap[0],
-            settings.num_iterations,
-            correlation_method=settings.correlation_method,
-            subpixel_method=settings.subpixel_method,
-            do_sig2noise=settings.extract_sig2noise,
-            sig2noise_method=settings.sig2noise_method,
-            sig2noise_mask=settings.sig2noise_mask,
-            normalized_correlation=settings.normalized_correlation
+            settings
         )
 
         # " Image masking "
@@ -461,19 +453,17 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
     return frame_def
 
 
-def first_pass(
-    frame_a,
-    frame_b,
-    window_size,
-    overlap,
-    iterations,
-    correlation_method="circular",
-    normalized_correlation=False,
-    subpixel_method="gaussian",
-    do_sig2noise=False,
-    sig2noise_method="peak2peak",
-    sig2noise_mask=2,
-):
+def first_pass(frame_a, frame_b, settings):
+    # window_size,
+    # overlap,
+    # iterations,
+    # correlation_method="circular",
+    # normalized_correlation=False,
+    # subpixel_method="gaussian",
+    # do_sig2noise=False,
+    # sig2noise_method="peak2peak",
+    # sig2noise_mask=2,
+    # settings):
     """
     First pass of the PIV evaluation.
 
@@ -520,27 +510,32 @@ def first_pass(
 
     """
 
-#     if do_sig2noise is False or iterations != 1:
-#         sig2noise_method = None  # this indicates to get out nans
+    #     if do_sig2noise is False or iterations != 1:
+    #         sig2noise_method = None  # this indicates to get out nans
 
     u, v, s2n = extended_search_area_piv(
         frame_a,
         frame_b,
-        window_size=window_size,
-        overlap=overlap,
-        search_area_size=window_size,
-        width=sig2noise_mask,
-        subpixel_method=subpixel_method,
-        sig2noise_method=sig2noise_method,
-        correlation_method=correlation_method,
-        normalized_correlation=normalized_correlation
+        window_size=settings.windowsizes[0],
+        overlap=settings.overlap[0],
+        search_area_size=settings.windowsizes[0],
+        width=settings.sig2noise_mask,
+        subpixel_method=settings.subpixel_method,
+        sig2noise_method=settings.sig2noise_method,
+        correlation_method=settings.correlation_method,
+        normalized_correlation=settings.normalized_correlation
     )
 
-    shapes = np.array(get_field_shape(frame_a.shape, window_size, overlap))
+    shapes = np.array(get_field_shape(frame_a.shape,
+                                      settings.windowsizes[0],
+                                      settings.overlap[0]))
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
-    x, y = get_coordinates(frame_a.shape, window_size, overlap)
+
+    x, y = get_coordinates(frame_a.shape,
+                           settings.windowsizes[0],
+                           settings.overlap[0])
 
     return x, y, u, v, s2n
 
