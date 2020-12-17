@@ -644,19 +644,21 @@ def multipass_img_deform(
     # are the coordinates of the old grid. x_int and y_int are the coordinates
     # of the new grid
 
+    window_size = settings.windowsizes[current_iteration]
+    overlap = settings.overlap[current_iteration]
+
     x, y = get_coordinates(np.shape(frame_a),
                            window_size,
                            overlap)
 
-    # reapply the image mask to the new coordinates
-    if len(mask_coords) > 1:  # not an empty list means there is a mask
+    # reapply the image mask to the new grid
+    if mask_coords:  # not an empty list means there is a mask
         xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-        mask = np.zeros_like(x, dtype=bool)
-        mask.flat[xymask] = 1
+        image_mask = np.zeros_like(x, dtype=bool)
+        image_mask.flat[xymask] = 1
 
     y_int = y[:, 0]
     x_int = x[0, :]
-
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
@@ -666,9 +668,9 @@ def multipass_img_deform(
     ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
 
-    if len(mask_coords) > 1:
-        u_pre = np.ma.masked_array(u_pre, mask=mask)
-        v_pre = np.ma.masked_array(v_pre, mask=mask)
+    if mask_coords:
+        u_pre = np.ma.masked_array(u_pre, mask=image_mask)
+        v_pre = np.ma.masked_array(v_pre, mask=image_mask)
 
     # if settings.show_plot:
     #     plt.figure()
@@ -685,20 +687,20 @@ def multipass_img_deform(
     # old_frame_a = frame_a.copy()
     # old_frame_b = frame_b.copy()
 
-    if deformation_method == "symmetric":
+    if settings.deformation_method == "symmetric":
         # this one is doing the image deformation (see above)
         x_new, y_new, ut, vt = create_deformation_field(
             frame_a, x, y, u_pre, v_pre)
         frame_a = scn.map_coordinates(
             frame_a, ((y_new - vt / 2, x_new - ut / 2)),
-            order=interpolation_order, mode='nearest')
+            order=settings.interpolation_order, mode='nearest')
         frame_b = scn.map_coordinates(
             frame_b, ((y_new + vt / 2, x_new + ut / 2)),
-            order=interpolation_order, mode='nearest')
-    elif deformation_method == "second image":
+            order=settings.interpolation_order, mode='nearest')
+    elif settings.deformation_method == "second image":
         frame_b = deform_windows(
             frame_b, x, y, u_pre, v_pre,
-            interpolation_order=interpolation_order)
+            interpolation_order=settings.interpolation_order)
     else:
         raise Exception("Deformation method is not valid.")
 
@@ -719,11 +721,11 @@ def multipass_img_deform(
         frame_b,
         window_size=window_size,
         overlap=overlap,
-        width=sig2noise_mask,
-        subpixel_method=subpixel_method,
-        sig2noise_method=sig2noise_method,  # if it's None, it's not used
-        correlation_method=correlation_method,
-        normalized_correlation=normalized_correlation,
+        width=settings.sig2noise_mask,
+        subpixel_method=settings.subpixel_method,
+        sig2noise_method=settings.sig2noise_method,  # if it's None, it's not used
+        correlation_method=settings.correlation_method,
+        normalized_correlation=settings.normalized_correlation,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape,
@@ -740,12 +742,12 @@ def multipass_img_deform(
 
     # adding the recent displacment on to the displacment of the previous pass
     u += u_pre
-    v -= v_pre
+    v += v_pre
 
     # reapply image mask just to be sure
-    if len(mask_coords) > 1:
-        u = np.ma.masked_array(u, mask=mask)
-        v = np.ma.masked_array(v, mask=mask)
+    if mask_coords:
+        u = np.ma.masked_array(u, mask=image_mask)
+        v = np.ma.masked_array(v, mask=image_mask)
 
     # if settings.show_plot:
     #     plt.figure()
