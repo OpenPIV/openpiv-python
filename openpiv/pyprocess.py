@@ -66,11 +66,11 @@ def get_coordinates(image_size, search_area_size, overlap):
     # compute grid coordinates of the search area window centers
     x = (
         np.arange(field_shape[1]) * (search_area_size - overlap)
-        + (search_area_size - 1) / 2.0
+        + (search_area_size) / 2.0
     )
     y = (
         np.arange(field_shape[0]) * (search_area_size - overlap)
-        + (search_area_size - 1) / 2.0
+        + (search_area_size) / 2.0
     )
 
     # moving coordinates further to the center, so that the points at the
