@@ -55,6 +55,10 @@ def get_coordinates(image_size, search_area_size, overlap):
         a two dimensional array containing the y coordinates of the
         interrogation window centers, in pixels.
 
+        Coordinate system 0,0 is at the top left corner, positive
+        x to the right, positive y from top downwards, i.e.
+        image coordinate system
+
     """
 
     # get shape of the resulting flow field
@@ -172,7 +176,8 @@ def find_first_peak(corr):
 
     Returns
     -------
-
+        (i,j) : integers, index of the peak position
+        peak  : amplitude of the peak
     """
 
     return np.unravel_index(np.argmax(corr), corr.shape), corr.max()
@@ -429,9 +434,9 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
     return sig2noise
 
 
-def fft_correlate_strided_images(image_a, image_b,
-                                 correlation_method="circular", 
-                                 normalized_correlation=True):
+def fft_correlate_images(image_a, image_b,
+                         correlation_method="circular",
+                         normalized_correlation=True):
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
     The 2D FFT should be applied to the last two axes (-2,-1) and the
@@ -506,10 +511,10 @@ def normalize_intensity(window):
     """
     window = window.astype(np.float32)
     window -= window.mean(axis=(-2, -1),
-                                   keepdims=True, dtype=np.float32)
-    tmp = window.std(axis=(-2,-1),keepdims=True)
-    window = np.divide(window, tmp, out=np.zeros_like(window), where=tmp!=0)
-    return np.clip(window,0,window.max())
+                          keepdims=True, dtype=np.float32)
+    tmp = window.std(axis=(-2, -1), keepdims=True)
+    window = np.divide(window, tmp, out=np.zeros_like(window), where=(tmp != 0))
+    return np.clip(window, 0, window.max())
 
 
 def correlate_windows(window_a, window_b, correlation_method="fft"):
@@ -558,8 +563,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft"):
         size = s1 + s2 - 1
         fslice = tuple([slice(0, int(sz)) for sz in size])
         # and slice only the relevant part
-        corr = fft_correlate_windows(zero_pad(window_a),
-                                     zero_pad(window_b))[fslice]
+        corr = fft_correlate_windows(window_a, window_b)[fslice]
     elif correlation_method == "direct":
         corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
     else:
@@ -757,7 +761,7 @@ def extended_search_area_piv(
     # the interrogation window in the frame A
 
     if search_area_size > window_size:
-        # before masking with zeros we need to remove 
+        # before masking with zeros we need to remove
         # edges
         
         aa = normalize_intensity(aa)
@@ -770,9 +774,9 @@ def extended_search_area_piv(
         mask = np.broadcast_to(mask, aa.shape)
         aa *= mask
 
-    corr = fft_correlate_strided_images(aa, bb, 
-                                        correlation_method=correlation_method,
-                                        normalized_correlation=normalized_correlation
+    corr = fft_correlate_images(aa, bb,
+                                     correlation_method=correlation_method,
+                                     normalized_correlation=normalized_correlation
     )
     u, v = correlation_to_displacement(corr, n_rows, n_cols,
                                        subpixel_method=subpixel_method)
@@ -790,7 +794,8 @@ def extended_search_area_piv(
     return u/dt, v/dt, sig2noise
 
 
-def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"):
+def correlation_to_displacement(corr, n_rows, n_cols,
+                                subpixel_method="gaussian"):
     """
     Correlation maps are converted to displacement for each interrogation
     window using the convention that the size of the correlation map
@@ -798,7 +803,7 @@ def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"
     (in frame B) that is called search_area_size
     Inputs:
         corr : 3D nd.array
-            contains output of the fft_correlate_strided_images
+            contains output of the fft_correlate_images
         n_rows, n_cols : number of interrogation windows, output of the
             get_field_shape
     """
@@ -807,7 +812,7 @@ def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"
     v = np.zeros((n_rows, n_cols))
 
     # center point of the correlation map
-    default_peak_position = np.floor(np.array(corr[0,:,:].shape)/2)
+    default_peak_position = np.floor(np.array(corr[0, :, :].shape)/2)
     for k in range(n_rows):
         for m in range(n_cols):
             # look at studying_correlations.ipynb
@@ -816,14 +821,11 @@ def correlation_to_displacement(corr, n_rows, n_cols, subpixel_method="gaussian"
                             subpixel_method=subpixel_method)) -\
                             default_peak_position
 
-            # get displacements, apply coordinate system definition
-            # peak is returned in the form of the image shift
-            # first value is the vertical shift (0,0 is top left origin)
-            # and negative vertical shift is our positive velocity in 
-            # the coordinate system where 0,0 is bottom left
-            # second peak value is the horizontal shift 
-            # and it remains positive from left to right
-            u[k, m], v[k, m] = peak[1], -peak[0]
+            # the horizontal shift from left to right is the columnwise called x
+            # the vertical shift from top to bottom is rowwise shift is now
+            # a positive vertical
+            # no coordinate system transformation inside the code
+            u[k, m], v[k, m] = peak[1], peak[0]
 
     return (u, v)
 
