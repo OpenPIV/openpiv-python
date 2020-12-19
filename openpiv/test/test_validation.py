@@ -3,7 +3,7 @@ from openpiv.tools import imread
 import pathlib
 
 import numpy as np
-from test_process import create_pair, shift_u, shift_v, threshold, dist
+from test_process import create_pair, shift_u, shift_v, threshold
 
 
 

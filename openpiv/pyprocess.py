@@ -93,6 +93,11 @@ def get_coordinates(image_size, search_area_size, overlap):
            (search_area_size - 1))
     ) // 2
 
+    # We convert the coordinate system to the physical one
+    # by locating 0,0 at the bottom left corner and
+    # vertical positive displacement is upwards
+    y = np.flipud(y)
+
     return np.meshgrid(x, y)
 
 
@@ -480,7 +485,7 @@ def fft_correlate_images(image_a, image_b,
         f2a = rfft2(image_a, fsize, axes=(-2, -1)).conj()
         f2b = rfft2(image_b, fsize, axes=(-2, -1))
         corr = fftshift(irfft2(f2a * f2b).real, axes=(-2, -1))[fslice]
-    elif correlation_method == "circular":          
+    elif correlation_method == "circular":
         corr = fftshift(irfft2(rfft2(image_a).conj() *
                                rfft2(image_b)).real, axes=(-2, -1))
     else:
@@ -693,8 +698,8 @@ def extended_search_area_piv(
        fallback to the simplest FFT based PIV
     
     normalized_correlation: bool
-        if True, then the image intensity will be modified by removing 
-        the mean, dividing by the standard deviation and 
+        if True, then the image intensity will be modified by removing
+        the mean, dividing by the standard deviation and
         the correlation map will be normalized. It's slower but could be
         more robust
 
@@ -763,7 +768,7 @@ def extended_search_area_piv(
     if search_area_size > window_size:
         # before masking with zeros we need to remove
         # edges
-        
+
         aa = normalize_intensity(aa)
         bb = normalize_intensity(bb)
 
@@ -775,9 +780,8 @@ def extended_search_area_piv(
         aa *= mask
 
     corr = fft_correlate_images(aa, bb,
-                                     correlation_method=correlation_method,
-                                     normalized_correlation=normalized_correlation
-    )
+                                correlation_method=correlation_method,
+                                normalized_correlation=normalized_correlation)
     u, v = correlation_to_displacement(corr, n_rows, n_cols,
                                        subpixel_method=subpixel_method)
 
@@ -821,13 +825,16 @@ def correlation_to_displacement(corr, n_rows, n_cols,
                             subpixel_method=subpixel_method)) -\
                             default_peak_position
 
-            # the horizontal shift from left to right is the columnwise called x
-            # the vertical shift from top to bottom is rowwise shift is now
+            # the horizontal shift from left to right is the columnwise called
+            # x the vertical shift from top to bottom is rowwise shift is now
             # a positive vertical
-            # no coordinate system transformation inside the code
             u[k, m], v[k, m] = peak[1], peak[0]
 
-    return (u, v)
+    # Note the transformation of the coordinate system
+    # from top left (image) to the bottom right (physical)
+    # we return the negative value of vertical displacement
+
+    return (u, -v)
 
 
 def nextpower2(i):
@@ -836,3 +843,34 @@ def nextpower2(i):
     while n < i:
         n *= 2
     return n
+
+
+def transform_coordinate_system(x, y, u, v):
+    """ 
+    Transform coordinate system from image to dat
+    system, in the way it is processed:
+    0,0 is at the top left corner
+    x is positive from left to right
+    y is positive from top to bottom
+    u is like x
+    v is like y
+
+    This is not correct right-hand system for physics analysis
+
+    The data coordinate system is the right hand system originating at the
+    bottom left corner (0,0) with x from left to right, y from bottom to top,
+    u,v parallel to x,y
+
+    Inputs:
+        x,y,u,v are 2D arrays of (nrows , ncols)
+
+    Returns:
+        x, y, u, v : 2D arrays,
+        transformed according to the right hand rule with the 
+        0,0 at the bottom left corner (like in a quiver vector plot)
+
+    """
+    y = np.flipud(y)
+    v *= -1
+
+    return x, y, u, v

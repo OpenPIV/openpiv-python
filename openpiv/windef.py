@@ -97,7 +97,8 @@ def piv(settings):
                                     mask_coords)
             # convert to the mask of on the grid of x
             tmp = np.zeros_like(x, dtype=bool)
-            tmp.flat[xymask] = True
+            tmp[np.unravel_index(xymask,tmp.shape)] = True
+            # tmp.flat[xymask] = True
 
             # mask the velocity
             u = np.ma.masked_array(u, mask=tmp)
@@ -655,7 +656,8 @@ def multipass_img_deform(
     if mask_coords:  # not an empty list means there is a mask
         xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
         image_mask = np.zeros_like(x, dtype=bool)
-        image_mask.flat[xymask] = 1
+        image_mask[np.unravel_index(xymask,image_mask.shape)] = 1
+        # image_mask.flat[xymask] = 1
 
     y_int = y[:, 0]
     x_int = x[0, :]

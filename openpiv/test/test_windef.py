@@ -17,6 +17,15 @@ frame_a, frame_b = create_pair(image_size=256)
 # function the validation methods are not tested here ant therefore
 # are disabled.
 
+settings = windef.Settings()
+settings.windowsizes = (64,)
+settings.overlap = (32,)
+settings.num_iterations = 1
+settings.correlation_method = 'circular'
+settings.sig2noise_method = 'peak2peak'
+settings.subpixel_method = 'gaussian'
+settings.sig2noise_mask = 2
+
 
 # circular cross correlation
 def test_first_pass_circ():
@@ -24,13 +33,7 @@ def test_first_pass_circ():
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
-        window_size=64,
-        overlap=32,
-        iterations=1,
-        correlation_method="circular",
-        subpixel_method="gaussian",
-        sig2noise_method="peak2peak",
-        sig2noise_mask=2,
+        settings
     )
     print("\n", x, y, u, v, s2n)
     assert np.mean(np.abs(u - shift_u)) < threshold
@@ -39,44 +42,30 @@ def test_first_pass_circ():
 
 def test_multi_pass_circ():
     """ test fot the multipass """
-    window_size = (128, 64, 32)
-    overlap = (64, 32, 16)
-    iterations = 3
-
+    settings.windowsizes = (128, 64, 32)
+    settings.overlap = (64, 32, 16)
+    settings.num_iterations = 3
+    settings.interpolation_order = 3
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
-        window_size[0],
-        overlap[0],
-        iterations,
-        correlation_method="circular",
-        subpixel_method="gaussian",
-        sig2noise_method="peak2peak",
-        sig2noise_mask=2,
+        settings,
     )
     u_old = u.copy()
     v_old = v.copy()
     print("\n", x, y, u_old, v_old, s2n)
     assert np.mean(np.abs(u_old - shift_u)) < threshold
     assert np.mean(np.abs(v_old - shift_v)) < threshold
-    for i in range(1, iterations):
+    for i in range(1,settings.num_iterations):
         x, y, u, v, s2n = windef.multipass_img_deform(
             frame_a,
             frame_b,
-            window_size[i],
-            overlap[i],
-            iterations,
             i,
             x,
             y,
             u,
             v,
-            correlation_method="circular",
-            subpixel_method="gaussian",
-            deformation_method="symmetric",
-            sig2noise_method="peak2peak",
-            sig2noise_mask=2,
-            interpolation_order=3,
+            settings
         )
 
     print("\n", x, y, u, v, s2n)
@@ -89,16 +78,12 @@ def test_multi_pass_circ():
 # linear cross correlation
 def test_first_pass_lin():
     """ test of the first pass """
+    settings.correlation_method = 'linear'
+
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
-        window_size=64,
-        overlap=32,
-        iterations=1,
-        correlation_method="linear",
-        subpixel_method="gaussian",
-        sig2noise_method="peak2peak",
-        sig2noise_mask=2,
+        settings,
     )
     print("\n", x, y, u, v, s2n)
     assert np.mean(np.abs(u - shift_u)) < threshold
@@ -207,24 +192,18 @@ def test_invert():
     windef.piv(settings)
 
 
-
 def test_multi_pass_lin():
     """ test fot the multipass """
-    window_size = (128, 64, 32)
-    overlap = (64, 32, 16)
-    iterations = 3
+    settings.windowsizes = (128, 64, 32)
+    settings.overlap = (64, 32, 16)
+    settings.num_iterations = 3
+    settings.sig2noise_validate = True
+    settings.correlation_method = 'linear'
 
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
-        window_size[0],
-        overlap[0],
-        iterations,
-        correlation_method="linear",
-        subpixel_method="gaussian",
-        do_sig2noise=True,
-        sig2noise_method="peak2peak",
-        sig2noise_mask=2,
+        settings,
     )
     u_old = u.copy()
     v_old = v.copy()
@@ -233,24 +212,16 @@ def test_multi_pass_lin():
     assert np.mean(np.abs(u_old - shift_u)) < threshold
     assert np.mean(np.abs(v_old - shift_v)) < threshold
 
-    for i in range(1, iterations):
+    for i in range(1, settings.num_iterations):
         x, y, u, v, _ = windef.multipass_img_deform(
             frame_a,
             frame_b,
-            window_size[i],
-            overlap[i],
-            iterations,
             i,
             x,
             y,
             u,
             v,
-            correlation_method="linear",
-            subpixel_method="gaussian",
-            deformation_method="symmetric",
-            sig2noise_method="peak2peak",
-            sig2noise_mask=2,
-            interpolation_order=3,
+            settings,
         )
 
     print("\n", x, y, u, v, s2n)
