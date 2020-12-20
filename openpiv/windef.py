@@ -335,7 +335,7 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
+def create_deformation_field(frame, x, y, u, v, kx=2, ky=2):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -396,7 +396,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     return x, y, ut, vt
 
 
-def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3):
+def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=2, ky=2):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -636,11 +636,10 @@ def multipass_img_deform(
 
     """
 
-    y_old = y_old[:, 0]
-    x_old = x_old[0, :]
+ 
 
     # calculate the y and y coordinates of the interrogation window centres.
-    # The interpolation function dont like meshgrids as input. Hence, the
+    # Hence, the
     # edges must be extracted to provide the sufficient input. x_old and y_old
     # are the coordinates of the old grid. x_int and y_int are the coordinates
     # of the new grid
@@ -652,12 +651,21 @@ def multipass_img_deform(
                            window_size,
                            overlap)
 
-    # reapply the image mask to the new grid
-    if mask_coords:  # not an empty list means there is a mask
-        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-        image_mask = np.zeros_like(x, dtype=bool)
-        image_mask[np.unravel_index(xymask,image_mask.shape)] = 1
-        # image_mask.flat[xymask] = 1
+
+    # Image deformation has to occur in image coordinates
+    # therefore we need to convert the results of the
+    # previous pass which are stored in the physical units
+    # and so y from the get_coordinates
+
+    v_old *= -1
+    y_old = np.flipud(y_old)
+    y = np.flipud(y)
+
+
+    # The interpolation function dont like meshgrids as input. 
+    y_old = y_old[:, 0]
+    x_old = x_old[0, :]
+
 
     y_int = y[:, 0]
     x_int = x[0, :]
@@ -667,12 +675,10 @@ def multipass_img_deform(
     ip = RectBivariateSpline(y_old, x_old, u_old, kx=2, ky=2)
     u_pre = ip(y_int, x_int)
 
-    ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
-    v_pre = ip2(y_int, x_int)
+    ip = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
+    v_pre = ip(y_int, x_int)
 
-    if mask_coords:
-        u_pre = np.ma.masked_array(u_pre, mask=image_mask)
-        v_pre = np.ma.masked_array(v_pre, mask=image_mask)
+
 
     # if settings.show_plot:
     #     plt.figure()
@@ -742,14 +748,25 @@ def multipass_img_deform(
     #     plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
     #     plt.gca().invert_yaxis()
 
-    # adding the recent displacment on to the displacment of the previous pass
+    # Here we got u_pre, v_pre in the image coordinates after the 
+    # interpolation and deformation 
+    # and u,v are in the physical coordinates 
+    # so we convert the coordinates again, before summation
+    # and before return of y
+    v_pre *= -1
+    y = np.flipud(y)
+
     u += u_pre
     v += v_pre
 
-    # reapply image mask just to be sure
-    if mask_coords:
-        u = np.ma.masked_array(u, mask=image_mask)
-        v = np.ma.masked_array(v, mask=image_mask)
+    # reapply the image mask to the new grid
+    if mask_coords:  # not an empty list means there is a mask
+        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+        image_mask = np.zeros_like(x, dtype=bool)
+        image_mask[np.unravel_index(xymask,image_mask.shape)] = 1
+
+        u_pre = np.ma.masked_array(u, mask=image_mask)
+        v_pre = np.ma.masked_array(v, mask=image_mask)
 
     # if settings.show_plot:
     #     plt.figure()
