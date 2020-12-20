@@ -93,16 +93,11 @@ def piv(settings):
             image_mask = np.logical_and(mask_a, mask_b)
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
-            xymask = points_in_poly(np.c_[y.flatten(), x.flatten()],
-                                    mask_coords)
-            # convert to the mask of on the grid of x
-            tmp = np.zeros_like(x, dtype=bool)
-            tmp[np.unravel_index(xymask,tmp.shape)] = True
-            # tmp.flat[xymask] = True
+            grid_mask = preprocess.prepare_mask_on_grid(x,y,mask_coords)
 
             # mask the velocity
-            u = np.ma.masked_array(u, mask=tmp)
-            v = np.ma.masked_array(v, mask=tmp)
+            u = np.ma.masked_array(u, mask=grid_mask)
+            v = np.ma.masked_array(v, mask=grid_mask)
         else:
             mask_coords = []
             u = np.ma.masked_array(u, mask=np.ma.nomask)
@@ -647,9 +642,14 @@ def multipass_img_deform(
     window_size = settings.windowsizes[current_iteration]
     overlap = settings.overlap[current_iteration]
 
-    x, y = get_coordinates(np.shape(frame_a),
+    print(f"window size = {window_size}\n")
+    print(f"overlap = {overlap}\n")
+
+    x, y = get_coordinates(frame_a.shape,
                            window_size,
                            overlap)
+
+    print(f"x,y {x.shape},{y.shape}\n")
 
 
     # The interpolation function dont like meshgrids as input. 
@@ -672,7 +672,7 @@ def multipass_img_deform(
     ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
     v_pre = ip2(y_int, x_int)
 
-
+    print(f"shapes {u_pre.shape}, {v_pre.shape}\n")
 
     # if settings.show_plot:
     #     plt.figure()
@@ -686,8 +686,8 @@ def multipass_img_deform(
     # splits the onto both frames, takes more effort due to additional
     # interpolation however should deliver better results
 
-    # old_frame_a = frame_a.copy()
-    # old_frame_b = frame_b.copy()
+    old_frame_a = frame_a.copy()
+    old_frame_b = frame_b.copy()
 
 
     # Image deformation has to occur in image coordinates
@@ -715,10 +715,10 @@ def multipass_img_deform(
         raise Exception("Deformation method is not valid.")
 
     # if settings.show_plot:
-    #     plt.figure()
-    #     plt.imshow(frame_a-old_frame_a)
-    #     plt.figure()
-    #     plt.imshow(frame_b-old_frame_b)
+    plt.figure()
+    plt.imshow(frame_a-old_frame_a)
+    plt.figure()
+    plt.imshow(frame_b-old_frame_b)
 
     # if do_sig2noise is True 
     #     sig2noise_method = sig2noise_method
@@ -763,12 +763,9 @@ def multipass_img_deform(
 
     # reapply the image mask to the new grid
     if mask_coords:  # not an empty list means there is a mask
-        xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-        image_mask = np.zeros_like(x, dtype=bool)
-        image_mask[np.unravel_index(xymask,image_mask.shape)] = 1
-
-        u_pre = np.ma.masked_array(u, mask=image_mask)
-        v_pre = np.ma.masked_array(v, mask=image_mask)
+        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+        u_pre = np.ma.masked_array(u, mask=grid_mask)
+        v_pre = np.ma.masked_array(v, mask=grid_mask)
 
     # if settings.show_plot:
     #     plt.figure()
