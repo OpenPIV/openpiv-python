@@ -1,7 +1,7 @@
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.pyprocess import fft_correlate_images, \
                               correlation_to_displacement
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import numpy as np
 
