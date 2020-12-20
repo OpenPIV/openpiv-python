@@ -652,31 +652,25 @@ def multipass_img_deform(
                            overlap)
 
 
-    # Image deformation has to occur in image coordinates
-    # therefore we need to convert the results of the
-    # previous pass which are stored in the physical units
-    # and so y from the get_coordinates
-
-    v_old *= -1
+    # The interpolation function dont like meshgrids as input. 
+    # plus the coordinate system for y is now from top to bottom
+    # and RectBivariateSpline wants an increasing set
     y_old = np.flipud(y_old)
     y = np.flipud(y)
 
-
-    # The interpolation function dont like meshgrids as input. 
     y_old = y_old[:, 0]
     x_old = x_old[0, :]
-
-
     y_int = y[:, 0]
     x_int = x[0, :]
+
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
     ip = RectBivariateSpline(y_old, x_old, u_old, kx=2, ky=2)
     u_pre = ip(y_int, x_int)
 
-    ip = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
-    v_pre = ip(y_int, x_int)
+    ip2 = RectBivariateSpline(y_old, x_old, v_old, kx=2, ky=2)
+    v_pre = ip2(y_int, x_int)
 
 
 
@@ -694,6 +688,14 @@ def multipass_img_deform(
 
     # old_frame_a = frame_a.copy()
     # old_frame_b = frame_b.copy()
+
+
+    # Image deformation has to occur in image coordinates
+    # therefore we need to convert the results of the
+    # previous pass which are stored in the physical units
+    # and so y from the get_coordinates
+
+    v_pre *= -1
 
     if settings.deformation_method == "symmetric":
         # this one is doing the image deformation (see above)
