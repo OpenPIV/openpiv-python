@@ -107,7 +107,8 @@ def display_vector_field(
         xmax = np.amax(a[:, 0]) + window_size / (2 * scaling_factor)
         ymax = np.amax(a[:, 1]) + window_size / (2 * scaling_factor)
         ax.imshow(im, origin="lower", cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
-        plt.draw()
+        # plt.draw()
+
 
     if widim is True:
         a[:, 1] = a[:, 1].max() - a[:, 1]
@@ -120,9 +121,12 @@ def display_vector_field(
         a[invalid, 0], a[invalid, 1], a[invalid, 2], a[invalid, 3], color="r", width=width, **kw
     )
     ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color="b", width=width,**kw)
-    #     if on_img is False:
-    # ax.invert_yaxis()
+    
+    if on_img is False:
+        ax.invert_yaxis()
+    
     ax.set_aspect(1.)
+    fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
 
     plt.show()
 

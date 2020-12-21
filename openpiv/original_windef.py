@@ -192,7 +192,7 @@ def piv(settings):
         'scales the results pixel-> meter'
         x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = settings.scaling_factor )     
         'save to a file'
-        save(x, y, u, v,sig2noise_ratio, mask ,os.path.join(save_path,'field_A%03d.txt' % counter), delimiter='\t')
+        tools.save(x, y, u, v,sig2noise_ratio, mask ,os.path.join(save_path,'field_A%03d.txt' % counter), delimiter='\t')
         'some messages to check if it is still alive'
         
 
@@ -201,7 +201,7 @@ def piv(settings):
             # plt.close('all')
             # plt.ioff()
             Name = os.path.join(save_path, 'Image_A%03d.png' % counter)
-            display_vector_field(os.path.join(save_path, 'field_A%03d.txt' % counter), scale=settings.scale_plot)
+            tools.display_vector_field(os.path.join(save_path, 'field_A%03d.txt' % counter), scale=settings.scale_plot)
             if settings.save_plot==True:
                 plt.savefig(Name)
             if settings.show_plot==True:
@@ -239,7 +239,7 @@ def correlation_func(cor_win_1, cor_win_2, window_size,correlation_method='circu
                                   rfft2(cor_win_2)).real, axes=(1, 2))
     return corr
 
-def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
+def frame_interpolation(frame, x, y, u, v, interpolation_order=1, debugging=False):
     '''This one is doing the image deformation also known as window deformation
     Therefore, the pixel values of the old image are interpolated on a new grid that is defined
     by the grid of the previous pass and the displacment evaluated by the previous pass
@@ -263,10 +263,12 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
     ip2 = RectBivariateSpline(y1, x1, v)
     vt = ip2(side_y, side_x)
 
-    plt.figure()
-    plt.quiver(side_x,side_y,ut,vt)
-    plt.show()
-    
+    if debugging:
+        plt.figure()
+        plt.quiver(side_x,side_y,ut,vt)
+        plt.title('old, sidex, sidey, ut, vt')
+        plt.show()
+        
     '''This lines are interpolating the displacement from the interrogation window
     grid onto the image grid. The result is displacment meshgrid with the size of the image.
     '''
@@ -275,9 +277,11 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
         frame, ((y-vt, x+ut,)), order=interpolation_order,mode='nearest')
     
     # if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-    plt.figure()
-    plt.imshow(frame-frame_def)
-    plt.show()
+    if debugging:
+        plt.figure()
+        plt.imshow(frame-frame_def)
+        plt.title('deformed old')
+        plt.show()
 
     #deform the image by using the map coordinates function
     '''This spline interpolation is doing the image deformation. This one likes meshgrids
@@ -368,7 +372,8 @@ def first_pass(frame_a, frame_b, window_size, overlap,iterations,correlation_met
 def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,current_iteration, x_old, y_old, u_old, v_old,correlation_method='circular',
                          subpixel_method='gaussian', do_sig2noise=False, sig2noise_method='peak2peak', sig2noise_mask=2,
                          MinMaxU=(-100, 50), MinMaxV=(-50, 50), std_threshold=5, median_threshold=2,median_size=1, filter_method='localmean',
-                         max_filter_iteration=10, filter_kernel_size=2, interpolation_order=3):
+                         max_filter_iteration=10, filter_kernel_size=2, interpolation_order=3,
+                         debugging=False):
     """
     First pass of the PIV evaluation.
 
@@ -481,13 +486,14 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     ''' interpolating the displacements from the old grid onto the new grid
     y befor x because of numpy works row major
     '''
-    plt.figure()
-    plt.quiver(x_old, y_old, u_old, v_old, color='b')
-    plt.quiver(x_int, y_int, u_pre, v_pre, color='r')
-    # plt.gca().invert_yaxis()
-    plt.gca().set_aspect(1.)
-    plt.title('old vs pre, no invert')
-    plt.show()
+    if debugging:
+        plt.figure()
+        plt.quiver(x_old, y_old, u_old, v_old, color='b')
+        plt.quiver(x_int, y_int, u_pre, v_pre, color='r')
+        # plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
+        plt.title('old vs pre, no invert')
+        plt.show()
 
     frame_b_deform = frame_interpolation(
         frame_b, x, y, u_pre, -v_pre, interpolation_order=interpolation_order)
@@ -519,18 +525,20 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     u = u+u_pre
     v = v+v_pre
 
-    plt.figure()
-    plt.quiver(x, y, u_pre, v_pre, color='b')
-    plt.quiver(x, y, u, v, color='r')
-    plt.gca().invert_yaxis()
-    plt.gca().set_aspect(1.)
-    plt.title("pre vs v with invert")
-    plt.show()
+
+    if debugging:
+        plt.figure()
+        plt.quiver(x, y, u_pre, v_pre, color='b')
+        plt.quiver(x, y, u, v, color='r')
+        plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
+        plt.title("pre vs v with invert")
+        plt.show()
 
 
 
-    plt.figure()
-    plt.quiver(x_int, y_int, u, v, color='b')
+        plt.figure()
+        plt.quiver(x_int, y_int, u, v, color='b')
     # plt.gca().invert_yaxis()
     # plt.gca().set_aspect(1.)
     # plt.show()
@@ -541,8 +549,8 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     u, v, mask_m = validation.local_median_val(u, v, u_threshold=median_threshold, v_threshold=median_threshold, size=median_size)
     mask = mask_g+mask_m+mask_s
 
-
-    plt.quiver(x_int, y_int, u, v, color='r')
+    if debugging:
+        plt.quiver(x_int, y_int, u, v, color='r')
 
 
     'adding masks to add the effect of alle the validations'
@@ -558,62 +566,16 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     else:
         sig2noise_ratio=np.full_like(u,np.nan)
 
-    plt.quiver(x_int, y_int, u, v, color='m')
-    # plt.gca().invert_yaxis()
-    plt.gca().set_aspect(1.)
-    plt.title("before, after validation and replacement in multipass, no invert")
-    plt.show()
+    if debugging: 
+        plt.quiver(x_int, y_int, u, v, color='m')
+        # plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
+        plt.title("before, after validation and replacement in multipass, no invert")
+        plt.show()
 
     return x, y, u, v,sig2noise_ratio, mask
 
 
-def save( x, y, u, v, sig2noise_ratio, mask, filename, fmt='%8.4f', delimiter='\t' ):
-    """Save flow field to an ascii file.
-    
-    Parameters
-    ----------
-    x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the 
-        interrogation window centers, in pixels.
-        
-    y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the 
-        interrogation window centers, in pixels.
-        
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity components,
-        in pixels/seconds.
-        
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity components,
-        in pixels/seconds.
-        
-    mask : 2d np.ndarray
-        a two dimensional boolen array where elements corresponding to
-        invalid vectors are True.
-        
-    filename : string
-        the path of the file where to save the flow field
-        
-    fmt : string
-        a format string. See documentation of numpy.savetxt
-        for more details.
-    
-    delimiter : string
-        character separating columns
-        
-    Examples
-    --------
-    
-    >>> openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f', delimiter='\t')
-    
-    """
-    # build output array
-    out = np.vstack( [m.ravel() for m in [x, y, u, v,sig2noise_ratio, mask] ] )
-            
-    # save data to file.
-    np.savetxt( filename, out.T, fmt=fmt, delimiter=delimiter, header='x'+delimiter+'y'+delimiter+'u'+delimiter+'v'+delimiter+'s2n'+delimiter+'mask' )
-    
 def display_vector_field( filename, on_img=False, image_name='None', window_size=32, scaling_factor=1,skiprows=1, **kw):
     """ Displays quiver plot of the data stored in the file 
     
@@ -660,16 +622,21 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     if on_img: # plot a background image
         im = fig.imread(image_name)
         im = fig.negative(im) #plot negative of the image for more clarity
-        fig.imsave('neg.tif', im)
-        im = fig.imread('neg.tif')
+        # fig.imsave('neg.tif', im)
+        # im = fig.imread('neg.tif')
         xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
         ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
         plt.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
+
     invalid = a[:,5].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
     plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],-a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
     plt.quiver(a[valid,0],a[valid,1],a[valid,2],-a[valid,3],color='b',width=0.001,headwidth=3,**kw)
+    plt.gca().set_aspect(1.)
+    if not on_img:
+        plt.gca().invert_yaxis()
+
     plt.draw()
 
 
