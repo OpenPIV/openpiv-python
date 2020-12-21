@@ -63,9 +63,15 @@ def piv(settings):
                 settings.ROI[2]:settings.ROI[3]
             ]
 
-        if hasattr(settings, 'invert') and settings.invert is True:
+        if settings.invert is True:
             frame_a = invert(frame_a)
             frame_b = invert(frame_b)
+
+        if settings.show_all_plots:
+            fig, ax = plt.subplots(1,2)
+            ax[0].imshow(frame_a, cmap=plt.cm.gray)
+            ax[1].imshow(frame_b, cmap=plt.cm.gray)
+            plt.show()
 
         if settings.dynamic_masking_method in ("edge", "intensity"):
             frame_a, mask_a = preprocess.dynamic_masking(
@@ -97,7 +103,7 @@ def piv(settings):
             # plt.show()
 
         # " Image masking "
-        if hasattr(settings, 'image_mask') and settings.image_mask:
+        if settings.image_mask:
             image_mask = np.logical_and(mask_a, mask_b)
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
@@ -143,13 +149,15 @@ def piv(settings):
         """
 
         mask = np.full_like(x, False)
-        if settings.validation_first_pass is True:
+        if settings.validation_first_pass:
             u, v, mask_g = validation.global_val(
                 u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
             )
+            print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
             u, v, mask_s = validation.global_std(
                 u, v, std_threshold=settings.std_threshold
             )
+            print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
             u, v, mask_m = validation.local_median_val(
                 u,
                 v,
@@ -157,20 +165,27 @@ def piv(settings):
                 v_threshold=settings.median_threshold,
                 size=settings.median_size,
             )
+            print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
             mask = mask + mask_g + mask_m + mask_s
 
 
             if (
-                settings.sig2noise_validate is True
+                settings.sig2noise_validate
                 and settings.num_iterations == 1
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
                     u, v, s2n,
                     threshold=settings.sig2noise_threshold
                 )
+                print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
+                if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
+                    plt.figure()
+                    plt.hist(s2n.flatten(),31)
+                    plt.show()
+
                 mask += mask_s2n
 
-        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        if settings.show_all_plots:
             # plt.figure()
             plt.quiver(x,y,u,v,color='r')
             plt.gca().invert_yaxis()
@@ -180,7 +195,7 @@ def piv(settings):
 
 
         # "filter to replace the values that where marked by the validation"
-        if settings.num_iterations == 1 and settings.replace_vectors is True:
+        if settings.num_iterations == 1 and settings.replace_vectors:
             # for multi-pass we cannot have holes in the data
             # after the first pass
             u, v = filters.replace_outliers(
@@ -200,7 +215,7 @@ def piv(settings):
             )
 
             # "adding masks to add the effect of all the validations"
-        if settings.smoothn is True:
+        if settings.smoothn:
             u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
                 u, s=settings.smoothn_p
             )
@@ -217,7 +232,7 @@ def piv(settings):
             v = np.ma.masked_array(v, np.ma.nomask)
 
 
-        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        if settings.show_all_plots:
             plt.figure()
             plt.quiver(x,y,u,v)
             plt.gca().invert_yaxis()
@@ -275,7 +290,7 @@ def piv(settings):
                 plt.title('end of the multipass, invert')
                 plt.show()
 
-        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        if settings.show_all_plots and settings.num_iterations > 1:
             plt.figure()
             plt.quiver(x,y,u,v)
             plt.gca().invert_yaxis()
@@ -291,7 +306,7 @@ def piv(settings):
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)
         
-        if hasattr(settings, 'image_mask') and settings.image_mask:
+        if settings.image_mask:
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
@@ -312,7 +327,7 @@ def piv(settings):
         )
         
         # "some other stuff that one might want to use"
-        if settings.show_plot is True or settings.save_plot is True:
+        if settings.show_plot or settings.save_plot:
             Name = os.path.join(save_path, "Image_A%03d.png" % counter)
             fig, _ = display_vector_field(
                 os.path.join(save_path, "field_A%03d.txt" % counter),
@@ -388,7 +403,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         u,v : deformation field
     """
     y1 = y[:, 0]  # extract first coloumn from meshgrid
-    y1 = y1[::-1] #flip 
+    # y1 = y1[::-1] #flip 
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(frame.shape[1])  # extract the image grid
     side_y = np.arange(frame.shape[0])
@@ -686,12 +701,15 @@ def multipass_img_deform(
     # and RectBivariateSpline wants an increasing set
 
     y_old = y_old[:, 0]
-    y_old = y_old[::-1]
+    # y_old = y_old[::-1]
     x_old = x_old[0, :]
 
     y_int = y[:, 0]
-    y_int = y_int[::-1]
+    # y_int = y_int[::-1]
     x_int = x[0, :]
+
+    # convert for the deformation
+    v_old *= -1
 
 
     # interpolating the displacements from the old grid onto the new grid
@@ -778,6 +796,8 @@ def multipass_img_deform(
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
 
+    # convert back after the deformation
+    v_pre *= -1
 
     u += u_pre
     v += v_pre
@@ -991,8 +1011,8 @@ class Settings(FrozenClass):
         # Replacment options for vectors which are masked as invalid by the
         # validation
         # Choose: True or False
-        self.replace_vectors = True  # Enable the replacement.
-        self.smoothn = True  # Enables smoothing of the displacement field
+        self.replace_vectors = False  # Enable the replacement.
+        self.smoothn = False  # Enables smoothing of the displacement field
         self.smoothn_p = 0.5  # This is a smoothing parameter
         # select a method to replace the outliers:
         # 'localmean', 'disk', 'distance'
@@ -1012,6 +1032,8 @@ class Settings(FrozenClass):
         self.image_mask = False
 
         self.show_all_plots = False
+
+        self.invert = False # for the test_invert
 
         self._freeze()
 

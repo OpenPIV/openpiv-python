@@ -1,7 +1,7 @@
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.pyprocess import fft_correlate_images, \
                               correlation_to_displacement
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift
 
-threshold = 0.22
+threshold = 0.23
 
 # define "PIV" shift, i.e. creating u,v values that we want to get
 # -5.5 pixels to the left and 3.2 pixels upwards
@@ -47,6 +47,7 @@ def create_pair(image_size=32, u=shift_u, v=shift_v):
     # fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     # ax[0].imshow(frame_a, cmap=plt.cm.gray)
     # ax[1].imshow(frame_b, cmap=plt.cm.gray)
+    # plt.show()
 
     return frame_a.astype(np.int32), frame_b.astype(np.int32)
 
