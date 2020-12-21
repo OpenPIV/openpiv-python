@@ -202,7 +202,7 @@ def piv(settings):
             # plt.close('all')
             # plt.ioff()
             Name = os.path.join(save_path, 'Image_A%03d.png' % counter)
-            tools.display_vector_field(os.path.join(save_path, 'field_A%03d.txt' % counter), scale=settings.scale_plot)
+            display_vector_field(os.path.join(save_path, 'field_A%03d.txt' % counter), scale=settings.scale_plot)
             if settings.save_plot==True:
                 plt.savefig(Name)
             if settings.show_plot==True:
@@ -633,10 +633,10 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
     plt.quiver(a[invalid,0],a[invalid,1],a[invalid,2],-a[invalid,3],color='r',width=0.001,headwidth=3,**kw)
-    plt.quiver(a[valid,0],a[valid,1],a[valid,2],-a[valid,3],color='b',width=0.001,headwidth=3,**kw)
+    plt.quiver(a[valid,0],a[valid,1],a[valid,2],-a[valid,3],color='b',width=0.0025,headwidth=3,**kw)
     plt.gca().set_aspect(1.)
-    if not on_img:
-        plt.gca().invert_yaxis()
+    # if not on_img:
+    # plt.gca().invert_yaxis()
 
     plt.draw()
 
@@ -957,6 +957,8 @@ class Settings(FrozenClass):
         # correlation function in the pyprocess
         #
         self.normalized_correlation = True
+        self.do_sig2noise_validation = False
+        self.extract_sig2noise = False
 
         self._freeze() # no new attributes after this point.
 
