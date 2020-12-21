@@ -42,8 +42,8 @@ def test_first_pass_circ():
 
 def test_multi_pass_circ():
     """ test fot the multipass """
-    settings.windowsizes = (128, 64, 32)
-    settings.overlap = (64, 32, 16)
+    settings.windowsizes = (64, 32, 16)
+    settings.overlap = (32, 16, 8)
     settings.num_iterations = 3
     settings.interpolation_order = 3
     x, y, u, v, s2n = windef.first_pass(
@@ -63,8 +63,8 @@ def test_multi_pass_circ():
             i,
             x,
             y,
-            u,
-            v,
+            np.ma.array(u, mask=np.ma.nomask),
+            np.ma.array(v, mask=np.ma.nomask),
             settings
         )
 
@@ -194,8 +194,8 @@ def test_invert():
 
 def test_multi_pass_lin():
     """ test fot the multipass """
-    settings.windowsizes = (128, 64, 32)
-    settings.overlap = (64, 32, 16)
+    settings.windowsizes = (64, 32, 16)
+    settings.overlap = (32, 16, 8)
     settings.num_iterations = 3
     settings.sig2noise_validate = True
     settings.correlation_method = 'linear'
@@ -219,8 +219,8 @@ def test_multi_pass_lin():
             i,
             x,
             y,
-            u,
-            v,
+            np.ma.array(u, mask=np.ma.nomask),
+            np.ma.array(v, mask=np.ma.nomask),
             settings,
         )
 
