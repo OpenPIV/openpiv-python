@@ -208,10 +208,16 @@ def piv(settings):
             plt.title('after first pass')
             plt.show()
 
+        if not isinstance(u, np.ma.MaskedArray):
+            raise ValueError("Expected masked array")
     
         """ Multi pass """
         
         for i in range(1, settings.num_iterations):
+
+            if not isinstance(u, np.ma.MaskedArray):
+                raise ValueError("Expected masked array")
+
             x, y, u, v, s2n = multipass_img_deform(
                 frame_a,
                 frame_b,
@@ -232,11 +238,18 @@ def piv(settings):
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError ('not a masked array anymore')
 
+            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+                plt.figure()
+                plt.quiver(x,y,u,v,color='r')
+
             u, v, mask_s = validation.global_std(
                 u, v, std_threshold=settings.std_threshold
             )
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError ('not a masked array anymore')
+
+            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+                plt.quiver(x,y,u,v,color='b')
             
             u, v, mask_m = validation.local_median_val(
                 u,
@@ -247,7 +260,9 @@ def piv(settings):
             )
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError ('not a masked array anymore')
-            
+            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+                plt.quiver(x,y,u,v,color='m')            
+
             mask = mask + mask_s + mask_m + mask_g
 
             if settings.sig2noise_validate:
@@ -255,13 +270,14 @@ def piv(settings):
                     u, v, s2n, threshold=settings.sig2noise_threshold
                 )
                 mask = mask + mask_s2n
+
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError ('not a masked array anymore')
-            
 
             if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
                 plt.figure()
-                nans = np.isnan(u)
+                nans = mask == True
+
                 plt.quiver(x[~nans], y[~nans], u[~nans], v[~nans], color='b')
                 plt.quiver(x[nans], y[nans], u[nans], v[nans], color='r')
                 # plt.gca().invert_yaxis()
@@ -308,8 +324,8 @@ def piv(settings):
                 plt.show()
 
         # "pixel/frame->pixel/sec"
-        u = u.filled(0.) / settings.dt
-        v = v.filled(0.) / settings.dt
+        u = u.filled(0.)
+        v = v.filled(0.)
         
         # "scales the results pixel-> meter"
         x, y, u, v = scaling.uniform(x, y, u, v,
@@ -337,8 +353,6 @@ def piv(settings):
         
         # "some other stuff that one might want to use"
         if settings.show_plot is True or settings.save_plot is True:
-            plt.close("all")
-            plt.ioff()
             Name = os.path.join(save_path, "Image_A%03d.png" % counter)
             fig, _ = display_vector_field(
                 os.path.join(save_path, "field_A%03d.txt" % counter),
@@ -414,7 +428,6 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         u,v : deformation field
     """
     y1 = y[:, 0]  # extract first coloumn from meshgrid
-    #  y1 = y1[::-1]  # flip
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(frame.shape[1])  # extract the image grid
     side_y = np.arange(frame.shape[0])
@@ -426,8 +439,16 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
 
     ip2 = RectBivariateSpline(y1, x1, v, kx=kx, ky=ky)
     vt = ip2(side_y, side_x)
+
     x, y = np.meshgrid(side_x, side_y)
-    return x, y, ut, vt
+
+    plt.figure()
+    plt.quiver(x1,y1,u,-v,color='r')
+    plt.quiver(x,y,ut,-vt)
+    plt.gca().invert_yaxis()
+    plt.show()
+
+    return x, y, ut, -vt
 
 
 def deform_windows(frame, x, y, u, v, interpolation_order=3, kx=3, ky=3):
@@ -669,6 +690,9 @@ def multipass_img_deform(
     s2n : 2D np.array of signal to noise ratio values
 
     """
+
+    if not isinstance(u_old, np.ma.MaskedArray):
+        raise ValueError ('Expected masked array')
 
     # calculate the y and y coordinates of the interrogation window centres.
     # Hence, the
