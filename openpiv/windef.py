@@ -876,8 +876,17 @@ def multipass_img_deform(
 
     return x, y, u, v, s2n, mask
 
+class FrozenClass(object):
+    __isfrozen = False
+    def __setattr__(self, key, value):
+        if self.__isfrozen and not hasattr(self, key):
+            raise TypeError( "%r is a frozen class" % self )
+        object.__setattr__(self, key, value)
 
-class Settings(object):
+    def _freeze(self):
+        self.__isfrozen = True
+
+class Settings(FrozenClass):
     def __init__(self):
         # "Data related settings"
         # Folder with the images to process
@@ -937,7 +946,7 @@ class Settings(object):
         # It is possible to decide if the S/N should be computed (for the last
         # pass) or not
         # 'True' or 'False' (only for the last pass)
-        self.extract_sig2noise = False
+        # self.extract_sig2noise = False
         # method used to calculate the signal to noise ratio 'peak2peak' or
         # 'peak2mean'
         self.sig2noise_method = "peak2peak" # or "peak2mean" or "None"
@@ -1001,6 +1010,10 @@ class Settings(object):
         # the vectorfield run the script with the given settings
 
         self.image_mask = False
+
+        self.show_all_plots = False
+
+        self._freeze()
 
 
 if __name__ == "__main__":
