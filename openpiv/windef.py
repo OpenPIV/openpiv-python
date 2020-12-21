@@ -88,6 +88,14 @@ def piv(settings):
             settings
         )
 
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v,color='b')
+            # plt.gca().invert_yaxis()
+            # plt.gca().set_aspect(1.)
+            # plt.title('after first pass, invert')
+            # plt.show()
+
         # " Image masking "
         if hasattr(settings, 'image_mask') and settings.image_mask:
             image_mask = np.logical_and(mask_a, mask_b)
@@ -151,17 +159,26 @@ def piv(settings):
             )
             mask = mask + mask_g + mask_m + mask_s
 
+
             if (
-                settings.extract_sig2noise is True
+                settings.sig2noise_validate is True
                 and settings.num_iterations == 1
-                and settings.sig2noise_validate is True
             ):
                 u, v, mask_s2n = validation.sig2noise_val(
                     u, v, s2n,
                     threshold=settings.sig2noise_threshold
                 )
                 mask += mask_s2n
-                
+
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            # plt.figure()
+            plt.quiver(x,y,u,v,color='r')
+            plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('after first pass validation new, inverted')
+            plt.show()
+
+
         # "filter to replace the values that where marked by the validation"
         if settings.num_iterations == 1 and settings.replace_vectors is True:
             # for multi-pass we cannot have holes in the data
@@ -203,9 +220,9 @@ def piv(settings):
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
             plt.figure()
             plt.quiver(x,y,u,v)
-            # plt.gca().invert_yaxis()
+            plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
-            plt.title('after first pass')
+            plt.title('before multi pass, inverted')
             plt.show()
 
         if not isinstance(u, np.ma.MaskedArray):
@@ -228,73 +245,7 @@ def piv(settings):
                 v,
                 settings,
                 mask_coords=mask_coords
-            )
-
-            mask = np.full_like(x, False, dtype=bool)
-            # validation every step
-            u, v, mask_g = validation.global_val(
-                u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
-            )
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')
-
-            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-                plt.figure()
-                plt.quiver(x,y,u,v,color='r')
-
-            u, v, mask_s = validation.global_std(
-                u, v, std_threshold=settings.std_threshold
-            )
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')
-
-            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-                plt.quiver(x,y,u,v,color='b')
-            
-            u, v, mask_m = validation.local_median_val(
-                u,
-                v,
-                u_threshold=settings.median_threshold,
-                v_threshold=settings.median_threshold,
-                size=settings.median_size,
-            )
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')
-            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-                plt.quiver(x,y,u,v,color='m')            
-
-            mask = mask + mask_s + mask_m + mask_g
-
-            if settings.sig2noise_validate:
-                u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, s2n, threshold=settings.sig2noise_threshold
-                )
-                mask = mask + mask_s2n
-
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')
-
-            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-                plt.figure()
-                nans = mask == True
-
-                plt.quiver(x[~nans], y[~nans], u[~nans], v[~nans], color='b')
-                plt.quiver(x[nans], y[nans], u[nans], v[nans], color='r')
-                # plt.gca().invert_yaxis()
-                plt.gca().set_aspect(1.)
-                plt.title('After all validations')
-                plt.show()
-            
-            # we have to replace outliers
-            u, v = filters.replace_outliers(
-                u,
-                v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size,
-            )
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')           
+            )        
 
             # If the smoothing is active, we do it at each pass
             # but not the last one
@@ -322,6 +273,14 @@ def piv(settings):
                 plt.gca().set_aspect(1.)
                 plt.title('end of the multipass')
                 plt.show()
+
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v)
+            plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('after multi pass, before saving, inverted')
+            plt.show()
 
         # "pixel/frame->pixel/sec"
         u = u.filled(0.)
@@ -442,11 +401,11 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
 
     x, y = np.meshgrid(side_x, side_y)
 
-    plt.figure()
-    plt.quiver(x1,y1,u,-v,color='r')
-    plt.quiver(x,y,ut,-vt)
-    plt.gca().invert_yaxis()
-    plt.show()
+    # plt.figure()
+    # plt.quiver(x1,y1,u,-v,color='r')
+    # plt.quiver(x,y,ut,-vt)
+    # plt.gca().invert_yaxis()
+    # plt.show()
 
     return x, y, ut, -vt
 
@@ -710,21 +669,22 @@ def multipass_img_deform(
     # The interpolation function dont like meshgrids as input. 
     # plus the coordinate system for y is now from top to bottom
     # and RectBivariateSpline wants an increasing set
-    y_old = np.flipud(y_old)
-    y = np.flipud(y)
 
     y_old = y_old[:, 0]
+    y_old = y_old[::-1]
     x_old = x_old[0, :]
+
     y_int = y[:, 0]
+    y_int = y_int[::-1]
     x_int = x[0, :]
 
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
-    ip = RectBivariateSpline(y_old, x_old, u_old.filled(0.), kx=3, ky=3)
+    ip = RectBivariateSpline(y_old, x_old, u_old.filled(0.))
     u_pre = ip(y_int, x_int)
 
-    ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.), kx=3, ky=3)
+    ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
     v_pre = ip2(y_int, x_int)
 
     # if settings.show_plot:
@@ -751,8 +711,6 @@ def multipass_img_deform(
     # previous pass which are stored in the physical units
     # and so y from the get_coordinates
 
-    v_pre *= -1
-
     if settings.deformation_method == "symmetric":
         # this one is doing the image deformation (see above)
         x_new, y_new, ut, vt = create_deformation_field(
@@ -765,7 +723,7 @@ def multipass_img_deform(
             order=settings.interpolation_order, mode='nearest')
     elif settings.deformation_method == "second image":
         frame_b = deform_windows(
-            frame_b, x, y, u_pre, v_pre,
+            frame_b, x, y, u_pre, -v_pre,
             interpolation_order=settings.interpolation_order)
     else:
         raise Exception("Deformation method is not valid.")
@@ -806,14 +764,6 @@ def multipass_img_deform(
     s2n = s2n.reshape(shapes)
 
 
-    # Here we got u_pre, v_pre in the image coordinates after the 
-    # interpolation and deformation 
-    # and u,v are in the physical coordinates 
-    # so we convert the coordinates again, before summation
-    # and before return of y
-    v_pre *= -1
-    y = np.flipud(y)
-
     u += u_pre
     v += v_pre
 
@@ -827,6 +777,74 @@ def multipass_img_deform(
     else:
         u = np.ma.masked_array(u, np.ma.nomask)
         v = np.ma.masked_array(v, np.ma.nomask)
+
+    mask = np.full_like(x, False, dtype=bool)
+    # validation every step
+    u, v, mask_g = validation.global_val(
+        u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
+    )
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError ('not a masked array anymore')
+
+    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        plt.figure()
+        plt.quiver(x,y,u,v,color='r')
+
+    u, v, mask_s = validation.global_std(
+        u, v, std_threshold=settings.std_threshold
+    )
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError ('not a masked array anymore')
+
+    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        plt.quiver(x,y,u,v,color='b')
+    
+    u, v, mask_m = validation.local_median_val(
+        u,
+        v,
+        u_threshold=settings.median_threshold,
+        v_threshold=settings.median_threshold,
+        size=settings.median_size,
+    )
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError ('not a masked array anymore')
+    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        plt.quiver(x,y,u,v,color='m')            
+
+    mask = mask + mask_s + mask_m + mask_g
+
+    if settings.sig2noise_validate:
+        u, v, mask_s2n = validation.sig2noise_val(
+            u, v, s2n, threshold=settings.sig2noise_threshold
+        )
+        mask = mask + mask_s2n
+
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError ('not a masked array anymore')
+
+    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        plt.figure()
+        nans = mask == True
+
+        plt.quiver(x[~nans], y[~nans], u[~nans], v[~nans], color='b')
+        plt.quiver(x[nans], y[nans], u[nans], v[nans], color='r')
+        # plt.gca().invert_yaxis()
+        plt.gca().set_aspect(1.)
+        plt.title('After all validations')
+        plt.show()
+    
+    # we have to replace outliers
+    u, v = filters.replace_outliers(
+        u,
+        v,
+        method=settings.filter_method,
+        max_iter=settings.max_filter_iteration,
+        kernel_size=settings.filter_kernel_size,
+    )
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError ('not a masked array anymore')   
+
+
 
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
@@ -883,7 +901,7 @@ class Settings(object):
         # Has to be a value with base two. In general window size/2 is a good
         # choice.
 
-        self.iterations = len(self.windowsizes)  # select the number of PIV
+        self.num_iterations = len(self.windowsizes)  # select the number of PIV
         # passes
 
         # methode used for subpixel interpolation:
