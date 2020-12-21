@@ -93,12 +93,7 @@ def get_coordinates(image_size, search_area_size, overlap):
            (search_area_size - 1))
     ) // 2
 
-    # We convert the coordinate system to the physical one
-    # by locating 0,0 at the bottom left corner and
-    # vertical positive displacement is upwards
-    y = np.flipud(y)
-
-    return np.meshgrid(x, y)
+    return np.meshgrid(x, y[::-1])
 
 
 def get_field_shape(image_size, search_area_size, overlap):
@@ -834,7 +829,7 @@ def correlation_to_displacement(corr, n_rows, n_cols,
     # from top left (image) to the bottom right (physical)
     # we return the negative value of vertical displacement
 
-    return (u, -v)
+    return (u, v)
 
 
 def nextpower2(i):

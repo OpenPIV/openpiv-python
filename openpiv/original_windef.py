@@ -71,9 +71,9 @@ def piv(settings):
             plt.figure()
             plt.quiver(x,y,u,v)
             # plt.gca().invert_yaxis()
-            plt.gca().set_aspect(1.)
-            plt.title('after first pass')
-            plt.show()        
+            # plt.gca().set_aspect(1.)
+            # plt.title('after first pass')
+            # plt.show()        
         'validation using gloabl limits and std and local median'
         '''MinMaxU : two elements tuple
             sets the limits of the u displacment component
@@ -114,11 +114,11 @@ def piv(settings):
                 mask=mask+mask_g+mask_m+mask_s
 
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-            plt.figure()
-            plt.quiver(x,y,u,v)
-            # plt.gca().invert_yaxis()
+            # plt.figure()
+            plt.quiver(x,y,u,v,color='r')
+            plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
-            plt.title('after first pass validation')
+            plt.title('after first pass validation old, inverted')
             plt.show()
 
         'filter to replace the values that where marked by the validation'
@@ -140,9 +140,9 @@ def piv(settings):
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
             plt.figure()
             plt.quiver(x,y,u,v)
-            # plt.gca().invert_yaxis()
+            plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
-            plt.title('before multi pass')
+            plt.title('before multi pass, inverted')
             plt.show()
 
 
@@ -161,9 +161,9 @@ def piv(settings):
             if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
                 plt.figure()
                 plt.quiver(x,y,u,v)
-                # plt.gca().invert_yaxis()
+                plt.gca().invert_yaxis()
                 plt.gca().set_aspect(1.)
-                plt.title('after multi pass, before smoothing')
+                plt.title('after multi pass, before smoothing, inverted')
                 plt.show()            
             # If the smoothing is active, we do it at each pass
             if settings.smoothn==True:
@@ -181,7 +181,7 @@ def piv(settings):
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
             plt.figure()
             plt.quiver(x,y,u,v)
-            # plt.gca().invert_yaxis()
+            plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('before saving')
             plt.show()
@@ -198,8 +198,8 @@ def piv(settings):
 
         'some other stuff that one might want to use'
         if settings.show_plot==True or settings.save_plot==True:
-            plt.close('all')
-            plt.ioff()
+            # plt.close('all')
+            # plt.ioff()
             Name = os.path.join(save_path, 'Image_A%03d.png' % counter)
             display_vector_field(os.path.join(save_path, 'field_A%03d.txt' % counter), scale=settings.scale_plot)
             if settings.save_plot==True:
@@ -262,6 +262,10 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
                             #from matlab 
     ip2 = RectBivariateSpline(y1, x1, v)
     vt = ip2(side_y, side_x)
+
+    plt.figure()
+    plt.quiver(side_x,side_y,ut,vt)
+    plt.show()
     
     '''This lines are interpolating the displacement from the interrogation window
     grid onto the image grid. The result is displacment meshgrid with the size of the image.
@@ -269,6 +273,12 @@ def frame_interpolation(frame, x, y, u, v, interpolation_order=1):
     x, y = np.meshgrid(side_x, side_y)#create a meshgrid 
     frame_def = scn.map_coordinates(
         frame, ((y-vt, x+ut,)), order=interpolation_order,mode='nearest')
+    
+    # if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+    plt.figure()
+    plt.imshow(frame-frame_def)
+    plt.show()
+
     #deform the image by using the map coordinates function
     '''This spline interpolation is doing the image deformation. This one likes meshgrids
     new grid is defined by the old grid + the displacement.
@@ -471,6 +481,13 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     ''' interpolating the displacements from the old grid onto the new grid
     y befor x because of numpy works row major
     '''
+    plt.figure()
+    plt.quiver(x_old, y_old, u_old, v_old, color='b')
+    plt.quiver(x_int, y_int, u_pre, v_pre, color='r')
+    # plt.gca().invert_yaxis()
+    plt.gca().set_aspect(1.)
+    plt.title('old vs pre, no invert')
+    plt.show()
 
     frame_b_deform = frame_interpolation(
         frame_b, x, y, u_pre, -v_pre, interpolation_order=interpolation_order)
@@ -501,11 +518,33 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
     'adding the recent displacment on to the displacment of the previous pass'
     u = u+u_pre
     v = v+v_pre
+
+    plt.figure()
+    plt.quiver(x, y, u_pre, v_pre, color='b')
+    plt.quiver(x, y, u, v, color='r')
+    plt.gca().invert_yaxis()
+    plt.gca().set_aspect(1.)
+    plt.title("pre vs v with invert")
+    plt.show()
+
+
+
+    plt.figure()
+    plt.quiver(x_int, y_int, u, v, color='b')
+    # plt.gca().invert_yaxis()
+    # plt.gca().set_aspect(1.)
+    # plt.show()
+
     'validation using gloabl limits and local median'
     u, v, mask_g = validation.global_val(u, v, MinMaxU, MinMaxV)
     u, v, mask_s = validation.global_std(u, v, std_threshold=std_threshold)
     u, v, mask_m = validation.local_median_val(u, v, u_threshold=median_threshold, v_threshold=median_threshold, size=median_size)
     mask = mask_g+mask_m+mask_s
+
+
+    plt.quiver(x_int, y_int, u, v, color='r')
+
+
     'adding masks to add the effect of alle the validations'
     #mask=np.zeros_like(u)
     'filter to replace the values that where marked by the validation'
@@ -518,6 +557,12 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
         sig2noise_ratio = sig2noise_ratio.reshape(shapes)
     else:
         sig2noise_ratio=np.full_like(u,np.nan)
+
+    plt.quiver(x_int, y_int, u, v, color='m')
+    # plt.gca().invert_yaxis()
+    plt.gca().set_aspect(1.)
+    plt.title("before, after validation and replacement in multipass, no invert")
+    plt.show()
 
     return x, y, u, v,sig2noise_ratio, mask
 
