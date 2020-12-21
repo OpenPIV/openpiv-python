@@ -12,6 +12,7 @@ from numpy.fft import rfft2, irfft2, fftshift
 import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
 from openpiv import validation, filters, pyprocess, tools, preprocess,scaling
+import openpiv.pyprocess as process
 from openpiv import smoothn
 import matplotlib.pyplot as plt
 
@@ -51,8 +52,14 @@ def piv(settings):
             frame_a =  frame_a[settings.ROI[0]:settings.ROI[1],settings.ROI[2]:settings.ROI[3]]
             frame_b =  frame_b[settings.ROI[0]:settings.ROI[1],settings.ROI[2]:settings.ROI[3]]
         if settings.dynamic_masking_method=='edge' or 'intensity':    
-            frame_a, mask_a = preprocess.dynamic_masking(frame_a,method=settings.dynamic_masking_method,filter_size=settings.dynamic_masking_filter_size,threshold=settings.dynamic_masking_threshold)
-            frame_b, mask_b = preprocess.dynamic_masking(frame_b,method=settings.dynamic_masking_method,filter_size=settings.dynamic_masking_filter_size,threshold=settings.dynamic_masking_threshold)
+            frame_a, _ = preprocess.dynamic_masking(frame_a,method=settings.dynamic_masking_method,filter_size=settings.dynamic_masking_filter_size,threshold=settings.dynamic_masking_threshold)
+            frame_b, _ = preprocess.dynamic_masking(frame_b,method=settings.dynamic_masking_method,filter_size=settings.dynamic_masking_filter_size,threshold=settings.dynamic_masking_threshold)
+
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            fig, ax = plt.subplots(1,2)
+            ax[0].imshow(frame_a,cmap=plt.cm.gray)
+            ax[1].imshow(frame_b,cmap=plt.cm.gray)
+            plt.show()
 
         '''%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'''
         'first pass'
@@ -60,6 +67,13 @@ def piv(settings):
                                       correlation_method=settings.correlation_method, subpixel_method=settings.subpixel_method, do_sig2noise=settings.extract_sig2noise,
                                       sig2noise_method=settings.sig2noise_method, sig2noise_mask=settings.sig2noise_mask,)
     
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v)
+            # plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('after first pass')
+            plt.show()        
         'validation using gloabl limits and std and local median'
         '''MinMaxU : two elements tuple
             sets the limits of the u displacment component
@@ -98,6 +112,15 @@ def piv(settings):
                 mask=mask+mask_g+mask_m+mask_s+mask_s2n
             else:
                 mask=mask+mask_g+mask_m+mask_s
+
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v)
+            # plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('after first pass validation')
+            plt.show()
+
         'filter to replace the values that where marked by the validation'
         if settings.iterations>1:
              u, v = filters.replace_outliers( u, v, method=settings.filter_method, max_iter=settings.max_filter_iteration, kernel_size=settings.filter_kernel_size)
@@ -114,7 +137,13 @@ def piv(settings):
                   v,dummy_v1,dummy_v2,dummy_v3=smoothn.smoothn(v,s=settings.smoothn_p)        
      
 
-
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v)
+            # plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('before multi pass')
+            plt.show()
 
 
         i = 1
@@ -129,6 +158,13 @@ def piv(settings):
                                                     median_threshold=settings.median_threshold,median_size=settings.median_size,filter_method=settings.filter_method,
                                                     max_filter_iteration=settings.max_filter_iteration, filter_kernel_size=settings.filter_kernel_size,
                                                     interpolation_order=settings.interpolation_order)
+            if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+                plt.figure()
+                plt.quiver(x,y,u,v)
+                # plt.gca().invert_yaxis()
+                plt.gca().set_aspect(1.)
+                plt.title('after multi pass, before smoothing')
+                plt.show()            
             # If the smoothing is active, we do it at each pass
             if settings.smoothn==True:
                  u,dummy_u1,dummy_u2,dummy_u3= smoothn.smoothn(u,s=settings.smoothn_p)
@@ -141,6 +177,15 @@ def piv(settings):
             mask=mask+mask_s2n
         if settings.replace_vectors==True:
             u, v = filters.replace_outliers( u, v, method=settings.filter_method, max_iter=settings.max_filter_iteration, kernel_size=settings.filter_kernel_size)
+
+        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x,y,u,v)
+            # plt.gca().invert_yaxis()
+            plt.gca().set_aspect(1.)
+            plt.title('before saving')
+            plt.show()
+
         'pixel/frame->pixel/sec'
         u=u/settings.dt
         v=v/settings.dt
@@ -574,7 +619,7 @@ def display_vector_field( filename, on_img=False, image_name='None', window_size
         im = fig.imread('neg.tif')
         xmax=np.amax(a[:,0])+window_size/(2*scaling_factor)
         ymax=np.amax(a[:,1])+window_size/(2*scaling_factor)
-        implot = plt.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
+        plt.imshow(im, origin='lower', cmap="Greys_r",extent=[0.,xmax,0.,ymax])
     invalid = a[:,5].astype('bool')
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
     valid = ~invalid
@@ -673,7 +718,7 @@ def find_subpixel_peak_position(corr, subpixel_method='gaussian'):
         #default_peak_position = (0,0)
 
         # the peak locations
-        peak1_i, peak1_j, dummy = pyprocess.find_first_peak(corr)
+        (peak1_i, peak1_j), dummy = pyprocess.find_first_peak(corr)
         '''
         The find_first_peak function returns the coordinates of the correlation peak
         and the value of the peak. Here only the coordinates are needed.
