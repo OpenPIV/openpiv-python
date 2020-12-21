@@ -235,7 +235,7 @@ def piv(settings):
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError("Expected masked array")
 
-            x, y, u, v, s2n = multipass_img_deform(
+            x, y, u, v, s2n, mask = multipass_img_deform(
                 frame_a,
                 frame_b,
                 i,
@@ -271,7 +271,8 @@ def piv(settings):
                 plt.figure()
                 plt.quiver(x, y, u, v, color='r')
                 plt.gca().set_aspect(1.)
-                plt.title('end of the multipass')
+                plt.gca().invert_yaxis()
+                plt.title('end of the multipass, invert')
                 plt.show()
 
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
@@ -387,6 +388,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         u,v : deformation field
     """
     y1 = y[:, 0]  # extract first coloumn from meshgrid
+    y1 = y1[::-1] #flip 
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(frame.shape[1])  # extract the image grid
     side_y = np.arange(frame.shape[0])
@@ -407,10 +409,10 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     # plt.gca().invert_yaxis()
     # plt.show()
 
-    return x, y, ut, -vt
+    return x, y, ut, vt
 
 
-def deform_windows(frame, x, y, u, v, interpolation_order=3, kx=3, ky=3):
+def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3, debugging=False):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -455,13 +457,26 @@ def deform_windows(frame, x, y, u, v, interpolation_order=3, kx=3, ky=3):
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
+    
     frame = frame.astype(np.float32)
     x, y, ut, vt = \
         create_deformation_field(frame,
                                  x, y, u, v,
                                  kx=kx, ky=ky)
     frame_def = scn.map_coordinates(
-        frame, ((y + vt, x + ut,)), order=interpolation_order, mode='nearest')
+        frame, ((y - vt, x + ut,)), order=interpolation_order, mode='nearest')
+
+    if debugging:
+        plt.figure()
+        plt.quiver(x, y, ut, vt)
+        plt.title('new, x,y, ut,vt')
+        plt.show()
+
+        plt.figure()
+        plt.imshow(frame-frame_def)
+        plt.title('new deformed image')
+        plt.show()
+    
 
     return frame_def
 
@@ -692,9 +707,9 @@ def multipass_img_deform(
         plt.figure()
         plt.quiver(x_old, y_old, u_old, v_old,color='b')
         plt.quiver(x_int, y_int, u_pre, v_pre,color='r',lw=2)
-        plt.title('inside deform')
+        plt.title('inside deform no invert')
         plt.gca().set_aspect(1.)
-        plt.gca().invert_yaxis()
+        # plt.gca().invert_yaxis()
         # plt.title(' Here we invert axis')
         plt.show()
 
@@ -809,7 +824,11 @@ def multipass_img_deform(
     if not isinstance(u, np.ma.MaskedArray):
         raise ValueError ('not a masked array anymore')
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.quiver(x,y,u,v,color='m')            
+        plt.quiver(x,y,u,v,color='m')
+        plt.gca().set_aspect(1.)
+        plt.gca().invert_yaxis()
+        plt.title('after validation, inverted, colored')
+        plt.show()            
 
     mask = mask + mask_s + mask_m + mask_g
 
@@ -828,9 +847,9 @@ def multipass_img_deform(
 
         plt.quiver(x[~nans], y[~nans], u[~nans], v[~nans], color='b')
         plt.quiver(x[nans], y[nans], u[nans], v[nans], color='r')
-        # plt.gca().invert_yaxis()
+        plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
-        plt.title('After all validations')
+        plt.title('After sig2noise, inverted')
         plt.show()
     
     # we have to replace outliers
@@ -848,15 +867,14 @@ def multipass_img_deform(
 
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
-        plt.quiver(x_int, y_int, u, v, color='r')
-        plt.quiver(x_int, y_int, u_pre, v_pre,color='b')
+        plt.quiver(x, y, u, v, color='r')
+        plt.quiver(x, y, u_pre, v_pre,color='b')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
-        plt.title(' after deform')
+        plt.title(' after replaced outliers, red, invert')
         plt.show()
 
-
-    return x, y, u, v, s2n
+    return x, y, u, v, s2n, mask
 
 
 class Settings(object):
