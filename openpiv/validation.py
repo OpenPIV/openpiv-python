@@ -116,11 +116,11 @@ def global_std(u, v, std_threshold=3):
     # participating in the magnitude comparison
 
     if isinstance(u, np.ma.MaskedArray):
-        vel_magnitude = u.data ** 2 + v.data ** 2
+        vel_magnitude = u.filled(np.nan) ** 2 + v.filled(np.nan) ** 2
     else:
         vel_magnitude = u ** 2 + v ** 2
 
-    ind = vel_magnitude > std_threshold * np.std(vel_magnitude)
+    ind = vel_magnitude > std_threshold * np.nanstd(vel_magnitude)
 
     u[ind] = np.nan
     v[ind] = np.nan
