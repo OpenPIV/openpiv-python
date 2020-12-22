@@ -28,6 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 def get_coordinates(image_size, search_area_size, overlap):
     """Compute the x, y coordinates of the centers of the interrogation windows.
+    the origin (0,0) is like in the image, top left corner
+    positive x is an increasing column index from left to right
+    positive y is increasing row index, from top to bottom
+
 
     Parameters
     ----------
@@ -67,11 +71,12 @@ def get_coordinates(image_size, search_area_size, overlap):
                                   overlap)
 
     # compute grid coordinates of the search area window centers
-    # compute grid coordinates of the search area window centers
+    # note the field_shape[1] (columns) for x
     x = (
         np.arange(field_shape[1]) * (search_area_size - overlap)
         + (search_area_size) / 2.0
     )
+    # note the rows in field_shape[0]
     y = (
         np.arange(field_shape[0]) * (search_area_size - overlap)
         + (search_area_size) / 2.0
@@ -92,6 +97,9 @@ def get_coordinates(image_size, search_area_size, overlap):
         - ((field_shape[0] - 1) * (search_area_size - overlap) +
            (search_area_size - 1))
     ) // 2
+
+    # the origin 0,0 is at top left
+    # the units are pixels
 
     return np.meshgrid(x, y)
 
@@ -820,10 +828,11 @@ def correlation_to_displacement(corr, n_rows, n_cols,
                             subpixel_method=subpixel_method)) -\
                             default_peak_position
 
-            # the horizontal shift from left to right is the columnwise called
+            # the horizontal shift from left to right is the u
+            # the vertical displacement from top to bottom (increasing row) is v
             # x the vertical shift from top to bottom is row-wise shift is now
             # a negative vertical
-            u[k, m], v[k, m] = peak[1], -peak[0]
+            u[k, m], v[k, m] = peak[1], peak[0]
 
     return (u, v)
 
