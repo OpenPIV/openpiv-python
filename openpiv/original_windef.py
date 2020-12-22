@@ -197,7 +197,9 @@ def piv(settings):
         'scales the results pixel-> meter'
         x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = settings.scaling_factor )     
         'save to a file'
-        tools.save(x, y, u, v,sig2noise_ratio, mask ,os.path.join(save_path,'field_A%03d.txt' % counter), delimiter='\t')
+        # note the negative sign of the vertical component
+        tools.save(x, y, u, -v, sig2noise_ratio, mask ,os.path.join(save_path,'field_A%03d.txt' % counter), delimiter='\t')
+        # tools.save(x, y, u, v,sig2noise_ratio, mask ,os.path.join(save_path,'field_A%03d.txt' % counter), delimiter='\t')
         'some messages to check if it is still alive'
         
 
@@ -244,7 +246,7 @@ def correlation_func(cor_win_1, cor_win_2, window_size,correlation_method='circu
                                   rfft2(cor_win_2)).real, axes=(1, 2))
     return corr
 
-def frame_interpolation(frame, x, y, u, v, interpolation_order=1, debugging=False):
+def frame_interpolation(frame, x, y, u, v, interpolation_order=1, debugging=True):
     '''This one is doing the image deformation also known as window deformation
     Therefore, the pixel values of the old image are interpolated on a new grid that is defined
     by the grid of the previous pass and the displacment evaluated by the previous pass
@@ -470,6 +472,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
         the vector was filtered
 
     """
+    debugging = True
 
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
     'calculate the y and y coordinates of the interrogation window centres'
@@ -502,6 +505,11 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
 
     frame_b_deform = frame_interpolation(
         frame_b, x, y, u_pre, -v_pre, interpolation_order=interpolation_order)
+    
+    if debugging:
+        plt.figure()
+        plt.imshow(frame_b - frame_b_deform)
+        plt.show()
     '''this one is doing the image deformation (see above)'''
 
     cor_win_1 = pyprocess.moving_window_array(frame_a, window_size, overlap)

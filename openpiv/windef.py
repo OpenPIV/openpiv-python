@@ -68,9 +68,9 @@ def piv(settings):
             frame_b = invert(frame_b)
 
         if settings.show_all_plots:
-            fig, ax = plt.subplots(1,2)
-            ax[0].imshow(frame_a, cmap=plt.get_cmap('gray'))
-            ax[1].imshow(frame_b, cmap=plt.get_cmap('gray'))
+            fig, ax = plt.subplots(1,1)
+            ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
+            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'),alpha=.5)
             plt.show()
 
         if settings.dynamic_masking_method in ("edge", "intensity"):
@@ -96,7 +96,7 @@ def piv(settings):
 
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
             plt.figure()
-            plt.quiver(x,y,u,v,color='b')
+            plt.quiver(x,y,u,-v,color='b')
             # plt.gca().invert_yaxis()
             # plt.gca().set_aspect(1.)
             # plt.title('after first pass, invert')
@@ -187,7 +187,7 @@ def piv(settings):
 
         if settings.show_all_plots:
             # plt.figure()
-            plt.quiver(x,y,u,v,color='r')
+            plt.quiver(x,y,u,-v,color='r')
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after first pass validation new, inverted')
@@ -234,7 +234,7 @@ def piv(settings):
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x,y,u,v)
+            plt.quiver(x,y,u,-v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('before multi pass, inverted')
@@ -284,7 +284,7 @@ def piv(settings):
 
             if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
                 plt.figure()
-                plt.quiver(x, y, u, v, color='r')
+                plt.quiver(x, y, u, -v, color='r')
                 plt.gca().set_aspect(1.)
                 plt.gca().invert_yaxis()
                 plt.title('end of the multipass, invert')
@@ -292,7 +292,7 @@ def piv(settings):
 
         if settings.show_all_plots and settings.num_iterations > 1:
             plt.figure()
-            plt.quiver(x,y,u,v)
+            plt.quiver(x,y,u,-v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after multi pass, before saving, inverted')
@@ -313,13 +313,19 @@ def piv(settings):
         else:
             u = np.ma.masked_array(u, np.ma.nomask)
             v = np.ma.masked_array(v, np.ma.nomask)
-        
+
+        # before saving we conver to the "physically relevant"
+        # right-hand coordinate system with 0,0 at the bottom left
+        # x to the right, y upwards
+        # and so u,v
+
+        # import pdb; pdb.set_trace()
         # "save to a file"
         save(
             x,
-            y,
+            y[::-1,:], # note the shift of the origin in y
             u,
-            v,
+            -v, 
             s2n,
             mask,
             os.path.join(save_path, "field_A%03d.txt" % counter),
@@ -720,8 +726,8 @@ def multipass_img_deform(
     # if settings.show_plot:
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
-        plt.quiver(x_old, y_old, u_old, v_old,color='b')
-        plt.quiver(x_int, y_int, u_pre, v_pre,color='r',lw=2)
+        plt.quiver(x_old, y_old, u_old, -v_old,color='b')
+        plt.quiver(x_int, y_int, u_pre, -v_pre,color='r',lw=2)
         plt.gca().set_aspect(1.)
         plt.gca().invert_yaxis()
         plt.title('inside deform, invert')
@@ -752,16 +758,17 @@ def multipass_img_deform(
             order=settings.interpolation_order, mode='nearest')
     elif settings.deformation_method == "second image":
         frame_b = deform_windows(
-            frame_b, x, y, u_pre, v_pre,
+            frame_b, x, y, u_pre, -v_pre,
             interpolation_order=settings.interpolation_order)
     else:
         raise Exception("Deformation method is not valid.")
 
     # if settings.show_plot:
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.figure()
-        plt.imshow(frame_a-old_frame_a)
-        plt.show()
+    if settings.show_all_plots:
+        if settings.deformation_method == 'symmetric':
+            plt.figure()
+            plt.imshow(frame_a-old_frame_a)
+            plt.show()
 
         plt.figure()
         plt.imshow(frame_b-old_frame_b)
@@ -817,7 +824,7 @@ def multipass_img_deform(
 
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
-        plt.quiver(x,y,u,v,color='r')
+        plt.quiver(x,y,u,-v,color='r')
 
     u, v, mask_s = validation.global_std(
         u, v, std_threshold=settings.std_threshold
@@ -826,7 +833,7 @@ def multipass_img_deform(
         raise ValueError ('not a masked array anymore')
 
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.quiver(x,y,u,v,color='b')
+        plt.quiver(x,y,u,-v,color='b')
     
     u, v, mask_m = validation.local_median_val(
         u,
@@ -838,7 +845,7 @@ def multipass_img_deform(
     if not isinstance(u, np.ma.MaskedArray):
         raise ValueError ('not a masked array anymore')
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.quiver(x,y,u,v,color='m')
+        plt.quiver(x,y,u,-v,color='m')
         plt.gca().set_aspect(1.)
         plt.gca().invert_yaxis()
         plt.title('after validation, inverted, colored')
@@ -859,8 +866,8 @@ def multipass_img_deform(
         plt.figure()
         nans = mask == True
 
-        plt.quiver(x[~nans], y[~nans], u[~nans], v[~nans], color='b')
-        plt.quiver(x[nans], y[nans], u[nans], v[nans], color='r')
+        plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
+        plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
         plt.title('After sig2noise, inverted')
@@ -881,8 +888,8 @@ def multipass_img_deform(
 
     if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
-        plt.quiver(x, y, u, v, color='r')
-        plt.quiver(x, y, u_pre, v_pre,color='b')
+        plt.quiver(x, y, u, -v, color='r')
+        plt.quiver(x, y, u_pre, -v_pre,color='b')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
         plt.title(' after replaced outliers, red, invert')

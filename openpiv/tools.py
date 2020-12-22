@@ -123,7 +123,7 @@ def display_vector_field(
     ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color="b", width=width,**kw)
     
     # if on_img is False:
-    ax.invert_yaxis()
+    # ax.invert_yaxis()
     
     ax.set_aspect(1.)
     fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')

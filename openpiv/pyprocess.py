@@ -632,7 +632,7 @@ def extended_search_area_piv(
     search_area_size=None,
     correlation_method="circular",
     subpixel_method="gaussian",
-    sig2noise_method=None,
+    sig2noise_method='peak2mean',
     width=2,
     normalized_correlation=False
 ):
