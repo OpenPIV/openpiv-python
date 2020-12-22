@@ -139,3 +139,16 @@ def test_local_median_validation(u_threshold=3, N=3, size=1):
     assert mask2[N,N]
     assert u2.mask[N+1,N+1]
 
+
+def test_global_val(N=2,U=(-10,10)):
+    u = np.random.rand(2*N+1, 2*N+1)
+    u[N, N] = U[0]-.1
+    u[0,0] = U[1]+.1
+    print('\n\n\n')
+    print(u)
+
+    u1, _, mask = validation.global_val(u,u,U,U)
+    assert np.isnan(u1[N,N])
+    assert np.isnan(u1[0,0])
+    assert mask[N,N]
+    assert mask[0,0]
