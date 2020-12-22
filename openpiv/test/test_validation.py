@@ -144,11 +144,30 @@ def test_global_val(N=2,U=(-10,10)):
     u = np.random.rand(2*N+1, 2*N+1)
     u[N, N] = U[0]-.1
     u[0,0] = U[1]+.1
+
+    v = np.ma.masked_array(u.copy(), np.ma.nomask)
+    v[N+1,N+1] = np.ma.masked
+    
+    
     print('\n\n\n')
-    print(u)
+    print(u)    
+    print(v.data)
+    print(v.mask)
 
     u1, _, mask = validation.global_val(u,u,U,U)
     assert np.isnan(u1[N,N])
     assert np.isnan(u1[0,0])
     assert mask[N,N]
     assert mask[0,0]
+
+    # masked array test
+
+
+    
+    v1, _, mask1 = validation.global_val(v,v,U,U)
+    assert isinstance(v1,np.ma.MaskedArray)
+    assert np.isnan(v1.data[N,N])
+    assert np.isnan(v1.data[0,0])
+    print(mask1)
+    assert mask1[N,N]
+    assert mask1[0,0]
