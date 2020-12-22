@@ -30,7 +30,7 @@ import matplotlib.patches as pt
 
 # from builtins import range
 from imageio import imread as _imread, imsave as _imsave
-
+from skimage.feature import canny
 
 def display_vector_field(
     filename,
@@ -258,7 +258,7 @@ def mark_background2(list_img, filename):
 
 def edges(list_img, filename):
     back = mark_background(30, list_img, filename)
-    edges = filter.canny(back, sigma=3)
+    edges = canny(back, sigma=3)
     imsave(filename, edges)
 
 

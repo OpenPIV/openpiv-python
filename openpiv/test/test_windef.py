@@ -58,7 +58,7 @@ def test_multi_pass_circ():
     assert np.mean(np.abs(u_old - shift_u)) < threshold
     assert np.mean(np.abs(v_old - shift_v)) < threshold
     for i in range(1,settings.num_iterations):
-        x, y, u, v, s2n, mask = windef.multipass_img_deform(
+        x, y, u, v, s2n, _ = windef.multipass_img_deform(
             frame_a,
             frame_b,
             i,

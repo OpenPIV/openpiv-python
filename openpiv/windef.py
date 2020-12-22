@@ -69,8 +69,8 @@ def piv(settings):
 
         if settings.show_all_plots:
             fig, ax = plt.subplots(1,2)
-            ax[0].imshow(frame_a, cmap=plt.cm.gray)
-            ax[1].imshow(frame_b, cmap=plt.cm.gray)
+            ax[0].imshow(frame_a, cmap=plt.get_cmap('gray'))
+            ax[1].imshow(frame_b, cmap=plt.get_cmap('gray'))
             plt.show()
 
         if settings.dynamic_masking_method in ("edge", "intensity"):
@@ -725,10 +725,9 @@ def multipass_img_deform(
         plt.figure()
         plt.quiver(x_old, y_old, u_old, v_old,color='b')
         plt.quiver(x_int, y_int, u_pre, v_pre,color='r',lw=2)
-        plt.title('inside deform no invert')
         plt.gca().set_aspect(1.)
-        # plt.gca().invert_yaxis()
-        # plt.title(' Here we invert axis')
+        plt.gca().invert_yaxis()
+        plt.title('inside deform, invert')
         plt.show()
 
     # @TKauefer added another method to the windowdeformation, 'symmetric'

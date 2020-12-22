@@ -57,9 +57,9 @@ def piv(settings):
             frame_b, _ = preprocess.dynamic_masking(frame_b,method=settings.dynamic_masking_method,filter_size=settings.dynamic_masking_filter_size,threshold=settings.dynamic_masking_threshold)
 
         if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-            fig, ax = plt.subplots(1,2)
-            ax[0].imshow(frame_a,cmap=plt.cm.gray)
-            ax[1].imshow(frame_b,cmap=plt.cm.gray)
+            _, ax = plt.subplots(1,2)
+            ax[0].imshow(frame_a,cmap=plt.get_cmap('gray'))
+            ax[1].imshow(frame_b,cmap=plt.get_cmap('gray'))
             plt.show()
 
         '''%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'''
@@ -106,10 +106,14 @@ def piv(settings):
         mask=np.full_like(x,False)
         if settings.validation_first_pass==True:    
             u, v, mask_g = validation.global_val( u, v, settings.MinMax_U_disp, settings.MinMax_V_disp)
+            print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
             u,v, mask_s = validation.global_std( u, v, std_threshold = settings.std_threshold )
+            print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
             u, v, mask_m = validation.local_median_val( u, v, u_threshold=settings.median_threshold, v_threshold=settings.median_threshold, size=settings.median_size )
+            print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
             if settings.extract_sig2noise==True and settings.num_iterations==1 and settings.do_sig2noise_validation==True:
-                u,v, mask_s2n = validation.sig2noise_val( u, v, sig2noise_ratio, threshold = settings.sig2noise_threshold)
+                u, v, mask_s2n = validation.sig2noise_val( u, v, sig2noise_ratio, threshold = settings.sig2noise_threshold)
+                print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
                 mask=mask+mask_g+mask_m+mask_s+mask_s2n
             else:
                 mask=mask+mask_g+mask_m+mask_s
@@ -820,7 +824,7 @@ def sig2noise_ratio_function(corr, sig2noise_method='peak2peak', width=2):
             # now compute signal to noise ratio
             
                 # find second peak height
-                peak2_i[i], peak2_j[i], corr_max2[i] = pyprocess.find_second_peak(
+                (peak2_i[i], peak2_j[i]), corr_max2[i] = pyprocess.find_second_peak(
                     corr[i,:,:], int(peak1_i[i]), int(peak1_j[i]), width=width)
         
                 # if it's an empty interrogation window
