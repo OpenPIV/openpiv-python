@@ -245,6 +245,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     
     # kernel footprint
     f = np.ones((2*size+1, 2*size+1))
+    f[size,size] = 0
 
     masked_u = np.where(~u.mask, u.data, np.nan)
     masked_v = np.where(~v.mask, v.data, np.nan)
