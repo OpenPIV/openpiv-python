@@ -403,7 +403,6 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         u,v : deformation field
     """
     y1 = y[:, 0]  # extract first coloumn from meshgrid
-    # y1 = y1[::-1] #flip 
     x1 = x[0, :]  # extract first row from meshgrid
     side_x = np.arange(frame.shape[1])  # extract the image grid
     side_y = np.arange(frame.shape[0])
@@ -708,8 +707,6 @@ def multipass_img_deform(
     # y_int = y_int[::-1]
     x_int = x[0, :]
 
-    # convert for the deformation
-    v_old *= -1
 
 
     # interpolating the displacements from the old grid onto the new grid
@@ -755,7 +752,7 @@ def multipass_img_deform(
             order=settings.interpolation_order, mode='nearest')
     elif settings.deformation_method == "second image":
         frame_b = deform_windows(
-            frame_b, x, y, u_pre, -v_pre,
+            frame_b, x, y, u_pre, v_pre,
             interpolation_order=settings.interpolation_order)
     else:
         raise Exception("Deformation method is not valid.")
@@ -795,8 +792,6 @@ def multipass_img_deform(
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
 
-    # convert back after the deformation
-    v_pre *= -1
 
     u += u_pre
     v += v_pre
