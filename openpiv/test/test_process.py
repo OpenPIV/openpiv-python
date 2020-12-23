@@ -42,7 +42,7 @@ def create_pair(image_size=32, u=shift_u, v=shift_v):
 
     # frame_b = np.roll(np.roll(frame_a, u, axis=1), v, axis=0)
     # scipy shift allows to shift by floating values
-    frame_b = shift(frame_a, (-v, u), mode='wrap')
+    frame_b = shift(frame_a, (v, u), mode='wrap')
 
     # fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     # ax[0].imshow(frame_a, cmap=plt.cm.gray)
