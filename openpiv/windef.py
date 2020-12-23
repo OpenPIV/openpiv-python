@@ -94,7 +94,7 @@ def piv(settings):
             settings
         )
 
-        if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+        if settings.show_all_plots:
             plt.figure()
             plt.quiver(x,y,u,-v,color='b')
             # plt.gca().invert_yaxis()
@@ -117,73 +117,8 @@ def piv(settings):
             u = np.ma.masked_array(u, mask=np.ma.nomask)
             v = np.ma.masked_array(v, mask=np.ma.nomask)
 
-        """
-        validation using gloabl limits and std and local median
-
-        MinMaxU : two elements tuple
-            sets the limits of the u displacment component
-            Used for validation.
-
-        MinMaxV : two elements tuple
-            sets the limits of the v displacment component
-            Used for validation.
-
-        std_threshold : float
-            sets the  threshold for the std validation
-
-        median_threshold : float
-            sets the threshold for the median validation
-
-        filter_method : string
-            the method used to replace the non-valid vectors
-            Methods:
-                'localmean',
-                'disk',
-                'distance',
-
-        max_filter_iteration : int
-            maximum of filter iterations to replace nans
-
-        filter_kernel_size : int
-            size of the kernel used for the filtering
-        """
-
-        mask = np.full_like(x, False)
         if settings.validation_first_pass:
-            u, v, mask_g = validation.global_val(
-                u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
-            )
-            print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
-            u, v, mask_s = validation.global_std(
-                u, v, std_threshold=settings.std_threshold
-            )
-            print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
-            u, v, mask_m = validation.local_median_val(
-                u,
-                v,
-                u_threshold=settings.median_threshold,
-                v_threshold=settings.median_threshold,
-                size=settings.median_size,
-            )
-            print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
-            mask = mask + mask_g + mask_m + mask_s
-
-
-            if (
-                settings.sig2noise_validate
-                and settings.num_iterations == 1
-            ):
-                u, v, mask_s2n = validation.sig2noise_val(
-                    u, v, s2n,
-                    threshold=settings.sig2noise_threshold
-                )
-                print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
-                if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
-                    plt.figure()
-                    plt.hist(s2n.flatten(),31)
-                    plt.show()
-
-                mask += mask_s2n
+            u, v, mask = validation.typical_validation(u, v, s2n, settings)
 
         if settings.show_all_plots:
             # plt.figure()
@@ -223,7 +158,7 @@ def piv(settings):
                 v, s=settings.smoothn_p
             )
 
-        if hasattr(settings, 'image_mask') and settings.image_mask:
+        if settings.image_mask:
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
@@ -723,8 +658,10 @@ def multipass_img_deform(
     ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
     v_pre = ip2(y_int, x_int)
 
+    print(f"show all plots is {settings.show_all_plots}")
+    
     # if settings.show_plot:
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+    if settings.show_all_plots:
         plt.figure()
         plt.quiver(x_old, y_old, u_old, -v_old,color='b')
         plt.quiver(x_int, y_int, u_pre, -v_pre,color='r',lw=2)
@@ -780,6 +717,10 @@ def multipass_img_deform(
     #     sig2noise_method = None
 
     # so we use here default circular not normalized correlation:
+    # if we did not want to validate every step, remove the method
+    if settings.sig2noise_validate is False:
+        settings.sig2noise_method = None
+
     u, v, s2n = extended_search_area_piv(
         frame_a,
         frame_b,
@@ -803,10 +744,8 @@ def multipass_img_deform(
     u += u_pre
     v += v_pre
 
-
-
     # reapply the image mask to the new grid
-    if hasattr(settings, 'image_mask') and settings.image_mask:
+    if settings.image_mask:
         grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
         u = np.ma.masked_array(u, mask=grid_mask)
         v = np.ma.masked_array(v, mask=grid_mask)
@@ -814,55 +753,16 @@ def multipass_img_deform(
         u = np.ma.masked_array(u, np.ma.nomask)
         v = np.ma.masked_array(v, np.ma.nomask)
 
-    mask = np.full_like(x, False, dtype=bool)
-    # validation every step
-    u, v, mask_g = validation.global_val(
-        u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
-    )
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError ('not a masked array anymore')
 
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.figure()
-        plt.quiver(x,y,u,-v,color='r')
+    # validate in the multi-pass by default
+    u, v, mask = validation.typical_validation(u, v, s2n, settings, no_std=True)
 
-    u, v, mask_s = validation.global_std(
-        u, v, std_threshold=settings.std_threshold
-    )
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError ('not a masked array anymore')
-
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.quiver(x,y,u,-v,color='b')
-    
-    u, v, mask_m = validation.local_median_val(
-        u,
-        v,
-        u_threshold=settings.median_threshold,
-        v_threshold=settings.median_threshold,
-        size=settings.median_size,
-    )
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError ('not a masked array anymore')
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
-        plt.quiver(x,y,u,-v,color='m')
-        plt.gca().set_aspect(1.)
-        plt.gca().invert_yaxis()
-        plt.title('after validation, inverted, colored')
-        plt.show()            
-
-    mask = mask + mask_s + mask_m + mask_g
-
-    if settings.sig2noise_validate:
-        u, v, mask_s2n = validation.sig2noise_val(
-            u, v, s2n, threshold=settings.sig2noise_threshold
-        )
-        mask = mask + mask_s2n
+    if np.all(mask == True):
+        raise ValueError("Something happened in the validation")
 
     if not isinstance(u, np.ma.MaskedArray):
         raise ValueError ('not a masked array anymore')
 
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
         plt.figure()
         nans = mask == True
 
@@ -886,7 +786,7 @@ def multipass_img_deform(
 
 
 
-    if hasattr(settings, 'show_all_plots') and settings.show_all_plots:
+    if settings.show_all_plots:
         plt.figure()
         plt.quiver(x, y, u, -v, color='r')
         plt.quiver(x, y, u_pre, -v_pre,color='b')

@@ -8,11 +8,15 @@ Created on Fri Oct  4 14:33:21 2019
 
 import numpy as np
 import openpiv.windef as windef
-from test_process import create_pair, shift_u, shift_v, threshold
+from openpiv.test import test_process 
+from openpiv import preprocess
 import pathlib
 import os
+import matplotlib.pyplot as plt
 
-frame_a, frame_b = create_pair(image_size=256)
+frame_a, frame_b = test_process.create_pair(image_size=256)
+shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
+                              test_process.threshold
 
 # this test are created only to test the displacement evaluation of the
 # function the validation methods are not tested here ant therefore
@@ -43,20 +47,36 @@ def test_first_pass_circ():
 
 def test_multi_pass_circ():
     """ test fot the multipass """
-    settings.windowsizes = (64, 32, 16)
-    settings.overlap = (32, 16, 8)
-    settings.num_iterations = 3
+    settings.windowsizes = (64, 64, 16)
+    settings.overlap = (32, 32, 8)
+    settings.num_iterations = 2
     settings.interpolation_order = 3
+    settings.show_all_plots = True
+
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
         settings,
     )
-    u_old = u.copy()
-    v_old = v.copy()
-    print("\n", x, y, u_old, v_old, s2n)
-    assert np.mean(np.abs(u_old - shift_u)) < threshold
-    assert np.mean(np.abs(v_old - shift_v)) < threshold
+    print("first pass\n")
+    print("\n", x, y, u, v, s2n)
+    assert np.allclose(u, shift_u, atol = threshold)
+    assert np.allclose(v, shift_v, atol = threshold)
+
+    if settings.image_mask:
+        image_mask = np.logical_and(mask_a, mask_b)
+        mask_coords = preprocess.mask_coordinates(image_mask)
+        # mark those points on the grid of PIV inside the mask
+        grid_mask = preprocess.prepare_mask_on_grid(x,y,mask_coords)
+
+        # mask the velocity
+        u = np.ma.masked_array(u, mask=grid_mask)
+        v = np.ma.masked_array(v, mask=grid_mask)
+    else:
+        mask_coords = []
+        u = np.ma.masked_array(u, mask=np.ma.nomask)
+        v = np.ma.masked_array(v, mask=np.ma.nomask)
+
     for i in range(1,settings.num_iterations):
         x, y, u, v, s2n, _ = windef.multipass_img_deform(
             frame_a,
@@ -64,12 +84,17 @@ def test_multi_pass_circ():
             i,
             x,
             y,
-            np.ma.array(u, mask=np.ma.nomask),
-            np.ma.array(v, mask=np.ma.nomask),
+            u,
+            v,
             settings
         )
 
-    print("\n", x, y, u, v, s2n)
+    print(f"Pass {i}\n")
+    print(x)
+    print(y)
+    print(u) 
+    print(v)
+    print(s2n)
     assert np.mean(np.abs(u - shift_u)) < threshold
     assert np.mean(np.abs(v - shift_v)) < threshold
     # the second condition is to check if the multipass is done.
@@ -91,7 +116,7 @@ def test_first_pass_lin():
     assert np.mean(np.abs(v - shift_v)) < threshold
 
 
-def test_invert():
+def test_invert_and_piv():
     """ Test windef.piv with invert option """
 
     settings = windef.Settings()
@@ -108,7 +133,7 @@ def test_invert():
     settings.num_iterations = 1
     settings.show_plot = True
     settings.scale_plot = 100
-    settings.show_all_plots = True
+    settings.show_all_plots = False
     settings.invert = True
 
     windef.piv(settings)
@@ -118,37 +143,50 @@ def test_multi_pass_lin():
     """ test fot the multipass """
     settings.windowsizes = (64, 32, 16)
     settings.overlap = (32, 16, 8)
-    settings.num_iterations = 3
+    settings.num_iterations = 2
     settings.sig2noise_validate = True
     settings.correlation_method = 'linear'
+    settings.normalized_correlation = True
 
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
         settings,
     )
-    u_old = u.copy()
-    v_old = v.copy()
 
-    print("\n", x, y, u_old, v_old, s2n)
-    assert np.mean(np.abs(u_old - shift_u)) < threshold
-    assert np.mean(np.abs(v_old - shift_v)) < threshold
+    print("\n", x, y, u, v, s2n)
+    assert np.mean(np.abs(u - shift_u)) < threshold
+    assert np.mean(np.abs(v - shift_v)) < threshold
+
+    if settings.image_mask:
+        image_mask = np.logical_and(mask_a, mask_b)
+        mask_coords = preprocess.mask_coordinates(image_mask)
+        # mark those points on the grid of PIV inside the mask
+        grid_mask = preprocess.prepare_mask_on_grid(x,y,mask_coords)
+
+        # mask the velocity
+        u = np.ma.masked_array(u, mask=grid_mask)
+        v = np.ma.masked_array(v, mask=grid_mask)
+    else:
+        mask_coords = []
+        u = np.ma.masked_array(u, mask=np.ma.nomask)
+        v = np.ma.masked_array(v, mask=np.ma.nomask)
 
     for i in range(1, settings.num_iterations):
-        x, y, u, v, s2n, mask = windef.multipass_img_deform(
+        x, y, u, v, s2n, _ = windef.multipass_img_deform(
             frame_a,
             frame_b,
             i,
             x,
             y,
-            np.ma.array(u, mask=np.ma.nomask),
-            np.ma.array(v, mask=np.ma.nomask),
+            u,
+            v,
             settings,
         )
-
-    print("\n", x, y, u, v, s2n)
-    assert np.mean(np.abs(u - shift_u)) < threshold
-    assert np.mean(np.abs(v - shift_v)) < threshold
+        print(f"Iteration {i}")
+        print("\n", x, y, u, v, s2n)
+        assert np.allclose(u, shift_u, atol=threshold)
+        assert np.allclose(v, shift_v, atol=threshold)
 
     # the second condition is to check if the multipass is done.
     # It need's a little numerical inaccuracy.
