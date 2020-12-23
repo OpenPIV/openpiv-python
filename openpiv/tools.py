@@ -323,7 +323,7 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     return list_bound
 
 
-def save(x, y, u, v, sig2noise_ratio, mask, filename, fmt="%8.4f", delimiter="\t"):
+def save(x, y, u, v, mask, filename, fmt="%8.4f", delimiter="\t"):
     """Save flow field to an ascii file.
 
     Parameters
@@ -365,8 +365,12 @@ def save(x, y, u, v, sig2noise_ratio, mask, filename, fmt="%8.4f", delimiter="\t
                         delimiter='\t')
 
     """
+    if isinstance(u, np.ma.MaskedArray):
+        u = u.filled(0.)
+        v = v.filled(0.)
+
     # build output array
-    out = np.vstack([m.ravel() for m in [x, y, u, v, sig2noise_ratio, mask]])
+    out = np.vstack([m.flatten() for m in [x, y, u, v, mask]])
 
     # save data to file.
     np.savetxt(
@@ -381,8 +385,6 @@ def save(x, y, u, v, sig2noise_ratio, mask, filename, fmt="%8.4f", delimiter="\t
         + "u"
         + delimiter
         + "v"
-        + delimiter
-        + "s2n"
         + delimiter
         + "mask",
     )

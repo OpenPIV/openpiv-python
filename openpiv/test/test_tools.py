@@ -37,8 +37,8 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
 
     x, y, u, v = transform_coordinates(x, y, u, v)
 
-    save(x, y, u, v, s2n,
-         np.zeros_like(s2n), 'tmp.txt')
+    save(x, y, u, v,
+         np.zeros_like(x), 'tmp.txt')
     fig, ax = plt.subplots(figsize=(6,6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     fig.savefig('./tmp.png')

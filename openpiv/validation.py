@@ -72,7 +72,7 @@ def global_val(u, v, u_thresholds, v_thresholds):
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.full_like(u, False)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     return u, v, mask
@@ -126,7 +126,7 @@ def global_std(u, v, std_threshold=3):
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.full_like(u, False)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     return u, v, mask
@@ -186,7 +186,7 @@ def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.full_like(u, False)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     if isinstance(w, np.ndarray):

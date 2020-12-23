@@ -13,10 +13,9 @@ import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
 
-from openpiv.tools import imread, Multiprocesser, save, display_vector_field, \
+from openpiv.tools import imread, Multiprocesser, display_vector_field, \
     transform_coordinates
-from openpiv import validation, filters
-from openpiv import preprocess, scaling
+from openpiv import validation, filters, tools, preprocess, scaling, tools
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
 from openpiv import smoothn
@@ -258,7 +257,7 @@ def piv(settings):
         x, y, u, v = transform_coordinates(x, y, u, v)
         # import pdb; pdb.set_trace()
         # "save to a file"
-        save(x, y, u, v, s2n, mask,
+        tools.save(x, y, u, v, mask,
             os.path.join(save_path, "field_A%03d.txt" % counter),
             delimiter="\t",
         )
@@ -653,8 +652,6 @@ def multipass_img_deform(
 
     ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
     v_pre = ip2(y_int, x_int)
-
-    print(f"show all plots is {settings.show_all_plots}")
     
     # if settings.show_plot:
     if settings.show_all_plots:
@@ -777,8 +774,15 @@ def multipass_img_deform(
         max_iter=settings.max_filter_iteration,
         kernel_size=settings.filter_kernel_size,
     )
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError ('not a masked array anymore')   
+
+    # reapply the image mask to the new grid
+    if settings.image_mask:
+        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+        u = np.ma.masked_array(u, mask=grid_mask)
+        v = np.ma.masked_array(v, mask=grid_mask)
+    else:
+        u = np.ma.masked_array(u, np.ma.nomask)
+        v = np.ma.masked_array(v, np.ma.nomask) 
 
 
 

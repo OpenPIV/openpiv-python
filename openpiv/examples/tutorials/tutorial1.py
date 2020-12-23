@@ -23,6 +23,6 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.3 )
 u, v, mask = validation.global_val( u, v, (-1000, 2000), (-1000, 1000) )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter=10, kernel_size=2)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
-tools.save(x, y, u, v, sig2noise, mask, 'test1.vec' )
+tools.save(x, y, u, v, mask, 'test1.vec' )
 tools.display_vector_field('test1.vec', scale=75, width=0.0035)
 

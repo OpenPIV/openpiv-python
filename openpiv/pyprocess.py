@@ -794,7 +794,7 @@ def extended_search_area_piv(
             corr, sig2noise_method=sig2noise_method, width=width
         )
     else:
-        sig2noise = np.full_like(u, np.nan)
+        sig2noise = np.zeros_like(u)*np.nan
 
     sig2noise = sig2noise.reshape(n_rows, n_cols)
 
