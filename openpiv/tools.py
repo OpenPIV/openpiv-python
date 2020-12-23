@@ -32,6 +32,12 @@ import matplotlib.patches as pt
 from imageio import imread as _imread, imsave as _imsave
 from skimage.feature import canny
 
+
+def unique(array):
+    uniq, index = np.unique(array, return_index=True)
+    return uniq[index.argsort()]
+
+
 def display_vector_field(
     filename,
     on_img=False,
@@ -94,6 +100,10 @@ def display_vector_field(
     """
 
     a = np.loadtxt(filename)
+    # parse
+    x, y, u, v, _, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
+
+
     if ax is None:
         fig, ax = plt.subplots()
     else:
@@ -104,29 +114,30 @@ def display_vector_field(
         im = negative(im)  # plot negative of the image for more clarity
         # imsave('neg.tif', im)
         # im = imread('neg.tif')
-        xmax = np.amax(a[:, 0]) + window_size / (2 * scaling_factor)
-        ymax = np.amax(a[:, 1]) + window_size / (2 * scaling_factor)
-        ax.imshow(im, origin="lower", cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
+        xmax = np.amax(x) + window_size / (2 * scaling_factor)
+        ymax = np.amax(y) + window_size / (2 * scaling_factor)
+        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
         # plt.draw()
 
-
-    if widim is True:
-        a[:, 1] = a[:, 1].max() - a[:, 1]
-
-    invalid = a[:, 5].astype("bool")  # mask is now 5th column, sig2noise is 4
-    # fig.canvas.set_window_title('Vector field,
-    #       '+str(np.count_nonzero(invalid))+' wrong vectors')
+    invalid = mask.astype("bool")  
     valid = ~invalid
+
+    # visual conversion for the data on image
+    # to be consistent with the image coordinate system
+
+    # if on_img:
+    #     y = y.max() - y
+    #     v *= -1
+
     ax.quiver(
-        a[invalid, 0], a[invalid, 1], a[invalid, 2], a[invalid, 3], color="r", width=width, **kw
-    )
-    ax.quiver(a[valid, 0], a[valid, 1], a[valid, 2], a[valid, 3], color="b", width=width,**kw)
+        x[invalid], y[invalid], u[invalid], v[invalid], color="r", width=width, **kw)
+    ax.quiver(x[valid], y[valid], u[valid], v[valid], color="b", width=width,**kw)
     
     # if on_img is False:
-    # ax.invert_yaxis()
+    #     ax.invert_yaxis()
     
     ax.set_aspect(1.)
-    fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
+    # fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
 
     plt.show()
 
