@@ -1,4 +1,4 @@
-from openpiv.tools import imread, save, display_vector_field
+from openpiv.tools import imread, save, display_vector_field, transform_coordinates
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates
 import pathlib
 import numpy as np
@@ -26,7 +26,7 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
     overlap = 16
     search_area_size = 40
 
-    vel = extended_search_area_piv(a, b, window_size,
+    u, v, s2n = extended_search_area_piv(a, b, window_size,
                                    search_area_size=search_area_size,
                                    overlap=overlap,
                                    correlation_method='circular',
@@ -35,8 +35,10 @@ def test_display_vector_field(file_a=file_a, file_b=file_b):
     x, y = get_coordinates(a.shape, search_area_size=search_area_size,
                            overlap=overlap)
 
-    save(x, y, vel[0], vel[1], np.zeros_like(vel[0]),
-         np.zeros_like(vel[0]), 'tmp.txt')
+    x, y, u, v = transform_coordinates(x, y, u, v)
+
+    save(x, y, u, v, s2n,
+         np.zeros_like(s2n), 'tmp.txt')
     fig, ax = plt.subplots(figsize=(6,6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     fig.savefig('./tmp.png')

@@ -13,7 +13,8 @@ import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
 
-from openpiv.tools import imread, Multiprocesser, save, display_vector_field
+from openpiv.tools import imread, Multiprocesser, save, display_vector_field, \
+    transform_coordinates
 from openpiv import validation, filters
 from openpiv import preprocess, scaling
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
@@ -254,15 +255,10 @@ def piv(settings):
         # x to the right, y upwards
         # and so u,v
 
+        x, y, u, v = transform_coordinates(x, y, u, v)
         # import pdb; pdb.set_trace()
         # "save to a file"
-        save(
-            x,
-            y[::-1,:], # note the shift of the origin in y
-            u,
-            -v, 
-            s2n,
-            mask,
+        save(x, y, u, v, s2n, mask,
             os.path.join(save_path, "field_A%03d.txt" % counter),
             delimiter="\t",
         )

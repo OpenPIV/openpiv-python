@@ -51,7 +51,7 @@ def test_multi_pass_circ():
     settings.overlap = (32, 32, 8)
     settings.num_iterations = 2
     settings.interpolation_order = 3
-    settings.show_all_plots = True
+    # ettings.show_all_plots = True
 
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
