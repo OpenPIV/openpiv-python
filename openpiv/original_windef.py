@@ -246,7 +246,7 @@ def correlation_func(cor_win_1, cor_win_2, window_size,correlation_method='circu
                                   rfft2(cor_win_2)).real, axes=(1, 2))
     return corr
 
-def frame_interpolation(frame, x, y, u, v, interpolation_order=1, debugging=True):
+def frame_interpolation(frame, x, y, u, v, interpolation_order=1, debugging=False):
     '''This one is doing the image deformation also known as window deformation
     Therefore, the pixel values of the old image are interpolated on a new grid that is defined
     by the grid of the previous pass and the displacment evaluated by the previous pass
@@ -472,7 +472,7 @@ def multipass_img_deform(frame_a, frame_b, window_size, overlap,iterations,curre
         the vector was filtered
 
     """
-    debugging = True
+    debugging = False
 
     x, y = get_coordinates(np.shape(frame_a), window_size, overlap)
     'calculate the y and y coordinates of the interrogation window centres'
