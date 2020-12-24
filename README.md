@@ -15,7 +15,7 @@
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
-a set of PIV image pairs. In addition, a Qt graphical user interface is in 
+a set of PIV image pairs. In addition, a Qt and Tk graphical user interfaces are in 
 development, to ease the use for those users who don't have python skills.
 
 ## Warning
