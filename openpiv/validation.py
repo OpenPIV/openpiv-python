@@ -78,7 +78,7 @@ def global_val(u, v, u_thresholds, v_thresholds):
     return u, v, mask
 
 
-def global_std(u, v, std_threshold=3):
+def global_std(u, v, std_threshold=5):
     """Eliminate spurious vectors with a global threshold defined by the
     standard deviation
 
@@ -122,6 +122,10 @@ def global_std(u, v, std_threshold=3):
         vel_magnitude = u ** 2 + v ** 2
 
     ind = vel_magnitude > std_threshold * np.nanstd(vel_magnitude)
+
+    if np.all(ind): # if all is True, something is really wrong
+        print('Warning! everything cannot be wrong in global_std')
+        ind = ~ind  
 
     u[ind] = np.nan
     v[ind] = np.nan
@@ -266,7 +270,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     return u, v, mask
 
 
-def typical_validation(u, v, s2n, settings, no_std=False):
+def typical_validation(u, v, s2n, settings):
 
     """
     validation using gloabl limits and std and local median, 
@@ -304,15 +308,12 @@ def typical_validation(u, v, s2n, settings, no_std=False):
     if settings.show_all_plots:
         plt.quiver(u,v,color='m')
 
-    if no_std is False:
-        u, v, mask_s = global_std(
-            u, v, std_threshold=settings.std_threshold
-        )
-        print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
-        if settings.show_all_plots:
-            plt.quiver(u,v,color='k')
-    else:
-        mask_s = np.zeros(u.shape, dtype=bool)
+    u, v, mask_s = global_std(
+        u, v, std_threshold=settings.std_threshold
+    )
+    print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
+    if settings.show_all_plots:
+        plt.quiver(u,v,color='k')
     
 
     u, v, mask_m = local_median_val(

@@ -750,7 +750,7 @@ def multipass_img_deform(
 
 
     # validate in the multi-pass by default
-    u, v, mask = validation.typical_validation(u, v, s2n, settings, no_std=False)
+    u, v, mask = validation.typical_validation(u, v, s2n, settings)
 
     if np.all(mask == True):
         raise ValueError("Something happened in the validation")
