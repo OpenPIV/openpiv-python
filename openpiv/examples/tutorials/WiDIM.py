@@ -30,7 +30,7 @@ with warnings.catch_warnings():
 #display results
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = scaling_factor )
 
-tools.save(x, y, u, v, 0*v, mask, '2image_00.txt' )
+tools.save(x, y, u, v, mask, '2image_00.txt' )
 
 tools.display_vector_field('2image_00.txt',on_img=True, image_name=os.path.join(path,'../test2/2image_00.tif'), window_size=16, scaling_factor=scaling_factor, scale=200, width=0.001)
 

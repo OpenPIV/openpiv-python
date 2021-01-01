@@ -1,7 +1,7 @@
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
 from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
 from skimage.filters import sobel, rank, threshold_otsu
-from skimage.measure import find_contours, approximate_polygon
+from skimage.measure import find_contours, approximate_polygon, points_in_poly
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -122,5 +122,18 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
             mask_coords = coords.copy()
             
     return mask_coords
+
+def prepare_mask_on_grid(x,y,mask_coords):
+    """ Converts mask coordinates of the image mask 
+    to the grid of 1/0 on the x,y grid
+    Inputs:
+        x,y : grid of x,y points
+        mask_coords : array of coordinates in pixels of the image_mask
+
+    Outputs:
+        grid of points of the mask, of the shape of x  
+    """
+    xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+    return xymask.reshape(x.shape).astype(np.int)
 
 
