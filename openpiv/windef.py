@@ -276,7 +276,9 @@ def piv(settings):
             if settings.show_plot is True:
                 plt.show()
 
-        print("Image Pair " + str(counter + 1))
+        print(f"Image Pair {counter + 1}")
+        print(file_a.rsplit('/')[-1],file_b.rsplit('/')[-1])
+
 
     # "Below is code to read files and create a folder to store the results"
     save_path = os.path.join(

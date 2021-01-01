@@ -304,14 +304,14 @@ def typical_validation(u, v, s2n, settings):
     u, v, mask_g = global_val(
         u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
     )
-    print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
+    # print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
     if settings.show_all_plots:
         plt.quiver(u,v,color='m')
 
     u, v, mask_s = global_std(
         u, v, std_threshold=settings.std_threshold
     )
-    print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
+    # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
     if settings.show_all_plots:
         plt.quiver(u,v,color='k')
     
@@ -326,7 +326,7 @@ def typical_validation(u, v, s2n, settings):
     if settings.show_all_plots:
         plt.quiver(u,v,color='r')
 
-    print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
+    # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
     mask = mask + mask_g + mask_m + mask_s
 
 
@@ -335,7 +335,7 @@ def typical_validation(u, v, s2n, settings):
             u, v, s2n,
             threshold=settings.sig2noise_threshold
         )
-        print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
+        # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
         if settings.show_all_plots:
             plt.quiver(u,v,color='g')
             plt.show()
