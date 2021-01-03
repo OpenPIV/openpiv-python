@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from scipy.ndimage import generic_filter
+import matplotlib.pyplot as plt
 
 
 def global_val(u, v, u_thresholds, v_thresholds):
@@ -71,13 +72,13 @@ def global_val(u, v, u_thresholds, v_thresholds):
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.zeros(u.shape, dtype=bool)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     return u, v, mask
 
 
-def global_std(u, v, std_threshold=3):
+def global_std(u, v, std_threshold=5):
     """Eliminate spurious vectors with a global threshold defined by the
     standard deviation
 
@@ -122,10 +123,14 @@ def global_std(u, v, std_threshold=3):
 
     ind = vel_magnitude > std_threshold * np.nanstd(vel_magnitude)
 
+    if np.all(ind): # if all is True, something is really wrong
+        print('Warning! everything cannot be wrong in global_std')
+        ind = ~ind  
+
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.zeros(u.shape, dtype=bool)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     return u, v, mask
@@ -179,13 +184,12 @@ def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
         1, 1202-1215.
 
     """
-
     ind = s2n < threshold
 
     u[ind] = np.nan
     v[ind] = np.nan
 
-    mask = np.zeros(u.shape, dtype=bool)
+    mask = np.zeros_like(u, dtype=bool)
     mask[ind] = True
 
     if isinstance(w, np.ndarray):
@@ -262,5 +266,85 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     mask = np.zeros(u.shape, dtype=bool)
     mask[ind] = True
+
+    return u, v, mask
+
+
+def typical_validation(u, v, s2n, settings):
+
+    """
+    validation using gloabl limits and std and local median, 
+
+    with a special option of 'no_std' for the case of completely
+    uniform shift, e.g. in tests. 
+
+    see Settings() for the parameters:
+
+    MinMaxU : two elements tuple
+        sets the limits of the u displacment component
+        Used for validation.
+
+    MinMaxV : two elements tuple
+        sets the limits of the v displacment component
+        Used for validation.
+
+    std_threshold : float
+        sets the  threshold for the std validation
+
+    median_threshold : float
+        sets the threshold for the median validation
+    """
+
+    if settings.show_all_plots:
+        plt.figure()
+        plt.quiver(u,v,color='b')
+
+    mask = np.zeros(u.shape, dtype=bool)
+
+    u, v, mask_g = global_val(
+        u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
+    )
+    # print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
+    if settings.show_all_plots:
+        plt.quiver(u,v,color='m')
+
+    u, v, mask_s = global_std(
+        u, v, std_threshold=settings.std_threshold
+    )
+    # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
+    if settings.show_all_plots:
+        plt.quiver(u,v,color='k')
+    
+
+    u, v, mask_m = local_median_val(
+        u,
+        v,
+        u_threshold=settings.median_threshold,
+        v_threshold=settings.median_threshold,
+        size=settings.median_size,
+    )
+    if settings.show_all_plots:
+        plt.quiver(u,v,color='r')
+
+    # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
+    mask = mask + mask_g + mask_m + mask_s
+
+
+    if settings.sig2noise_validate:
+        u, v, mask_s2n = sig2noise_val(
+            u, v, s2n,
+            threshold=settings.sig2noise_threshold
+        )
+        # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
+        if settings.show_all_plots:
+            plt.quiver(u,v,color='g')
+            plt.show()
+
+        if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
+            plt.figure()
+            plt.hist(s2n[s2n>0].flatten(),31)
+            plt.show()
+
+        mask += mask_s2n
 
     return u, v, mask

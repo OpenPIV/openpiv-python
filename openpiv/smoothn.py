@@ -441,6 +441,10 @@ def smoothn(
         # warning('MATLAB:smoothn:MaxIter',\
         #    ['Maximum number of iterations (%d'%(MaxIter) + ') has '\
         #    + 'been exceeded. Increase MaxIter option or decrease TolZ value.'])
+
+    if is_masked:
+        z = np.ma.array(z, mask=mask)
+
     return z, s, exitflag, Wtot
 
 
@@ -791,3 +795,28 @@ def sparseTest(n=1000):
     # Ut.T * Ut = I
     # ((Vt.T * (np.diag(np.array(eigenvalues).flatten())**2)) * Vt)
     # we see you get the same as m.T * m by squaring the eigenvalues
+
+
+# from StackOverflow
+# https://stackoverflow.com/questions/17115030/want-to-smooth-a-contour-from-a-masked-array
+
+def smooth(u, mask):
+    r = u.filled(0.)  # set all 'masked' points to 0. so they aren't used in the smoothing
+    a = 4*r[1:-1,1:-1] + r[2:,1:-1] + r[:-2,1:-1] + r[1:-1,2:] + r[1:-1,:-2]
+    b = 4*m[1:-1,1:-1] + m[2:,1:-1] + m[:-2,1:-1] + m[1:-1,2:] + m[1:-1,:-2]  # a divisor that accounts for masked points
+    b[b==0] = 1.  # for avoiding divide by 0 error (region is masked so value doesn't matter)
+    u[1:-1,1:-1] = a/b
+
+def smooth_masked_array(u):
+    """ Use smooth() on the masked array """
+    
+    if not isinstance(u, np.ma.MaskedArray):
+        raise ValueError("Expected masked array")
+
+    m = u.mask
+
+    # run the data through the smoothing filter a few times
+    for i in range(10):   
+        smooth(u, m)
+
+    return np.ma.array(u, mask=m)  # put together the mask and the data
