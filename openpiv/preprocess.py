@@ -137,3 +137,9 @@ def prepare_mask_on_grid(x,y,mask_coords):
     return xymask.reshape(x.shape).astype(np.int)
 
 
+def preprocess_image(image, settings):
+    """ Preprocess image according to the function in settings """
+    func = settings.image_preprocess_function
+    parameters = settings.image_preprocess_parameters
+    return func(image, parameters)
+

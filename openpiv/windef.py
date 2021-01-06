@@ -18,6 +18,7 @@ from openpiv.tools import imread, Multiprocesser, display_vector_field, \
 from openpiv import validation, filters, tools, preprocess, scaling, tools
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
+from openpiv.preprocess import preprocess_image
 from openpiv import smoothn
 from skimage.measure import points_in_poly
 from skimage.util import invert
@@ -66,6 +67,10 @@ def piv(settings):
         if settings.invert is True:
             frame_a = invert(frame_a)
             frame_b = invert(frame_b)
+
+        if settings.preprocess_images:
+            frame_a = preprocess_image(frame_a, settings)
+            frame_b = preprocess_image(frame_b, settings)
 
         if settings.show_all_plots:
             fig, ax = plt.subplots(1,1)
@@ -940,6 +945,8 @@ class Settings(FrozenClass):
         self.show_all_plots = False
 
         self.invert = False # for the test_invert
+        
+        self.preprocess_images = False
 
         self._freeze()
 

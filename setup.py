@@ -22,7 +22,7 @@ with open(path.join(this_directory, 'README.md')) as f:
 
 setup(
     name="OpenPIV",
-    version='0.23.4',
+    version='0.23.4a',
     cmdclass={'build_ext': build_ext},
     ext_modules=extensions,
     packages=find_packages(),
