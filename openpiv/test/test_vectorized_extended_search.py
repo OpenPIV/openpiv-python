@@ -15,7 +15,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from numpy.fft import rfft2, irfft2
+from scipy.fft import rfft2, irfft2
 
 
 # In[3]:
