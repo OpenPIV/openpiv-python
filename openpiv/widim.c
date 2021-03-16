@@ -22632,7 +22632,7 @@ if (!__Pyx_RefNanny) {
  * from __future__ import division
  * import numpy as np             # <<<<<<<<<<<<<<
  * import numpy.ma as ma
- * from numpy.fft import rfft2,irfft2,fftshift
+ * from scipy.fft import rfft2,irfft2,fftshift
  */
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -22643,7 +22643,7 @@ if (!__Pyx_RefNanny) {
  * from __future__ import division
  * import numpy as np
  * import numpy.ma as ma             # <<<<<<<<<<<<<<
- * from numpy.fft import rfft2,irfft2,fftshift
+ * from scipy.fft import rfft2,irfft2,fftshift
  * from math import log
  */
   __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
@@ -22660,7 +22660,7 @@ if (!__Pyx_RefNanny) {
   /* "openpiv/widim.pyx":5
  * import numpy as np
  * import numpy.ma as ma
- * from numpy.fft import rfft2,irfft2,fftshift             # <<<<<<<<<<<<<<
+ * from scipy.fft import rfft2,irfft2,fftshift             # <<<<<<<<<<<<<<
  * from math import log
  * from scipy.signal import convolve
  */
@@ -22694,7 +22694,7 @@ if (!__Pyx_RefNanny) {
 
   /* "openpiv/widim.pyx":6
  * import numpy.ma as ma
- * from numpy.fft import rfft2,irfft2,fftshift
+ * from scipy.fft import rfft2,irfft2,fftshift
  * from math import log             # <<<<<<<<<<<<<<
  * from scipy.signal import convolve
  * import time
@@ -22714,7 +22714,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "openpiv/widim.pyx":7
- * from numpy.fft import rfft2,irfft2,fftshift
+ * from scipy.fft import rfft2,irfft2,fftshift
  * from math import log
  * from scipy.signal import convolve             # <<<<<<<<<<<<<<
  * import time

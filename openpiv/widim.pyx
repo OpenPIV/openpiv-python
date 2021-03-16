@@ -2,7 +2,7 @@
 from __future__ import division
 import numpy as np
 import numpy.ma as ma
-from numpy.fft import rfft2,irfft2,fftshift
+from scipy.fft import rfft2,irfft2,fftshift
 from math import log
 from scipy.signal import convolve
 import time

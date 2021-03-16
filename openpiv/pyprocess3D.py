@@ -1,6 +1,6 @@
 import numpy.lib.stride_tricks
 import numpy as np
-from numpy.fft import rfftn, irfftn
+from scipy.fft import rfftn, irfftn
 from numpy import ma
 from tqdm import tqdm
 from openpiv.pyprocess import get_field_shape, find_first_peak
