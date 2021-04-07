@@ -1,7 +1,8 @@
 # OpenPIV
 [![Build Status](https://travis-ci.org/OpenPIV/openpiv-python.svg?branch=master)](https://travis-ci.org/OpenPIV/openpiv-python)
 ![Build and upload to PyPI](https://github.com/OpenPIV/openpiv-python/workflows/Build%20and%20upload%20to%20PyPI/badge.svg)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4320056.svg)](https://doi.org/10.5281/zenodo.4320056)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
+
 
 
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
@@ -15,7 +16,7 @@
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
-a set of PIV image pairs. In addition, a Qt graphical user interface is in 
+a set of PIV image pairs. In addition, a Qt and Tk graphical user interfaces are in 
 development, to ease the use for those users who don't have python skills.
 
 ## Warning
@@ -95,7 +96,8 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
 
 ## How to cite this work
-OpenPIV/openpiv-python:  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4320056.svg)](https://doi.org/10.5281/zenodo.4320056)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
+
 
 
 
