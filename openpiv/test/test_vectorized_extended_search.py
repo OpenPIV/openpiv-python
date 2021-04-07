@@ -124,14 +124,12 @@ mask = np.broadcast_to(mask, aa.shape)
 
 
 # make it use only a small window inside a larger window
-plt.figure()
-plt.imshow(aa[-1, :, :], cmap=plt.cm.gray)
-
+fig,ax = plt.subplots(1,2)
+ax[0].imshow(aa[-1, :, :], cmap=plt.cm.gray)
 aa = aa * mask
-
-plt.figure()
-plt.imshow(aa[-1, :, :], cmap=plt.cm.gray)
-
+ax[1].imshow(aa[-1, :, :], cmap=plt.cm.gray)
+plt.show()
+plt.close()
 
 # In[15]:
 
@@ -142,13 +140,13 @@ c1 = fft_correlate_strided_images(aa, bb)
 # In[16]:
 
 
-plt.contourf(c[-1, :, :])
+# plt.contourf(c[-1, :, :])
 
 
 # In[17]:
 
 
-plt.contourf(c1[-1, :, :])
+# plt.contourf(c1[-1, :, :])
 
 
 # In[ ]:

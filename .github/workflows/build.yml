@@ -6,14 +6,11 @@ name: Build and upload to PyPI
 
 # Build on every branch push, tag push, and pull request change:
 # on: [push, pull_request]
-on: [pull_request]
+# on: [pull_request]
 # Alternatively, to publish when a (published) GitHub Release is created, use the following:
-# on:
-#   push:
-#   pull_request:
-#   release:
-#     types:
-#       - published
+on:
+  release:
+    types: [published]
 
 jobs:
   build_wheels:
@@ -81,6 +78,6 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@master
         with:
-          user: __token__
+          user: pypi-openpiv
           password: ${{ secrets.pypi_password }}
           # To test: repository_url: https://test.pypi.org/legacy/

@@ -44,16 +44,20 @@ Things OpenPIV currently needs, (in order of importance)
 * A good graphical user interface (in progress)
 
 
-How to test all the notebooks
+How to test all the notebooks::
 -----------------------------
 
-    conda install ipykernel
-    python -m ipykernel install --user --name openpiv --display-name="openpiv"
-    jupyter nbconvert --to html --ExecutePreprocessor.kernel_name=openpiv --execute *.ipynb
+    conda create -n openpiv
+    conda activate openpiv
+    conda install -c conda-forge openpiv
+    conda install ipykernel  
+    python -m ipykernel install --user --name openpiv --display-name="openpiv"  
+    jupyter nbconvert --to html --ExecutePreprocessor.kernel_name=openpiv --execute *.ipynb  
+    
 
 Then open the `openpiv/examples/notebooks` and check the HTML files. If one of those will fail, the error message will be in the command shell
 
-If you need to install cv2
+If you need to install cv2::
 --------------------------
 
     conda install -c conda-forge opencv

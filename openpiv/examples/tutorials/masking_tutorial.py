@@ -42,7 +42,7 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, sig2noise, mask, 'test.txt', fmt='%9.6f', delimiter='\t')
+tools.save(x, y, u, v, mask, 'test.txt', fmt='%9.6f', delimiter='\t')
 tools.display_vector_field('test.txt', scale=50, width=0.002)
 
 
@@ -77,6 +77,6 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1)
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, sig2noise, mask, 'test_masked.txt', fmt='%9.6f', delimiter='\t')
+tools.save(x, y, u, v, mask, 'test_masked.txt', fmt='%9.6f', delimiter='\t')
 tools.display_vector_field('test_masked.txt', scale=50, width=0.002)
 
