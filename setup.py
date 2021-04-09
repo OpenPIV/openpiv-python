@@ -1,9 +1,6 @@
 from os import path
 
 from setuptools import setup, find_packages
-from setuptools.extension import Extension
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
 import numpy
 
 
@@ -23,8 +20,6 @@ with open(path.join(this_directory, 'README.md')) as f:
 setup(
     name="OpenPIV",
     version='0.23.5',
-    cmdclass={'build_ext': build_ext},
-    ext_modules=extensions,
     packages=find_packages(),
     include_package_data=True,
     setup_requires=[
