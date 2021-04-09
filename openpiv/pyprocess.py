@@ -776,7 +776,7 @@ def extended_search_area_piv(
         bb = normalize_intensity(bb)
 
         mask = np.zeros((search_area_size, search_area_size)).astype(aa.dtype)
-        pad = np.int((search_area_size - window_size) / 2)
+        pad = int((search_area_size - window_size) / 2)
         mask[slice(pad, search_area_size - pad),
              slice(pad, search_area_size - pad)] = 1
         mask = np.broadcast_to(mask, aa.shape)
