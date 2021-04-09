@@ -7,11 +7,11 @@ from Cython.Distutils import build_ext
 import numpy
 
 
-extensions = [
-    Extension("openpiv.widim", ["./openpiv/widim.pyx"],
-              include_dirs=[numpy.get_include()])]
+#extensions = [
+#    Extension("openpiv.widim", ["./openpiv/widim.pyx"],
+#              include_dirs=[numpy.get_include()])]
 
-extensions = cythonize(extensions, include_path=[numpy.get_include()])
+#extensions = cythonize(extensions, include_path=[numpy.get_include()])
 
 
 # read the contents of your README file
@@ -22,18 +22,16 @@ with open(path.join(this_directory, 'README.md')) as f:
 
 setup(
     name="OpenPIV",
-    version='0.23.4',
+    version='0.23.5',
     cmdclass={'build_ext': build_ext},
     ext_modules=extensions,
     packages=find_packages(),
     include_package_data=True,
     setup_requires=[
         'setuptools',
-        'cython>=0.29.14',
         'numpy'
     ],
     install_requires=[
-        'cython>=0.29.14',
         'numpy',
         'imageio',
         'matplotlib>=3',
