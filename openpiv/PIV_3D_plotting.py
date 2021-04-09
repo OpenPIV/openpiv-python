@@ -59,7 +59,7 @@ def scatter_3D(a, cmap="jet", sca_args=None, control="color", size=60):
     z = z.flatten()
 
     fig = plt.figure()
-    ax = fig.gca(projection="3d", rasterized=True)
+    ax = fig.add_subplot(projection='3d', rasterized=True)
 
     if control == "color":
         # make cmap
