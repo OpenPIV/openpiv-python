@@ -105,7 +105,7 @@ bb = moving_window_array(b, search_size, overlap)
 
 
 mask = np.zeros((search_size, search_size))
-pad = np.int((search_size - window_size) / 2)
+pad = int((search_size - window_size) / 2)
 
 
 # In[12]:
