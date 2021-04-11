@@ -14,3 +14,6 @@ v0.23.2 - added mask_coordinats to preprocess, allows to use dynamic_masking to 
     created new Jupyter notebook to test von Karman vortex street case and compare with PIVLab
     breakes backward compatibility of windef with removing validation and filtering steps, to be compatible
     with the first_pass. Both first_pass and multi_pass now apply filtering externally
+    
+v0.23.6 - removed widim.pyx, no Cython modules anymore
+
