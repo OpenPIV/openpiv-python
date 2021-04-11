@@ -1,7 +1,3 @@
-env:
-  CIBW_BEFORE_ALL: "python -m pip install cython"
-  CIBW_BUILD: "cp37-* cp38-*"
-
 name: Build and upload to PyPI
 
 # Build on every branch push, tag push, and pull request change:
@@ -13,52 +9,32 @@ on: [push, pull_request]
 #     types: [published]
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, windows-latest, macOS-latest]
-
+  build-n-publish:
+    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+    runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
-
-      # Used to host cibuildwheel
-      - uses: actions/setup-python@v2
-
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==1.10.0
-
-      - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
-        # to supply options, put them in 'env', like:
-        # env:
-        #   CIBW_SOME_OPTION: value
-
-      - uses: actions/upload-artifact@v2
+      - uses: actions/checkout@master
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
         with:
-          path: ./wheelhouse/*.whl
-
-  build_sdist:
-    name: Build source distribution
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-python@v2
-        name: Install Python
-        with:
-          python-version: '3.7'
-
-      - name: Build sdist
-        run: "python -m pip install cython numpy; python setup.py sdist"
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: dist/*.tar.gz
+          python-version: 3.7
+      - name: Install pypa/build
+        run: >-
+          python -m
+          pip install
+          build
+          --user
+      - name: Build a binary wheel and a source tarball
+        run: >-
+          python -m
+          build
+          --sdist
+          --wheel
+          --outdir dist/
+          .
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build-n-publish]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
