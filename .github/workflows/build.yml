@@ -8,9 +8,9 @@ name: Build and upload to PyPI
 # on: [push, pull_request]
 # on: [pull_request]
 # Alternatively, to publish when a (published) GitHub Release is created, use the following:
-on:
-  release:
-    types: [published]
+on: [push, pull_request]
+#   release:
+#     types: [published]
 
 jobs:
   build_wheels:
@@ -67,9 +67,9 @@ jobs:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
-    # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     # alternatively, to publish when a GitHub Release is created, use the following rule:
-    if: github.event_name == 'release' && github.event.action == 'published'
+    # if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v2
         with:
