@@ -467,9 +467,9 @@ def fft_correlate_images(image_a, image_b,
     """
 
     if normalized_correlation:
-        # remove the effect of stronger laser or 
+        # remove the effect of stronger laser or
         # longer exposure for frame B
-        # image_a = match_histograms(image_a, image_b) 
+        # image_a = match_histograms(image_a, image_b)
 
         # remove mean background, normalize to 0..1 range
         image_a = normalize_intensity(image_a)
@@ -521,7 +521,8 @@ def normalize_intensity(window):
     window -= window.mean(axis=(-2, -1),
                           keepdims=True, dtype=np.float32)
     tmp = window.std(axis=(-2, -1), keepdims=True)
-    window = np.divide(window, tmp, out=np.zeros_like(window), where=(tmp != 0))
+    window = np.divide(window, tmp, out=np.zeros_like(window),
+                       where=(tmp != 0))
     return np.clip(window, 0, window.max())
 
 
@@ -699,7 +700,7 @@ def extended_search_area_piv(
        the size of the interrogation window in the second frame,
        default is the same interrogation window size and it is a
        fallback to the simplest FFT based PIV
-    
+
     normalized_correlation: bool
         if True, then the image intensity will be modified by removing
         the mean, dividing by the standard deviation and
@@ -828,10 +829,10 @@ def correlation_to_displacement(corr, n_rows, n_cols,
                             subpixel_method=subpixel_method)) -\
                             default_peak_position
 
-            # the horizontal shift from left to right is the u
-            # the vertical displacement from top to bottom (increasing row) is v
-            # x the vertical shift from top to bottom is row-wise shift is now
-            # a negative vertical
+        # the horizontal shift from left to right is the u
+        # the vertical displacement from top to bottom (increasing row) is v
+        # x the vertical shift from top to bottom is row-wise shift is now
+        # a negative vertical
             u[k, m], v[k, m] = peak[1], peak[0]
 
     return (u, v)

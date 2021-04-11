@@ -44,7 +44,7 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
       array : 2d or 3d np.ndarray
           an array containing NaN elements that have to be replaced
-          if array is a masked array (numpy.ma.MaskedArray), then 
+          if array is a masked array (numpy.ma.MaskedArray), then
           the mask is reapplied after the replacement
 
       max_iter : int
@@ -90,7 +90,9 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
     # list of kernel array indices
     # kernel_indices = np.indices(kernel.shape)
-    # kernel_indices = np.reshape(kernel_indices, (n_dim, (2 * kernel_size + 1) ** n_dim), order="C").T
+    # kernel_indices = np.reshape(kernel_indices,
+    #   (n_dim, (2 * kernel_size + 1) ** n_dim),
+    #   order="C").T
 
     # indices where array is NaN
     nan_indices = np.array(np.nonzero(np.isnan(array))).T.astype(int)
@@ -104,7 +106,7 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
 
     # make several passes
     # until we reach convergence
-    for it in range(max_iter):
+    for _ in range(max_iter):
         # note: identifying new nan indices and looping other the new indices
         # would give slightly different result
 
@@ -116,11 +118,10 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
             # init to 0.0
             replaced_new[k] = 0.0
 
-            # generating a list of indices of the convolution window in the 
+            # generating a list of indices of the convolution window in the
             # array
-            slice_indices = np.array(
-                np.meshgrid(*[range(i - kernel_size, i + kernel_size + 1) for i in ind])
-            )
+            slice_indices = np.array(np.meshgrid(*[range(i - kernel_size,
+                                     i + kernel_size + 1) for i in ind]))
 
             # identifying all indices strictly inside the image edges:
             in_mask = np.array(
