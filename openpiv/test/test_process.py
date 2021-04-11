@@ -10,7 +10,7 @@ from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift
 
-threshold = 0.23
+threshold = 0.25
 
 # define "PIV" shift, i.e. creating u,v values that we want to get
 # -5.5 pixels to the left and 3.2 pixels upwards
@@ -101,7 +101,7 @@ def test_extended_search_area_overlap():
 def test_extended_search_area_sig2noise():
     """ test of the extended area PIV with sig2peak """
     frame_a, frame_b = create_pair(image_size=64, u=-3.5, v=2.1)
-    u, v, s2n = piv(
+    u, v, _ = piv(
         frame_a,
         frame_b,
         window_size=16,

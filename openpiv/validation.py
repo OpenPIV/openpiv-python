@@ -116,16 +116,20 @@ def global_std(u, v, std_threshold=5):
     # both previous nans and masked regions are not 
     # participating in the magnitude comparison
 
-    if isinstance(u, np.ma.MaskedArray):
-        vel_magnitude = u.filled(np.nan) ** 2 + v.filled(np.nan) ** 2
-    else:
-        vel_magnitude = u ** 2 + v ** 2
+    # def reject_outliers(data, m=2):
+    #     return data[abs(data - np.mean(data)) < m * np.std(data)]    
 
-    ind = vel_magnitude > std_threshold * np.nanstd(vel_magnitude)
+    # create nan filled arrays where masks
+    # if u,v, are non-masked, ma.copy() adds false masks
+    tmpu = np.ma.copy(u).filled(np.nan)
+    tmpv = np.ma.copy(v).filled(np.nan)
+
+    ind = np.logical_or(np.abs(tmpu - np.nanmean(tmpu)) > std_threshold * np.nanstd(tmpu), 
+                        np.abs(tmpv - np.nanmean(tmpv)) > std_threshold * np.nanstd(tmpv))
 
     if np.all(ind): # if all is True, something is really wrong
-        print('Warning! everything cannot be wrong in global_std')
-        ind = ~ind  
+        print('Warning! probably a uniform shift data, do not use this filter')
+        ind = ~ind
 
     u[ind] = np.nan
     v[ind] = np.nan
@@ -244,8 +248,8 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     # NaN and then use generic filter with nanmean
     # 
 
-    u = np.ma.MaskedArray(u)
-    v = np.ma.MaskedArray(v)
+    u = np.ma.copy(u)
+    v = np.ma.copy(v)
     
     # kernel footprint
     f = np.ones((2*size+1, 2*size+1))
