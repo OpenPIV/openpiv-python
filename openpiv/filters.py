@@ -67,7 +67,7 @@ def gaussian_kernel(sigma, truncate=4.0):
 
 def gaussian(u, v, half_width=1):
     """Smooths the velocity field with a Gaussian kernel.
-    
+
     Parameters
     ----------
     u : 2d np.ndarray
@@ -86,7 +86,7 @@ def gaussian(u, v, half_width=1):
         the smoothed u velocity component field
 
     vf : 2d np.ndarray
-        the smoothed v velocity component field    
+        the smoothed v velocity component field
 
     """
     g = _gaussian_kernel(half_width=half_width)
@@ -150,17 +150,17 @@ def replace_outliers(u, v, w=None, method="localmean",
 
     """
     uf = replace_nans(
-        u, method=method, max_iter=max_iter, tol=tol, 
+        u, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
     )
     vf = replace_nans(
-        v, method=method, max_iter=max_iter, tol=tol, 
+        v, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
     )
 
     if isinstance(w, np.ndarray):
         wf = replace_nans(
-            w, method=method, max_iter=max_iter, tol=tol, 
+            w, method=method, max_iter=max_iter, tol=tol,
             kernel_size=kernel_size
         )
         return uf, vf, wf
