@@ -1,15 +1,5 @@
 from os import path
-
 from setuptools import setup, find_packages
-import numpy
-
-
-#extensions = [
-#    Extension("openpiv.widim", ["./openpiv/widim.pyx"],
-#              include_dirs=[numpy.get_include()])]
-
-#extensions = cythonize(extensions, include_path=[numpy.get_include()])
-
 
 # read the contents of your README file
 this_directory = path.abspath(path.dirname(__file__))
@@ -24,7 +14,6 @@ setup(
     include_package_data=True,
     setup_requires=[
         'setuptools',
-        'numpy'
     ],
     install_requires=[
         'numpy',

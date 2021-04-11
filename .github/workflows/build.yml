@@ -78,6 +78,6 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@master
         with:
-          user: pypi-openpiv
-          password: ${{ secrets.pypi_password }}
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
           # To test: repository_url: https://test.pypi.org/legacy/
