@@ -32,22 +32,9 @@ jobs:
           --wheel
           --outdir dist/
           .
-
-  upload_pypi:
-    needs: [build-n-publish]
-    runs-on: ubuntu-latest
-    # upload to PyPI on every tag starting with 'v'
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    # if: github.event_name == 'release' && github.event.action == 'published'
-    steps:
-      - uses: actions/download-artifact@v2
+      - name: Publish distribution 📦 to PyPI
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+        uses: pypa/gh-action-pypi-publish@master
         with:
-          name: artifact
-          path: dist
-
-      - uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          # To test: repository_url: https://test.pypi.org/legacy/
+          repository_url: https://pypi.org/legacy/
