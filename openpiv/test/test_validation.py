@@ -142,19 +142,21 @@ def test_local_median_validation(u_threshold=3, N=3, size=1):
 
 def test_global_val(N=2,U=(-10,10)):
     u = np.random.rand(2*N+1, 2*N+1)
-    u[N, N] = U[0]-.1
-    u[0,0] = U[1]+.1
+    u[N, N] = U[0]-.2
+    u[0,0] = U[1]+.2
 
     v = np.ma.masked_array(u.copy(), np.ma.nomask)
     v[N+1,N+1] = np.ma.masked
     
     
-    print('\n\n\n')
-    print(u)    
-    print(v.data)
-    print(v.mask)
+    # print('\n\n\n')
+    # print(u)    
+    # print(v.data)
+    # print(v.mask)
 
     u1, _, mask = validation.global_val(u,u,U,U)
+    # print(f'u1 {u1}')
+    # print(u1[N,N])
     assert np.isnan(u1[N,N])
     assert np.isnan(u1[0,0])
     assert mask[N,N]
@@ -168,7 +170,7 @@ def test_global_val(N=2,U=(-10,10)):
     assert isinstance(v1,np.ma.MaskedArray)
     assert np.isnan(v1.data[N,N])
     assert np.isnan(v1.data[0,0])
-    print(mask1)
+    # print(mask1)
     assert mask1[N,N]
     assert mask1[0,0]
 
@@ -182,24 +184,24 @@ def test_global_std(N=2,std_threshold=3):
     v[N+1,N+1] = np.ma.masked
     
     
-    print('data')
-    print(u)    
+    # print('data')
+    # print(u)    
     
     
-    print('masked')
-    print(v.data)
-    print(v.mask)
+    # print('masked')
+    # print(v.data)
+    # print(v.mask)
 
     u1, _, mask = validation.global_std(u, u, std_threshold=3)
     assert np.isnan(u1[N,N])
     assert np.isnan(u1[0,0])
     assert mask[N,N]
-    assert mask[0,0]
+    assert mask[0,0] 
 
     v1, _, mask1 = validation.global_std(v, v, std_threshold=3)
     assert isinstance(v1,np.ma.MaskedArray)
     assert np.isnan(v1.data[N,N])
     assert np.isnan(v1.data[0,0])
-    print(mask1)
+    # print(mask1)
     assert mask1[N,N]
     assert mask1[0,0]
