@@ -1,12 +1,6 @@
 from os import path
 from setuptools import setup, find_packages
 
-setup(
-    name='an_example_package',
-    # other arguments omitted
-    long_description=long_description,
-    long_description_content_type='text/markdown'
-)
 
 # read the contents of your README file
 this_directory = path.abspath(path.dirname(__file__))
