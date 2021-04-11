@@ -1,6 +1,6 @@
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
-from skimage import io, img_as_float, exposure, data, img_as_uint, img_as_ubyte
-from skimage.filters import sobel, rank, threshold_otsu
+from skimage import img_as_float, exposure, img_as_ubyte
+from skimage.filters import sobel, threshold_otsu
 from skimage.measure import find_contours, approximate_polygon, points_in_poly
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,9 +36,11 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
 
     method: string
         'edges' or 'intensity':
-        'edges' method is used for relatively dark and sharp objects, with visible edges, on
+        'edges' method is used for relatively dark and sharp objects,
+        with visible edges, on
         dark backgrounds, i.e. low contrast
-        'intensity' method is useful for smooth bright objects or dark objects or vice versa,
+        'intensity' method is useful for smooth bright objects or dark objects
+        or vice versa,
         i.e. images with high contrast between the object and the background
 
     filter_size: integer
@@ -50,8 +52,9 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
 
     Returns
     -------
-    image : array of the same datatype as the incoming image with the object masked out
-        as a completely black region(s) of zeros (integers or floats).
+    image : array of the same datatype as the incoming image with the
+    object masked out
+    as a completely black region(s) of zeros (integers or floats).
 
 
     Example
@@ -59,7 +62,8 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     frame_a  = openpiv.tools.imread( 'Camera1-001.tif' )
     imshow(frame_a) # original
 
-    frame_a = dynamic_masking(frame_a,method='edges',filter_size=7,threshold=0.005)
+    frame_a = dynamic_masking(frame_a,method='edges',filter_size=7,
+    threshold=0.005)
     imshow(frame_a) # masked
 
     """
@@ -78,7 +82,8 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
         imcopy -= blurback
         imcopy[mask] = 0
     elif method == "intensity":
-        background = gaussian_filter(median_filter(image, filter_size), filter_size)
+        background = gaussian_filter(median_filter(image, filter_size),
+                                     filter_size)
         mask = background > threshold_otsu(background)
         imcopy[mask] = 0
     else:
@@ -87,29 +92,25 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     return imcopy, mask
 
 
-
-
 def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
     """ Creates set of coordinates of polygons from the image mask
-    
-    Inputs:
+        Inputs:
         mask : binary image of a mask.
 
         [tolerance] : float - tolerance for approximate_polygons, default = 1.5
 
-        [min_length] : int - minimum length of the polygon, filters out 
+        [min_length] : int - minimum length of the polygon, filters out
         the small polygons like noisy regions, default = 10
-    
+
     Outputs:
         mask_coord : list of mask coordinates in pixels
-    
+
     Example:
         # if masks of image A and B are slightly different:
         image_mask = np.logical_and(image_mask_a, image_mask_b)
         mask_coords = mask_coordinates(image_mask)
-        
     """
-    
+
     mask_coords = []
     if plot:
         plt.figure()
@@ -120,20 +121,19 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
             if plot:
                 plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
             mask_coords = coords.copy()
-            
+
     return mask_coords
 
-def prepare_mask_on_grid(x,y,mask_coords):
-    """ Converts mask coordinates of the image mask 
+
+def prepare_mask_on_grid(x, y, mask_coords):
+    """ Converts mask coordinates of the image mask
     to the grid of 1/0 on the x,y grid
     Inputs:
         x,y : grid of x,y points
         mask_coords : array of coordinates in pixels of the image_mask
 
     Outputs:
-        grid of points of the mask, of the shape of x  
+        grid of points of the mask, of the shape of x
     """
     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
     return xymask.reshape(x.shape).astype(np.int)
-
-
