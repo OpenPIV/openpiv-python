@@ -4,9 +4,9 @@ name: Build and upload to PyPI
 # on: [push, pull_request]
 # on: [pull_request]
 # Alternatively, to publish when a (published) GitHub Release is created, use the following:
-on: [push, pull_request]
-#   release:
-#     types: [published]
+on:
+   release:
+     types: [published]
 
 jobs:
   build-n-publish:
@@ -33,8 +33,8 @@ jobs:
           --outdir dist/
           .
       - name: Publish distribution 📦 to PyPI
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+        # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-          repository_url: https://pypi.org/legacy/
+          # repository_url: https://pypi.org/legacy/
