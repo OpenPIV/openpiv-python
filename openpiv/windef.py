@@ -15,11 +15,10 @@ import matplotlib.pyplot as plt
 
 from openpiv.tools import imread, Multiprocesser, display_vector_field, \
     transform_coordinates
-from openpiv import validation, filters, tools, preprocess, scaling, tools
+from openpiv import validation, filters, tools, preprocess, scaling
 from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
     get_field_shape
 from openpiv import smoothn
-from skimage.measure import points_in_poly
 from skimage.util import invert
 
 
@@ -68,9 +67,9 @@ def piv(settings):
             frame_b = invert(frame_b)
 
         if settings.show_all_plots:
-            fig, ax = plt.subplots(1,1)
+            fig, ax = plt.subplots(1, 1)
             ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
-            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'),alpha=.5)
+            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
             plt.show()
 
         if settings.dynamic_masking_method in ("edge", "intensity"):
@@ -96,7 +95,7 @@ def piv(settings):
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x,y,u,-v,color='b')
+            plt.quiver(x, y, u, -v, color='b')
             # plt.gca().invert_yaxis()
             # plt.gca().set_aspect(1.)
             # plt.title('after first pass, invert')
@@ -107,7 +106,7 @@ def piv(settings):
             image_mask = np.logical_and(mask_a, mask_b)
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
-            grid_mask = preprocess.prepare_mask_on_grid(x,y,mask_coords)
+            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
 
             # mask the velocity
             u = np.ma.masked_array(u, mask=grid_mask)
@@ -122,12 +121,11 @@ def piv(settings):
 
         if settings.show_all_plots:
             # plt.figure()
-            plt.quiver(x,y,u,-v,color='r')
+            plt.quiver(x, y,  u, -v, color='r')
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after first pass validation new, inverted')
             plt.show()
-
 
         # "filter to replace the values that where marked by the validation"
         if settings.num_iterations == 1 and settings.replace_vectors:
@@ -140,7 +138,8 @@ def piv(settings):
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
             )
-        elif settings.num_iterations > 1: # don't even check if it's true or false
+        # don't even check if it's true or false
+        elif settings.num_iterations > 1:
             u, v = filters.replace_outliers(
                 u,
                 v,
@@ -166,10 +165,9 @@ def piv(settings):
             u = np.ma.masked_array(u, np.ma.nomask)
             v = np.ma.masked_array(v, np.ma.nomask)
 
-
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x,y,u,-v)
+            plt.quiver(x, y, u, -v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('before multi pass, inverted')
@@ -177,9 +175,9 @@ def piv(settings):
 
         if not isinstance(u, np.ma.MaskedArray):
             raise ValueError("Expected masked array")
-    
+
         """ Multi pass """
-        
+
         for i in range(1, settings.num_iterations):
 
             if not isinstance(u, np.ma.MaskedArray):
@@ -195,11 +193,11 @@ def piv(settings):
                 v,
                 settings,
                 mask_coords=mask_coords
-            )        
+            )
 
             # If the smoothing is active, we do it at each pass
             # but not the last one
-            if settings.smoothn is True and i < settings.num_iterations-1: 
+            if settings.smoothn is True and i < settings.num_iterations-1:
                 u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
                     u, s=settings.smoothn_p
                 )
@@ -207,7 +205,7 @@ def piv(settings):
                     v, s=settings.smoothn_p
                 )
             if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError ('not a masked array anymore')
+                raise ValueError('not a masked array anymore')
 
             if hasattr(settings, 'image_mask') and settings.image_mask:
                 grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
@@ -219,7 +217,7 @@ def piv(settings):
 
             if settings.show_all_plots:
                 plt.figure()
-                plt.quiver(x, y, u, -v, color='r')
+                plt.quiver(x, y, u, -1*v, color='r')
                 plt.gca().set_aspect(1.)
                 plt.gca().invert_yaxis()
                 plt.title('end of the multipass, invert')
@@ -227,22 +225,22 @@ def piv(settings):
 
         if settings.show_all_plots and settings.num_iterations > 1:
             plt.figure()
-            plt.quiver(x,y,u,-v)
+            plt.quiver(x, y, u, -v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after multi pass, before saving, inverted')
             plt.show()
 
         # we now use only 0s instead of the image
-        # masked regions. 
+        # masked regions.
         # we could do Nan, not sure what is best
         u = u.filled(0.)
         v = v.filled(0.)
-        
+
         # "scales the results pixel-> meter"
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)
-        
+
         if settings.image_mask:
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
             u = np.ma.masked_array(u, mask=grid_mask)
@@ -260,10 +258,8 @@ def piv(settings):
         # import pdb; pdb.set_trace()
         # "save to a file"
         tools.save(x, y, u, v, mask,
-            os.path.join(save_path, "field_A%03d.txt" % counter),
-            delimiter="\t",
-        )
-        
+                   os.path.join(save_path, "field_A%03d.txt" % counter),
+                   delimiter="\t")
         # "some other stuff that one might want to use"
         if settings.show_plot or settings.save_plot:
             Name = os.path.join(save_path, "Image_A%03d.png" % counter)
@@ -277,8 +273,7 @@ def piv(settings):
                 plt.show()
 
         print(f"Image Pair {counter + 1}")
-        print(file_a.rsplit('/')[-1],file_b.rsplit('/')[-1])
-
+        print(file_a.rsplit('/')[-1], file_b.rsplit('/')[-1])
 
     # "Below is code to read files and create a folder to store the results"
     save_path = os.path.join(
@@ -366,7 +361,8 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     return x, y, ut, vt
 
 
-def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3, debugging=False):
+def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
+                   debugging=False):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -411,7 +407,7 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3, debuggi
         a deformed image based on the meshgrid and displacements of the
         previous pass
     """
-    
+
     frame = frame.astype(np.float32)
     x, y, ut, vt = \
         create_deformation_field(frame,
@@ -430,7 +426,6 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3, debuggi
         plt.imshow(frame-frame_def)
         plt.title('new deformed image')
         plt.show()
-    
 
     return frame_def
 
@@ -620,7 +615,7 @@ def multipass_img_deform(
     """
 
     if not isinstance(u_old, np.ma.MaskedArray):
-        raise ValueError ('Expected masked array')
+        raise ValueError('Expected masked array')
 
     # calculate the y and y coordinates of the interrogation window centres.
     # Hence, the
@@ -635,7 +630,7 @@ def multipass_img_deform(
                            window_size,
                            overlap)
 
-    # The interpolation function dont like meshgrids as input. 
+    # The interpolation function dont like meshgrids as input.
     # plus the coordinate system for y is now from top to bottom
     # and RectBivariateSpline wants an increasing set
 
@@ -647,8 +642,6 @@ def multipass_img_deform(
     # y_int = y_int[::-1]
     x_int = x[0, :]
 
-
-
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
     ip = RectBivariateSpline(y_old, x_old, u_old.filled(0.))
@@ -656,12 +649,12 @@ def multipass_img_deform(
 
     ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
     v_pre = ip2(y_int, x_int)
-    
+
     # if settings.show_plot:
     if settings.show_all_plots:
         plt.figure()
-        plt.quiver(x_old, y_old, u_old, -v_old,color='b')
-        plt.quiver(x_int, y_int, u_pre, -v_pre,color='r',lw=2)
+        plt.quiver(x_old, y_old, u_old, -1*v_old, color='b')
+        plt.quiver(x_int, y_int, u_pre, -1*v_pre, color='r', lw=2)
         plt.gca().set_aspect(1.)
         plt.gca().invert_yaxis()
         plt.title('inside deform, invert')
@@ -673,7 +666,6 @@ def multipass_img_deform(
 
     old_frame_a = frame_a.copy()
     old_frame_b = frame_b.copy()
-
 
     # Image deformation has to occur in image coordinates
     # therefore we need to convert the results of the
@@ -708,7 +700,7 @@ def multipass_img_deform(
         plt.imshow(frame_b-old_frame_b)
         plt.show()
 
-    # if do_sig2noise is True 
+    # if do_sig2noise is True
     #     sig2noise_method = sig2noise_method
     # else:
     #     sig2noise_method = None
@@ -725,7 +717,7 @@ def multipass_img_deform(
         overlap=overlap,
         width=settings.sig2noise_mask,
         subpixel_method=settings.subpixel_method,
-        sig2noise_method=settings.sig2noise_method,  # if it's None, it's not used
+        sig2noise_method=settings.sig2noise_method,
         correlation_method=settings.correlation_method,
         normalized_correlation=settings.normalized_correlation,
     )
@@ -736,7 +728,6 @@ def multipass_img_deform(
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
-
 
     u += u_pre
     v += v_pre
@@ -750,19 +741,18 @@ def multipass_img_deform(
         u = np.ma.masked_array(u, np.ma.nomask)
         v = np.ma.masked_array(v, np.ma.nomask)
 
-
     # validate in the multi-pass by default
     u, v, mask = validation.typical_validation(u, v, s2n, settings)
 
-    if np.all(mask == True):
+    if np.all(mask):
         raise ValueError("Something happened in the validation")
 
     if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError ('not a masked array anymore')
+        raise ValueError('not a masked array anymore')
 
     if settings.show_all_plots:
         plt.figure()
-        nans = mask == True
+        nans = np.nonzero(mask)
 
         plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
         plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
@@ -770,7 +760,7 @@ def multipass_img_deform(
         plt.gca().set_aspect(1.)
         plt.title('After sig2noise, inverted')
         plt.show()
-    
+
     # we have to replace outliers
     u, v = filters.replace_outliers(
         u,
@@ -787,14 +777,12 @@ def multipass_img_deform(
         v = np.ma.masked_array(v, mask=grid_mask)
     else:
         u = np.ma.masked_array(u, np.ma.nomask)
-        v = np.ma.masked_array(v, np.ma.nomask) 
-
-
+        v = np.ma.masked_array(v, np.ma.nomask)
 
     if settings.show_all_plots:
         plt.figure()
         plt.quiver(x, y, u, -v, color='r')
-        plt.quiver(x, y, u_pre, -v_pre,color='b')
+        plt.quiver(x, y, u_pre, -1*v_pre, color='b')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
         plt.title(' after replaced outliers, red, invert')
@@ -802,15 +790,18 @@ def multipass_img_deform(
 
     return x, y, u, v, s2n, mask
 
+
 class FrozenClass(object):
     __isfrozen = False
+
     def __setattr__(self, key, value):
         if self.__isfrozen and not hasattr(self, key):
-            raise TypeError( "%r is a frozen class" % self )
+            raise TypeError("%r is a frozen class" % self)
         object.__setattr__(self, key, value)
 
     def _freeze(self):
         self.__isfrozen = True
+
 
 class Settings(FrozenClass):
     def __init__(self):
@@ -875,7 +866,7 @@ class Settings(FrozenClass):
         # self.extract_sig2noise = False
         # method used to calculate the signal to noise ratio 'peak2peak' or
         # 'peak2mean'
-        self.sig2noise_method = "peak2peak" # or "peak2mean" or "None"
+        self.sig2noise_method = "peak2peak"  # or "peak2mean" or "None"
         # select the width of the masked to masked out pixels next to the main
         # peak
         self.sig2noise_mask = 2
@@ -939,7 +930,7 @@ class Settings(FrozenClass):
 
         self.show_all_plots = False
 
-        self.invert = False # for the test_invert
+        self.invert = False  # for the test_invert
 
         self._freeze()
 

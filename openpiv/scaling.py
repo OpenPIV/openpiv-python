@@ -20,36 +20,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-import numpy as np
-
-
 def uniform(x, y, u, v, scaling_factor):
     """
     Apply an uniform scaling
-    
+
     Parameters
     ----------
     x : 2d np.ndarray
-    
     y : 2d np.ndarray
-    
     u : 2d np.ndarray
-    
     v : 2d np.ndarray
-    
     scaling_factor : float
         the image scaling factor in pixels per meter
-    
+
     Return
     ----------
     x : 2d np.ndarray
-    
     y : 2d np.ndarray
-    
     u : 2d np.ndarray
-    
     v : 2d np.ndarray
-        
     """
     return (
         x / scaling_factor,

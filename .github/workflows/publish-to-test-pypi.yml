@@ -1,12 +1,6 @@
-name: Build and upload to PyPI
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 
-# Build on every branch push, tag push, and pull request change:
-# on: [push, pull_request]
-# on: [pull_request]
-# Alternatively, to publish when a (published) GitHub Release is created, use the following:
-on:
-   release:
-     types: [published]
+on: push
 
 jobs:
   build-n-publish:
@@ -31,10 +25,16 @@ jobs:
           --sdist
           --wheel
           --outdir dist/
-          .
-      - name: Publish distribution 📦 to PyPI
-        # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+          . 
+      - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          # repository_url: https://pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+#       - name: Publish distribution 📦 to PyPI
+#         if: startsWith(github.ref, 'refs/tags')
+#         uses: pypa/gh-action-pypi-publish@master
+#         with:
+#           password: ${{ secrets.PYPI_API_TOKEN }}  
+    
+ 

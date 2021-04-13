@@ -6,7 +6,7 @@ notifications:
   email: false
 
 install:
-    - pip install -q numpy cython pytest
+    - pip install -q numpy pytest
     - pip install -e .
 
 script:

@@ -46,12 +46,13 @@ def simple_piv(im1, im2, plot=True):
     x, y = pyprocess.get_coordinates(image_size=im1.shape,
                                      search_area_size=32, overlap=16)
 
-    valid = s2n > np.percentile(s2n,5)
+    valid = s2n > np.percentile(s2n, 5)
 
     if plot:
         _, ax = plt.subplots(figsize=(6, 6))
         ax.imshow(im1, cmap=plt.get_cmap("gray"), alpha=0.5, origin="upper")
-        ax.quiver(x[valid], y[valid], u[valid], -v[valid], scale=70, color='r',width=.005)
+        ax.quiver(x[valid], y[valid], u[valid], -v[valid], scale=70,
+                  color='r', width=.005)
         plt.show()
 
     return x, y, u, v
@@ -85,7 +86,7 @@ def piv_example():
     # each frame
     ims = []
     for i in range(2):
-        im = ax.imshow(images[i % 2], animated=True, cmap=plt.cm.gray)
+        im = ax.imshow(images[i % 2], animated=True, cmap="gray")
         ims.append([im])
 
     _ = animation.ArtistAnimation(fig, ims, interval=500, blit=False,
@@ -105,7 +106,7 @@ def piv_example():
     fig, ax = plt.subplots(1, 2, figsize=(11, 8))
     ax[0].imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8)
     ax[0].quiver(x, y, vel[0], -vel[1], scale=50, color="r")
-    ax[1].quiver(x, y[::-1,:], vel[0], -vel[1], scale=50, color="b")
+    ax[1].quiver(x, y[::-1, :], vel[0], -1*vel[1], scale=50, color="b")
     ax[1].set_aspect(1)
     # ax[1].invert_yaxis()
     plt.show()

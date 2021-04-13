@@ -8,7 +8,7 @@ Created on Fri Oct  4 14:04:04 2019
 
 import os
 import numpy as np
-from numpy.fft import rfft2, irfft2, fftshift
+from scipy.fft import rfft2, irfft2, fftshift
 import scipy.ndimage as scn
 from scipy.interpolate import RectBivariateSpline
 from openpiv import pyprocess, validation, filters, tools, preprocess,scaling
