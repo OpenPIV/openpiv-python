@@ -19,7 +19,6 @@ The dependencies are:
 * `Python <http://python.org/>`_
 * `Scipy <http://numpy.scipy.org/>`_
 * `Numpy <http://www.scipy.org/>`_
-* `Cython <http://cython.org/>`_
 * `scikit-image <http://scikit-image.org/>`_
 
 On all platforms, the following Python distribution is recommended:
