@@ -621,4 +621,22 @@ def transform_coordinates(x, y, u, v):
     y = y[::-1, :]
     v *= -1
     return x, y, u, v
+
+
+def _round(number, decimals = 0):
+    """
+    Rounding with select length of decimals
+    Parameters
+    ----------
+    number: int, float, np.ndarray
+        input number or array to be rounded
+    decimals: int
+        number of decimals
+    Returns
+    -------
+    rounded input: int, float, np.ndarray
+        rounded input with specified decimals
+    """
+    multiplier = 10 **decimals
+    return(math.floor(number * multiplier + 0.5) / multiplier) 
         
