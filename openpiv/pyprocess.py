@@ -486,9 +486,9 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
             condition = (
                 corr_max1[i] < 1e-3
                 or peak1_i == 0
-                or peak1_j == corr.shape[0]
+                or peak1_i == corr.shape[0] - 1
                 or peak1_j == 0
-                or peak1_j == corr.shape[1]
+                or peak1_j == corr.shape[1] - 1
             )
 
             if condition:
@@ -504,9 +504,9 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                 condition = (
                     corr_max2 == 0
                     or peak2_i == 0
-                    or peak2_j == corr.shape[0]
+                    or peak2_i == corr.shape[0] - 1
                     or peak2_j == 0
-                    or peak2_j == corr.shape[1]
+                    or peak2_j == corr.shape[1] - 1
                 )
                 if condition:  # mark failed peak2
                     corr_max2 = np.nan
@@ -521,15 +521,15 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
             condition = (
                 corr_max1[i] < 1e-3
                 or peak1_i == 0
-                or peak1_j == corr.shape[0]
+                or peak1_i == corr.shape[0] - 1
                 or peak1_j == 0
-                or peak1_j == corr.shape[1]
+                or peak1_j == corr.shape[1] - 1
             )
 
             if condition:
                 # return zero, since we have no signal.
                 # no point to get the second peak, save time
-                sig2noise[i] = 0.0
+                corr_max1[i] = 0.0
 
         # find means of all the correlation maps
         corr_max2 = np.abs(correlation.mean(axis=(-2, -1)))
@@ -586,14 +586,14 @@ def vectorized_sig2noise_ratio(correlation,
         flag = np.zeros(peaks1.shape).astype(bool)
         flag[peaks1 < 1e-3] = True
         flag[peaks1_i == 0] = True
-        flag[peaks1_j == correlation.shape[1]] = True
+        flag[peaks1_i == correlation.shape[1]-1] = True
         flag[peaks1_j == 0] = True
-        flag[peaks1_j == correlation.shape[2]] = True
+        flag[peaks1_j == correlation.shape[2]-1] = True
         flag[peaks2 < 1e-3] = True
         flag[peaks2_i == 0] = True
-        flag[peaks2_j == correlation.shape[1]] = True
+        flag[peaks2_i == correlation.shape[1]-1] = True
         flag[peaks2_j == 0] = True
-        flag[peaks2_j == correlation.shape[2]] = True
+        flag[peaks2_j == correlation.shape[2]-1] = True
         # peak-to-peak calculation
         peak2peak = np.divide(
             peaks1, peaks2,
@@ -612,9 +612,9 @@ def vectorized_sig2noise_ratio(correlation,
         flag = np.zeros(peaks1max.shape).astype(bool)
         flag[peaks1max < 1e-3] = True
         flag[peaks1_i == 0] = True
-        flag[peaks1_j == correlation.shape[1]] = True
+        flag[peaks1_i == correlation.shape[1]-1] = True
         flag[peaks1_j == 0] = True
-        flag[peaks1_j == correlation.shape[2]] = True
+        flag[peaks1_j == correlation.shape[2]-1] = True
         # peak-to-mean calculation
         peak2mean = np.divide(
             peaks1max, peaks2mean,
@@ -625,7 +625,7 @@ def vectorized_sig2noise_ratio(correlation,
         return peak2mean
     else:
         raise ValueError(f"sig2noise_method not supported: {sig2noise_method}")
-
+        
         
 def fft_correlate_images(image_a, image_b,
                          correlation_method="circular",
