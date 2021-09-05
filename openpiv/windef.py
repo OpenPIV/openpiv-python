@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from openpiv.tools import imread, Multiprocesser, display_vector_field, \
     transform_coordinates
 from openpiv import validation, filters, tools, preprocess, scaling
-from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
+from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
     get_field_shape
 from openpiv import smoothn
 from skimage.util import invert
@@ -510,7 +510,7 @@ def first_pass(frame_a, frame_b, settings):
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
 
-    x, y = get_coordinates(frame_a.shape,
+    x, y = get_rect_coordinates(frame_a.shape,
                            settings.windowsizes[0],
                            settings.overlap[0])
 
@@ -626,7 +626,7 @@ def multipass_img_deform(
     window_size = settings.windowsizes[current_iteration]
     overlap = settings.overlap[current_iteration]
 
-    x, y = get_coordinates(frame_a.shape,
+    x, y = get_rect_coordinates(frame_a.shape,
                            window_size,
                            overlap)
 
