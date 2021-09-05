@@ -500,7 +500,8 @@ def first_pass(frame_a, frame_b, settings):
         subpixel_method=settings.subpixel_method,
         sig2noise_method=settings.sig2noise_method,
         correlation_method=settings.correlation_method,
-        normalized_correlation=settings.normalized_correlation
+        normalized_correlation=settings.normalized_correlation,
+        use_vectorized = settings.use_vectorized,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape,
@@ -720,6 +721,7 @@ def multipass_img_deform(
         sig2noise_method=settings.sig2noise_method,
         correlation_method=settings.correlation_method,
         normalized_correlation=settings.normalized_correlation,
+        use_vectorized = settings.use_vectorized,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape,
@@ -851,6 +853,8 @@ class Settings(FrozenClass):
         # methode used for subpixel interpolation:
         # 'gaussian','centroid','parabolic'
         self.subpixel_method = "gaussian"
+        # use vectorized sig2noise and subpixel approximation functions
+        self.use_vectorized = False
         # 'symmetric' or 'second image', 'symmetric' splits the deformation
         # both images, while 'second image' does only deform the second image.
         self.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
@@ -917,7 +921,7 @@ class Settings(FrozenClass):
         # maximum iterations performed to replace the outliers
         self.max_filter_iteration = 4
         self.filter_kernel_size = 2  # kernel size for the localmean method
-
+        
         # "Output options"
         # Select if you want to save the plotted vectorfield: True or False
         self.save_plot = True
