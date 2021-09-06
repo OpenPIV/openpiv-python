@@ -293,7 +293,7 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
+def create_deformation_field(frame, x, y, u, v, interpolation_order = 3):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -322,15 +322,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         in pixels/seconds.
 
     interpolation_order: scalar
-        the degree of the frame interpolation (deformation) of the mesh
-
-    kx : scalar
-         the degree of the interpolation of the B-splines over the x-axis
-         of a rectangular mesh
-
-    ky : scalar
-         the degree of the interpolation of the B-splines over the
-         y-axis of a rectangular mesh
+        the degree of the interpolation of the B-splines over the rectangular mesh
 
     Returns
     -------
@@ -343,11 +335,11 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     side_y = np.arange(frame.shape[0])
 
     # interpolating displacements onto a new meshgrid
-    ip = RectBivariateSpline(y1, x1, u, kx=kx, ky=ky)
+    ip = RectBivariateSpline(y1, x1, u, kx=interpolation_order, ky=interpolation_order)
     ut = ip(side_y, side_x)
     # the way how to use the interpolation functions differs from matlab
 
-    ip2 = RectBivariateSpline(y1, x1, v, kx=kx, ky=ky)
+    ip2 = RectBivariateSpline(y1, x1, v, kx=interpolation_order, ky=interpolation_order)
     vt = ip2(side_y, side_x)
 
     x, y = np.meshgrid(side_x, side_y)
@@ -361,7 +353,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     return x, y, ut, vt
 
 
-def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
+def deform_windows(frame, x, y, u, v, interpolation_order=1, interpolation_order2=3,
                    debugging=False):
     """
     Deform an image by window deformation where a new grid is defined based
@@ -391,15 +383,10 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
         in pixels/seconds.
 
     interpolation_order: scalar
-        the degree of the frame interpolation (deformation) of the mesh
+        the degree of the frame interpolation (deformation) of the image
 
-    kx : scalar
-         the degree of the interpolation of the B-splines over the x-axis
-         of a rectangular mesh
-
-    ky : scalar
-         the degree of the interpolation of the B-splines over the
-         y-axis of a rectangular mesh
+    interpolation_order2: scalar
+        the degree of the interpolation of the B-splines over the rectangular mesh
 
     Returns
     -------
@@ -412,7 +399,7 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
     x, y, ut, vt = \
         create_deformation_field(frame,
                                  x, y, u, v,
-                                 kx=kx, ky=ky)
+                                 interpolation_order=interpolation_order2)
     frame_def = scn.map_coordinates(
         frame, ((y - vt, x + ut,)), order=interpolation_order, mode='nearest')
 
