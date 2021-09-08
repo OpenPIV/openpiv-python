@@ -75,6 +75,9 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 6. [3D PIV](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python/blob/master/openpiv/examples/notebooks/openpiv_3D_test.ipynb)
 
 
+These and many additional examples are in another repository: [OpenPIV-Python-Examples](https://github.com/OpenPIV/openpiv-python-examples)
+
+
 ## Contributors
 
 1. [Alex Liberzon](http://github.com/alexlib)
