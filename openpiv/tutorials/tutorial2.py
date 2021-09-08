@@ -31,11 +31,11 @@ def func( args ):
     # get window centers coordinates
     x, y = pyprocess.get_coordinates( image_size=frame_a.shape, search_area_size=128, overlap=32 )
     # save to a file
-    tools.save(x, y, u, v, mask, 'test2_%03d.txt' % counter)
-    tools.display_vector_field('test2_%03d.txt' % counter)
+    tools.save(x, y, u, v, mask, '../data/test2/test2_%03d.txt' % counter)
+    tools.display_vector_field('../data/test2/test2_%03d.txt' % counter)
 
 path = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(path,'../test2/')
+path = os.path.join(path,'../data/test2/')
 task = tools.Multiprocesser( data_dir = path, pattern_a='2image_*0.tif', pattern_b='2image_*1.tif' )
 task.run( func = func, n_cpus=1 )
 

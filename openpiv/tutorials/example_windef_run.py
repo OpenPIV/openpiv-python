@@ -6,7 +6,7 @@ settings = windef.Settings()
 
 'Data related settings'
 # Folder with the images to process
-settings.filepath_images = '../test1'
+settings.filepath_images = '../data/test1'
 # Folder for the outputs
 settings.save_path = ''
 # Root name of the output Folder for Result Files
