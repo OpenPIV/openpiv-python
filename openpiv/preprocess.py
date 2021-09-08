@@ -373,9 +373,10 @@ def threshold_binarize(img, threshold, max_val = 255):
     return img
 
 
-def gen_mean_background(img_list, resize = 255):
+def gen_min_background(img_list, resize = 255):
     """
-    Generate a background by averaging all images in an image list.
+    Generate a background by averaging the minimum intensity 
+    of all images in an image list.
     Apply by subtracting generated background image.
     
     Parameters
@@ -468,7 +469,7 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         a transformed two dimensional array of the input image  
     """
     if pad not in [
-        'zero'
+        'zero', 'reflect'
     ]:
         raise ValueError(f'pad method not supported: {pad}')
     end_y, end_x = img.shape
@@ -488,12 +489,14 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         offset_y1 = 0
         offset_y2 = offset_y * -1
         start_y = offset_y2
-        end_y += offset_y2
-        
+        end_y += offset_y2   
+    if pad == 'zero':
+        pad = 'constant'
     img = np.pad(
         img,
         ((offset_y1, offset_y2),
-        (offset_x1, offset_x2))
+        (offset_x1, offset_x2)),
+        mode = pad
     )
     return img[start_y:end_y, start_x:end_x]
 
