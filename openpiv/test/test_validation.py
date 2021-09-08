@@ -3,7 +3,7 @@ from openpiv.tools import imread
 import pathlib
 
 import numpy as np
-from test_process import create_pair, shift_u, shift_v, threshold
+from .test_process import create_pair, shift_u, shift_v, threshold
 from openpiv import validation
 
 from scipy.ndimage import generic_filter, median_filter
