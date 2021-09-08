@@ -16,7 +16,6 @@ matplotlib
 natsort
 networkx
 numpy
-OpenPIV @ file:///mnt/c/Users/alex/repos/ErichZimmer/openpiv-python
 packaging
 parso
 pexpect
