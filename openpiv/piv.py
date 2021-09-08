@@ -68,13 +68,13 @@ def piv_example():
 
     """
     # if im1 is None and im2 is None:
-    im1 = pkg.resource_filename("openpiv", "examples/test5/frame_a.tif")
-    im2 = pkg.resource_filename("openpiv", "examples/test5/frame_b.tif")
+    im1 = pkg.resource_filename("openpiv", "data/test1/exp1_001_a.bmp")
+    im2 = pkg.resource_filename("openpiv", "data/test1/exp1_001_b.bmp")
 
     frame_a = tools.imread(im1)
     frame_b = tools.imread(im2)
 
-    frame_a[0:32, 512 - 32:] = 255
+    # frame_a[0:32, 512 - 32:] = 255
 
     images = []
     images.extend([frame_a, frame_b])
