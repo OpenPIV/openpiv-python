@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from openpiv.tools import imread, Multiprocesser, display_vector_field, \
     transform_coordinates
 from openpiv import validation, filters, tools, preprocess, scaling
-from openpiv.pyprocess import extended_search_area_piv, get_coordinates, \
+from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
     get_field_shape
 from openpiv import smoothn
 from skimage.util import invert
@@ -293,7 +293,7 @@ def piv(settings):
     task.run(func=func, n_cpus=1)
 
 
-def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
+def create_deformation_field(frame, x, y, u, v, interpolation_order = 3):
     """
     Deform an image by window deformation where a new grid is defined based
     on the grid and displacements of the previous pass and pixel values are
@@ -322,15 +322,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
         in pixels/seconds.
 
     interpolation_order: scalar
-        the degree of the frame interpolation (deformation) of the mesh
-
-    kx : scalar
-         the degree of the interpolation of the B-splines over the x-axis
-         of a rectangular mesh
-
-    ky : scalar
-         the degree of the interpolation of the B-splines over the
-         y-axis of a rectangular mesh
+        the degree of the interpolation of the B-splines over the rectangular mesh
 
     Returns
     -------
@@ -343,11 +335,11 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     side_y = np.arange(frame.shape[0])
 
     # interpolating displacements onto a new meshgrid
-    ip = RectBivariateSpline(y1, x1, u, kx=kx, ky=ky)
+    ip = RectBivariateSpline(y1, x1, u, kx=interpolation_order, ky=interpolation_order)
     ut = ip(side_y, side_x)
     # the way how to use the interpolation functions differs from matlab
 
-    ip2 = RectBivariateSpline(y1, x1, v, kx=kx, ky=ky)
+    ip2 = RectBivariateSpline(y1, x1, v, kx=interpolation_order, ky=interpolation_order)
     vt = ip2(side_y, side_x)
 
     x, y = np.meshgrid(side_x, side_y)
@@ -361,7 +353,7 @@ def create_deformation_field(frame, x, y, u, v, kx=3, ky=3):
     return x, y, ut, vt
 
 
-def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
+def deform_windows(frame, x, y, u, v, interpolation_order=1, interpolation_order2=3,
                    debugging=False):
     """
     Deform an image by window deformation where a new grid is defined based
@@ -391,15 +383,10 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
         in pixels/seconds.
 
     interpolation_order: scalar
-        the degree of the frame interpolation (deformation) of the mesh
+        the degree of the frame interpolation (deformation) of the image
 
-    kx : scalar
-         the degree of the interpolation of the B-splines over the x-axis
-         of a rectangular mesh
-
-    ky : scalar
-         the degree of the interpolation of the B-splines over the
-         y-axis of a rectangular mesh
+    interpolation_order2: scalar
+        the degree of the interpolation of the B-splines over the rectangular mesh
 
     Returns
     -------
@@ -412,7 +399,7 @@ def deform_windows(frame, x, y, u, v, interpolation_order=1, kx=3, ky=3,
     x, y, ut, vt = \
         create_deformation_field(frame,
                                  x, y, u, v,
-                                 kx=kx, ky=ky)
+                                 interpolation_order=interpolation_order2)
     frame_def = scn.map_coordinates(
         frame, ((y - vt, x + ut,)), order=interpolation_order, mode='nearest')
 
@@ -500,7 +487,8 @@ def first_pass(frame_a, frame_b, settings):
         subpixel_method=settings.subpixel_method,
         sig2noise_method=settings.sig2noise_method,
         correlation_method=settings.correlation_method,
-        normalized_correlation=settings.normalized_correlation
+        normalized_correlation=settings.normalized_correlation,
+        use_vectorized = settings.use_vectorized,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape,
@@ -510,7 +498,7 @@ def first_pass(frame_a, frame_b, settings):
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
 
-    x, y = get_coordinates(frame_a.shape,
+    x, y = get_rect_coordinates(frame_a.shape,
                            settings.windowsizes[0],
                            settings.overlap[0])
 
@@ -626,7 +614,7 @@ def multipass_img_deform(
     window_size = settings.windowsizes[current_iteration]
     overlap = settings.overlap[current_iteration]
 
-    x, y = get_coordinates(frame_a.shape,
+    x, y = get_rect_coordinates(frame_a.shape,
                            window_size,
                            overlap)
 
@@ -720,6 +708,7 @@ def multipass_img_deform(
         sig2noise_method=settings.sig2noise_method,
         correlation_method=settings.correlation_method,
         normalized_correlation=settings.normalized_correlation,
+        use_vectorized = settings.use_vectorized,
     )
 
     shapes = np.array(get_field_shape(frame_a.shape,
@@ -851,6 +840,8 @@ class Settings(FrozenClass):
         # methode used for subpixel interpolation:
         # 'gaussian','centroid','parabolic'
         self.subpixel_method = "gaussian"
+        # use vectorized sig2noise and subpixel approximation functions
+        self.use_vectorized = False
         # 'symmetric' or 'second image', 'symmetric' splits the deformation
         # both images, while 'second image' does only deform the second image.
         self.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
@@ -917,7 +908,7 @@ class Settings(FrozenClass):
         # maximum iterations performed to replace the outliers
         self.max_filter_iteration = 4
         self.filter_kernel_size = 2  # kernel size for the localmean method
-
+        
         # "Output options"
         # Select if you want to save the plotted vectorfield: True or False
         self.save_plot = True
