@@ -27,6 +27,7 @@ setup(
         'natsort',
         'GitPython',
         'pytest',
+        'watermark',
         'tqdm'
     ],
     classifiers=[
