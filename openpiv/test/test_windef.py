@@ -124,7 +124,7 @@ def test_invert_and_piv():
     settings = windef.Settings()
     'Data related settings'
     # Folder with the images to process
-    settings.filepath_images = pathlib.Path(__file__).parent / '../examples/test1'
+    settings.filepath_images = pathlib.Path(__file__).parent / '../data/test1'
     settings.save_path = '.'
     # Root name of the output Folder for Result Files
     settings.save_folder_suffix = 'test'

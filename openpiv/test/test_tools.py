@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.testing import compare
 
-file_a = pathlib.Path(__file__).parent / '../examples/test1/exp1_001_a.bmp'
-file_b = pathlib.Path(__file__).parent / '../examples/test1/exp1_001_b.bmp'
+file_a = pathlib.Path(__file__).parent / '../data/test1/exp1_001_a.bmp'
+file_b = pathlib.Path(__file__).parent / '../data/test1/exp1_001_b.bmp'
 
 test_file = pathlib.Path(__file__).parent / 'test_tools.png'
 

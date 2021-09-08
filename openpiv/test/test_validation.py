@@ -12,8 +12,8 @@ from scipy.signal import convolve2d
 import matplotlib.pyplot as plt
 
 
-file_a = pathlib.Path(__file__).parent / '../examples/test1/exp1_001_a.bmp'
-file_b = pathlib.Path(__file__).parent / '../examples/test1/exp1_001_b.bmp'
+file_a = pathlib.Path(__file__).parent / '../data/test1/exp1_001_a.bmp'
+file_b = pathlib.Path(__file__).parent / '../data/test1/exp1_001_b.bmp'
 
 frame_a = imread(file_a)
 frame_b = imread(file_b)

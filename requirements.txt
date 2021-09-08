@@ -17,7 +17,6 @@ matplotlib-inline==0.1.3
 natsort==7.1.1
 networkx==2.6.2
 numpy==1.21.2
--e git+https://github.com/alexlib/openpiv-python.git@07e72934489be4407d921b230153bbb40ac65749#egg=OpenPIV
 packaging==21.0
 parso==0.8.2
 pickleshare==0.7.5
