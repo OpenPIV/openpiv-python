@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="OpenPIV",
-    version='0.23.7a',
+    version='0.23.7b',
     packages=find_packages(),
     include_package_data=True,
     long_description=long_description,
