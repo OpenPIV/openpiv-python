@@ -16,4 +16,5 @@ v0.23.2 - added mask_coordinats to preprocess, allows to use dynamic_masking to 
     with the first_pass. Both first_pass and multi_pass now apply filtering externally
     
 v0.23.6 - removed widim.pyx, no Cython modules anymore
+v0.23.7 - @ErichZimmer provided rectangular windows and we moved the test cases to another repo openpiv-python-examples
 

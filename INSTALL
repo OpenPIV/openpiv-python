@@ -1,6 +1,6 @@
-========================
-Installation instruction
-========================
+=========================
+Installation instructions
+=========================
 
 Dependencies
 ============
@@ -9,49 +9,15 @@ OpenPIV would not have been possible if other great open source projects did not
 exist. We make extensive use of code and tools that other people have created, so
 you should install them before you can use OpenPIV.
 
-The dependencies are:
+The main dependencies are:
 
 * `python <http://python.org/>`_
 * `scipy <http://numpy.scipy.org/>`_
 * `numpy <http://www.scipy.org/>`_
-* `cython <http://cython.org/>`_
 * `scikit-image <http://scikit-image.org/>`_
 
 On all the platforms, the binary Anaconda installation is recommended. 
 Visit https://www.continuum.io/downloads
-
-How to install the dependencies on Linux (detailed)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-On a Linux platform installing these dependencies should be trick. Often, if not always,
-python is installed by default, while the other dependencies should appear in your package
-manager.
-
-/**
-Example of installation procedure on Ubuntu
-(tested for version 10.04 to 12.10)
-	*open a terminal & install modules
-sudo apt-get install python-pip
-sudo apt-get install python-setuptools python-dev build-essential
-sudo pip install numpy
-sudo pip install
-sudo apt-get install libatlas-base-dev gfortran
-sudo pip install scipy
-sudo pip install cython
-sudo apt-get install python-matplotlib
-pip install -U scikit-image
-	*you will need version 1.6.0 or later of the numpy module. 
-	*If pip cannot find the right version, easyinstall should work:
-         	sudo easyinstall numpy
-	*now download openpiv source code and move to the openpiv directory
-	*then install openpiv:
-sudo python setup.py install
-	*open a new terminal & test openpiv
-openpiv
-	*if you get an error such as "unknown module lib" try to logout or try to modify the PYTHONPATH variable by adding
-	      export PYTHONPATH=$PYTHONPATH:[path-to-openpiv-directory]  
-	to your ~/.bashrc file and then logout or:
-	 source ~/.bashrc
-**/
 
 
 Get OpenPIV source code!
