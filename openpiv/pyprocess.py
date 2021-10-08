@@ -309,7 +309,7 @@ def find_all_first_peaks(corr):
     return np.array(index_list), np.array(peaks_max)
 
 
-def find_all_second_peaks(corr, width = 2):
+def find_all_second_peaks(corr, width = 2, return_corr = False):
     '''
     Find row and column indices of the first correlation peak.
 
@@ -322,6 +322,10 @@ def find_all_second_peaks(corr, width = 2):
     width : int
         the half size of the region around the first correlation
         peak to ignore for finding the second peak
+    
+    return_corr: bool
+        return the correlation matix. Can be used to find second peaks
+        for subpixel approximation.
         
     Returns
     -------
@@ -340,14 +344,18 @@ def find_all_second_peaks(corr, width = 2):
     ifin[ifin > corr.shape[1]] = corr.shape[1]
     jini[jini < 0] = 0
     jfin[jfin > corr.shape[2]] = corr.shape[2]
-    # create a masked view of the corr
-    tmp = corr.view(np.ma.MaskedArray)
+    # create a masked view of the corr, is too slow?
+    #tmp = corr.view(np.ma.MaskedArray)
+    tmp = corr.copy()
     for i in ind:
-        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.ma.masked
+        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = 0 #ma.masked 
     indexes, peaks = find_all_first_peaks(tmp)
-    return indexes, peaks
+    if return_corr == True:
+        return tmp
+    else:
+        return indexes, peaks
 
-
+    
 def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     """
     Find subpixel approximation of the correlation peak.
@@ -650,8 +658,8 @@ def fft_correlate_images(image_a, image_b,
         one of the three methods implemented: 'circular' or 'linear'
         [default: 'circular].
 
-    normalized_correlation : string
-        decides wetehr normalized correlation is done or not: True or False
+    normalized_correlation : bool
+        decides wether normalized correlation is done or not: True or False
         [default: True].
     
     conj : function
@@ -701,8 +709,8 @@ def fft_correlate_images(image_a, image_b,
         corr = corr/(s2[0]*s2[1])  # for extended search area
         corr = np.clip(corr, 0, 1)
     return corr
-
-
+    
+    
 def normalize_intensity(window):
     """Normalize interrogation window or strided image of many windows,
        by removing the mean intensity value per window and clipping the
@@ -727,6 +735,118 @@ def normalize_intensity(window):
     window = np.divide(window, tmp, out=np.zeros_like(window),
                        where=(tmp != 0))
     return np.clip(window, 0, window.max())
+
+
+def fft_norm_correlate_images(image_a, image_b,
+                              correlation_method="circular",
+                              conj = np.conj,
+                              rfft2 = rfft2_,
+                              irfft2 = irfft2_,
+                              fftshift = fftshift_):
+    """ FFT based normalized cross correlation
+    of two images with multiple views of np.stride_tricks()
+    The 2D FFT should be applied to the last two axes (-2,-1) and the
+    zero axis is the number of the interrogation window
+    This should also work out of the box for rectangular windows.
+    Parameters
+    ----------
+    image_a : 3d np.ndarray, first dimension is the number of windows,
+        and two last dimensions are interrogation windows of the first image
+
+    image_b : similar
+
+    correlation_method : string
+        one of the three methods implemented: 'circular' or 'linear'
+        [default: 'circular].
+    
+    conj : function
+        function used for complex conjugate
+    
+    rfft2 : function
+        function used for rfft2
+    
+    irfft2 : function
+        function used for irfft2
+    
+    fftshift : function
+        function used for fftshift
+        
+    """
+    return fft_correlate_images(
+        image_a - image_a.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16),
+        image_b - image_b.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16),
+        correlation_method=correlation_method,
+        normalized_correlation=False,
+        rfft2 = rfft2,
+        irfft2 = irfft2,
+        conj = conj,
+        fftshift = fftshift,
+    ) / (image_a.shape[1] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
+         image_b.shape[2] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
+    
+
+def phase_correlation(image_a, image_b,
+                      correlation_method = 'circular',
+                      normalized_correlation = True,
+                      conj = np.conj,
+                      rfft2 = rfft2_,
+                      irfft2 = irfft2_,
+                      fftshift = fftshift_):
+    '''
+    Phase filtering to produce a phase-only correlation. Two methods
+    are implemented here: Phase-only correlation and "symmetric" phase 
+    correlation, which is supposedly more robust.
+    Parameters
+    ----------
+    image_a : 3d np.ndarray, first dimension is the number of windows,
+        and two last dimensions are interrogation windows of the first image
+
+    image_b : similar
+
+    correlation_method : string
+        one of the two methods implemented: 'circular' or 'linear'
+        [default: 'circular].
+        
+    normalized_correlation : bool
+        decides wether normalized correlation is done or not: True or False
+        [default: True].
+        
+    Returns
+    -------
+    corr : 3d np.ndarray
+        a three dimensions array for the correlation function.
+    '''
+    if correlation_method not in ['circular', 'linear']:
+        raise ValueError(f'Correlation method not supported {correlation_method}')
+
+    s1 = np.array(image_a.shape[-2:])
+    s2 = np.array(image_b.shape[-2:])
+    if normalized_correlation == True:
+        norm = (image_a.shape[-2] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
+                image_b.shape[-1] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
+        image_a -= image_a.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16)
+        image_b -= image_b.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16)
+    else:
+        norm = 1
+        
+    if correlation_method == 'circular':
+        f2a = conj(rfft2(image_a))
+        f2b = rfft2(image_b)
+        r = f2a * f2b
+        r /= (np.sqrt(np.absolute(f2a) * np.absolute(f2b)) + 1e-10)
+        corr = fftshift(irfft2(r).real, axes=(-2, -1))
+    else:
+        size = s1 + s2 - 1
+        fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+        fslice = (slice(0, image_a.shape[0]),
+                  slice((fsize[0]-s1[0])//2, (fsize[0]+s1[0])//2),
+                  slice((fsize[1]-s1[1])//2, (fsize[1]+s1[1])//2))
+        f2a = conj(rfft2(image_a, fsize, axes=(-2, -1)))
+        f2b = rfft2(image_b, fsize, axes=(-2, -1))
+        r = f2a * f2b
+        r /= (np.sqrt(np.absolute(f2a) * np.absolute(f2b)) + 1e-10)
+        corr = fftshift(irfft2(r), axes=(-2, -1)).real[fslice]
+    return corr / norm
 
 
 def correlate_windows(window_a, window_b, correlation_method="fft",
@@ -1079,6 +1199,7 @@ def vectorized_correlation_to_displacements(corr,
                                             n_rows = None,
                                             n_cols = None,
                                             subpixel_method = 'gaussian', 
+                                            offset_minimum = False,
                                             eps = 1e-7
 ):
     """
@@ -1105,7 +1226,10 @@ def vectorized_correlation_to_displacements(corr,
     """
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
         raise ValueError(f"Method not implemented {subpixel_method}")
-        
+    if offset_minimum == True:
+        corr_min = corr.min(axis = (-2,-1)) # avoid negative peaks 
+        corr_min[corr_min > 0] = 0
+        corr -= corr_min[:, np.newaxis, np.newaxis]
     corr = corr.astype(np.float32) + eps # avoids division by zero
     peaks = find_all_first_peaks(corr)[0]
     ind, peaks_x, peaks_y = peaks[:,0], peaks[:,1], peaks[:,2]
