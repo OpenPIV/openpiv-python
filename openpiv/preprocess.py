@@ -2,8 +2,9 @@ from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
 from skimage import img_as_float, exposure, img_as_ubyte
 from skimage.filters import sobel, threshold_otsu
 from skimage.measure import find_contours, approximate_polygon, points_in_poly
-from skimage.transform import rescale
 from openpiv.tools import imread
+from skimage import transform as tf
+from matplotlib.transforms import Affine2D
 import numpy as np
 import matplotlib.pyplot as plt
 """This module contains image processing routines that improve
@@ -300,12 +301,16 @@ def local_variance_normalization(img, sigma_1 = 2, sima_2 = 2, flag = 'zero'):
         a filtered two dimensional array of the input image
     """
     if flag not in ['negative', 'zero', 'positive']:
-        raise ValueError(f"Flag not supported {flag}")
+        raise ValueError(f"Flag {flag} not supported")
     img_blur = gaussian_filter(img, sigma_1)
     high_pass = img - img_blur
     img_blur = gaussian_filter(high_pass * high_pass, sima_2)
     den = np.power(img_blur, 0.5)
-    img = high_pass / den
+    img = np.divide( # stops image from being all black
+        high_pass, den,
+        out = np.zeros_like(img),
+        where = (den != 0.0)
+    )
     img[img == np.nan] = 0
     if flag == 'zero':
         img[img < 0] = 0 
@@ -407,7 +412,7 @@ def gen_min_background(img_list, resize = 255):
     return(background)
 
 
-def gen_lowpass_background(img_list, sigma = 3, resize = None):
+def gen_lowpass_background(img_list, sigma = 0, resize = None):
     """
     Generate a background by averaging a low pass of all images in an image list.
     Apply by subtracting generated background image.
@@ -418,7 +423,7 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
         list of image directories
         
     sigma: float
-        sigma of the gaussian filter
+        sigma of the gaussian filter, 0 to deacivate
         
     resize: int or float
         disabled by default, normalize array and set value to user
@@ -434,7 +439,8 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
             img = normalize_array(imread(img_file)) * resize
         else:
             img = imread(img_file)
-        img = gaussian_filter(img, sigma = sigma)
+        if sigma > 0:
+            img = gaussian_filter(img, sigma = sigma)
         if img_file == img_list[0]:
             background = img
         else:
@@ -501,10 +507,7 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
     return img[start_y:end_y, start_x:end_x]
 
 
-def stretch_image(img,
-                  x_axis = 0,
-                  y_axis = 0,
-                 ):
+def stretch_image(img, x_axis = 0, y_axis = 0, order = 1):
     """
     Stretch an image by interplation.
     
@@ -519,6 +522,8 @@ def stretch_image(img,
         
     y_axis: float
         stretch the y-axis of an image where 0 == no stretching
+    order: int [1-5]
+        spline interpolation order
         
     Returns
     -------
@@ -531,4 +536,67 @@ def stretch_image(img,
     if x_axis < 1: x_axis = 1
     if y_axis < 1: y_axis = 1
         
-    return rescale(img, (y_axis, x_axis))
+    return tf.rescale(img, (y_axis, x_axis), order = order)
+
+
+def rotate_image(img, origin_x = 0, origin_y = 0, angle = 0, order = 1):
+    """
+    Rotate an image by interplation.
+    
+    Parameters
+    ----------
+    img: image
+        a two dimensional array of float32 or float64, 
+        but can be uint16, uint8 or similar type
+        
+    origin_x: int
+        x component of origin (pivot)
+        
+    origin_y: float
+        y component of origin (pivot)
+        
+    angle: float
+        angle, in degrees, to rotate the image over specified origin
+        
+    order: int [1-5]
+        spline interpolation order
+        
+    Returns
+    -------
+    img: image
+        a transformed two dimensional array of the input image  
+    """
+    matrix = Affine2D().rotate_deg_around(
+        origin_x,
+        origin_y,
+        angle
+    ).get_matrix()
+    return tf.warp(img, inverse_map = matrix, order = order) 
+
+
+def skew_image(img, x_axis = 0, y_axis = 0, order = 1):
+    """
+    Rotate an image by interplation.
+    
+    Parameters
+    ----------
+    img: image
+        a two dimensional array of float32 or float64, 
+        but can be uint16, uint8 or similar type
+        
+    x_axis: float
+        skew the x-axis of an image
+        
+    y_axis: float
+        skew the y-axis of an image
+        
+    order: int [1-5]
+        spline interpolation order
+        
+    Returns
+    -------
+    img: image
+        a transformed two dimensional array of the input image  
+    """
+    matrix = Affine2D().skew_deg(xShear = y_axis, yShear = x_axis).get_matrix()
+    return tf.warp(img, inverse_map = matrix, order = order)
