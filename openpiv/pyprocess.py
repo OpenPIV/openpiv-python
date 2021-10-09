@@ -345,10 +345,9 @@ def find_all_second_peaks(corr, width = 2, return_corr = False):
     jini[jini < 0] = 0
     jfin[jfin > corr.shape[2]] = corr.shape[2]
     # create a masked view of the corr, is too slow?
-    #tmp = corr.view(np.ma.MaskedArray)
-    tmp = corr.copy()
+    tmp = corr.view(np.ma.MaskedArray)
     for i in ind:
-        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = 0 #ma.masked 
+        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.ma.masked 
     indexes, peaks = find_all_first_peaks(tmp)
     if return_corr == True:
         return tmp
@@ -781,8 +780,8 @@ def fft_norm_correlate_images(image_a, image_b,
         irfft2 = irfft2,
         conj = conj,
         fftshift = fftshift,
-    ) / (image_a.shape[1] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
-         image_b.shape[2] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
+    ) / (image_b.shape[-2] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
+         image_b.shape[-1] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
     
 
 def phase_correlation(image_a, image_b,
@@ -822,8 +821,8 @@ def phase_correlation(image_a, image_b,
     s1 = np.array(image_a.shape[-2:])
     s2 = np.array(image_b.shape[-2:])
     if normalized_correlation == True:
-        norm = (image_a.shape[-2] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
-                image_b.shape[-1] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
+        norm = (s2[0] * image_a.std(axis = (-2,-1))[:, np.newaxis, np.newaxis] * 
+                s2[1] * image_b.std(axis = (-2,-1))[:, np.newaxis, np.newaxis])
         image_a -= image_a.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16)
         image_b -= image_b.mean(axis = (-2,-1))[:,np.newaxis, np.newaxis].astype(np.int16)
     else:
