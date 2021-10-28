@@ -275,7 +275,7 @@ def high_pass(img, sigma = 5, clip = False):
     return img
 
 
-def local_variance_normalization(img, sigma_1 = 2, sima_2 = 2, flag = 'zero'):
+def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
     """
     Local variance normalization by two gaussian filters.
     This method is used by common commercial softwares
@@ -292,30 +292,25 @@ def local_variance_normalization(img, sigma_1 = 2, sima_2 = 2, flag = 'zero'):
     sigma_2: float
         sigma value of the second gaussian low pass filter
         
-    flag: string
-        one of three methods to set negative pixel intensities
+    clip: bool
+        set negative pixels to zero
         
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
     """
-    if flag not in ['negative', 'zero', 'positive']:
-        raise ValueError(f"Flag {flag} not supported")
-    img_blur = gaussian_filter(img, sigma_1)
-    high_pass = img - img_blur
-    img_blur = gaussian_filter(high_pass * high_pass, sima_2)
+    low_pass = gaussian_filter(img, sigma = sigma_1)
+    high_pass = img - low_pass
+    img_blur = gaussian_filter(high_pass * high_pass, sigma_2)
     den = np.power(img_blur, 0.5)
     img = np.divide( # stops image from being all black
         high_pass, den,
         out = np.zeros_like(img),
         where = (den != 0.0)
-    )
-    img[img == np.nan] = 0
-    if flag == 'zero':
+    )    
+    if clip == True: 
         img[img < 0] = 0 
-    elif flag == 'positive':
-        img = np.abs(img)
     img = (img - img.min()) / (img.max() - img.min())
     return img
 
@@ -351,6 +346,7 @@ def contrast_stretch(img, lower_limit = 2, upper_limit = 98):
     img = exposure.rescale_intensity(img, in_range = (lower, upper))
     return img
 
+
 def threshold_binarize(img, threshold, max_val = 255):
     """
     Simple binarizing threshold
@@ -378,7 +374,7 @@ def threshold_binarize(img, threshold, max_val = 255):
     return img
 
 
-def gen_min_background(img_list, resize = 255):
+def gen_min_background(img_list, rescale_intensity = False):
     """
     Generate a background by averaging the minimum intensity 
     of all images in an image list.
@@ -389,32 +385,32 @@ def gen_min_background(img_list, resize = 255):
     img_list: list
         list of image directories
         
-    resize: int or float
-        disabled by default, normalize array and set value to user
-        selected max pixel intensity
+    rescale_intensity: bool
+        normalize then rescale array to uint8
         
     Returns
     -------
     img: image
         a mean of all images
     """
-    background = imread(img_list[0])
-    if resize != None:
-        background = normalize_array(background) * resize
     for img in img_list: 
-        if img == img_list: # the original image is already included, so skip it in the for loop
-            pass
+        if img == img_list[0]: # the original image is already included, so skip it in the for loop
+            background = imread(img)
+            if rescale_intensity == True:
+                background = np.uint8(normalize_array(background) * 255)
+            dtype = background.dtype
         else:
             img = imread(img)
-            if resize != None:
-                img = normalize_array(img) * resize
+            if rescale_intensity == True:
+                background = np.uint8(normalize_array(background) * 255)
             background = np.min(np.array([background, img]), axis = 0)
-    return(background)
+    return background.astype(dtype)
 
 
-def gen_lowpass_background(img_list, sigma = 0, resize = None):
+def gen_mean_background(img_list, rescale_intensity = False):
     """
-    Generate a background by averaging a low pass of all images in an image list.
+    Generate a background by averaging the minimum intensity 
+    of all images in an image list.
     Apply by subtracting generated background image.
     
     Parameters
@@ -422,30 +418,26 @@ def gen_lowpass_background(img_list, sigma = 0, resize = None):
     img_list: list
         list of image directories
         
-    sigma: float
-        sigma of the gaussian filter, 0 to deacivate
-        
-    resize: int or float
-        disabled by default, normalize array and set value to user
-        selected max pixel intensity
+    rescale_intensity: bool
+        normalize then rescale array to uint8
         
     Returns
     -------
     img: image
-        a mean of all low-passed images
+        a mean of all images
     """
-    for img_file in img_list:
-        if resize != None:
-            img = normalize_array(imread(img_file)) * resize
+    for img in img_list: 
+        if img == img_list[0]: # the original image is already included, so skip it in the for loop
+            background = imread(img)
+            if rescale_intensity == True:
+                background = np.uint8(normalize_array(background) * 255)
+            dtype = background.dtype
         else:
-            img = imread(img_file)
-        if sigma > 0:
-            img = gaussian_filter(img, sigma = sigma)
-        if img_file == img_list[0]:
-            background = img
-        else:
-            background += img
-    return (background / len(img_list))
+            img = imread(img)
+            if rescale_intensity == True:
+                img = np.uint8(normalize_array(img) * 255)
+            background = np.sum(np.array([background, img]), axis=0)
+    return (background / len(img_list)).astype(dtype)
 
 
 def offset_image(img, offset_x, offset_y, pad = 'zero'):
@@ -480,6 +472,7 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         raise ValueError(f'pad method not supported: {pad}')
     end_y, end_x = img.shape
     start_x = 0; start_y = 0
+    pad_val = 0
     if offset_x > 0:
         offset_x1 = offset_x
         offset_x2 = 0
@@ -495,21 +488,22 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         offset_y1 = 0
         offset_y2 = offset_y * -1
         start_y = offset_y2
-        end_y += offset_y2   
+        end_y += offset_y2 
+    pad_val = None
     if pad == 'zero':
         pad = 'constant'
     img = np.pad(
         img,
         ((offset_y1, offset_y2),
         (offset_x1, offset_x2)),
-        mode = pad
+        mode = pad,
     )
     return img[start_y:end_y, start_x:end_x]
 
 
 def stretch_image(img, x_axis = 0, y_axis = 0, order = 1):
     """
-    Stretch an image by interplation.
+    Stretch an image by interpolation.
     
     Parameters
     ----------
@@ -522,6 +516,7 @@ def stretch_image(img, x_axis = 0, y_axis = 0, order = 1):
         
     y_axis: float
         stretch the y-axis of an image where 0 == no stretching
+        
     order: int [1-5]
         spline interpolation order
         
@@ -537,66 +532,3 @@ def stretch_image(img, x_axis = 0, y_axis = 0, order = 1):
     if y_axis < 1: y_axis = 1
         
     return tf.rescale(img, (y_axis, x_axis), order = order)
-
-
-def rotate_image(img, origin_x = 0, origin_y = 0, angle = 0, order = 1):
-    """
-    Rotate an image by interplation.
-    
-    Parameters
-    ----------
-    img: image
-        a two dimensional array of float32 or float64, 
-        but can be uint16, uint8 or similar type
-        
-    origin_x: int
-        x component of origin (pivot)
-        
-    origin_y: float
-        y component of origin (pivot)
-        
-    angle: float
-        angle, in degrees, to rotate the image over specified origin
-        
-    order: int [1-5]
-        spline interpolation order
-        
-    Returns
-    -------
-    img: image
-        a transformed two dimensional array of the input image  
-    """
-    matrix = Affine2D().rotate_deg_around(
-        origin_x,
-        origin_y,
-        angle
-    ).get_matrix()
-    return tf.warp(img, inverse_map = matrix, order = order) 
-
-
-def skew_image(img, x_axis = 0, y_axis = 0, order = 1):
-    """
-    Rotate an image by interplation.
-    
-    Parameters
-    ----------
-    img: image
-        a two dimensional array of float32 or float64, 
-        but can be uint16, uint8 or similar type
-        
-    x_axis: float
-        skew the x-axis of an image
-        
-    y_axis: float
-        skew the y-axis of an image
-        
-    order: int [1-5]
-        spline interpolation order
-        
-    Returns
-    -------
-    img: image
-        a transformed two dimensional array of the input image  
-    """
-    matrix = Affine2D().skew_deg(xShear = y_axis, yShear = x_axis).get_matrix()
-    return tf.warp(img, inverse_map = matrix, order = order)
