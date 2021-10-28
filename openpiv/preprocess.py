@@ -302,7 +302,7 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
     """
     low_pass = gaussian_filter(img, sigma = sigma_1)
     high_pass = img - low_pass
-    img_blur = gaussian_filter(high_pass * high_pass, sigma_2)
+    img_blur = gaussian_filter(high_pass * high_pass, sigma = sigma_2)
     den = np.power(img_blur, 0.5)
     img = np.divide( # stops image from being all black
         high_pass, den,
@@ -489,7 +489,7 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         offset_y2 = offset_y * -1
         start_y = offset_y2
         end_y += offset_y2 
-    pad_val = None
+        
     if pad == 'zero':
         pad = 'constant'
     img = np.pad(
