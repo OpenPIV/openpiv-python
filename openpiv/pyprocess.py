@@ -286,7 +286,7 @@ def find_second_peak(corr, i=None, j=None, width=2):
     return (i, j), corr_max2
 
 
-def find_first_peaks(corr):
+def find_all_first_peaks(corr):
     '''
     Find row and column indices of the first correlation peak.
 
@@ -308,7 +308,7 @@ def find_first_peaks(corr):
     return index_list, peaks_max
 
 
-def find_second_peaks(corr, indexes = [], width = 2, return_corr = False):
+def find_all_second_peaks(corr, indexes = [], width = 2, return_corr = False):
     '''
     Find row and column indices of the first correlation peak.
 
