@@ -472,7 +472,6 @@ def offset_image(img, offset_x, offset_y, pad = 'zero'):
         raise ValueError(f'pad method not supported: {pad}')
     end_y, end_x = img.shape
     start_x = 0; start_y = 0
-    pad_val = 0
     if offset_x > 0:
         offset_x1 = offset_x
         offset_x2 = 0
