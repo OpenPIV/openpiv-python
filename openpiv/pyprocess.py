@@ -51,7 +51,7 @@ def get_field_shape(image_size, search_area_size, overlap):
 
     Returns
     -------
-    field_shape : three elements tuple
+    field_shape : 2-element tuple
         the shape of the resulting flow field
     """
     field_shape = (np.array(image_size) - np.array(search_area_size)) // (
