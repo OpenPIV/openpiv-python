@@ -2,7 +2,7 @@ from numpy import *
 from pylab import *
 import scipy.optimize.lbfgsb as lbfgsb
 import numpy.linalg
-from scipy.fftpack.realtransforms import dct, idct
+from scipy.fftpack import dct, idct
 import numpy as np
 import numpy.ma as ma
 

@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as pt
 
 # from builtins import range
-from imageio import imread as _imread, imsave as _imsave
+from imageio.v3 import imread as _imread, imwrite as _imsave
 from skimage.feature import canny
 
 
@@ -112,12 +112,9 @@ def display_vector_field(
     if on_img is True:  # plot a background image
         im = imread(image_name)
         im = negative(im)  # plot negative of the image for more clarity
-        # imsave('neg.tif', im)
-        # im = imread('neg.tif')
         xmax = np.amax(x) + window_size / (2 * scaling_factor)
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
         ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
-        # plt.draw()
 
     invalid = mask.astype("bool")  
     valid = ~invalid
@@ -129,9 +126,12 @@ def display_vector_field(
     #     y = y.max() - y
     #     v *= -1
 
-    ax.quiver(
-        x[invalid], y[invalid], u[invalid], v[invalid], color="r", width=width, **kw)
-    ax.quiver(x[valid], y[valid], u[valid], v[valid], color="b", width=width,**kw)
+    if len(x[invalid]) > 0:  
+        ax.quiver(
+                x[invalid], y[invalid], u[invalid], v[invalid], \
+                    color="r", width=width, **kw)
+    ax.quiver(x[valid], y[valid], u[valid], v[valid], \
+        color="b", width=width, **kw)
     
     # if on_img is False:
     #     ax.invert_yaxis()
@@ -146,7 +146,7 @@ def display_vector_field(
 
 def imread(filename, flatten=0):
     """Read an image file into a numpy array
-    using imageio.imread
+    using imageio imread
     
     Parameters
     ----------
@@ -183,7 +183,7 @@ def rgb2gray(rgb):
 
 def imsave(filename, arr):
     """Write an image file from a numpy array
-    using imageio.imread
+    using imageio imread
     
     Parameters
     ----------

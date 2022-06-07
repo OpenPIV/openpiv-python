@@ -2,7 +2,7 @@ import numpy as np
 from openpiv.preprocess import dynamic_masking, mask_coordinates
 from skimage import img_as_float
 from skimage.color import rgb2gray, rgba2rgb
-from skimage.io import imread
+from imageio.v3 import imread
 import matplotlib.pyplot as plt
 import os
 
