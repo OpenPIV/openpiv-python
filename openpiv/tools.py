@@ -424,12 +424,28 @@ class Multiprocesser:
             the path where image files are located 
             
         pattern_a : str
-            a shell glob patter to match the first 
-            frames.
+            a shell glob pattern to match the first (A) frames.
             
         pattern_b : str
-            a shell glob patter to match the second
-            frames. if None, then the list is sequential, 001.tif, 002.tif 
+            a shell glob pattern to match the second (B) frames. 
+            
+        Options: 
+                pattern_a = 'image_*_a.bmp'
+                pattern_b = 'image_*_b.bmp'
+
+            or
+                pattern_a = '000*.tif'
+                pattern_b = '(1+2),(2+3)'
+                will create PIV of these pairs: 0001.tif+0002.tif, 0002.tif+0003.tif ...
+            or
+                pattern_a = '000*.tif'
+                pattern_b = '(1+3),(2+4)'
+                will create PIV of these pairs: 0001.tif+0003.tif, 0002.tif+0004.tif ...
+            or
+                pattern_a = '000*.tif'
+                pattern_b = '(1+2),(3+4)'
+                will create PIV of these pairs: 0001.tif+0002.tif, 0003.tif+0004.tif ...           
+          
 
         Examples
         --------
@@ -442,9 +458,15 @@ class Multiprocesser:
             glob.glob(os.path.join(os.path.abspath(data_dir), pattern_a))
         )
 
-        if pattern_b is None:
+        if pattern_b == '(1+2),(2+3)':
             self.files_b = self.files_a[1:]
             self.files_a = self.files_a[:-1]
+        elif pattern_b == '(1+3),(2+4)':
+            self.files_b = self.files_a[2:]
+            self.files_a = self.files_a[:-2]
+        elif pattern_b == '(1+2),(3+4)':
+            self.files_b = self.files_a[1::2]
+            self.files_a = self.files_a[0::2]
         else:
             self.files_b = sorted(
                 glob.glob(os.path.join(os.path.abspath(data_dir), pattern_b))
@@ -455,6 +477,9 @@ class Multiprocesser:
 
         # check if everything was fine
         if not len(self.files_a) == len(self.files_b):
+            print(self.files_a)
+            print(self.files_b)
+            
             raise ValueError(
                 'Something failed loading the image file. There should be an equal number of "a" and "b" files.'
             )
