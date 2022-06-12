@@ -45,3 +45,21 @@ def test_display_vector_field(file_a=_file_a, file_b=_file_b, test_file=_test_fi
     fig.savefig('./tmp.png')
     res = compare.compare_images('./tmp.png', test_file, 0.001)
     assert res is None
+
+def test_file_patterns():
+    """ 
+    tools.Multiprocesser() class has a couple of options to process
+    pairs of images or create pairs from sequential list of files
+
+    # Format and Image Sequence 
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # or if you have a sequence:
+        # settings.frame_pattern_a = '000*.tif'
+        # settings.frame_pattern_b = '(1+2),(2+3)'
+        # settings.frame_pattern_b = '(1+3),(2+4)'
+        # settings.frame_pattern_b = '(1+2),(3+4)'
+    """
+
+    
