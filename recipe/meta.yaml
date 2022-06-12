@@ -1,9 +1,9 @@
 package:
   name: openpiv
-  version: "0.21.7"
+  version: "0.24.0"
 
 source:
-  git_rev: 0.21.7
+  git_rev: 0.24.0
   git_url: https://github.com/openpiv/openpiv-python.git
 
 requirements:
