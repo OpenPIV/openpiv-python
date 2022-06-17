@@ -27,9 +27,9 @@ Contents:
 
    src/piv_basics
    src/installation_instruction
-   src/developers
    src/tutorial1
    src/windef
+   src/developers
    src/api_reference
    src/faq
 
