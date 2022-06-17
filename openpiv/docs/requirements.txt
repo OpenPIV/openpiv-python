@@ -1,5 +1,6 @@
 cython>=0.20
 numpy>=1.9
+openpiv
 sphinx
 recommonmark
 ipykernel
