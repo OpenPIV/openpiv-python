@@ -72,6 +72,16 @@ def piv(settings):
             ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
             plt.show()
 
+        if settings.static_masking:
+            frame_a[settings.static_mask] = 0
+            frame_b[settings.static_mask] = 0
+        
+            if settings.show_all_plots:
+                fig, ax = plt.subplots(1,2)
+                ax[0].imshow(frame_a)
+                ax[1].imshow(frame_b)
+        
+
         if settings.dynamic_masking_method in ("edge", "intensity"):
             frame_a, mask_a = preprocess.dynamic_masking(
                 frame_a,
@@ -85,6 +95,16 @@ def piv(settings):
                 filter_size=settings.dynamic_masking_filter_size,
                 threshold=settings.dynamic_masking_threshold,
             )
+            if settings.show_all_plots:
+                fig, ax = plt.subplots(2,2)
+                ax[0,0].imshow(frame_a)
+                ax[0,1].imshow(mask_a)
+                ax[1,0].imshow(frame_b)
+                ax[1,1].imshow(mask_b)
+                # plt.gca().invert_yaxis()
+                # plt.gca().set_aspect(1.)
+                # plt.title('after first pass, invert')
+                # plt.show()
 
         # "first pass"
         x, y, u, v, s2n = first_pass(
@@ -741,8 +761,7 @@ def multipass_img_deform(
 
     if settings.show_all_plots:
         plt.figure()
-        nans = np.nonzero(mask)
-
+        nans = np.nonzero(mask)[0]
         plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
         plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
         plt.gca().invert_yaxis()
@@ -922,6 +941,9 @@ class Settings(FrozenClass):
         self.show_all_plots = False
 
         self.invert = False  # for the test_invert
+        
+        self.static_masking = False
+        self.static_mask = None
 
         self._freeze()
 
