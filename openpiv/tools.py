@@ -32,6 +32,12 @@ import matplotlib.patches as pt
 from imageio.v3 import imread as _imread, imwrite as _imsave
 from skimage.feature import canny
 
+import re
+
+def natural_sort(l): 
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key=alphanum_key)
 
 def unique(array):
     uniq, index = np.unique(array, return_index=True)
@@ -454,7 +460,7 @@ class Multiprocesser:
         """
         # load lists of images
 
-        self.files_a = sorted(
+        self.files_a = natural_sort(
             glob.glob(os.path.join(os.path.abspath(data_dir), pattern_a))
         )
 
