@@ -5,14 +5,11 @@ Created on Fri Oct  4 14:33:21 2019
 @author: Theo
 """
 
-
+import pathlib
 import numpy as np
 from openpiv import windef
 from openpiv.test import test_process 
 from openpiv import preprocess
-import pathlib
-import os
-import matplotlib.pyplot as plt
 
 frame_a, frame_b = test_process.create_pair(image_size=256)
 shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
@@ -178,9 +175,30 @@ def test_multi_pass_lin():
             settings,
         )
         print(f"Iteration {i}")
-        print("\n", x, y, u, v, s2n)
+        print(u[:2,:2],v[:2,:2])
         assert np.allclose(u, shift_u, atol=threshold)
         assert np.allclose(v, shift_v, atol=threshold)
+
+    # the second condition is to check if the multipass is done.
+    # It need's a little numerical inaccuracy.
+
+def test_simple_multipass():
+    """ Test simple multipass """
+    # windowsizes = (64, 32, 16)
+    x, y, u, v, s2n = windef.simple_multipass(
+        frame_a,
+        frame_b,
+        #windowsizes
+    )
+    print("simple multipass\n")
+    print(u[:2,:2],v[:2,:2])
+
+    # note the -shift_v 
+    # the simple_multipass also transforms units, so 
+    # the plot is in the image-like space
+
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, -shift_v, atol=threshold)
 
     # the second condition is to check if the multipass is done.
     # It need's a little numerical inaccuracy.
