@@ -21,6 +21,70 @@ from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
 from openpiv import smoothn
 from skimage.util import invert
 
+def simple_multipass(frame_a, frame_b, windows = None):
+    """ Simple windows deformation multipass run with 
+    default settings
+    """
+    settings = Settings() # default, see below
+
+    if windows is not None:
+        settings.num_iterations = len(windows)
+        settings.windowsizes = windows
+        settings.overlap = [int(w/2) for w in windows]
+
+    x, y, u, v, s2n = first_pass(
+                                frame_a,
+                                frame_b,
+                                settings
+                                )
+
+
+    u = np.ma.masked_array(u, mask=np.ma.nomask)
+    v = np.ma.masked_array(v, mask=np.ma.nomask)
+
+    if settings.validation_first_pass:
+        u, v, mask = validation.typical_validation(u, v, s2n, settings)
+    
+    u, v = filters.replace_outliers(u, v)
+
+    if settings.smoothn:
+            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
+            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
+    # multipass 
+    for i in range(1, settings.num_iterations):
+
+        x, y, u, v, s2n, mask = multipass_img_deform(
+            frame_a,
+            frame_b,
+            i,
+            x,
+            y,
+            u,
+            v,
+            settings
+        )
+
+        # If the smoothing is active, we do it at each pass
+        # but not the last one
+        if settings.smoothn is True and i < settings.num_iterations-1:
+            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
+                u, s=settings.smoothn_p
+            )
+            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
+                v, s=settings.smoothn_p
+            )
+
+    # replance NaNs by zeros
+    u = u.filled(0.)
+    v = v.filled(0.)
+
+    # # "scales the results pixel-> meter"
+    # x, y, u, v = scaling.uniform(x, y, u, v,
+    #                                 scaling_factor=settings.scaling_factor)
+
+    x, y, u, v = transform_coordinates(x, y, u, v)
+    return (x,y,u,v,s2n)
+
 
 def piv(settings):
     """ the func fuction is the "frame" in which the PIV evaluation is done """
