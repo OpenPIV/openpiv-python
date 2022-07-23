@@ -12,7 +12,6 @@ requirements:
     - pip
     - setuptools
     - numpy
-    - cython
     - requests
     - matplotlib
     - scipy
