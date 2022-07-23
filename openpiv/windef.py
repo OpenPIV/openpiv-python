@@ -21,14 +21,16 @@ from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
 from openpiv import smoothn
 from skimage.util import invert
 
-def simple_multipass(frame_a, frame_b, windows = (64, 32, 16)):
+def simple_multipass(frame_a, frame_b, windows = None):
     """ Simple windows deformation multipass run with 
     default settings
     """
-    settings = Settings()
+    settings = Settings() # default, see below
 
-    settings.num_iterations = len(windows)
-    settings.windowsizes = windows
+    if windows is not None:
+        settings.num_iterations = len(windows)
+        settings.windowsizes = windows
+        settings.overlap = [int(w/2) for w in windows]
 
     x, y, u, v, s2n = first_pass(
                                 frame_a,
@@ -43,21 +45,11 @@ def simple_multipass(frame_a, frame_b, windows = (64, 32, 16)):
     if settings.validation_first_pass:
         u, v, mask = validation.typical_validation(u, v, s2n, settings)
     
-    u, v = filters.replace_outliers(
-                u,
-                v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size
-            )
+    u, v = filters.replace_outliers(u, v)
 
     if settings.smoothn:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
-            )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
-            )
+            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
+            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
     # multipass 
     for i in range(1, settings.num_iterations):
 

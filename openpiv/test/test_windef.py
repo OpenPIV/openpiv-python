@@ -184,11 +184,9 @@ def test_multi_pass_lin():
 
 def test_simple_multipass():
     """ Test simple multipass """
-    # windowsizes = (64, 32, 16)
     x, y, u, v, s2n = windef.simple_multipass(
         frame_a,
-        frame_b,
-        #windowsizes
+        frame_b
     )
     print("simple multipass\n")
     print(u[:2,:2],v[:2,:2])
@@ -197,6 +195,16 @@ def test_simple_multipass():
     # the simple_multipass also transforms units, so 
     # the plot is in the image-like space
 
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, -shift_v, atol=threshold)
+
+
+   # windowsizes = (64, 32, 16)
+    x, y, u, v, s2n = windef.simple_multipass(
+        frame_a,
+        frame_b,
+        windows = (32,16)
+    )
     assert np.allclose(u, shift_u, atol=threshold)
     assert np.allclose(v, -shift_v, atol=threshold)
 
