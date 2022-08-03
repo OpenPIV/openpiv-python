@@ -25,11 +25,9 @@ setup(
         'scikit-image',
         'scipy',
         'natsort',
-        'GitPython',
-        'pytest',
-        'watermark',
         'tqdm'
     ],
+    extras_require={"tests": ["pytest"]},
     classifiers=[
         # PyPI-specific version type. The number specified here is a magic
         # constant
