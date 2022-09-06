@@ -1,29 +1,31 @@
+{% set data = load_setup_py_data(setup_file="../setup.py",
+  from_recipe_dir=True) %}
+
 package:
   name: openpiv
-  version: "0.24.2"
+  version: {{ data.get('version') }}
 
 source:
-  git_rev: 0.24.2
-  git_url: https://github.com/openpiv/openpiv-python.git
+  path: ..
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
   build:
-    - python
+    - python >=3.7
     - pip
-    - setuptools
-    - numpy
-    - requests
-    - matplotlib
-    - scipy
-    - pillow
-    - imageio
-    - tqdm
   run:
-    - python
+    - python >=3.7
     - numpy
-    - scipy
-    - matplotlib
+    - imageio
+    - matplotlib-base
     - scikit-image
+    - scipy
+    - natsort
+    - tqdm
 
 test:
   imports:

@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="OpenPIV",
-    version='0.24.2',
+    version='0.24.3',
     packages=find_packages(),
     include_package_data=True,
     long_description=long_description,
@@ -25,11 +25,9 @@ setup(
         'scikit-image',
         'scipy',
         'natsort',
-        'GitPython',
-        'pytest',
-        'watermark',
         'tqdm'
     ],
+    extras_require={"tests": ["pytest"]},
     classifiers=[
         # PyPI-specific version type. The number specified here is a magic
         # constant
