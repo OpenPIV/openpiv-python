@@ -307,7 +307,7 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
         a filtered two dimensional array of the input image
     
     """
-    high_pass = high_pass(img, sigma_1, False)
+    high_pass = img - gaussian_filter(img, sigma_1)
     img_blur = gaussian_filter(high_pass * high_pass, sigma = sigma_2)
     den = np.sqrt(img_blur)
     img = np.divide( # stops image from being all black
