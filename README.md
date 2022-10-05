@@ -72,7 +72,7 @@ The OpenPIV documentation is available on the project web page at <http://openpi
 3. [Dynamic masking tutorial](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python-examples/blob/main/notebooks/masking_tutorial.ipynb)
 4. [Multipass with Windows Deformation](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python-examples/blob/main/notebooks/window_deformation_comparison.ipynb)
 5. [Multiple sets in one notebook](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python-examples/blob/main/notebooks/all_test_cases_sample.ipynb)
-6. [3D PIV](https://nbviewer.jupyter.org/github/OpenPIV/openpiv-python-examples/blob/main/notebooks/openpiv_3D_test.ipynb)
+6. [3D PIV](https://nbviewer.org/github/OpenPIV/openpiv-python-examples/blob/main/notebooks/PIV_3D_example.ipynb)
 
 
 These and many additional examples are in another repository: [OpenPIV-Python-Examples](https://github.com/OpenPIV/openpiv-python-examples)
