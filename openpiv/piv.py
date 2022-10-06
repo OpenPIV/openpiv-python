@@ -55,7 +55,7 @@ def simple_piv(im1, im2, plot=True):
                   color='r', width=.005)
         plt.show()
 
-    return x, y, u, v
+    return x, y, u, v, s2n
 
 
 def piv_example():
