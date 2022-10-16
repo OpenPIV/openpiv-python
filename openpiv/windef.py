@@ -380,7 +380,7 @@ def piv(settings):
 
         if settings.show_all_plots and settings.num_iterations > 1:
             plt.figure()
-            plt.quiver(x, y, u, -v)
+            plt.quiver(x, y, u, -1*v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after multi pass, before saving, inverted')

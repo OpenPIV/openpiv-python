@@ -107,8 +107,16 @@ def test_save_plot():
 
     settings = windef.PIVSettings()
     settings.save_plot = True
-
+    settings.save_path = settings.filepath_images.parent.parent / "test"
     windef.piv(settings)
+
+    save_path_string = \
+        f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+    save_path = \
+        settings.save_path / save_path_string
+
+    png_file = save_path / f'field_A{0:04d}.png'
+    assert png_file.exists()
 
 
 def test_invert_and_piv():
