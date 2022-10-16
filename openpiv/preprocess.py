@@ -161,7 +161,7 @@ def normalize_array(array, axis = None):
     
     """
     array = array.astype(np.float32)
-    if axis == None:
+    if axis is None:
         return((array - np.nanmin(array)) / (np.nanmax(array) - np.nanmin(array)))
     else:
         return((array - np.nanmin(array, axis = axis)) / 
@@ -187,7 +187,7 @@ def standardize_array(array, axis = None):
     
     """
     array = array.astype(np.float32)
-    if axis == None:
+    if axis is None:
         return((array - np.nanmean(array) / np.nanstd(array)))  
     else:
         return((array - np.nanmean(array, axis = axis) / np.nanstd(array, axis = axis)))
@@ -250,7 +250,7 @@ def intensity_clip(img, min_val = 0, max_val = None, flag = 'clip'):
     elif flag == 'cap':
         flag_min, flag_max = min_val, max_val
     img[img < min_val] = flag_min
-    if max_val != None:
+    if max_val is not None:
         img[img > max_val] = flag_max
     return img
 
@@ -276,7 +276,7 @@ def high_pass(img, sigma = 5, clip = False):
     """
     low_pass = gaussian_filter(img, sigma = sigma)
     img -= low_pass
-    if clip == True:
+    if clip:
         img[img < 0] = 0
     return img
 
@@ -307,15 +307,15 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
         a filtered two dimensional array of the input image
     
     """
-    high_pass = img - gaussian_filter(img, sigma_1)
-    img_blur = gaussian_filter(high_pass * high_pass, sigma = sigma_2)
+    _high_pass = img - gaussian_filter(img, sigma_1)
+    img_blur = gaussian_filter(_high_pass * _high_pass, sigma = sigma_2)
     den = np.sqrt(img_blur)
     img = np.divide( # stops image from being all black
-        high_pass, den,
+        _high_pass, den,
         out = np.zeros_like(img),
         where = (den != 0.0)
     )    
-    if clip == True: 
+    if clip:
         img[img < 0] = 0 
     img = (img - img.min()) / (img.max() - img.min())
     return img
@@ -404,14 +404,14 @@ def gen_min_background(img_list, resize = 255):
     
     """
     background = imread(img_list[0])
-    if resize != None:
+    if resize is not None:
         background = normalize_array(background) * resize
     for img in img_list: 
         if img == img_list: # the original image is already included, so skip it in the for loop
             pass
         else:
             img = imread(img)
-            if resize != None:
+            if resize is not None:
                 img = normalize_array(img) * resize
             background = np.min(np.array([background, img]), axis = 0)
     return(background)
@@ -545,3 +545,71 @@ def stretch_image(img,
     if y_axis < 1: y_axis = 1
         
     return rescale(img, (y_axis, x_axis))
+
+
+def prepare_images(
+    file_a: pathlib.Path,
+    file_b: pathlib.Path,
+    settings:
+    ):
+            # read images into numpy arrays
+        frame_a = imread(os.path.join(settings.filepath_images, file_a))
+        frame_b = imread(os.path.join(settings.filepath_images, file_b))
+
+        
+        # crop to ROI
+        if settings.ROI == "full":
+            pass
+        else:
+            frame_a = frame_a[
+                settings.ROI[0]:settings.ROI[1],
+                settings.ROI[2]:settings.ROI[3]
+            ]
+            frame_b = frame_b[
+                settings.ROI[0]:settings.ROI[1],
+                settings.ROI[2]:settings.ROI[3]
+            ]
+
+        if settings.invert is True:
+            frame_a = invert(frame_a)
+            frame_b = invert(frame_b)
+
+        if settings.show_all_plots:
+            fig, ax = plt.subplots(1, 1)
+            ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
+            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
+            plt.show()
+
+        if settings.static_masking:
+            frame_a[settings.static_mask] = 0
+            frame_b[settings.static_mask] = 0
+        
+            if settings.show_all_plots:
+                fig, ax = plt.subplots(1,2)
+                ax[0].imshow(frame_a)
+                ax[1].imshow(frame_b)
+        
+
+        if settings.dynamic_masking_method in ("edge", "intensity"):
+            frame_a, mask_a = preprocess.dynamic_masking(
+                frame_a,
+                method=settings.dynamic_masking_method,
+                filter_size=settings.dynamic_masking_filter_size,
+                threshold=settings.dynamic_masking_threshold,
+            )
+            frame_b, mask_b = preprocess.dynamic_masking(
+                frame_b,
+                method=settings.dynamic_masking_method,
+                filter_size=settings.dynamic_masking_filter_size,
+                threshold=settings.dynamic_masking_threshold,
+            )
+            if settings.show_all_plots:
+                fig, ax = plt.subplots(2,2)
+                ax[0,0].imshow(frame_a)
+                ax[0,1].imshow(mask_a)
+                ax[1,0].imshow(frame_b)
+                ax[1,1].imshow(mask_b)
+                # plt.gca().invert_yaxis()
+                # plt.gca().set_aspect(1.)
+                # plt.title('after first pass, invert')
+                # plt.show()

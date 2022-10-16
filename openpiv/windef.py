@@ -97,78 +97,11 @@ def piv(settings):
 
         file_a, file_b, counter = args
 
-        # counter2=str(counter2)
-        #####################
-        # Here goes you code
-        #####################
-
-        " read images into numpy arrays"
-        frame_a = imread(os.path.join(settings.filepath_images, file_a))
-        frame_b = imread(os.path.join(settings.filepath_images, file_b))
-
-        # Miguel: I just had a quick look, and I do not understand the reason
-        # for this step.
-        #  I propose to remove it.
-        # frame_a = (frame_a*1024).astype(np.int32)
-        # frame_b = (frame_b*1024).astype(np.int32)
-
-        " crop to ROI"
-        if settings.ROI == "full":
-            frame_a = frame_a
-            frame_b = frame_b
-        else:
-            frame_a = frame_a[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
-            frame_b = frame_b[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
-
-        if settings.invert is True:
-            frame_a = invert(frame_a)
-            frame_b = invert(frame_b)
-
-        if settings.show_all_plots:
-            fig, ax = plt.subplots(1, 1)
-            ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
-            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
-            plt.show()
-
-        if settings.static_masking:
-            frame_a[settings.static_mask] = 0
-            frame_b[settings.static_mask] = 0
-        
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(1,2)
-                ax[0].imshow(frame_a)
-                ax[1].imshow(frame_b)
-        
-
-        if settings.dynamic_masking_method in ("edge", "intensity"):
-            frame_a, mask_a = preprocess.dynamic_masking(
-                frame_a,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            frame_b, mask_b = preprocess.dynamic_masking(
-                frame_b,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(2,2)
-                ax[0,0].imshow(frame_a)
-                ax[0,1].imshow(mask_a)
-                ax[1,0].imshow(frame_b)
-                ax[1,1].imshow(mask_b)
-                # plt.gca().invert_yaxis()
-                # plt.gca().set_aspect(1.)
-                # plt.title('after first pass, invert')
-                # plt.show()
+        frame_a, frame_b, image_mask = preprocess.prepare_images(
+            file_a,
+            file_b,
+            settings
+        )
 
         # "first pass"
         x, y, u, v, s2n = first_pass(
