@@ -5,7 +5,6 @@ Created on Fri Oct  4 14:04:04 2019
 @modified: Alex, Erich
 """
 
-from multiprocessing.spawn import prepare
 import pathlib
 import os
 from dataclasses import dataclass
@@ -40,7 +39,7 @@ class Settings:
     save_folder_suffix: str = ''
     # Format and Image Sequence
     frame_pattern_a: str = '*.tif'
-    frame_pattern_b: str = None
+    frame_pattern_b: str = ''
 
     # "Region of interest"
     # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
@@ -67,10 +66,10 @@ class Settings:
 
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2
-    windowsizes: Tuple = (64,32,16)
+    windowsizes: Tuple[int, ...]=(64,32,16)
     
     # The overlap of the interroagtion window for each pass.
-    overlap: Tuple = (32, 16, 8)  # This is 50% overlap
+    overlap: Tuple[int, ...] = (32, 16, 8)  # This is 50% overlap
 
     # Has to be a value with base two. In general window size/2 is a good
     # choice.
@@ -414,18 +413,21 @@ def piv(settings):
         x, y, u, v = transform_coordinates(x, y, u, v)
         # import pdb; pdb.set_trace()
         # "save to a file"
+
+        save_file = f'field_A{counter:03d}.txt'
+
         tools.save(x, y, u, v, mask,
-                   os.path.join(save_path, "field_A%03d.txt" % counter),
+                save_path / save_file,
                    delimiter="\t")
         # "some other stuff that one might want to use"
         if settings.show_plot or settings.save_plot:
-            Name = os.path.join(save_path, "Image_A%03d.png" % counter)
+            fig_name = f'field_A{counter:03d}.png'
             fig, _ = display_vector_field(
-                os.path.join(save_path, "field_A%03d.txt" % counter),
+                fig_name, 
                 scale=settings.scale_plot,
             )
             if settings.save_plot is True:
-                fig.savefig(Name)
+                fig.savefig(fig_name)
             if settings.show_plot is True:
                 plt.show()
 
@@ -673,91 +675,74 @@ def multipass_img_deform(
     settings,
     mask_coords=[],
 ):
-    # window_size,
-    # overlap,
-    # iterations,
-    # current_iteration,
-    # x_old,
-    # y_old,
-    # u_old,
-    # v_old,
-    # correlation_method="circular",
-    # normalized_correlation=False,
-    # subpixel_method="gaussian",
-    # deformation_method="symmetric",
-    # sig2noise_method="peak2peak",
-    # sig2noise_threshold=1.0,
-    # sig2noise_mask=2,
-    # interpolation_order=1,
-
     """
-    Multi pass of the PIV evaluation.
+        Multi pass of the PIV evaluation.
 
-    This function does the PIV evaluation of the second and other passes.
-    It returns the coordinates of the interrogation window centres,
-    the displacement u, v for each interrogation window as well as
-    the signal to noise ratio array (which is full of NaNs if opted out)
+        This function does the PIV evaluation of the second and other passes.
+        It returns the coordinates of the interrogation window centres,
+        the displacement u, v for each interrogation window as well as
+        the signal to noise ratio array (which is full of NaNs if opted out)
 
 
-    Parameters
-    ----------
-    frame_a : 2d np.ndarray
-        the first image
+        Parameters
+        ----------
+        frame_a : 2d np.ndarray
+            the first image
 
-    frame_b : 2d np.ndarray
-        the second image
+        frame_b : 2d np.ndarray
+            the second image
 
-    window_size : tuple of ints
-         the size of the interrogation window
+        window_size : tuple of ints
+            the size of the interrogation window
 
-    overlap : tuple of ints
-        the overlap of the interrogation window, e.g. window_size/2
+        overlap : tuple of ints
+            the overlap of the interrogation window, e.g. window_size/2
 
-    x_old : 2d np.ndarray
-        the x coordinates of the vector field of the previous pass
+        x_old : 2d np.ndarray
+            the x coordinates of the vector field of the previous pass
 
-    y_old : 2d np.ndarray
-        the y coordinates of the vector field of the previous pass
+        y_old : 2d np.ndarray
+            the y coordinates of the vector field of the previous pass
 
-    u_old : 2d np.ndarray
-        the u displacement of the vector field of the previous pass
-        in case of the image mask - u_old and v_old are MaskedArrays
+        u_old : 2d np.ndarray
+            the u displacement of the vector field of the previous pass
+            in case of the image mask - u_old and v_old are MaskedArrays
 
-    v_old : 2d np.ndarray
-        the v displacement of the vector field of the previous pass
+        v_old : 2d np.ndarray
+            the v displacement of the vector field of the previous pass
 
-    subpixel_method: string
-        the method used for the subpixel interpolation.
-        one of the following methods to estimate subpixel location of the peak:
-        'centroid' [replaces default if correlation map is negative],
-        'gaussian' [default if correlation map is positive],
-        'parabolic'
+        subpixel_method: string
+            the method used for the subpixel interpolation.
+            one of the following methods to estimate subpixel location of the peak:
+            'centroid' [replaces default if correlation map is negative],
+            'gaussian' [default if correlation map is positive],
+            'parabolic'
 
-    interpolation_order : int
-        the order of the spline interpolation used for the image deformation
+        interpolation_order : int
+            the order of the spline interpolation used for the image deformation
 
-    mask_coords : list of x,y coordinates (pixels) of the image mask,
-        default is an empty list
+        mask_coords : list of x,y coordinates (pixels) of the image mask,
+            default is an empty list
 
-    Returns
-    -------
-    x : 2d np.array
-        array containg the x coordinates of the interrogation window centres
+        Returns
+        -------
+        x : 2d np.array
+            array containg the x coordinates of the interrogation window centres
 
-    y : 2d np.array
-        array containg the y coordinates of the interrogation window centres
+        y : 2d np.array
+            array containg the y coordinates of the interrogation window centres
 
-    u : 2d np.array
-        array containing the horizontal displacement for every interrogation
-        window [pixels]
+        u : 2d np.array
+            array containing the horizontal displacement for every interrogation
+            window [pixels]
 
-    u : 2d np.array
-        array containing the vertical displacement for every interrogation
-        window it returns values in [pixels]
+        u : 2d np.array
+            array containing the vertical displacement for every interrogation
+            window it returns values in [pixels]
 
-    s2n : 2D np.array of signal to noise ratio values
+        s2n : 2D np.array of signal to noise ratio values
 
-    """
+        """
 
     if not isinstance(u_old, np.ma.MaskedArray):
         raise ValueError('Expected masked array')

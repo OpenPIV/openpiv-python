@@ -1,8 +1,9 @@
-from openpiv.lib import replace_nans
-import numpy as np
-from scipy.signal import convolve
-
 """The openpiv.filters module contains some filtering/smoothing routines."""
+from typing import Tuple, Optional
+import numpy as np
+import numpy.typing as npt
+from scipy.signal import convolve
+from openpiv.lib import replace_nans
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -22,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def _gaussian_kernel(half_width=1):
+def _gaussian_kernel(half_width: int=1)-> npt.ArrayLike:
     """A normalized 2D Gaussian kernel array
 
     Parameters
@@ -48,12 +49,11 @@ def _gaussian_kernel(half_width=1):
     return g / g.sum()
 
 
-def gaussian_kernel(sigma, truncate=4.0):
+def gaussian_kernel(sigma:float, truncate:float=4.0)->npt.ArrayLike:
     """
     Return Gaussian that truncates at the given number of standard deviations.
     """
 
-    sigma = float(sigma)
     radius = int(truncate * sigma + 0.5)
 
     x, y = np.mgrid[-radius:radius + 1, -radius:radius + 1]
@@ -65,7 +65,11 @@ def gaussian_kernel(sigma, truncate=4.0):
     return k
 
 
-def gaussian(u, v, half_width=1):
+def gaussian(
+    u: npt.ArrayLike,
+    v: npt.ArrayLike,
+    half_width: int=1
+    )->Tuple[npt.ArrayLike, npt.ArrayLike]:
     """Smooths the velocity field with a Gaussian kernel.
 
     Parameters
@@ -95,8 +99,15 @@ def gaussian(u, v, half_width=1):
     return uf, vf
 
 
-def replace_outliers(u, v, w=None, method="localmean",
-                     max_iter=5, tol=1e-3, kernel_size=1):
+def replace_outliers(
+    u: npt.ArrayLike,
+    v: npt.ArrayLike,
+    w: Optional[npt.ArrayLike]=None,
+    method: str="localmean",
+    max_iter: int=5,
+    tol: float=1e-3,
+    kernel_size: int=1,
+    )-> Tuple[npt.ArrayLike, ...]:
     """Replace invalid vectors in an velocity field using an iterative image
         inpainting algorithm.
 
