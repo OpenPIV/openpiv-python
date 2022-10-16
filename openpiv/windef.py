@@ -31,7 +31,7 @@ class PIVSettings:
     """
     # "Data related settings"
     # Folder with the images to process
-    filepath_images: pathlib.Path = files('openpiv') / "data" / "test1"
+    filepath_images: pathlib.Path = files('openpiv') / "data" / "test1"  # type: ignore
     # Folder for the outputs
     save_path: pathlib.Path = filepath_images.parent
     # Root name of the output Folder for Result Files

@@ -18,9 +18,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import warnings
 import numpy as np
+import numpy.typing as npt
+from typing import Optional
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
+
 
 
 def global_val(u, v, u_thresholds, v_thresholds):
@@ -62,7 +66,7 @@ def global_val(u, v, u_thresholds, v_thresholds):
 
     """
 
-    np.warnings.filterwarnings("ignore")
+    warnings.filterwarnings("ignore")
 
     ind = np.logical_or(
         np.logical_or(u < u_thresholds[0], u > u_thresholds[1]),
@@ -140,7 +144,13 @@ def global_std(u, v, std_threshold=5):
     return u, v, mask
 
 
-def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
+def sig2noise_val(
+    u: npt.ArrayLike,
+    v: npt.ArrayLike,
+    s2n: npt.ArrayLike,
+    threshold: float=1.05,
+    w: Optional[npt.ArrayLike]=None,
+    ):
     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
     Replace spurious vectors with zero if signal to noise ratio
@@ -188,7 +198,7 @@ def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
         1, 1202-1215.
 
     """
-    ind = s2n < threshold
+    ind = s2n < threshold  # type: ignore
 
     u[ind] = np.nan
     v[ind] = np.nan

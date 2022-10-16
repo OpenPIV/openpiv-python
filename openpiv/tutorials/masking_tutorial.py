@@ -1,17 +1,14 @@
-from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
-import os
+import pathlib
+from importlib_resources import files
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-import os
+from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
 
 # we can run it from any folder
-path = os.path.dirname(os.path.abspath(__file__))
+path = files('openpiv') / "data" / "test4" 
 
-
-im_a  = tools.imread( os.path.join(path,'../data/test4/Camera1-0101.tif'))
-im_b  = tools.imread( os.path.join(path,'../data/test4/Camera1-0102.tif'))
+im_a  = tools.imread(  path / "Camera1-0101.tif")
+im_b  = tools.imread( path / "Camera1-0102.tif")
 
 plt.imshow(np.c_[im_a,im_b],cmap='gray')
 
@@ -42,8 +39,8 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1 )
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, mask, '../data/test4/test.txt', fmt='%9.6f', delimiter='\t')
-tools.display_vector_field('../data/test4/test.txt', scale=50, width=0.002)
+tools.save(x, y, u, v, mask, path / 'test.txt', fmt='%9.6f', delimiter='\t')
+tools.display_vector_field( path / 'test.txt', scale=50, width=0.002)
 
 
 
@@ -77,6 +74,6 @@ u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1)
 u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 # save to a file
-tools.save(x, y, u, v, mask, '../data/test4/test_masked.txt', fmt='%9.6f', delimiter='\t')
-tools.display_vector_field('../data/test4/test_masked.txt', scale=50, width=0.002)
+tools.save(x, y, u, v, mask,  path / 'test_masked.txt', fmt='%9.6f', delimiter='\t')
+tools.display_vector_field( path / 'test_masked.txt', scale=50, width=0.002)
 
