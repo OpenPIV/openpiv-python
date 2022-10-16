@@ -6,7 +6,6 @@ Created on Fri Oct  4 14:04:04 2019
 """
 
 import pathlib
-import os
 from dataclasses import dataclass
 from typing import Optional, Any, Tuple
 import numpy.typing as npt
@@ -26,20 +25,20 @@ from openpiv import smoothn
 
 
 @dataclass
-class Settings:
+class PIVSettings:
     """ All the PIV settings for the batch analysis with multi-processing and
     window deformation. Default settings are set at the initiation
     """
     # "Data related settings"
     # Folder with the images to process
-    filepath_images: pathlib.Path = files('openpiv') / "data"
+    filepath_images: pathlib.Path = files('openpiv') / "data" / "test1"
     # Folder for the outputs
     save_path: pathlib.Path = filepath_images.parent
     # Root name of the output Folder for Result Files
     save_folder_suffix: str = ''
     # Format and Image Sequence
-    frame_pattern_a: str = '*.tif'
-    frame_pattern_b: str = ''
+    frame_pattern_a: str = 'exp1_001_a.bmp'
+    frame_pattern_b: str = 'exp1_001_b.bmp'
 
     # "Region of interest"
     # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
@@ -151,9 +150,9 @@ class Settings:
     
     # "Output options"
     # Select if you want to save the plotted vectorfield: True or False
-    save_plot: bool=True
+    save_plot: bool=False
     # Choose wether you want to see the vectorfield or not:True or False
-    show_plot: bool=True
+    show_plot: bool=False
     scale_plot: int=100  # select a value to scale the quiver plot of
     # the vectorfield run the script with the given settings
 
@@ -162,10 +161,10 @@ class Settings:
     invert: bool=False  # for the test_invert
 
 def simple_multipass(
-    frame_a,
-    frame_b,
-    settings,
-    windows = None,
+    frame_a: npt.ArrayLike,
+    frame_b: npt.ArrayLike,
+    settings: "PIVSettings",
+    windows: Optional[Tuple[int, ...]]=None,
     ):
     """ Simple windows deformation multipass run with 
     default settings
@@ -259,7 +258,7 @@ def piv(settings):
             plt.quiver(x, y, u, -v, color='b')
 
         # " Image masking "
-        if settings.image_mask:
+        if image_mask is not None:
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
@@ -313,7 +312,7 @@ def piv(settings):
                 v, s=settings.smoothn_p
             )
 
-        if settings.image_mask:
+        if image_mask is not None:
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
@@ -323,7 +322,7 @@ def piv(settings):
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x, y, u, -v)
+            plt.quiver(x, y, u, -1*v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('before multi pass, inverted')
@@ -397,7 +396,7 @@ def piv(settings):
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)
 
-        if settings.image_mask:
+        if image_mask is not None:
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
@@ -414,16 +413,14 @@ def piv(settings):
         # import pdb; pdb.set_trace()
         # "save to a file"
 
-        save_file = f'field_A{counter:03d}.txt'
+        txt_file = save_path / f'field_A{counter:04d}.txt'
+        fig_name = save_path / f'field_A{counter:04d}.png'
 
-        tools.save(x, y, u, v, mask,
-                save_path / save_file,
-                   delimiter="\t")
-        # "some other stuff that one might want to use"
+        tools.save(x, y, u, v, mask, txt_file)
+
         if settings.show_plot or settings.save_plot:
-            fig_name = f'field_A{counter:03d}.png'
             fig, _ = display_vector_field(
-                fig_name, 
+                txt_file, 
                 scale=settings.scale_plot,
             )
             if settings.save_plot is True:
@@ -432,18 +429,18 @@ def piv(settings):
                 plt.show()
 
         print(f"Image Pair {counter + 1}")
-        print(file_a.rsplit('/')[-1], file_b.rsplit('/')[-1])
+        print(file_a.stem, file_b.stem)
 
     # "Below is code to read files and create a folder to store the results"
-    save_path = os.path.join(
-        settings.save_path,
-        "Open_PIV_results_"
-        + str(settings.windowsizes[settings.num_iterations-1])
-        + "_"
-        + settings.save_folder_suffix,
-    )
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
+    save_path_string = \
+        f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+
+    save_path = \
+        settings.save_path / save_path_string
+
+    if not save_path.exists():
+        # os.makedirs(save_path)
+        save_path.mkdir(parents=True, exist_ok=True)
     task = Multiprocesser(
         data_dir=settings.filepath_images,
         pattern_a=settings.frame_pattern_a,
@@ -931,5 +928,5 @@ if __name__ == "__main__":
 
     """
 
-    settings = Settings()
+    settings = settings()
     piv(settings)

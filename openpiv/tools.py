@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """The openpiv.tools module is a collection of utilities and tools.
 """
 
@@ -19,40 +18,44 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import glob
 import sys
-import os.path
+import pathlib
 import multiprocessing
+from typing import Any, NoReturn, List, Optional
+# import re
 
 import numpy as np
+import numpy.typing as npt
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
+from natsort import natsorted
 
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
 from skimage.feature import canny
 
-import re
 
-def natural_sort(l): 
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-    return sorted(l, key=alphanum_key)
+def natural_sort(file_list: List[pathlib.Path])-> List[pathlib.Path]:
+    """ Creates naturally sorted list """
+    # convert = lambda text: int(text) if text.isdigit() else text.lower()
+    # alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    # return sorted(file_list, key=alphanum_key)
+    return natsorted(file_list, key=str)
 
-def unique(array):
+def sorted_unique(array: npt.ArrayLike)->npt.ArrayLike:
+    """Creates sorted unique array """
     uniq, index = np.unique(array, return_index=True)
     return uniq[index.argsort()]
 
 
 def display_vector_field(
-    filename,
-    on_img=False,
-    image_name="None",
-    window_size=32,
-    scaling_factor=1,
-    widim=False,
-    ax=None,
-    width=0.0025,
+    filename: pathlib.Path,
+    on_img: bool=False,
+    image_name: Optional[pathlib.Path]=None,
+    window_size: int=32,
+    scaling_factor: float=1.,
+    ax: Optional[Any]=None,
+    width: float=0.0025,
     **kw
 ):
     """ Displays quiver plot of the data stored in the file 
@@ -98,13 +101,16 @@ def display_vector_field(
                                            width=0.0025) 
 
     --- vector field on top of image
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True, 
-                                          image_name='exp1_001_a.bmp', 
+    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True, 
+                                          image_name=Path('exp1_001_a.bmp'), 
                                           window_size=32, scaling_factor=70, 
                                           scale=100, width=0.0025)
     
     """
 
+    print('Inside display_vector_field')
+    print(filename)
+    
     a = np.loadtxt(filename)
     # parse
     x, y, u, v, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4]
@@ -329,7 +335,16 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     return list_bound
 
 
-def save(x, y, u, v, mask, filename, fmt="%8.4f", delimiter="\t"):
+def save(
+    x: npt.ArrayLike,
+    y: npt.ArrayLike,
+    u: npt.ArrayLike,
+    v: npt.ArrayLike, 
+    mask: npt.ArrayLike,
+    filename: pathlib.Path, 
+    fmt: str="%8.4f", 
+    delimiter: str="\t",
+    )-> None:
     """Save flow field to an ascii file.
 
     Parameters
@@ -411,7 +426,11 @@ def display(message):
 
 
 class Multiprocesser:
-    def __init__(self, data_dir, pattern_a, pattern_b=None):
+    def __init__(self,
+    data_dir: pathlib.Path,
+    pattern_a: str,
+    pattern_b: Optional[str]=None,
+    )->NoReturn:
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets
@@ -460,9 +479,12 @@ class Multiprocesser:
         """
         # load lists of images
 
-        self.files_a = natural_sort(
-            glob.glob(os.path.join(os.path.abspath(data_dir), pattern_a))
-        )
+        print(data_dir)
+        print(pattern_a)
+        print(data_dir.exists())
+        print(sorted(data_dir.glob(pattern_a)))
+        
+        self.files_a = natural_sort(list(data_dir.glob(pattern_a)))
 
         if pattern_b == '(1+2),(2+3)':
             self.files_b = self.files_a[1:]
@@ -474,9 +496,7 @@ class Multiprocesser:
             self.files_b = self.files_a[1::2]
             self.files_a = self.files_a[0::2]
         else:
-            self.files_b = sorted(
-                glob.glob(os.path.join(os.path.abspath(data_dir), pattern_b))
-            )
+            self.files_b = sorted(data_dir.glob(pattern_b))
 
         # number of images
         self.n_files = len(self.files_a)
@@ -490,7 +510,7 @@ class Multiprocesser:
                 'Something failed loading the image file. There should be an equal number of "a" and "b" files.'
             )
 
-        if not len(self.files_a):
+        if len(self.files_a) == 0:
             raise ValueError(
                 "Something failed loading the image file. No images were found. Please check directory and image template name."
             )

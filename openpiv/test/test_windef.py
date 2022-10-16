@@ -1,4 +1,3 @@
- # -*- coding: utf-8 -*-
 """
 Created on Fri Oct  4 14:33:21 2019
 
@@ -8,8 +7,7 @@ Created on Fri Oct  4 14:33:21 2019
 import pathlib
 import numpy as np
 from openpiv import windef
-from openpiv.test import test_process 
-from openpiv import preprocess
+from openpiv.test import test_process
 
 frame_a, frame_b = test_process.create_pair(image_size=256)
 shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
@@ -19,7 +17,7 @@ shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
 # function the validation methods are not tested here ant therefore
 # are disabled.
 
-settings = windef.Settings()
+settings = windef.PIVSettings()
 settings.windowsizes = (64,)
 settings.overlap = (32,)
 settings.num_iterations = 1
@@ -62,19 +60,8 @@ def test_multi_pass_circ():
     assert np.allclose(u, shift_u, atol = threshold)
     assert np.allclose(v, shift_v, atol = threshold)
 
-    if settings.image_mask:
-        image_mask = np.logical_and(mask_a, mask_b)
-        mask_coords = preprocess.mask_coordinates(image_mask)
-        # mark those points on the grid of PIV inside the mask
-        grid_mask = preprocess.prepare_mask_on_grid(x,y,mask_coords)
-
-        # mask the velocity
-        u = np.ma.masked_array(u, mask=grid_mask)
-        v = np.ma.masked_array(v, mask=grid_mask)
-    else:
-        mask_coords = []
-        u = np.ma.masked_array(u, mask=np.ma.nomask)
-        v = np.ma.masked_array(v, mask=np.ma.nomask)
+    u = np.ma.masked_array(u, mask=np.ma.nomask)
+    v = np.ma.masked_array(v, mask=np.ma.nomask)
 
     for i in range(1,settings.num_iterations):
         x, y, u, v, s2n, _ = windef.multipass_img_deform(
@@ -115,14 +102,22 @@ def test_first_pass_lin():
     assert np.mean(np.abs(v - shift_v)) < threshold
 
 
+def test_save_plot():
+    """ Test save plot """
+
+    settings = windef.PIVSettings()
+    settings.save_plot = True
+
+    windef.piv(settings)
+
+
 def test_invert_and_piv():
     """ Test windef.piv with invert option """
 
-    settings = windef.Settings()
-    'Data related settings'
+    settings = windef.PIVSettings()
     # Folder with the images to process
     settings.filepath_images = pathlib.Path(__file__).parent / '../data/test1'
-    settings.save_path = '.'
+    settings.save_path = pathlib.Path('.')
     # Root name of the output Folder for Result Files
     settings.save_folder_suffix = 'test'
     # Format and Image Sequence

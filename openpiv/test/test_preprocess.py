@@ -1,10 +1,12 @@
+""" Test preprocess """
+import os
 import numpy as np
-from openpiv.preprocess import dynamic_masking, mask_coordinates
 from skimage import img_as_float
 from skimage.color import rgb2gray, rgba2rgb
 from imageio.v3 import imread
 import matplotlib.pyplot as plt
-import os
+from openpiv.preprocess import dynamic_masking, mask_coordinates
+
 
 test_directory = os.path.split(os.path.abspath(__file__))[0]
 

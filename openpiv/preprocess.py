@@ -2,7 +2,7 @@
 images prior to PIV processing."""
 
 import pathlib
-from typing import Sequence, Any, TypeVar
+from typing import Tuple, Any
 import numpy as np
 import numpy.typing as npt
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
@@ -557,7 +557,7 @@ def prepare_images(
     file_a: pathlib.Path,
     file_b: pathlib.Path,
     settings: "Settings",
-    )-> Sequence[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]:
+    )-> Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]:
     """ prepares two images for the PIV pass
 
     Args:
