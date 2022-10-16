@@ -186,7 +186,8 @@ def test_simple_multipass():
     """ Test simple multipass """
     x, y, u, v, s2n = windef.simple_multipass(
         frame_a,
-        frame_b
+        frame_b,
+        settings,
     )
     print("simple multipass\n")
     print(u[:2,:2],v[:2,:2])
@@ -203,7 +204,8 @@ def test_simple_multipass():
     x, y, u, v, s2n = windef.simple_multipass(
         frame_a,
         frame_b,
-        windows = (32,16)
+        settings,
+        windows=(32,16),
     )
     assert np.allclose(u, shift_u, atol=threshold)
     assert np.allclose(v, -shift_v, atol=threshold)

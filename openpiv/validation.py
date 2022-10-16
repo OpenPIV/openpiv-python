@@ -306,7 +306,7 @@ def typical_validation(u, v, s2n, settings):
     mask = np.zeros(u.shape, dtype=bool)
 
     u, v, mask_g = global_val(
-        u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
+        u, v, settings.min_max_u_disp, settings.min_max_v_disp
     )
     # print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
     if settings.show_all_plots:

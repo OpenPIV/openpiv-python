@@ -1,13 +1,18 @@
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
-from skimage import img_as_float, exposure, img_as_ubyte
-from skimage.filters import sobel, threshold_otsu
-from skimage.measure import find_contours, approximate_polygon, points_in_poly
-from skimage.transform import rescale
-from openpiv.tools import imread
-import numpy as np
-import matplotlib.pyplot as plt
 """This module contains image processing routines that improve
 images prior to PIV processing."""
+
+import pathlib
+from typing import Sequence, Any, TypeVar
+import numpy as np
+import numpy.typing as npt
+from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
+from skimage import img_as_float, exposure, img_as_ubyte
+from skimage import filters
+from skimage.util import invert
+from skimage.measure import find_contours, approximate_polygon, points_in_poly
+from skimage.transform import rescale
+import matplotlib.pyplot as plt
+from openpiv.tools import imread
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -25,6 +30,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 
 
 def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
@@ -75,7 +81,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     blurback = img_as_ubyte(gaussian_filter(image, filter_size))
     if method == "edges":
         # identify edges
-        edges = sobel(blurback)
+        edges = filters.sobel(blurback)
         blur_edges = gaussian_filter(edges, 21)
         # create the boolean mask
         mask = blur_edges > threshold
@@ -85,7 +91,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     elif method == "intensity":
         background = gaussian_filter(median_filter(image, filter_size),
                                      filter_size)
-        mask = background > threshold_otsu(background)
+        mask = background > filters.threshold_otsu(background)
         imcopy[mask] = 0
     else:
         raise ValueError(f"method {method} is not implemented")
@@ -441,7 +447,7 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
     
     """
     for img_file in img_list:
-        if resize != None:
+        if resize is not None:
             img = normalize_array(imread(img_file)) * resize
         else:
             img = imread(img_file)
@@ -541,75 +547,85 @@ def stretch_image(img,
     y_axis += 1 # set so zero = no stretch
     x_axis += 1
 
-    if x_axis < 1: x_axis = 1
-    if y_axis < 1: y_axis = 1
-        
+    x_axis = max(x_axis, 1)
+    y_axis = max(y_axis, 1)
+
     return rescale(img, (y_axis, x_axis))
 
 
 def prepare_images(
     file_a: pathlib.Path,
     file_b: pathlib.Path,
-    settings:
-    ):
-            # read images into numpy arrays
-        frame_a = imread(os.path.join(settings.filepath_images, file_a))
-        frame_b = imread(os.path.join(settings.filepath_images, file_b))
+    settings: "Settings",
+    )-> Sequence[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]:
+    """ prepares two images for the PIV pass
 
-        
-        # crop to ROI
-        if settings.ROI == "full":
-            pass
-        else:
-            frame_a = frame_a[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
-            frame_b = frame_b[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
+    Args:
+        file_a (pathlib.Path): filename of frame A
+        file_b (pathlib.Path): filename of frame B
+        settings (_type_): windef.Settings() 
+    """
+    image_mask = None
+        # read images into numpy arrays
+    frame_a = imread(settings.filepath_images / file_a)
+    frame_b = imread(settings.filepath_images / file_b)
 
-        if settings.invert is True:
-            frame_a = invert(frame_a)
-            frame_b = invert(frame_b)
+    
+    # crop to roi
+    if settings.roi == "full":
+        pass
+    else:
+        frame_a = frame_a[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+        frame_b = frame_b[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+
+    if settings.invert is True:
+        frame_a = invert(frame_a)
+        frame_b = invert(frame_b)
+
+    if settings.show_all_plots:
+        _, ax = plt.subplots(1, 1)
+        ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
+        ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
+        plt.show()
+
+    if settings.static_mask is not None:
+        frame_a[settings.static_mask] = 0
+        frame_b[settings.static_mask] = 0
+        image_mask = settings.static_mask
+    
+        if settings.show_all_plots:
+            _, ax = plt.subplots()
+            ax.set_title('Masked frames')
+            ax.imshow(np.c_[frame_a, frame_b])
+    
+
+    if settings.dynamic_masking_method in ("edge", "intensity"):
+        frame_a, mask_a = dynamic_masking(
+            frame_a,
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
+        )
+        frame_b, mask_b = dynamic_masking(
+            frame_b,
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
+        )
+
+        image_mask = np.logical_and(mask_a, mask_b)
 
         if settings.show_all_plots:
-            fig, ax = plt.subplots(1, 1)
-            ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
-            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
-            plt.show()
+            _, ax = plt.subplots(2,2)
+            ax[0,0].imshow(frame_a)
+            ax[0,1].imshow(mask_a)
+            ax[1,0].imshow(frame_b)
+            ax[1,1].imshow(mask_b)
 
-        if settings.static_masking:
-            frame_a[settings.static_mask] = 0
-            frame_b[settings.static_mask] = 0
-        
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(1,2)
-                ax[0].imshow(frame_a)
-                ax[1].imshow(frame_b)
-        
-
-        if settings.dynamic_masking_method in ("edge", "intensity"):
-            frame_a, mask_a = preprocess.dynamic_masking(
-                frame_a,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            frame_b, mask_b = preprocess.dynamic_masking(
-                frame_b,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(2,2)
-                ax[0,0].imshow(frame_a)
-                ax[0,1].imshow(mask_a)
-                ax[1,0].imshow(frame_b)
-                ax[1,1].imshow(mask_b)
-                # plt.gca().invert_yaxis()
-                # plt.gca().set_aspect(1.)
-                # plt.title('after first pass, invert')
-                # plt.show()
+    return frame_a, frame_b, image_mask

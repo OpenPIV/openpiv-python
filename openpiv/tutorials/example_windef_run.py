@@ -17,7 +17,7 @@ settings.frame_pattern_b = 'exp1_001_b.bmp'
 
 'Region of interest'
 # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full' for full image
-settings.ROI = 'full'
+settings.roi = 'full'
 
 'Image preprocessing'
 # 'None' for no masking, 'edges' for edges masking, 'intensity' for intensity masking
@@ -66,8 +66,8 @@ settings.validation_first_pass = True
 # The validation is done at each iteration based on three filters.
 # The first filter is based on the min/max ranges. Observe that these values are defined in
 # terms of minimum and maximum displacement in pixel/frames.
-settings.MinMax_U_disp = (-30, 30)
-settings.MinMax_V_disp = (-30, 30)
+settings.min_max_u_disp = (-30, 30)
+settings.min_max_v_disp = (-30, 30)
 # The second filter is based on the global STD threshold
 settings.std_threshold = 7  # threshold of the std validation
 # The third filter is the median test (not normalized at the moment)
