@@ -160,77 +160,11 @@ class PIVSettings:
 
     invert: bool=False  # for the test_invert
 
-def simple_multipass(
-    frame_a: npt.ArrayLike,
-    frame_b: npt.ArrayLike,
-    settings: "PIVSettings",
-    windows: Optional[Tuple[int, ...]]=None,
-    ):
-    """ Simple windows deformation multipass run with 
-    default settings
-    """
-
-    if windows is not None:
-        settings.num_iterations = len(windows)
-        settings.windowsizes = windows
-        settings.overlap = [int(w/2) for w in windows]
-
-    x, y, u, v, s2n = first_pass(
-                                frame_a,
-                                frame_b,
-                                settings
-                                )
-
-
-    u = np.ma.masked_array(u, mask=np.ma.nomask)
-    v = np.ma.masked_array(v, mask=np.ma.nomask)
-
-    if settings.validation_first_pass:
-        u, v, mask = validation.typical_validation(u, v, s2n, settings)
-    
-    u, v = filters.replace_outliers(u, v)
-
-    if settings.smoothn:
-            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
-            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
-    # multipass 
-    for i in range(1, settings.num_iterations):
-
-        x, y, u, v, s2n, mask = multipass_img_deform(
-            frame_a,
-            frame_b,
-            i,
-            x,
-            y,
-            u,
-            v,
-            settings
-        )
-
-        # If the smoothing is active, we do it at each pass
-        # but not the last one
-        if settings.smoothn is True and i < settings.num_iterations-1:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
-            )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
-            )
-
-    # replance NaNs by zeros
-    u = u.filled(0.)
-    v = v.filled(0.)
-
-    # # "scales the results pixel-> meter"
-    # x, y, u, v = scaling.uniform(x, y, u, v,
-    #                                 scaling_factor=settings.scaling_factor)
-
-    x, y, u, v = transform_coordinates(x, y, u, v)
-    return (x,y,u,v,s2n)
-
 
 def piv(settings):
     """ the func fuction is the "frame" in which the PIV evaluation is done """
+
+    # note that settings is in the outer scope of piv()
 
     def func(args):
         """A function to process each image pair."""
@@ -258,21 +192,20 @@ def piv(settings):
             plt.quiver(x, y, u, -v, color='b')
 
         # " Image masking "
-        if image_mask is not None:
+        if image_mask is None:
+            grid_mask = np.ma.nomask
+        else:
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
             grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
 
-            # mask the velocity
-            u = np.ma.masked_array(u, mask=grid_mask)
-            v = np.ma.masked_array(v, mask=grid_mask)
-        else:
-            mask_coords = []
-            u = np.ma.masked_array(u, mask=np.ma.nomask)
-            v = np.ma.masked_array(v, mask=np.ma.nomask)
+
+        # mask the velocity
+        u = np.ma.masked_array(u, mask=grid_mask)
+        v = np.ma.masked_array(v, mask=grid_mask)
 
         if settings.validation_first_pass:
-            u, v, mask = validation.typical_validation(u, v, s2n, settings)
+            u, v, grid_mask = validation.typical_validation(u, v, s2n, settings)
 
         if settings.show_all_plots:
             # plt.figure()
@@ -416,7 +349,7 @@ def piv(settings):
         txt_file = save_path / f'field_A{counter:04d}.txt'
         fig_name = save_path / f'field_A{counter:04d}.png'
 
-        tools.save(x, y, u, v, mask, txt_file)
+        tools.save(x, y, u, v, grid_mask, txt_file)
 
         if settings.show_plot or settings.save_plot:
             fig, _ = display_vector_field(
@@ -908,8 +841,8 @@ def multipass_img_deform(
 
     if settings.show_all_plots:
         plt.figure()
-        plt.quiver(x, y, u, -v, color='r')
-        plt.quiver(x, y, u_pre, -1*v_pre, color='b')
+        plt.quiver(x, y, u, v, color='r')
+        plt.quiver(x, y, u_pre, v_pre, color='b')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
         plt.title(' after replaced outliers, red, invert')
@@ -917,16 +850,83 @@ def multipass_img_deform(
 
     return x, y, u, v, s2n, mask
 
-
-
-
-
-if __name__ == "__main__":
-    """ Run windef.py as a script:
-
-    python windef.py
-
+def simple_multipass(
+    frame_a: npt.ArrayLike,
+    frame_b: npt.ArrayLike,
+    settings: "PIVSettings",
+    windows: Optional[Tuple[int, ...]]=None,
+    ):
+    """ Simple windows deformation multipass run with 
+    default settings
     """
 
-    settings = settings()
-    piv(settings)
+    if windows is not None:
+        settings.num_iterations = len(windows)
+        settings.windowsizes = windows
+        settings.overlap = tuple(int(w/2) for w in windows)
+
+    x, y, u, v, s2n = first_pass(
+                                frame_a,
+                                frame_b,
+                                settings
+                                )
+
+
+    u = np.ma.masked_array(u, mask=np.ma.nomask)
+    v = np.ma.masked_array(v, mask=np.ma.nomask)
+
+    if settings.validation_first_pass:
+        u, v, _ = validation.typical_validation(u, v, s2n, settings)
+    
+    u, v = filters.replace_outliers(u, v)
+
+    if settings.smoothn:
+            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
+            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
+
+    # multipass 
+    for i in range(1, settings.num_iterations):
+
+        x, y, u, v, s2n, _ = multipass_img_deform(
+            frame_a,
+            frame_b,
+            i,
+            x,
+            y,
+            u,
+            v,
+            settings
+        )
+
+        # If the smoothing is active, we do it at each pass
+        # but not the last one
+        if settings.smoothn is True and i < settings.num_iterations-1:
+            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
+                u, s=settings.smoothn_p
+            )
+            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
+                v, s=settings.smoothn_p
+            )
+
+    # replance NaNs by zeros
+    u = u.filled(0.)
+    v = v.filled(0.)
+
+    # # "scales the results pixel-> meter"
+    # x, y, u, v = scaling.uniform(x, y, u, v,
+    #                                 scaling_factor=settings.scaling_factor)
+
+    x, y, u, v = transform_coordinates(x, y, u, v)
+    return (x,y,u,v,s2n)
+
+
+
+# if __name__ == "__main__":
+#     """ Run windef.py as a script:
+
+#     python windef.py
+
+#     """
+
+#     settings = PIVSettings()
+#     piv(settings)

@@ -285,7 +285,6 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
 
 def typical_validation(u, v, s2n, settings):
-
     """
     validation using gloabl limits and std and local median, 
 
