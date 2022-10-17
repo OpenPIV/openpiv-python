@@ -194,6 +194,7 @@ def piv(settings):
         # " Image masking "
         if image_mask is None:
             grid_mask = np.ma.nomask
+            mask_coords = []
         else:
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
