@@ -17,19 +17,28 @@ shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
 # function the validation methods are not tested here ant therefore
 # are disabled.
 
-settings = windef.PIVSettings()
-settings.windowsizes = (64,)
-settings.overlap = (32,)
-settings.num_iterations = 1
-settings.correlation_method = 'circular'
-settings.sig2noise_method = 'peak2peak'
-settings.subpixel_method = 'gaussian'
-settings.sig2noise_mask = 2
+# settings = windef.PIVSettings()
+# settings.windowsizes = (64,)
+# settings.overlap = (32,)
+# settings.num_iterations = 1
+# settings.correlation_method = 'circular'
+# settings.sig2noise_method = 'peak2peak'
+# settings.subpixel_method = 'gaussian'
+# settings.sig2noise_mask = 2
 
 
 # circular cross correlation
 def test_first_pass_circ():
     """ test of the first pass """
+    settings = windef.PIVSettings()
+    settings.windowsizes = (64,)
+    settings.overlap = (32,)
+    settings.num_iterations = 1
+    settings.correlation_method = 'circular'
+    settings.sig2noise_method = 'peak2peak'
+    settings.subpixel_method = 'gaussian'
+    settings.sig2noise_mask = 2
+
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
         frame_b,
@@ -42,13 +51,14 @@ def test_first_pass_circ():
 
 def test_multi_pass_circ():
     """ test fot the multipass """
+    settings = windef.PIVSettings()
     settings.windowsizes = (64, 64, 16)
     settings.overlap = (32, 32, 8)
     settings.num_iterations = 2
     settings.interpolation_order = 3
     settings.validation_first_pass = True
     settings.sig2noise_validate = False
-    # ettings.show_all_plots = True
+    # settings.show_all_plots = True
 
     x, y, u, v, s2n = windef.first_pass(
         frame_a,
@@ -90,6 +100,14 @@ def test_multi_pass_circ():
 # linear cross correlation
 def test_first_pass_lin():
     """ test of the first pass """
+    settings = windef.PIVSettings()
+    settings.windowsizes = (64,)
+    settings.overlap = (32,)
+    settings.num_iterations = 1
+    settings.correlation_method = 'circular'
+    settings.sig2noise_method = 'peak2peak'
+    settings.subpixel_method = 'gaussian'
+    settings.sig2noise_mask = 2
     settings.correlation_method = 'linear'
 
     x, y, u, v, s2n = windef.first_pass(
@@ -143,8 +161,17 @@ def test_invert_and_piv():
 
 def test_multi_pass_lin():
     """ test fot the multipass """
-    settings.windowsizes = (64, 32, 16)
-    settings.overlap = (32, 16, 8)
+    settings = windef.PIVSettings()
+    # settings.windowsizes = (64,)
+    # settings.overlap = (32,)
+    # settings.num_iterations = 1
+    # settings.correlation_method = 'circular'
+    # settings.sig2noise_method = 'peak2peak'
+    # settings.subpixel_method = 'gaussian'
+    # settings.sig2noise_mask = 2
+
+    settings.windowsizes = (64, 32)
+    settings.overlap = (32, 16)
     settings.num_iterations = 1
     settings.sig2noise_validate = True
     settings.correlation_method = 'linear'
@@ -187,13 +214,25 @@ def test_multi_pass_lin():
 
 def test_simple_multipass():
     """ Test simple multipass """
-    x, y, u, v, s2n = windef.simple_multipass(
+    settings = windef.PIVSettings()
+    settings.windowsizes = (64,)
+    settings.overlap = (32,)
+    settings.num_iterations = 1
+    settings.correlation_method = 'circular'
+    settings.sig2noise_method = 'peak2peak'
+    settings.subpixel_method = 'gaussian'
+    settings.sig2noise_mask = 2
+
+    x, y, u, v, _ = windef.simple_multipass(
         frame_a,
         frame_b,
         settings,
     )
     print("simple multipass\n")
-    print(u[:2,:2],v[:2,:2])
+    print(u[:4,:4])
+    print(v[:4,:4])
+    print(shift_u)
+    print(shift_v)
 
     # note the -shift_v 
     # the simple_multipass also transforms units, so 
@@ -208,8 +247,11 @@ def test_simple_multipass():
         frame_a,
         frame_b,
         settings,
-        windows=(32,16),
+        windows=(32,16,8),
     )
+    print("simple multipass\n")
+    print(u[:4,:4])
+    print(v[:4,:4])
     assert np.allclose(u, shift_u, atol=threshold)
     assert np.allclose(v, -shift_v, atol=threshold)
 

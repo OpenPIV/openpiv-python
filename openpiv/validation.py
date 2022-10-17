@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import warnings
-import numpy as np
-import numpy.typing as npt
 from typing import Optional
+import numpy.typing as npt
+import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
 
@@ -53,14 +53,6 @@ def global_val(u, v, u_thresholds, v_thresholds):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
     mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
@@ -73,16 +65,14 @@ def global_val(u, v, u_thresholds, v_thresholds):
         np.logical_or(v < v_thresholds[0], v > v_thresholds[1]),
     )
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
-def global_std(u, v, std_threshold=5):
+def global_std(
+    u: npt.ArrayLike,
+    v: npt.ArrayLike,
+    std_threshold: int=5,
+    )->npt.ArrayLike:
     """Eliminate spurious vectors with a global threshold defined by the
     standard deviation
 
@@ -105,14 +95,6 @@ def global_std(u, v, std_threshold=5):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
     mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
@@ -135,82 +117,51 @@ def global_std(u, v, std_threshold=5):
         print('Warning! probably a uniform shift data, do not use this filter')
         ind = ~ind
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
-def sig2noise_val(
-    u: npt.ArrayLike,
-    v: npt.ArrayLike,
-    s2n: npt.ArrayLike,
-    threshold: float=1.05,
-    w: Optional[npt.ArrayLike]=None,
-    ):
-    """Eliminate spurious vectors from cross-correlation signal to noise ratio.
+# def sig2noise_val(
+#     s2n: npt.ArrayLike,
+#     threshold: float=1.05,
+#     )->npt.ArrayLike:
+#     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
-    Replace spurious vectors with zero if signal to noise ratio
-    is below a specified threshold.
+#     Replace spurious vectors with zero if signal to noise ratio
+#     is below a specified threshold.
 
-    Parameters
-    ----------
-    u : 2d or 3d np.ndarray
-        a two or three dimensional array containing the u velocity component.
+#     Parameters
+#     ----------
+#     u : 2d or 3d np.ndarray
+#         a two or three dimensional array containing the u velocity component.
 
-    v : 2d or 3d np.ndarray
-        a two or three dimensional array containing the v velocity component.
+#     v : 2d or 3d np.ndarray
+#         a two or three dimensional array containing the v velocity component.
 
-    s2n : 2d np.ndarray
-        a two or three dimensional array containing the value  of the signal to
-        noise ratio from cross-correlation function.
-    w : 2d or 3d np.ndarray
-        a two or three dimensional array containing the w (in z-direction)
-        velocity component.
+#     s2n : 2d np.ndarray
+#         a two or three dimensional array containing the value  of the signal to
+#         noise ratio from cross-correlation function.
+#     w : 2d or 3d np.ndarray
+#         a two or three dimensional array containing the w (in z-direction)
+#         velocity component.
 
-    threshold: float
-        the signal to noise ratio threshold value.
+#     threshold: float
+#         the signal to noise ratio threshold value.
 
-    Returns
-    -------
-    u : 2d or 3d np.ndarray
-        a two or three dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
+#     Returns
+#     -------
 
-    v : 2d or 3d  np.ndarray
-        a two or three dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
+#     mask : boolean 2d np.ndarray
+#         a boolean array. True elements corresponds to outliers.
 
-    w : 2d or 3d  np.ndarray
-        optional, a two or three dimensional array containing the w
-        (in z-direction) velocity component, where spurious vectors
-        have been replaced by NaN.
+#     References
+#     ----------
+#     R. D. Keane and R. J. Adrian, Measurement Science & Technology, 1990,
+#         1, 1202-1215.
 
-    mask : boolean 2d np.ndarray
-        a boolean array. True elements corresponds to outliers.
+#     """
+#       # type: ignore
 
-    References
-    ----------
-    R. D. Keane and R. J. Adrian, Measurement Science & Technology, 1990,
-        1, 1202-1215.
-
-    """
-    ind = s2n < threshold  # type: ignore
-
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    if isinstance(w, np.ndarray):
-        w[ind] = np.nan
-        return u, v, w, mask
-
-    return u, v, mask
+#     return ind 
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
@@ -242,25 +193,12 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
 
     mask : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
-    # make a copy of the data without the masked region, fill it also with 
-    # NaN and then use generic filter with nanmean
-    # 
 
-    u = np.ma.copy(u)
-    v = np.ma.copy(v)
-    
     # kernel footprint
     f = np.ones((2*size+1, 2*size+1))
     f[size,size] = 0
@@ -275,13 +213,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros(u.shape, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
 def typical_validation(u, v, s2n, settings):
@@ -311,43 +243,55 @@ def typical_validation(u, v, s2n, settings):
     if settings.show_all_plots:
         plt.figure()
         plt.quiver(u,v,color='b')
+        plt.title('Before (b) and global (m) local (k)')
 
-    mask = np.zeros(u.shape, dtype=bool)
+    # mask = np.zeros(u.shape, dtype=bool)
 
-    u, v, mask_g = global_val(
-        u, v, settings.min_max_u_disp, settings.min_max_v_disp
-    )
-    # print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
+    # Global validation
+    mask_g = global_val(u, v, settings.min_max_u_disp, settings.min_max_v_disp)
+
+    u[mask_g] = np.ma.masked
+    v[mask_g] = np.ma.masked
+
     if settings.show_all_plots:
-        plt.quiver(u,v,color='m')
+        plt.quiver(u, v, color='m')
 
-    u, v, mask_s = global_std(
+    mask_s = global_std(
         u, v, std_threshold=settings.std_threshold
     )
+
+    u[mask_s] = np.ma.masked
+    v[mask_s] = np.ma.masked
+
     # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
     if settings.show_all_plots:
         plt.quiver(u,v,color='k')
     
 
-    u, v, mask_m = local_median_val(
+    mask_m = local_median_val(
         u,
         v,
         u_threshold=settings.median_threshold,
         v_threshold=settings.median_threshold,
         size=settings.median_size,
     )
+    
+    u[mask_m] = np.ma.masked
+    v[mask_m] = np.ma.masked
+    
     if settings.show_all_plots:
         plt.quiver(u,v,color='r')
 
     # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
-    mask = mask + mask_g + mask_m + mask_s
+    mask = mask_g | mask_m | mask_s
 
 
     if settings.sig2noise_validate:
-        u, v, mask_s2n = sig2noise_val(
-            u, v, s2n,
-            threshold=settings.sig2noise_threshold
-        )
+        mask_s2n = s2n < settings.sig2noise_threshold
+        
+        u[mask_s2n] = np.ma.masked
+        v[mask_s2n] = np.ma.masked
+
         # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
         if settings.show_all_plots:
             plt.quiver(u,v,color='g')

@@ -430,7 +430,7 @@ class Multiprocesser:
     data_dir: pathlib.Path,
     pattern_a: str,
     pattern_b: Optional[str]=None,
-    )->NoReturn:
+    )->None:
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets

@@ -23,7 +23,6 @@ from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
 from openpiv import smoothn
 
 
-
 @dataclass
 class PIVSettings:
     """ All the PIV settings for the batch analysis with multi-processing and
@@ -139,7 +138,7 @@ class PIVSettings:
     # validation
     # Choose: True or False
     replace_vectors: bool=True  # Enable the replacement.
-    smoothn: bool=True  # Enables smoothing of the displacement field
+    smoothn: bool=False  # Enables smoothing of the displacement field
     smoothn_p: float=0.05  # This is a smoothing parameter
     # select a method to replace the outliers:
     # 'localmean', 'disk', 'distance'
@@ -174,6 +173,7 @@ def piv(settings):
 
         file_a, file_b, counter = args
 
+        # frame_a, frame_b are masked
         frame_a, frame_b, image_mask = preprocess.prepare_images(
             file_a,
             file_b,
@@ -206,7 +206,9 @@ def piv(settings):
         v = np.ma.masked_array(v, mask=grid_mask)
 
         if settings.validation_first_pass:
-            u, v, grid_mask = validation.typical_validation(u, v, s2n, settings)
+            u, v, invalid_mask = validation.typical_validation(u, v, s2n, settings)
+        
+        
 
         if settings.show_all_plots:
             # plt.figure()
@@ -559,8 +561,10 @@ def first_pass(frame_a, frame_b, settings):
     u : 2d np.array
         array containing the u displacement for every interrogation window
 
-    u : 2d np.array
+    v : 2d np.array
         array containing the u displacement for every interrogation window
+    
+    s2n: 2d np.array of the signal to noise ratio
 
     """
 
@@ -856,7 +860,7 @@ def simple_multipass(
     frame_b: npt.ArrayLike,
     settings: "PIVSettings",
     windows: Optional[Tuple[int, ...]]=None,
-    ):
+    )->Tuple:
     """ Simple windows deformation multipass run with 
     default settings
     """
@@ -873,22 +877,18 @@ def simple_multipass(
                                 )
 
 
-    u = np.ma.masked_array(u, mask=np.ma.nomask)
-    v = np.ma.masked_array(v, mask=np.ma.nomask)
+    u = np.ma.copy(u)
+    v = np.ma.copy(v)
 
     if settings.validation_first_pass:
         u, v, _ = validation.typical_validation(u, v, s2n, settings)
     
     u, v = filters.replace_outliers(u, v)
 
-    if settings.smoothn:
-            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
-            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
-
     # multipass 
     for i in range(1, settings.num_iterations):
 
-        x, y, u, v, s2n, _ = multipass_img_deform(
+        x, y, u, v, s2n, mask = multipass_img_deform(
             frame_a,
             frame_b,
             i,
@@ -899,25 +899,11 @@ def simple_multipass(
             settings
         )
 
-        # If the smoothing is active, we do it at each pass
-        # but not the last one
-        if settings.smoothn is True and i < settings.num_iterations-1:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
-            )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
-            )
-
     # replance NaNs by zeros
-    u = u.filled(0.)
-    v = v.filled(0.)
+    u = np.ma.fix_invalid(u, fill_value=0.)
+    v = np.ma.fix_invalid(v, fill_value=0.)
 
-    # # "scales the results pixel-> meter"
-    # x, y, u, v = scaling.uniform(x, y, u, v,
-    #                                 scaling_factor=settings.scaling_factor)
-
-    x, y, u, v = transform_coordinates(x, y, u, v)
+    x, y, u, v = transform_coordinates(x, y, u.data, v.data) # note the use of .data for masked arrays
     return (x,y,u,v,s2n)
 
 
