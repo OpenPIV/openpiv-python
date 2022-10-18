@@ -108,9 +108,6 @@ def display_vector_field(
     
     """
 
-    print('Inside display_vector_field')
-    print(filename)
-    
     a = np.loadtxt(filename)
     # parse
     x, y, u, v, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4]
@@ -189,7 +186,15 @@ def imread(filename, flatten=0):
     return im
 
 
-def rgb2gray(rgb):
+def rgb2gray(rgb: np.ndarray)->np.ndarray:
+    """converts rgb image to gray 
+
+    Args:
+        rgb (_type_): numpy.ndarray, image size, three channels
+
+    Returns:
+        gray: numpy.ndarray of the same shape, one channel
+    """
     return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
 
 
