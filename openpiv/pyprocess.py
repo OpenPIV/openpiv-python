@@ -1,7 +1,9 @@
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
 
-from typing import Optional, Tuple, Callable
+from cmath import isfinite
+from curses import window
+from typing import Optional, Tuple, Callable, Union
 import numpy.lib.stride_tricks
 import numpy as np
 from numpy import log
@@ -158,13 +160,18 @@ def get_coordinates(
 
 def get_rect_coordinates(
     image_size: Tuple[int,int],
-    window_size: Tuple[int,int], # (32,16)
-    overlap: Tuple[int,int],
+    window_size: Union[int, Tuple[int,int]],
+    overlap: Union[int, Tuple[int,int]],
     center_on_field: bool=False,
     ):
     '''
     Rectangular grid version of get_coordinates.
     '''
+    if isinstance(window_size, int):
+        window_size = (window_size, window_size)
+    if isinstance(overlap, int):
+        overlap = (overlap, overlap)
+
     # @alexlib why the center_on_field is False? 
     # todo: test True as well 
     _, y = get_coordinates(image_size, window_size[0], overlap[0], center_on_field=center_on_field)
@@ -896,13 +903,13 @@ def fft_correlate_windows(window_a, window_b,
 def extended_search_area_piv(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
-    window_size: Tuple[int,int], # for rectangular windows
-    overlap: Tuple[int,int]=(0,0),
+    window_size: Union[int, Tuple[int,int]],
+    overlap: Union[int, Tuple[int,int]]=(0,0),
     dt: float=1.0,
-    search_area_size: Optional[Tuple[int,int]]=None,
+    search_area_size: Optional[Union[int, Tuple[int,int]]]=None,
     correlation_method: str="circular",
     subpixel_method: str="gaussian",
-    sig2noise_method: str='peak2mean',
+    sig2noise_method: Union[str, None]='peak2mean',
     width: int=2,
     normalized_correlation: bool=False,
     use_vectorized: bool=False,
@@ -1002,18 +1009,21 @@ def extended_search_area_piv(
     a NumPy vectorized solution in pyprocess.py
 
     """
-    # if search_area_size is not None:
-    #     if isinstance(search_area_size, tuple) is False and isinstance(search_area_size, list) is False:
-    #         search_area_size = [search_area_size, search_area_size]
-    # if isinstance(window_size, tuple) is False and isinstance(window_size, list) is False:
-    #     window_size = [window_size, window_size]
-    # if isinstance(overlap, tuple) is False and isinstance(overlap, list) is False:
-    #     overlap = [overlap, overlap]
-        
-    # check the inputs for validity
+    # Reformat inputs so it works for both square and rectangular windows
+    # first if we get integer window size -> make it tuple
+    if isinstance(window_size, int):
+        window_size = (window_size, window_size)
+    # same for overlap
+    if isinstance(overlap, int):
+        overlap = (overlap, overlap)
+    
+    # if no search_size, copy window_size
     if search_area_size is None:
-        search_area_size = window_size
+        search_area_size = tuple(window_size)
+    elif isinstance(search_area_size, int):
+        search_area_size = (search_area_size, search_area_size)
 
+    # verify that things are logically possible: 
     if overlap[0] >= window_size[0] or overlap[1] >= window_size[1]:
         raise ValueError("Overlap has to be smaller than the window_size")
 

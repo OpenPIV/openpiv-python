@@ -222,7 +222,7 @@ def typical_validation(
     v: np.ndarray,
     s2n: np.ndarray,
     settings: "PIVSettings"
-    ):
+    )->np.ndarray:
     """
     validation using gloabl limits and std and local median, 
 

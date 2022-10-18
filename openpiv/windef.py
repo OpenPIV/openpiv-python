@@ -7,8 +7,7 @@ Created on Fri Oct  4 14:04:04 2019
 
 import pathlib
 from dataclasses import dataclass
-from typing import Optional, Any, Tuple
-import numpy.typing as npt
+from typing import Optional, Tuple, Union
 import numpy as np
 import scipy.ndimage as scn
 
@@ -42,7 +41,7 @@ class PIVSettings:
     # "Region of interest"
     # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
     # for full image
-    roi: Any = "full"
+    roi: Union[Tuple[int, int, int, int], str] = "full"
 
     # "Image preprocessing"
     # Every image would be processed separately and the 
@@ -88,19 +87,30 @@ class PIVSettings:
     scaling_factor: float = 1.0  # scaling factor pixel/meter
     dt: float = 1.0  # time between to frames (in seconds)
 
-    # "Signal to noise ratio options (only for the last pass)"
-    # It is possible to decide if the S/N should be computed (for the last
-    # pass) or not
-    # 'True' or 'False' (only for the last pass)
-    # extract_sig2noise: False
-    # method used to calculate the signal to noise ratio 'peak2peak' or
-    # 'peak2mean'
-    sig2noise_method: str="peak2peak"  # or "peak2mean" or "None"
+    # Signal to noise ratio:
+    # we can decide to estimate it or not at every vector position
+    # we can decided if we use it for validation or only store it for 
+    # later post-processing
+    # plus we need some parameters for threshold validation and for the 
+    # calculations:
+
+    sig2noise_method: Optional[str]="peak2mean" # or "peak2peak" or "None"
     # select the width of the masked to masked out pixels next to the main
     # peak
     sig2noise_mask: int=2
     # If extract_sig2noise::False the values in the signal to noise ratio
     # output column are set to NaN
+    
+    # "Validation based on the signal to noise ratio"
+    # Note: only available when extract_sig2noise::True and only for the
+    # last pass of the interrogation
+    # Enable the signal to noise ratio validation. Options: True or False
+    # sig2noise_validate: False  # This is time consuming
+    # minmum signal to noise ratio that is need for a valid vector
+    sig2noise_threshold: float=1.0
+    sig2noise_validate: bool=True # when it's False we can save time by not
+    #estimating sig2noise ratio at all, so we can set both sig2noise_method to None 
+    
 
     # "vector validation options"
     # choose if you want to do validation of the first pass: True or False
@@ -124,14 +134,7 @@ class PIVSettings:
     # the S/N.
     median_size: int=1  # defines the size of the local median
 
-    # "Validation based on the signal to noise ratio"
-    # Note: only available when extract_sig2noise::True and only for the
-    # last pass of the interrogation
-    # Enable the signal to noise ratio validation. Options: True or False
-    # sig2noise_validate: False  # This is time consuming
-    # minmum signal to noise ratio that is need for a valid vector
-    sig2noise_threshold: float=1.0
-    sig2noise_validate: bool=True
+
 
     # "Outlier replacement or Smoothing options"
     # Replacment options for vectors which are masked as invalid by the
@@ -198,8 +201,8 @@ def piv(settings):
         # the invalid vectors are treated separately using a different
         # marker
         if image_mask is None:
-            grid_mask = np.zeros_like(u,dtype=bool)
-            mask_coords = []
+            grid_mask = np.zeros_like(u, dtype=bool)
+            mask_coords = None
         else:
             mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
@@ -215,6 +218,8 @@ def piv(settings):
         # reference
         if settings.validation_first_pass:
             invalid_mask = validation.typical_validation(u, v, s2n, settings)
+        else:
+            invalid_mask = np.zeros_like(u, dtype=bool)
         
         
 
@@ -227,13 +232,15 @@ def piv(settings):
             plt.show()
 
         # "filter to replace the values that where marked by the validation"
-        if (settings.num_iterations == 1 and settings.replace_vectors) or settings.num_iterations > 1:
+        if (settings.num_iterations == 1 and settings.replace_vectors) \
+            or (settings.num_iterations > 1):
             # for multi-pass we cannot have holes in the data
             # after the first pass
-            u, v = filters.replace_outliers(
-                u: np.ndarray,
-                v: np.ndarray,
-                invalid_mask: np.ndarray,
+            u, v, _ = filters.replace_outliers(
+                u,
+                v,
+                invalid_mask,
+                grid_mask,
                 method=settings.filter_method,
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
@@ -241,20 +248,19 @@ def piv(settings):
 
             # "adding masks to add the effect of all the validations"
         if settings.smoothn:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
+            u, *_ = smoothn.smoothn(
+                u,
+                s=settings.smoothn_p
             )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
+            v, *_ = smoothn.smoothn(
+                v,
+                s=settings.smoothn_p
             )
 
-        if image_mask is not None:
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            # enforce grid_mask that possibly destroyed by smoothing
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
-        else:
-            u = np.ma.masked_array(u, np.ma.nomask)
-            v = np.ma.masked_array(v, np.ma.nomask)
+
 
         if settings.show_all_plots:
             plt.figure()
@@ -264,17 +270,15 @@ def piv(settings):
             plt.title('before multi pass, inverted')
             plt.show()
 
-        if not isinstance(u, np.ma.MaskedArray):
-            raise ValueError("Expected masked array")
+        # if not isinstance(u, np.ma.MaskedArray):
+        #     raise ValueError("Expected masked array")
 
-        """ Multi pass """
-
+        # Multi pass
         for i in range(1, settings.num_iterations):
+            # if not isinstance(u, np.ma.MaskedArray):
+            #     raise ValueError("Expected masked array")
 
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError("Expected masked array")
-
-            x, y, u, v, s2n, mask = multipass_img_deform(
+            x, y, u, v, s2n, grid_mask = multipass_img_deform(
                 frame_a,
                 frame_b,
                 i,
@@ -600,15 +604,15 @@ def first_pass(frame_a, frame_b, settings):
 
 
 def multipass_img_deform(
-    frame_a,
-    frame_b,
-    current_iteration,
-    x_old,
-    y_old,
-    u_old,
-    v_old,
-    settings,
-    mask_coords=[],
+    frame_a: np.ndarray,
+    frame_b: np.ndarray,
+    current_iteration: int,
+    x_old: np.ndarray,
+    y_old: np.ndarray,
+    u_old: np.ndarray,
+    v_old: np.ndarray,
+    settings: "PIVSettings",
+    mask_coords: Union[np.ndarray, None]=None,
 ):
     """
         Multi pass of the PIV evaluation.
@@ -688,8 +692,8 @@ def multipass_img_deform(
     # are the coordinates of the old grid. x_int and y_int are the coordinates
     # of the new grid
 
-    window_size = settings.windowsizes[current_iteration]
-    overlap = settings.overlap[current_iteration]
+    window_size = settings.windowsizes[current_iteration] # integer only
+    overlap = settings.overlap[current_iteration] # integer only, won't work for rectangular windows
 
     x, y = get_rect_coordinates(frame_a.shape,
                            window_size,
@@ -699,20 +703,19 @@ def multipass_img_deform(
     # plus the coordinate system for y is now from top to bottom
     # and RectBivariateSpline wants an increasing set
 
+    # 1D arrays for the interpolation
     y_old = y_old[:, 0]
-    # y_old = y_old[::-1]
     x_old = x_old[0, :]
 
     y_int = y[:, 0]
-    # y_int = y_int[::-1]
     x_int = x[0, :]
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
-    ip = RectBivariateSpline(y_old, x_old, u_old.filled(0.))
+    ip = RectBivariateSpline(y_old, x_old, np.ma.filled(u_old, 0.))
     u_pre = ip(y_int, x_int)
 
-    ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
+    ip2 = RectBivariateSpline(y_old, x_old, np.ma.filled(v_old, 0.))
     v_pre = ip2(y_int, x_int)
 
     # if settings.show_plot:
@@ -772,6 +775,7 @@ def multipass_img_deform(
 
     # so we use here default circular not normalized correlation:
     # if we did not want to validate every step, remove the method
+    # and save some time on cross-correlations
     if settings.sig2noise_validate is False:
         settings.sig2noise_method = None
 
@@ -788,9 +792,10 @@ def multipass_img_deform(
         use_vectorized = settings.use_vectorized,
     )
 
+    # get_field_shape expects tuples for rectangular windows
     shapes = np.array(get_field_shape(frame_a.shape,
-                                      window_size,
-                                      overlap))
+                                      (window_size, window_size),
+                                      (overlap, overlap)))
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
@@ -799,26 +804,23 @@ def multipass_img_deform(
     v += v_pre
 
     # reapply the image mask to the new grid
-    if settings.dynamic_masking_method is not None:
+    if mask_coords is not None:
         grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-        u = np.ma.masked_array(u, mask=grid_mask)
-        v = np.ma.masked_array(v, mask=grid_mask)
     else:
-        u = np.ma.masked_array(u, np.ma.nomask)
-        v = np.ma.masked_array(v, np.ma.nomask)
+        grid_mask = np.zeros_like(u, dtype=bool)
+
+    u = np.ma.masked_array(u, mask=grid_mask)
+    v = np.ma.masked_array(v, mask=grid_mask)
 
     # validate in the multi-pass by default
-    u, v, mask = validation.typical_validation(u, v, s2n, settings)
+    invalid_mask = validation.typical_validation(u, v, s2n, settings)
 
-    if np.all(mask):
+    if np.all(invalid_mask):
         raise ValueError("Something happened in the validation")
-
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError('not a masked array anymore')
 
     if settings.show_all_plots:
         plt.figure()
-        nans = np.nonzero(mask)[0]
+        nans = np.nonzero(invalid_mask)[0]
         plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
         plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
         plt.gca().invert_yaxis()
@@ -827,22 +829,24 @@ def multipass_img_deform(
         plt.show()
 
     # we have to replace outliers
-    u, v = filters.replace_outliers(
+    u, v, _ = filters.replace_outliers(
         u,
         v,
+        invalid_mask,
+        grid_mask,
         method=settings.filter_method,
         max_iter=settings.max_filter_iteration,
         kernel_size=settings.filter_kernel_size,
     )
 
-    # reapply the image mask to the new grid
-    if settings.dynamic_masking_method is not None:
-        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-        u = np.ma.masked_array(u, mask=grid_mask)
-        v = np.ma.masked_array(v, mask=grid_mask)
-    else:
-        u = np.ma.masked_array(u, np.ma.nomask)
-        v = np.ma.masked_array(v, np.ma.nomask)
+    # # reapply the image mask to the new grid
+    # if settings.dynamic_masking_method is not None:
+    #     grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+    #     u = np.ma.masked_array(u, mask=grid_mask)
+    #     v = np.ma.masked_array(v, mask=grid_mask)
+    # else:
+    #     u = np.ma.masked_array(u, np.ma.nomask)
+    #     v = np.ma.masked_array(v, np.ma.nomask)
 
     if settings.show_all_plots:
         plt.figure()
@@ -853,7 +857,7 @@ def multipass_img_deform(
         plt.title(' after replaced outliers, red, invert')
         plt.show()
 
-    return x, y, u, v, s2n, mask
+    return x, y, u, v, s2n, grid_mask
 
 def simple_multipass(
     frame_a: np.ndarray,
@@ -876,19 +880,20 @@ def simple_multipass(
                                 settings
                                 )
 
+    grid_mask = np.zeros_like(u, dtype=bool)
 
-    u = np.ma.copy(u)
-    v = np.ma.copy(v)
+    u = np.ma.array(u, mask=grid_mask)
+    v = np.ma.array(v, mask=grid_mask)
 
     if settings.validation_first_pass:
-        u, v, _ = validation.typical_validation(u, v, s2n, settings)
-    
-    u, v = filters.replace_outliers(u, v)
+        invalid_mask = validation.typical_validation(u, v, s2n, settings)
+
+        u, v, _ = filters.replace_outliers(u, v, invalid_mask, grid_mask)
 
     # multipass 
     for i in range(1, settings.num_iterations):
 
-        x, y, u, v, s2n, mask = multipass_img_deform(
+        x, y, u, v, s2n, grid_mask = multipass_img_deform(
             frame_a,
             frame_b,
             i,
