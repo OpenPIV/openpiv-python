@@ -501,12 +501,20 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                     corr, peak1_i, peak1_j, width=width
                 )
 
-                condition = (
-                    corr_max2 == 0
-                    or peak2_i == 0
+                border_condition = (
+                    peak2_i == 0
                     or peak2_i == corr.shape[0] - 1
                     or peak2_j == 0
                     or peak2_j == corr.shape[1] - 1
+                )
+
+                condition = (
+                    # non-valid second peak
+                    corr_max2 == 0
+                    or (
+                    # maybe a valid peak at the border, bad sign
+                    border_condition and corr_max2 > 0.5*corr_max1[i]
+                    )
                 )
                 if condition:  # mark failed peak2
                     corr_max2 = np.nan
