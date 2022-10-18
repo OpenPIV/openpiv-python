@@ -103,7 +103,7 @@ def replace_outliers(
     u: np.ndarray,
     v: np.ndarray,
     invalid_mask: np.ndarray,
-    grid_mask: np.ndarray,
+    grid_mask: Optional[np.ndarray]=None,
     w: Optional[np.ndarray]=None,
     method: str="localmean",
     max_iter: int=5,
@@ -189,6 +189,8 @@ def replace_outliers(
             kernel_size=kernel_size
         )
 
+    if grid_mask is None:
+        grid_mask = np.zeros_like(u, dtype=bool)
     
     # reinforce grid_mask
     uf = np.ma.masked_array(uf, mask=grid_mask)

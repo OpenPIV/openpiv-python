@@ -558,7 +558,6 @@ def sig2noise_ratio(
                 sig2noise[i] = corr_max1[i] / corr_max2
 
     elif sig2noise_method == "peak2mean":  # only one loop
-        print('peak2mean')
         for i, corr in enumerate(correlation):
             # compute first peak position
             (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)

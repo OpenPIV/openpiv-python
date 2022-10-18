@@ -19,12 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import warnings
-from typing import Optional
-import numpy.typing as npt
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
-from openpiv.windef import PIVSettings
 
 
 
@@ -121,48 +118,48 @@ def global_std(
     return ind
 
 
-# def sig2noise_val(
-#     s2n: np.ndarray,
-#     threshold: float=1.05,
-#     )->np.ndarray:
-#     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
+def sig2noise_val(
+    s2n: np.ndarray,
+    threshold: float=1.05,
+    )->np.ndarray:
+    """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
-#     Replace spurious vectors with zero if signal to noise ratio
-#     is below a specified threshold.
+    Replace spurious vectors with zero if signal to noise ratio
+    is below a specified threshold.
 
-#     Parameters
-#     ----------
-#     u : 2d or 3d np.ndarray
-#         a two or three dimensional array containing the u velocity component.
+    Parameters
+    ----------
+    u : 2d or 3d np.ndarray
+        a two or three dimensional array containing the u velocity component.
 
-#     v : 2d or 3d np.ndarray
-#         a two or three dimensional array containing the v velocity component.
+    v : 2d or 3d np.ndarray
+        a two or three dimensional array containing the v velocity component.
 
-#     s2n : 2d np.ndarray
-#         a two or three dimensional array containing the value  of the signal to
-#         noise ratio from cross-correlation function.
-#     w : 2d or 3d np.ndarray
-#         a two or three dimensional array containing the w (in z-direction)
-#         velocity component.
+    s2n : 2d np.ndarray
+        a two or three dimensional array containing the value  of the signal to
+        noise ratio from cross-correlation function.
+    w : 2d or 3d np.ndarray
+        a two or three dimensional array containing the w (in z-direction)
+        velocity component.
 
-#     threshold: float
-#         the signal to noise ratio threshold value.
+    threshold: float
+        the signal to noise ratio threshold value.
 
-#     Returns
-#     -------
+    Returns
+    -------
 
-#     mask : boolean 2d np.ndarray
-#         a boolean array. True elements corresponds to outliers.
+    mask : boolean 2d np.ndarray
+        a boolean array. True elements corresponds to outliers.
 
-#     References
-#     ----------
-#     R. D. Keane and R. J. Adrian, Measurement Science & Technology, 1990,
-#         1, 1202-1215.
+    References
+    ----------
+    R. D. Keane and R. J. Adrian, Measurement Science & Technology, 1990,
+        1, 1202-1215.
 
-#     """
-#       # type: ignore
+    """
+    mask_s2n = s2n < threshold
 
-#     return ind 
+    return mask_s2n 
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
@@ -295,7 +292,7 @@ def typical_validation(
 
 
     if settings.sig2noise_validate:
-        mask_s2n = s2n < settings.sig2noise_threshold  # type: ignore
+        mask_s2n = sig2noise_val(s2n, settings.sig2noise_threshold)
         
         # u[mask_s2n] = np.ma.masked
         # v[mask_s2n] = np.ma.masked
