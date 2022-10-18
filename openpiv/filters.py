@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def _gaussian_kernel(half_width: int=1)-> npt.ArrayLike:
+def _gaussian_kernel(half_width: int=1)-> np.ndarray:
     """A normalized 2D Gaussian kernel array
 
     Parameters
@@ -49,7 +49,7 @@ def _gaussian_kernel(half_width: int=1)-> npt.ArrayLike:
     return g / g.sum()
 
 
-def gaussian_kernel(sigma:float, truncate:float=4.0)->npt.ArrayLike:
+def gaussian_kernel(sigma:float, truncate:float=4.0)->np.ndarray:
     """
     Return Gaussian that truncates at the given number of standard deviations.
     """
@@ -66,10 +66,10 @@ def gaussian_kernel(sigma:float, truncate:float=4.0)->npt.ArrayLike:
 
 
 def gaussian(
-    u: npt.ArrayLike,
-    v: npt.ArrayLike,
+    u: np.ndarray,
+    v: np.ndarray,
     half_width: int=1
-    )->Tuple[npt.ArrayLike, npt.ArrayLike]:
+    )->Tuple[np.ndarray, np.ndarray]:
     """Smooths the velocity field with a Gaussian kernel.
 
     Parameters
@@ -100,14 +100,15 @@ def gaussian(
 
 
 def replace_outliers(
-    u: npt.ArrayLike,
-    v: npt.ArrayLike,
-    w: Optional[npt.ArrayLike]=None,
+    u: np.ndarray,
+    v: np.ndarray,
+    invalid_mask: np.ndarray,
+    w: Optional[np.ndarray]=None,
     method: str="localmean",
     max_iter: int=5,
     tol: float=1e-3,
     kernel_size: int=1,
-    )-> Tuple[npt.ArrayLike, ...]:
+    )-> Tuple[np.ndarray, ...]:
     """Replace invalid vectors in an velocity field using an iterative image
         inpainting algorithm.
 
@@ -160,6 +161,9 @@ def replace_outliers(
         been replaced
 
     """
+    # we shall now replace NaNs only at invalid_mask positions,
+    # regardless the grid_mask (which is a user-provided masked region)
+    
     uf = replace_nans(
         u, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size

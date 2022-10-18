@@ -24,6 +24,7 @@ import numpy.typing as npt
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
+from openpiv.windef import PIVSettings
 
 
 
@@ -69,10 +70,10 @@ def global_val(u, v, u_thresholds, v_thresholds):
 
 
 def global_std(
-    u: npt.ArrayLike,
-    v: npt.ArrayLike,
+    u: np.ndarray,
+    v: np.ndarray,
     std_threshold: int=5,
-    )->npt.ArrayLike:
+    )->np.ndarray:
     """Eliminate spurious vectors with a global threshold defined by the
     standard deviation
 
@@ -121,9 +122,9 @@ def global_std(
 
 
 # def sig2noise_val(
-#     s2n: npt.ArrayLike,
+#     s2n: np.ndarray,
 #     threshold: float=1.05,
-#     )->npt.ArrayLike:
+#     )->np.ndarray:
 #     """Eliminate spurious vectors from cross-correlation signal to noise ratio.
 
 #     Replace spurious vectors with zero if signal to noise ratio
@@ -216,28 +217,35 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     return ind
 
 
-def typical_validation(u, v, s2n, settings):
+def typical_validation(
+    u: np.ndarray,
+    v: np.ndarray,
+    s2n: np.ndarray,
+    settings: "PIVSettings"
+    ):
     """
     validation using gloabl limits and std and local median, 
 
     with a special option of 'no_std' for the case of completely
-    uniform shift, e.g. in tests. 
+    uniform shift, e.g. in tests.
 
-    see Settings() for the parameters:
+    see windef.PIVSettings() for the parameters:
 
-    MinMaxU : two elements tuple
-        sets the limits of the u displacment component
-        Used for validation.
+        MinMaxU : two elements tuple
+            sets the limits of the u displacment component
+            Used for validation.
 
-    MinMaxV : two elements tuple
-        sets the limits of the v displacment component
-        Used for validation.
+        MinMaxV : two elements tuple
+            sets the limits of the v displacment component
+            Used for validation.
 
-    std_threshold : float
-        sets the  threshold for the std validation
+        std_threshold : float
+            sets the  threshold for the std validation
 
-    median_threshold : float
-        sets the threshold for the median validation
+        median_threshold : float
+            sets the threshold for the median validation
+
+    
     """
 
     if settings.show_all_plots:
@@ -250,22 +258,22 @@ def typical_validation(u, v, s2n, settings):
     # Global validation
     mask_g = global_val(u, v, settings.min_max_u_disp, settings.min_max_v_disp)
 
-    u[mask_g] = np.ma.masked
-    v[mask_g] = np.ma.masked
+    # u[mask_g] = np.ma.masked
+    # v[mask_g] = np.ma.masked
 
-    if settings.show_all_plots:
-        plt.quiver(u, v, color='m')
+    # if settings.show_all_plots:
+    #     plt.quiver(u, v, color='m')
 
     mask_s = global_std(
         u, v, std_threshold=settings.std_threshold
     )
 
-    u[mask_s] = np.ma.masked
-    v[mask_s] = np.ma.masked
+    # u[mask_s] = np.ma.masked
+    # v[mask_s] = np.ma.masked
 
     # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
-    if settings.show_all_plots:
-        plt.quiver(u,v,color='k')
+    # if settings.show_all_plots:
+    #     plt.quiver(u,v,color='k')
     
 
     mask_m = local_median_val(
@@ -276,32 +284,32 @@ def typical_validation(u, v, s2n, settings):
         size=settings.median_size,
     )
     
-    u[mask_m] = np.ma.masked
-    v[mask_m] = np.ma.masked
+    # u[mask_m] = np.ma.masked
+    # v[mask_m] = np.ma.masked
     
-    if settings.show_all_plots:
-        plt.quiver(u,v,color='r')
+    # if settings.show_all_plots:
+    #     plt.quiver(u,v,color='r')
 
     # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
     mask = mask_g | mask_m | mask_s
 
 
     if settings.sig2noise_validate:
-        mask_s2n = s2n < settings.sig2noise_threshold
+        mask_s2n = s2n < settings.sig2noise_threshold  # type: ignore
         
-        u[mask_s2n] = np.ma.masked
-        v[mask_s2n] = np.ma.masked
+        # u[mask_s2n] = np.ma.masked
+        # v[mask_s2n] = np.ma.masked
 
         # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
-        if settings.show_all_plots:
-            plt.quiver(u,v,color='g')
-            plt.show()
+        # if settings.show_all_plots:
+        #     plt.quiver(u,v,color='g')
+        #     plt.show()
 
         if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
             plt.figure()
-            plt.hist(s2n[s2n>0].flatten(),31)
+            plt.hist( s2n[s2n>0], 31)
             plt.show()
 
         mask += mask_s2n
 
-    return u, v, mask
+    return mask

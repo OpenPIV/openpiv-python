@@ -23,11 +23,11 @@ threshold = 0.25
 
 
 # <------
-shift_u = -3.5  # shift to the left, should be placed in columns, axis=1
+shift_u = -3  # shift to the left, should be placed in columns, axis=1
 # ^
 # |
 # |
-shift_v = 2.2   # shift upwards, should be placed in rows, axis=0 
+shift_v = 2   # shift upwards, should be placed in rows, axis=0 
 
 
 def create_pair(image_size=32, u=shift_u, v=shift_v):

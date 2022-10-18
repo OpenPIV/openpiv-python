@@ -1,12 +1,14 @@
-import numpy.lib.stride_tricks
-import numpy as np
-from scipy.fft import rfft2 as rfft2_, irfft2 as irfft2_, fftshift as fftshift_
-from numpy import ma
-from scipy.signal import convolve2d as conv_
-from numpy import log
-
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
+
+from typing import Optional, Tuple, Callable
+import numpy.lib.stride_tricks
+import numpy as np
+from numpy import log
+from numpy import ma
+from numpy.fft import rfft2 as rfft2_, irfft2 as irfft2_, fftshift as fftshift_
+from scipy.signal import convolve2d as conv_
+
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -26,7 +28,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def get_field_shape(image_size, search_area_size, overlap):
+def get_field_shape(
+    image_size: Tuple[int,int],
+    search_area_size: Tuple[int,int],
+    overlap: Tuple[int,int],
+    )->Tuple[int,int]:
     """Compute the shape of the resulting flow field.
 
     Given the image size, the interrogation window size and
@@ -54,15 +60,22 @@ def get_field_shape(image_size, search_area_size, overlap):
     field_shape : 2-element tuple
         the shape of the resulting flow field
     """
-    field_shape = (np.array(image_size) - np.array(search_area_size)) // (
+    field_shape = (np.array(image_size) - np.array(search_area_size)) // (  # type: ignore
         np.array(search_area_size) - np.array(overlap)
     ) + 1
     
     return field_shape
 
 
-def get_coordinates(image_size, search_area_size, overlap, center_on_field = True):
+def get_coordinates(
+    image_size: Tuple[int,int],
+    search_area_size: int,
+    overlap: int,
+    center_on_field: bool=True
+    )->Tuple[np.ndarray, np.ndarray]:
     """Compute the x, y coordinates of the centers of the interrogation windows.
+    for the SQUARE windows only, see also get_rect_coordinates
+
     the origin (0,0) is like in the image, top left corner
     positive x is an increasing column index from left to right
     positive y is increasing row index, from top to bottom
@@ -100,10 +113,11 @@ def get_coordinates(image_size, search_area_size, overlap, center_on_field = Tru
 
     """
 
-    # get shape of the resulting flow field
+    # get shape of the resulting flow field as a 2 component array 
     field_shape = get_field_shape(image_size,
-                                  search_area_size,
-                                  overlap)
+                                  (search_area_size, search_area_size),
+                                  (overlap, overlap)
+                                  )
 
     # compute grid coordinates of the search area window centers
     # note the field_shape[1] (columns) for x
@@ -121,7 +135,7 @@ def get_coordinates(image_size, search_area_size, overlap, center_on_field = Tru
     # extreme left/right or top/bottom
     # have the same distance to the window edges. For simplicity only integer
     # movements are allowed.
-    if center_on_field == True:
+    if center_on_field is True:
         x += (
             image_size[1]
             - 1
@@ -137,24 +151,35 @@ def get_coordinates(image_size, search_area_size, overlap, center_on_field = Tru
         # the origin 0,0 is at top left
         # the units are pixels
 
-    return np.meshgrid(x, y)
+    X, Y = np.meshgrid(x,y)
+
+    return (X, Y)
 
 
-def get_rect_coordinates(frame_a, window_size, overlap, center_on_field = False):
+def get_rect_coordinates(
+    image_size: Tuple[int,int],
+    window_size: Tuple[int,int], # (32,16)
+    overlap: Tuple[int,int],
+    center_on_field: bool=False,
+    ):
     '''
     Rectangular grid version of get_coordinates.
     '''
-    if isinstance(window_size, tuple) == False and isinstance(window_size, list) == False:
-        window_size = [window_size, window_size]
-    if isinstance(overlap, tuple) == False and isinstance(overlap, list) == False:
-        overlap = [overlap, overlap]
-    _, y = get_coordinates(frame_a, window_size[0], overlap[0], center_on_field = False)
-    x, _ = get_coordinates(frame_a, window_size[1], overlap[1], center_on_field = False)
+    # @alexlib why the center_on_field is False? 
+    # todo: test True as well 
+    _, y = get_coordinates(image_size, window_size[0], overlap[0], center_on_field=center_on_field)
+    x, _ = get_coordinates(image_size, window_size[1], overlap[1], center_on_field=center_on_field)
+
+    X,Y = np.meshgrid(x[0,:], y[:,0])
     
-    return np.meshgrid(x[0,:], y[:,0])
+    return (X, Y)
 
 
-def sliding_window_array(image, window_size = 64, overlap = 32):
+def sliding_window_array(
+    image: np.ndarray, 
+    window_size: Tuple[int,int]=(64,64),
+    overlap: Tuple[int,int]=(32,32),
+    )-> np.ndarray:
     '''
     This version does not use numpy as_strided and is much more memory efficient.
     Basically, we have a 2d array and we want to perform cross-correlation
@@ -163,10 +188,10 @@ def sliding_window_array(image, window_size = 64, overlap = 32):
     with three dimension, of size (n_windows, window_size, window_size), in
     which each slice, (along the first axis) is an interrogation window. 
     '''
-    if isinstance(window_size, tuple) == False and isinstance(window_size, list) == False:
-        window_size = [window_size, window_size]
-    if isinstance(overlap, tuple) == False and isinstance(overlap, list) == False:
-        overlap = [overlap, overlap]
+    # if isinstance(window_size, tuple) is False and isinstance(window_size, list) is False:
+    #     window_size = [window_size, window_size]
+    # if isinstance(overlap, tuple) is False and isinstance(overlap, list) is False:
+    #     overlap = [overlap, overlap]
 
     x, y = get_rect_coordinates(image.shape, window_size, overlap, center_on_field = False)
     x = (x - window_size[1]//2).astype(int); y = (y - window_size[0]//2).astype(int)
@@ -446,7 +471,11 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
         return subp_peak_position
 
 
-def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
+def sig2noise_ratio(
+    correlation: np.ndarray,
+    sig2noise_method: str="peak2peak",
+    width: int=2
+    )-> np.ndarray:
     """
     Computes the signal to noise ratio from the correlation map.
 
@@ -514,6 +543,7 @@ def sig2noise_ratio(correlation, sig2noise_method="peak2peak", width=2):
                 sig2noise[i] = corr_max1[i] / corr_max2
 
     elif sig2noise_method == "peak2mean":  # only one loop
+        print('peak2mean')
         for i, corr in enumerate(correlation):
             # compute first peak position
             (peak1_i, peak1_j), corr_max1[i] = find_first_peak(corr)
@@ -600,7 +630,7 @@ def vectorized_sig2noise_ratio(correlation,
             out=np.zeros_like(peaks1),
             where=(peaks2 > 0.0)
         )
-        peak2peak[flag==True] = 0 # replace invalid values
+        peak2peak[flag is True] = 0 # replace invalid values
         return peak2peak
     
     elif sig2noise_method == "peak2mean":
@@ -621,19 +651,22 @@ def vectorized_sig2noise_ratio(correlation,
             out=np.zeros_like(peaks1max),
             where=(peaks2mean > 0.0)
         )
-        peak2mean[flag == True] = 0 # replace invalid values
+        peak2mean[flag is True] = 0 # replace invalid values
         return peak2mean
     else:
         raise ValueError(f"sig2noise_method not supported: {sig2noise_method}")
         
         
-def fft_correlate_images(image_a, image_b,
-                         correlation_method="circular",
-                         normalized_correlation=True,
-                         conj = np.conj,
-                         rfft2 = rfft2_,
-                         irfft2 = irfft2_,
-                         fftshift = fftshift_):
+def fft_correlate_images(
+    image_a: np.ndarray,
+    image_b: np.ndarray,
+    correlation_method: str="circular",
+    normalized_correlation: bool=True,
+    conj: Callable=np.conj,
+    rfft2 = rfft2_,
+    irfft2 = irfft2_,
+    fftshift = fftshift_,
+    )->np.ndarray:
     """ FFT based cross correlation
     of two images with multiple views of np.stride_tricks()
     The 2D FFT should be applied to the last two axes (-2,-1) and the
@@ -853,18 +886,18 @@ def fft_correlate_windows(window_a, window_b,
 
 
 def extended_search_area_piv(
-    frame_a,
-    frame_b,
-    window_size,
-    overlap=0,
-    dt=1.0,
-    search_area_size=None,
-    correlation_method="circular",
-    subpixel_method="gaussian",
-    sig2noise_method='peak2mean',
-    width=2,
-    normalized_correlation=False,
-    use_vectorized = False,
+    frame_a: np.ndarray,
+    frame_b: np.ndarray,
+    window_size: Tuple[int,int], # for rectangular windows
+    overlap: Tuple[int,int]=(0,0),
+    dt: float=1.0,
+    search_area_size: Optional[Tuple[int,int]]=None,
+    correlation_method: str="circular",
+    subpixel_method: str="gaussian",
+    sig2noise_method: str='peak2mean',
+    width: int=2,
+    normalized_correlation: bool=False,
+    use_vectorized: bool=False,
 ):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
@@ -961,13 +994,13 @@ def extended_search_area_piv(
     a NumPy vectorized solution in pyprocess.py
 
     """
-    if search_area_size is not None:
-        if isinstance(search_area_size, tuple) == False and isinstance(search_area_size, list) == False:
-            search_area_size = [search_area_size, search_area_size]
-    if isinstance(window_size, tuple) == False and isinstance(window_size, list) == False:
-        window_size = [window_size, window_size]
-    if isinstance(overlap, tuple) == False and isinstance(overlap, list) == False:
-        overlap = [overlap, overlap]
+    # if search_area_size is not None:
+    #     if isinstance(search_area_size, tuple) is False and isinstance(search_area_size, list) is False:
+    #         search_area_size = [search_area_size, search_area_size]
+    # if isinstance(window_size, tuple) is False and isinstance(window_size, list) is False:
+    #     window_size = [window_size, window_size]
+    # if isinstance(overlap, tuple) is False and isinstance(overlap, list) is False:
+    #     overlap = [overlap, overlap]
         
     # check the inputs for validity
     if search_area_size is None:
@@ -1014,7 +1047,7 @@ def extended_search_area_piv(
     corr = fft_correlate_images(aa, bb,
                                 correlation_method=correlation_method,
                                 normalized_correlation=normalized_correlation)
-    if use_vectorized == True:
+    if use_vectorized is True:
         u, v = vectorized_correlation_to_displacements(corr, n_rows, n_cols,
                                            subpixel_method=subpixel_method)
     else:
@@ -1023,7 +1056,7 @@ def extended_search_area_piv(
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
-        if use_vectorized == True:
+        if use_vectorized is True:
             sig2noise = vectorized_sig2noise_ratio(
                 corr, sig2noise_method=sig2noise_method, width=width
             )
@@ -1075,11 +1108,11 @@ def correlation_to_displacement(corr, n_rows, n_cols,
     return (u, v)
 
 
-def vectorized_correlation_to_displacements(corr, 
-                                            n_rows = None,
-                                            n_cols = None,
-                                            subpixel_method = 'gaussian', 
-                                            eps = 1e-7
+def vectorized_correlation_to_displacements(corr: np.ndarray, 
+                                            n_rows: Optional[int]=None,
+                                            n_cols: Optional[int]=None,
+                                            subpixel_method: str='gaussian',
+                                            eps: float=1e-7
 ):
     """
     Correlation maps are converted to displacement for each interrogation

@@ -145,7 +145,7 @@ def prepare_mask_on_grid(x, y, mask_coords):
     
     """
     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-    return xymask.reshape(x.shape).astype(np.int)
+    return xymask.reshape(x.shape)
 
 
 def normalize_array(array, axis = None):
@@ -557,7 +557,7 @@ def prepare_images(
     file_a: pathlib.Path,
     file_b: pathlib.Path,
     settings: "Settings",
-    )-> Tuple[npt.ArrayLike, npt.ArrayLike, npt.ArrayLike]:
+    )-> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ prepares two images for the PIV pass
 
     Args:
@@ -590,8 +590,8 @@ def prepare_images(
 
     if settings.show_all_plots:
         _, ax = plt.subplots(1, 1)
-        ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
-        ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
+        ax.imshow(frame_a, cmap='Reds')
+        ax.imshow(frame_b, cmap='Blues', alpha=.5)
         plt.show()
 
     if settings.static_mask is not None:

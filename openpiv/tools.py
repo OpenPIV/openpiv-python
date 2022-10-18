@@ -42,7 +42,7 @@ def natural_sort(file_list: List[pathlib.Path])-> List[pathlib.Path]:
     # return sorted(file_list, key=alphanum_key)
     return natsorted(file_list, key=str)
 
-def sorted_unique(array: npt.ArrayLike)->npt.ArrayLike:
+def sorted_unique(array: np.ndarray)->np.ndarray:
     """Creates sorted unique array """
     uniq, index = np.unique(array, return_index=True)
     return uniq[index.argsort()]
@@ -336,11 +336,11 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
 
 
 def save(
-    x: npt.ArrayLike,
-    y: npt.ArrayLike,
-    u: npt.ArrayLike,
-    v: npt.ArrayLike, 
-    mask: npt.ArrayLike,
+    x: np.ndarray,
+    y: np.ndarray,
+    u: np.ndarray,
+    v: np.ndarray, 
+    mask: np.ndarray,
     filename: pathlib.Path, 
     fmt: str="%8.4f", 
     delimiter: str="\t",

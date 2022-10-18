@@ -56,7 +56,7 @@ class PIVSettings:
     dynamic_masking_filter_size: int = 7
 
     # Static masking applied to all images, A,B
-    static_mask: Optional[npt.ArrayLike] = None # or a boolean matrix of image shape
+    static_mask: Optional[np.ndarray] = None # or a boolean matrix of image shape
 
     # "Processing Parameters"
     correlation_method: str="circular"  # ['circular', 'linear']
@@ -173,7 +173,9 @@ def piv(settings):
 
         file_a, file_b, counter = args
 
-        # frame_a, frame_b are masked
+        # frame_a, frame_b are masked as black where we do not 
+        # want to get vectors. later piv would mark it as completely black
+        # and set s2n to invalid
         frame_a, frame_b, image_mask = preprocess.prepare_images(
             file_a,
             file_b,
@@ -192,8 +194,11 @@ def piv(settings):
             plt.quiver(x, y, u, -v, color='b')
 
         # " Image masking "
+        # note that grid_mask keeps only the user-supplied image masking
+        # the invalid vectors are treated separately using a different
+        # marker
         if image_mask is None:
-            grid_mask = np.ma.nomask
+            grid_mask = np.zeros_like(u,dtype=bool)
             mask_coords = []
         else:
             mask_coords = preprocess.mask_coordinates(image_mask)
@@ -205,8 +210,11 @@ def piv(settings):
         u = np.ma.masked_array(u, mask=grid_mask)
         v = np.ma.masked_array(v, mask=grid_mask)
 
+        # validation also masks the u,v and returns another invalid_mask
+        # the question is whether to merge the two masks or just keep for the 
+        # reference
         if settings.validation_first_pass:
-            u, v, invalid_mask = validation.typical_validation(u, v, s2n, settings)
+            invalid_mask = validation.typical_validation(u, v, s2n, settings)
         
         
 
@@ -219,21 +227,13 @@ def piv(settings):
             plt.show()
 
         # "filter to replace the values that where marked by the validation"
-        if settings.num_iterations == 1 and settings.replace_vectors:
+        if (settings.num_iterations == 1 and settings.replace_vectors) or settings.num_iterations > 1:
             # for multi-pass we cannot have holes in the data
             # after the first pass
             u, v = filters.replace_outliers(
-                u,
-                v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size,
-            )
-        # don't even check if it's true or false
-        elif settings.num_iterations > 1:
-            u, v = filters.replace_outliers(
-                u,
-                v,
+                u: np.ndarray,
+                v: np.ndarray,
+                invalid_mask: np.ndarray,
                 method=settings.filter_method,
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
@@ -856,8 +856,8 @@ def multipass_img_deform(
     return x, y, u, v, s2n, mask
 
 def simple_multipass(
-    frame_a: npt.ArrayLike,
-    frame_b: npt.ArrayLike,
+    frame_a: np.ndarray,
+    frame_b: np.ndarray,
     settings: "PIVSettings",
     windows: Optional[Tuple[int, ...]]=None,
     )->Tuple:
