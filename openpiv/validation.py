@@ -19,13 +19,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import warnings
+from typing import Tuple
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
 
 
 
-def global_val(u, v, u_thresholds, v_thresholds):
+def global_val(
+    u: np.ndarray,
+    v: np.ndarray,
+    u_thresholds: Tuple[int, int],
+    v_thresholds: Tuple[int, int],
+    )-> np.ndarray:
     """Eliminate spurious vectors with a global threshold.
 
     This validation method tests for the spatial consistency of the data

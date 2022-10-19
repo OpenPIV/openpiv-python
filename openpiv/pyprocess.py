@@ -732,8 +732,8 @@ def fft_correlate_images(
         fslice = (slice(0, image_a.shape[0]),
                   slice((fsize[0]-s1[0])//2, (fsize[0]+s1[0])//2),
                   slice((fsize[1]-s1[1])//2, (fsize[1]+s1[1])//2))
-        f2a = conj(rfft2(image_a, fsize, axes=(-2, -1)))
-        f2b = rfft2(image_b, fsize, axes=(-2, -1))
+        f2a = conj(rfft2(image_a, fsize, axes=(-2, -1)))  # type: ignore
+        f2b = rfft2(image_b, fsize, axes=(-2, -1))  # type: ignore
         corr = fftshift(irfft2(f2a * f2b).real, axes=(-2, -1))[fslice]
     elif correlation_method == "circular":
         f2a = conj(rfft2(image_a))

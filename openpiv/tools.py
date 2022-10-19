@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import pathlib
 import multiprocessing
-from typing import Any, NoReturn, List, Optional
+from typing import Any, Union, List, Optional
 # import re
 
 import numpy as np
@@ -49,9 +49,9 @@ def sorted_unique(array: np.ndarray)->np.ndarray:
 
 
 def display_vector_field(
-    filename: pathlib.Path,
+    filename: Union[pathlib.Path, str],
     on_img: bool=False,
-    image_name: Optional[pathlib.Path]=None,
+    image_name: Optional[Union[pathlib.Path,str]]=None,
     window_size: int=32,
     scaling_factor: float=1.,
     ax: Optional[Any]=None,
@@ -346,7 +346,7 @@ def save(
     u: np.ndarray,
     v: np.ndarray, 
     mask: np.ndarray,
-    filename: pathlib.Path, 
+    filename: Union[pathlib.Path,str], 
     fmt: str="%8.4f", 
     delimiter: str="\t",
     )-> None:
