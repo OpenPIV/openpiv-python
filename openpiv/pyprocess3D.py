@@ -428,7 +428,12 @@ def nextpower2(i):
 
 
 def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
-    # check the inputs for validity
+    """ check the inputs for validity """
+    # if isinstance(window_size, int):
+    #     window_size = (window_size, window_size)
+    # if isinstance(search_area_size, int):
+    #     search_area_size = (search_area_size, search_area_size)
+
     search_area_size = [
         ws if x == 0 or x is None else x for x, ws in zip(search_area_size, window_size)
     ]

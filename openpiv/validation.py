@@ -128,10 +128,7 @@ def sig2noise_val(
     s2n: np.ndarray,
     threshold: float=1.05,
     )->np.ndarray:
-    """Eliminate spurious vectors from cross-correlation signal to noise ratio.
-
-    Replace spurious vectors with zero if signal to noise ratio
-    is below a specified threshold.
+    """ Marks spurious vectors if signal to noise ratio is below a specified threshold.
 
     Parameters
     ----------

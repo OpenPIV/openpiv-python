@@ -50,12 +50,13 @@ def sorted_unique(array: np.ndarray)->np.ndarray:
 
 def display_vector_field(
     filename: Union[pathlib.Path, str],
-    on_img: bool=False,
+    on_img: Optional[bool]=False,
     image_name: Optional[Union[pathlib.Path,str]]=None,
-    window_size: int=32,
-    scaling_factor: float=1.,
+    window_size: Optional[int]=32,
+    scaling_factor: Optional[float]=1.,
     ax: Optional[Any]=None,
-    width: float=0.0025,
+    width: Optional[float]=0.0025,
+    show_invalid: Optional[bool]=True,
     **kw
 ):
     """ Displays quiver plot of the data stored in the file 
@@ -81,8 +82,8 @@ def display_vector_field(
         when on_img is True, provide the scaling factor to scale the background
         image to the vector field
     
-    widim : bool, optional, default is False
-        when widim == True, the y values are flipped, i.e. y = y.max() - y
+    show_invalid: bool, show or not the invalid vectors, default is True
+
         
     Key arguments   : (additional parameters, optional)
         *scale*: [None | float]
@@ -123,7 +124,7 @@ def display_vector_field(
         im = negative(im)  # plot negative of the image for more clarity
         xmax = np.amax(x) + window_size / (2 * scaling_factor)
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
-        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
+        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])    
 
     invalid = mask.astype("bool")  
     valid = ~invalid
@@ -135,12 +136,27 @@ def display_vector_field(
     #     y = y.max() - y
     #     v *= -1
 
-    if len(x[invalid]) > 0:  
+    ax.quiver(
+        x[valid],
+        y[valid],
+        u[valid],
+        v[valid],
+        color="b",
+        width=width,
+        **kw
+        )
+        
+    if show_invalid and len(invalid) > 0:
         ax.quiver(
-                x[invalid], y[invalid], u[invalid], v[invalid], \
-                    color="r", width=width, **kw)
-    ax.quiver(x[valid], y[valid], u[valid], v[valid], \
-        color="b", width=width, **kw)
+                x[invalid],
+                y[invalid],
+                u[invalid],
+                v[invalid],
+                color="r",
+                width=width,
+                **kw,
+                )
+    
     
     # if on_img is False:
     #     ax.invert_yaxis()

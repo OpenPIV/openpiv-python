@@ -103,13 +103,12 @@ def replace_outliers(
     u: np.ndarray,
     v: np.ndarray,
     invalid_mask: np.ndarray,
-    grid_mask: Optional[np.ndarray]=None,
     w: Optional[np.ndarray]=None,
     method: str="localmean",
     max_iter: int=5,
     tol: float=1e-3,
     kernel_size: int=1,
-    )-> Tuple[np.ndarray, np.ndarray,np.ndarray]:
+    )-> Tuple[np.ndarray, ...]:
     """Replace invalid vectors in an velocity field using an iterative image
         inpainting algorithm.
 
@@ -169,9 +168,15 @@ def replace_outliers(
     # we shall now replace NaNs only at invalid_mask positions,
     # regardless the grid_mask (which is a user-provided masked region)
 
+    
+    if not isinstance(u, np.ma.MaskedArray):
+        u = np.ma.masked_array(u, mask=np.ma.nomask)
+        
+    # store grid_mask for reinforcement
+    grid_mask = u.mask.copy()
+
     u[invalid_mask] = np.nan
     v[invalid_mask] = np.nan
-    wf = np.empty_like(u)
     
     uf = replace_nans(
         u, method=method, max_iter=max_iter, tol=tol,
@@ -182,19 +187,17 @@ def replace_outliers(
         kernel_size=kernel_size
     )
 
+ 
+    uf = np.ma.masked_array(uf, mask=grid_mask)
+    vf = np.ma.masked_array(vf, mask=grid_mask)
+
     if isinstance(w, np.ndarray):
         w[invalid_mask] = np.nan
         wf = replace_nans(
             w, method=method, max_iter=max_iter, tol=tol,
             kernel_size=kernel_size
         )
-
-    if grid_mask is None:
-        grid_mask = np.zeros_like(u, dtype=bool)
+        wf = np.ma.masked_array(wf, mask=grid_mask)
+        return uf, vf, wf
     
-    # reinforce grid_mask
-    uf = np.ma.masked_array(uf, mask=grid_mask)
-    vf = np.ma.masked_array(vf, mask=grid_mask)
-    wf = np.ma.masked_array(wf, mask=grid_mask)
-
-    return uf, vf, wf
+    return uf, vf

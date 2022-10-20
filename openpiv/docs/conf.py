@@ -11,7 +11,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys
+import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -55,15 +56,15 @@ source_suffix = {
 master_doc = 'index'
 
 # General information about the project.
-project = u'OpenPIV'
-copyright = u'2014, OpenPIV group'
+project = 'OpenPIV'
+copyright = '2014, OpenPIV team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.24.0'
+version = '0.24.4a'
 # The full version, including alpha/beta/rc tags.
 # release = '0.0.1a'
 
@@ -136,7 +137,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -229,8 +230,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'openpiv', u'OpenPIV Documentation',
-     [u'OpenPIV group'], 1)
+    ('index', 'openpiv', 'OpenPIV Documentation',
+     ['OpenPIV group'], 1)
 ]
 
 # If true, show URL addresses after external links.

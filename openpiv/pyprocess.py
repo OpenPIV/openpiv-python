@@ -1112,7 +1112,7 @@ def correlation_to_displacement(corr, n_rows, n_cols,
             # the find_subpixel_peak_position returns
             peak = np.array(find_subpixel_peak_position(corr[k*n_cols+m, :, :],
                             subpixel_method=subpixel_method)) -\
-                            default_peak_position
+                            default_peak_position  # type: ignore
 
         # the horizontal shift from left to right is the u
         # the vertical displacement from top to bottom (increasing row) is v

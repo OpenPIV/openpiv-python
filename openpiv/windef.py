@@ -162,6 +162,88 @@ class PIVSettings:
 
     invert: bool=False  # for the test_invert
 
+def prepare_images(
+    file_a: pathlib.Path,
+    file_b: pathlib.Path,
+    settings: "PIVSettings",
+    )-> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """ prepares two images for the PIV pass
+
+    Args:
+        file_a (pathlib.Path): filename of frame A
+        file_b (pathlib.Path): filename of frame B
+        settings (_type_): windef.Settings() 
+    """
+    image_mask = None
+
+        # read images into numpy arrays
+    frame_a = tools.imread(settings.filepath_images / file_a)
+    frame_b = tools.imread(settings.filepath_images / file_b)
+
+    
+    # crop to roi
+    if settings.roi == "full":
+        pass
+    else:
+        frame_a = frame_a[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+        frame_b = frame_b[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+
+    if settings.invert is True:
+        frame_a = preprocess.invert(frame_a)
+        frame_b = preprocess.invert(frame_b)
+
+    if settings.show_all_plots:
+        _, ax = plt.subplots(1, 1)
+        ax.imshow(frame_a, cmap='Reds')
+        ax.imshow(frame_b, cmap='Blues', alpha=.5)
+        plt.show()
+
+    if settings.static_mask is not None:
+        # for some unclear reason these are non-writable arrays
+        for frame in [frame_a, frame_b]:
+            tmp = frame.copy()
+            tmp[settings.static_mask] = 0
+            frame = tmp.copy()
+
+        image_mask = settings.static_mask
+    
+        if settings.show_all_plots:
+            _, ax = plt.subplots()
+            ax.set_title('Masked frames')
+            ax.imshow(np.c_[frame_a, frame_b])
+    
+
+    if settings.dynamic_masking_method in ("edge", "intensity"):
+        frame_a, mask_a = preprocess.dynamic_masking(
+            frame_a,
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
+        )
+        frame_b, mask_b = preprocess.dynamic_masking(
+            frame_b,
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
+        )
+
+        image_mask = np.logical_and(mask_a, mask_b)
+
+        if settings.show_all_plots:
+            _, (ax0,ax1,ax2,ax3) = plt.subplots(2,2)
+            ax0.imshow(frame_a)  # type: ignore
+            ax1.imshow(mask_a)  # type: ignore
+            ax2.imshow(frame_b) # type: ignore
+            ax3.imshow(mask_b) # type: ignore
+
+    return (frame_a, frame_b, image_mask)
+
 
 def piv(settings):
     """ the func fuction is the "frame" in which the PIV evaluation is done """
@@ -179,7 +261,7 @@ def piv(settings):
         # frame_a, frame_b are masked as black where we do not 
         # want to get vectors. later piv would mark it as completely black
         # and set s2n to invalid
-        frame_a, frame_b, image_mask = preprocess.prepare_images(
+        frame_a, frame_b, image_mask = prepare_images(
             file_a,
             file_b,
             settings,

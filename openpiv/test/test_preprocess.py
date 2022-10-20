@@ -10,7 +10,7 @@ from openpiv.preprocess import dynamic_masking, mask_coordinates
 
 test_directory = os.path.split(os.path.abspath(__file__))[0]
 
-def test_dynamic_masking(display_images=False):
+def test_dynamic_masking(display_images=True):
     """ test dynamic_masking """
 
     # I created an image using skimage.data.binary_blobs:
@@ -20,7 +20,7 @@ def test_dynamic_masking(display_images=False):
     img = rgb2gray(rgba2rgb(imread(os.path.join(test_directory, "moon.png"))))
     img1, _ = dynamic_masking(img_as_float(img), method="intensity")
     assert np.allclose(img[80:84, 80:84], 0.86908039)  # non-zero image
-    assert np.allclose(img1[80:84, 80:84], 0.0)  # not it's black
+    assert np.allclose(img1[80:84, 80:84], 0.0)  # now it's black
 
     if display_images:
         _, ax = plt.subplots(1, 2)
