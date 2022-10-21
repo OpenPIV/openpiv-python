@@ -54,6 +54,9 @@ def simple_piv(im1, im2, plot=True):
         ax.quiver(x[valid], y[valid], u[valid], -v[valid], scale=70,
                   color='r', width=.005)
         plt.show()
+        
+    # conform with the windef and tools.display_vector_field
+    x,y,u,v = tools.transform_coordinates(x,y,u,v)
 
     return x, y, u, v, s2n
 
