@@ -1016,7 +1016,7 @@ def extended_search_area_piv(
     
     # if no search_size, copy window_size
     if search_area_size is None:
-        search_area_size = tuple(window_size)
+        search_area_size = window_size
     elif isinstance(search_area_size, int):
         search_area_size = (search_area_size, search_area_size)
 

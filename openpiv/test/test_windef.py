@@ -204,8 +204,8 @@ def test_multi_pass_lin():
             v,
             settings,
         )
-        print(f"Iteration {i}")
-        print(u[:2,:2],v[:2,:2])
+        # print(f"Iteration {i}")
+        # print(u[:2,:2],v[:2,:2])
         assert np.allclose(u, shift_u, atol=threshold)
         assert np.allclose(v, shift_v, atol=threshold)
 
@@ -228,8 +228,8 @@ def test_simple_multipass():
         frame_b,
         settings,
     )
-    print("simple multipass\n")
-    print(x,y,u,v,mask)
+    # print("simple multipass\n")
+    # print(x,y,u,v,mask)
     # print(u[:4,:4])
     # print(v[:4,:4])
     # print(shift_u)
@@ -258,3 +258,29 @@ def test_simple_multipass():
 
 #     # the second condition is to check if the multipass is done.
 #     # It need's a little numerical inaccuracy.
+
+
+def test_simple_rectangular_window():
+    """ Test simple multipass """
+    print('test simple pass with rectangular windows')
+
+    settings = windef.PIVSettings()
+    settings.windowsizes = ((64, 32),)
+    settings.overlap = ((32, 16),)
+    settings.num_iterations = 1
+    settings.correlation_method = 'circular'
+    settings.sig2noise_method = 'peak2peak'
+    settings.subpixel_method = 'gaussian'
+    settings.sig2noise_mask = 2
+
+    x, y, u, v, mask = windef.simple_multipass(
+        frame_a,
+        frame_b,
+        settings,
+    )
+    # print("rectangular windows\n")
+    # print(x,y,u,v,mask)
+    # print(np.diff(x[0,:2]))
+    # print( np.diff(y[:2,0]))
+    assert np.diff(x[0,:2]) == 16
+    assert np.diff(y[:2,0]) == -32
