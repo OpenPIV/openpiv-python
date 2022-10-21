@@ -193,13 +193,14 @@ def sliding_window_array(
     with three dimension, of size (n_windows, window_size, window_size), in
     which each slice, (along the first axis) is an interrogation window. 
     '''
-    # if isinstance(window_size, tuple) is False and isinstance(window_size, list) is False:
-    #     window_size = [window_size, window_size]
-    # if isinstance(overlap, tuple) is False and isinstance(overlap, list) is False:
-    #     overlap = [overlap, overlap]
+    # if isinstance(window_size, int):
+    #     window_size = (window_size, window_size)
+    # if isinstance(overlap, int):
+    #     overlap = (overlap, overlap)
 
     x, y = get_rect_coordinates(image.shape, window_size, overlap, center_on_field = False)
-    x = (x - window_size[1]//2).astype(int); y = (y - window_size[0]//2).astype(int)
+    x = (x - window_size[1]//2).astype(int)
+    y = (y - window_size[0]//2).astype(int)
     x, y = np.reshape(x, (-1,1,1)), np.reshape(y, (-1,1,1))
 
     win_x, win_y = np.meshgrid(np.arange(0, window_size[1]), np.arange(0, window_size[0]))
