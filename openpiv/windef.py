@@ -29,7 +29,7 @@ class PIVSettings:
     """
     # "Data related settings"
     # Folder with the images to process
-    filepath_images: pathlib.Path = files('openpiv') / "data" / "test1"  # type: ignore
+    filepath_images: Union[pathlib.Path, str] = files('openpiv') / "data" / "test1"  # type: ignore
     # Folder for the outputs
     save_path: pathlib.Path = filepath_images.parent
     # Root name of the output Folder for Result Files
@@ -318,11 +318,10 @@ def piv(settings):
             or (settings.num_iterations > 1):
             # for multi-pass we cannot have holes in the data
             # after the first pass
-            u, v, _ = filters.replace_outliers(
+            u, v = filters.replace_outliers(
                 u,
                 v,
                 invalid_mask,
-                grid_mask,
                 method=settings.filter_method,
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
@@ -453,6 +452,9 @@ def piv(settings):
         print(f"Image Pair {counter + 1}")
         print(file_a.stem, file_b.stem)
 
+    # if teh settings.save_path is a string convert it to the Path
+    settings.filepath_images = pathlib.Path(settings.filepath_images) 
+    settings.save_path = pathlib.Path(settings.save_path)
     # "Below is code to read files and create a folder to store the results"
     save_path_string = \
         f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
@@ -911,24 +913,14 @@ def multipass_img_deform(
         plt.show()
 
     # we have to replace outliers
-    u, v, _ = filters.replace_outliers(
+    u, v = filters.replace_outliers(
         u,
         v,
         invalid_mask,
-        grid_mask,
         method=settings.filter_method,
         max_iter=settings.max_filter_iteration,
         kernel_size=settings.filter_kernel_size,
     )
-
-    # # reapply the image mask to the new grid
-    # if settings.dynamic_masking_method is not None:
-    #     grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-    #     u = np.ma.masked_array(u, mask=grid_mask)
-    #     v = np.ma.masked_array(v, mask=grid_mask)
-    # else:
-    #     u = np.ma.masked_array(u, np.ma.nomask)
-    #     v = np.ma.masked_array(v, np.ma.nomask)
 
     if settings.show_all_plots:
         plt.figure()
@@ -970,7 +962,7 @@ def simple_multipass(
     if settings.validation_first_pass:
         invalid_mask = validation.typical_validation(u, v, s2n, settings)
 
-        u, v, _ = filters.replace_outliers(u, v, invalid_mask, grid_mask)
+        u, v = filters.replace_outliers(u, v, invalid_mask)
 
     # multipass 
     for i in range(1, settings.num_iterations):

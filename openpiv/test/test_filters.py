@@ -77,7 +77,7 @@ def test_replace_outliers():
     invalid_mask = np.isnan(v)
     grid_mask = np.zeros_like(v, dtype=bool)
     u = v.copy()
-    uf, _, _ = filters.replace_outliers(u,v, invalid_mask, grid_mask)
+    uf, _ = filters.replace_outliers(u,v, invalid_mask)
 
     assert np.ma.allclose(v_copy,uf)
     assert isinstance(uf, np.ma.MaskedArray)
