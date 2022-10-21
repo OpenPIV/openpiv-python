@@ -903,15 +903,15 @@ def multipass_img_deform(
     if np.all(invalid_mask):
         raise ValueError("Something happened in the validation")
 
-    if settings.show_all_plots:
-        plt.figure()
-        nans = np.nonzero(invalid_mask)[0]
-        plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
-        plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
-        plt.gca().invert_yaxis()
-        plt.gca().set_aspect(1.)
-        plt.title('After sig2noise, inverted')
-        plt.show()
+    # if settings.show_all_plots:
+    #     plt.figure()
+    #     nans = np.nonzero(invalid_mask)[0]
+    #     plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
+    #     plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
+    #     plt.gca().invert_yaxis()
+    #     plt.gca().set_aspect(1.)
+    #     plt.title('After sig2noise, inverted')
+    #     plt.show()
 
     # we have to replace outliers
     u, v = filters.replace_outliers(
