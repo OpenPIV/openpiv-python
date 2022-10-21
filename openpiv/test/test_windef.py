@@ -284,3 +284,21 @@ def test_simple_rectangular_window():
     # print( np.diff(y[:2,0]))
     assert np.diff(x[0,:2]) == 16
     assert np.diff(y[:2,0]) == -32
+
+
+    settings.windowsizes = ((32, 64),(16, 32))
+    settings.overlap = ((16, 32), (8, 16))
+    settings.num_iterations = 2
+
+    x, y, u, v, mask = windef.simple_multipass(
+        frame_a,
+        frame_b,
+        settings,
+    )
+    assert np.diff(x[0,:2]) == 16
+    assert np.diff(y[:2,0]) == -8
+
+    settings.show_all_plots = False
+    settings.show_plot = True
+
+    windef.piv(settings)

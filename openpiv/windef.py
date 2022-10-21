@@ -878,8 +878,9 @@ def multipass_img_deform(
 
     # get_field_shape expects tuples for rectangular windows
     shapes = np.array(get_field_shape(frame_a.shape,
-                                      (window_size, window_size),
-                                      (overlap, overlap)))
+                                      window_size,
+                                      overlap)
+                                      )
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
