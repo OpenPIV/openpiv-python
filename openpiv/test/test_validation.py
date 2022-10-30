@@ -44,21 +44,21 @@ def test_validation_peak2peak():
     assert np.allclose(np.min(s2n), 1.24009)
 
 def test_sig2noise_val():
-
+    """ tests sig2noise validation """
     u = np.ones((5,5))
     v = np.ones((5,5))
-    threshold = 1.05
-    s2n = np.ones((5,5))*threshold
+    s2n_threshold = 1.05
+    s2n = np.ones((5,5))*s2n_threshold
     s2n[2,2] -= 0.1
   
-    mask = s2n < threshold
+    mask = s2n < s2n_threshold
   
-    assert mask[0,0] == False
-    assert mask[2,2] == True
+    assert not mask[0,0] # should be False
+    assert mask[2,2]
 
 
 
-def test_local_median_validation(u_threshold=3, N=3, size=1):
+def test_local_median_validation(u_threshold=3, N=3):
     """ test local median
 
     Args:
@@ -78,7 +78,7 @@ def test_local_median_validation(u_threshold=3, N=3, size=1):
 
     # now we test our function which is just a decoration 
     # of the above steps
-    flag = validation.local_median_val(u,u,3,3)
+    flag = validation.local_median_val(u,u,u_threshold,u_threshold)
 
     assert flag[N,N]
 

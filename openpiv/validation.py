@@ -126,7 +126,7 @@ def global_std(
 
 def sig2noise_val(
     s2n: np.ndarray,
-    threshold: float=1.05,
+    threshold: float=1.0,
     )->np.ndarray:
     """ Marks spurious vectors if signal to noise ratio is below a specified threshold.
 

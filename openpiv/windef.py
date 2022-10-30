@@ -44,8 +44,8 @@ class PIVSettings:
     roi: Union[Tuple[int, int, int, int], str] = "full"
 
     # "Image preprocessing"
-    # Every image would be processed separately and the 
-    # average mask is applied to both A, B, but it's varying 
+    # Every image would be processed separately and the
+    # average mask is applied to both A, B, but it's varying
     # for the frames sequence
     #: None for no masking
     #: 'edges' for edges masking, 
@@ -295,19 +295,19 @@ def piv(settings):
         u = np.ma.masked_array(u, mask=grid_mask)
         v = np.ma.masked_array(v, mask=grid_mask)
 
-        # validation also masks the u,v and returns another invalid_mask
+        # validation also masks the u,v and returns another flags
         # the question is whether to merge the two masks or just keep for the 
         # reference
         if settings.validation_first_pass:
-            invalid_mask = validation.typical_validation(u, v, s2n, settings)
+            flags = validation.typical_validation(u, v, s2n, settings)
         else:
-            invalid_mask = np.zeros_like(u, dtype=bool)
+            flags = np.zeros_like(u, dtype=bool)
         
         
 
         if settings.show_all_plots:
             # plt.figure()
-            plt.quiver(x, y,  u, -v, color='r')
+            plt.quiver(x, y,  u, -1*v, color='r')
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after first pass validation new, inverted')
@@ -321,7 +321,7 @@ def piv(settings):
             u, v = filters.replace_outliers(
                 u,
                 v,
-                invalid_mask,
+                flags,
                 method=settings.filter_method,
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
@@ -359,7 +359,7 @@ def piv(settings):
             # if not isinstance(u, np.ma.MaskedArray):
             #     raise ValueError("Expected masked array")
 
-            x, y, u, v, s2n, grid_mask = multipass_img_deform(
+            x, y, u, v, grid_mask, flags = multipass_img_deform(
                 frame_a,
                 frame_b,
                 i,
@@ -763,7 +763,9 @@ def multipass_img_deform(
             array containing the vertical displacement for every interrogation
             window it returns values in [pixels]
 
-        s2n : 2D np.array of signal to noise ratio values
+        grid_mask : 2d boolean np.array with the image mask in the x,y coordinates
+
+        flags : 2D np.array of integers, flags marking 0 - valid, 1 - invalid vectors
 
         """
 
@@ -898,14 +900,14 @@ def multipass_img_deform(
     v = np.ma.masked_array(v, mask=grid_mask)
 
     # validate in the multi-pass by default
-    invalid_mask = validation.typical_validation(u, v, s2n, settings)
+    flags = validation.typical_validation(u, v, s2n, settings)
 
-    if np.all(invalid_mask):
+    if np.all(flags):
         raise ValueError("Something happened in the validation")
 
     # if settings.show_all_plots:
     #     plt.figure()
-    #     nans = np.nonzero(invalid_mask)[0]
+    #     nans = np.nonzero(flags)[0]
     #     plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
     #     plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
     #     plt.gca().invert_yaxis()
@@ -917,7 +919,7 @@ def multipass_img_deform(
     u, v = filters.replace_outliers(
         u,
         v,
-        invalid_mask,
+        flags,
         method=settings.filter_method,
         max_iter=settings.max_filter_iteration,
         kernel_size=settings.filter_kernel_size,
@@ -932,7 +934,7 @@ def multipass_img_deform(
         plt.title(' after replaced outliers, red, invert')
         plt.show()
 
-    return x, y, u, v, s2n, grid_mask
+    return x, y, u, v, grid_mask, flags
 
 def simple_multipass(
     frame_a: np.ndarray,
@@ -960,15 +962,13 @@ def simple_multipass(
     u = np.ma.array(u, mask=grid_mask)
     v = np.ma.array(v, mask=grid_mask)
 
-    if settings.validation_first_pass:
-        invalid_mask = validation.typical_validation(u, v, s2n, settings)
-
-        u, v = filters.replace_outliers(u, v, invalid_mask)
+    flags = validation.typical_validation(u, v, s2n, settings)
+    u, v = filters.replace_outliers(u, v, flags)
 
     # multipass 
     for i in range(1, settings.num_iterations):
 
-        x, y, u, v, s2n, grid_mask = multipass_img_deform(
+        x, y, u, v, grid_mask, flags = multipass_img_deform(
             frame_a,
             frame_b,
             i,
@@ -983,8 +983,9 @@ def simple_multipass(
     u = np.ma.fix_invalid(u, fill_value=0.)
     v = np.ma.fix_invalid(v, fill_value=0.)
 
-    x, y, u, v = transform_coordinates(x, y, u.data, v.data) # note the use of .data for masked arrays
-    return (x,y,u,v,s2n)
+    # note the use of .data for masked arrays
+    x, y, u, v = transform_coordinates(x, y, u.data, v.data) 
+    return (x, y, u, v, flags)
 
 
 
