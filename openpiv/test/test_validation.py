@@ -78,9 +78,9 @@ def test_local_median_validation(u_threshold=3, N=3, size=1):
 
     # now we test our function which is just a decoration 
     # of the above steps
-    mask = validation.local_median_val(u,u,3,3)
+    flag = validation.local_median_val(u,u,3,3)
 
-    assert mask[N,N]
+    assert flag[N,N]
 
 def test_global_val():
     """ tests global validation

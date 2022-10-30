@@ -57,7 +57,7 @@ def global_val(
 
     Returns
     -------
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -99,7 +99,7 @@ def global_std(
 
     Returns
     -------
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -151,7 +151,7 @@ def sig2noise_val(
     Returns
     -------
 
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     References
@@ -160,9 +160,9 @@ def sig2noise_val(
         1, 1202-1215.
 
     """
-    mask_s2n = s2n < threshold
+    ind = s2n < threshold
 
-    return mask_s2n 
+    return ind 
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
@@ -174,7 +174,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     specified threshold. The median is computed for both velocity components.
 
     The image masked areas (obstacles, reflections) are marked as masked array:
-       u = np.ma.masked(u, mask = image_mask)
+       u = np.ma.masked(u, flag = image_mask)
     and it should not be replaced by the local median, but remain masked. 
 
 
@@ -195,7 +195,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     Returns
     -------
 
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -253,30 +253,30 @@ def typical_validation(
         plt.quiver(u,v,color='b')
         plt.title('Before (b) and global (m) local (k)')
 
-    # mask = np.zeros(u.shape, dtype=bool)
+    # flag = np.zeros(u.shape, dtype=bool)
 
     # Global validation
-    mask_g = global_val(u, v, settings.min_max_u_disp, settings.min_max_v_disp)
+    flag_g = global_val(u, v, settings.min_max_u_disp, settings.min_max_v_disp)
 
-    # u[mask_g] = np.ma.masked
-    # v[mask_g] = np.ma.masked
+    # u[flag_g] = np.ma.masked
+    # v[flag_g] = np.ma.masked
 
     # if settings.show_all_plots:
     #     plt.quiver(u, v, color='m')
 
-    mask_s = global_std(
+    flag_s = global_std(
         u, v, std_threshold=settings.std_threshold
     )
 
-    # u[mask_s] = np.ma.masked
-    # v[mask_s] = np.ma.masked
+    # u[flag_s] = np.ma.masked
+    # v[flag_s] = np.ma.masked
 
-    # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
+    # print(f"std filter invalidated {sum(flag_s.flatten())} vectors")
     # if settings.show_all_plots:
     #     plt.quiver(u,v,color='k')
     
 
-    mask_m = local_median_val(
+    flag_m = local_median_val(
         u,
         v,
         u_threshold=settings.median_threshold,
@@ -284,32 +284,32 @@ def typical_validation(
         size=settings.median_size,
     )
     
-    # u[mask_m] = np.ma.masked
-    # v[mask_m] = np.ma.masked
+    # u[flag_m] = np.ma.masked
+    # v[flag_m] = np.ma.masked
     
     # if settings.show_all_plots:
     #     plt.quiver(u,v,color='r')
 
-    # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
-    mask = mask_g | mask_m | mask_s
+    # print(f"median filter invalidated {sum(flag_m.flatten())} vectors")
+    flag = flag_g | flag_m | flag_s
 
 
     if settings.sig2noise_validate:
-        mask_s2n = sig2noise_val(s2n, settings.sig2noise_threshold)
+        flag_s2n = sig2noise_val(s2n, settings.sig2noise_threshold)
         
-        # u[mask_s2n] = np.ma.masked
-        # v[mask_s2n] = np.ma.masked
+        # u[flag_s2n] = np.ma.masked
+        # v[flag_s2n] = np.ma.masked
 
-        # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
+        # print(f"s2n filter invalidated {sum(flag_s2n.flatten())} vectors")
         # if settings.show_all_plots:
         #     plt.quiver(u,v,color='g')
         #     plt.show()
 
-        if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
+        if settings.show_all_plots and sum(flag_s2n.flatten()): # if not all NaN
             plt.figure()
             plt.hist( s2n[s2n>0], 31)
             plt.show()
 
-        mask += mask_s2n
+        flag += flag_s2n
 
-    return mask
+    return flag
