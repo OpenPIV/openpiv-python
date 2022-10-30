@@ -25,7 +25,8 @@ setup(
         'scikit-image',
         'scipy',
         'natsort',
-        'tqdm'
+        'tqdm',
+        'importlib_resources'
     ],
     extras_require={"tests": ["pytest"]},
     classifiers=[
