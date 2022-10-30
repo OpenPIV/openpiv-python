@@ -111,7 +111,7 @@ def display_vector_field(
 
     a = np.loadtxt(filename)
     # parse
-    x, y, u, v, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4]
+    x, y, u, v, mask, flags = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
 
 
     if ax is None:
@@ -126,7 +126,7 @@ def display_vector_field(
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
         ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])    
 
-    invalid = mask.astype("bool")  
+    invalid = flags > 0 # mask.astype("bool")  
     valid = ~invalid
 
     # visual conversion for the data on image
@@ -357,12 +357,14 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
 
 
 def save(
+    filename: Union[pathlib.Path,str],
     x: np.ndarray,
     y: np.ndarray,
     u: np.ndarray,
     v: np.ndarray, 
-    mask: np.ndarray,
-    filename: Union[pathlib.Path,str], 
+    mask: Optional[np.ndarray] = None,
+    flags: Optional[np.ndarray] = None,
+ 
     fmt: str="%8.4f", 
     delimiter: str="\t",
     )-> None:
@@ -370,6 +372,9 @@ def save(
 
     Parameters
     ----------
+    filename : string
+        the path of the file where to save the flow field
+
     x : 2d np.ndarray
         a two dimensional array containing the x coordinates of the
         interrogation window centers, in pixels.
@@ -386,12 +391,14 @@ def save(
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
 
-    mask : 2d np.ndarray
-        a two dimensional boolen array where elements corresponding to
-        invalid vectors are True.
+    mask: 2d np.ndarray boolean, marks the image masked regions (dynamic and/or static)
+        default: None - will be all False
 
-    filename : string
-        the path of the file where to save the flow field
+    flags : 2d np.ndarray
+        a two dimensional integers array where elements corresponding to
+        vectors: 0 - valid, 1 - invalid (, 2 - interpolated)
+        default: None, will create all valid 0
+
 
     fmt : string
         a format string. See documentation of numpy.savetxt
@@ -403,7 +410,7 @@ def save(
     Examples
     --------
 
-    openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f',
+    openpiv.tools.save('field_001.txt', x, y, u, v, mask, flags,  fmt='%6.3f',
                         delimiter='\t')
 
     """
@@ -411,8 +418,14 @@ def save(
         u = u.filled(0.)
         v = v.filled(0.)
 
+    if mask is None:
+        mask = np.zeros_like(u, dtype=int)
+
+    if flags is None:
+        flags = np.zeros_like(u, dtype=int)
+
     # build output array
-    out = np.vstack([m.flatten() for m in [x, y, u, v, mask]])
+    out = np.vstack([m.flatten() for m in [x, y, u, v, mask, flags]])
 
     # save data to file.
     np.savetxt(
@@ -428,7 +441,9 @@ def save(
         + delimiter
         + "v"
         + delimiter
-        + "mask",
+        + "mask"
+        + delimiter
+        + "flags",
     )
 
 

@@ -38,7 +38,7 @@ def test_display_vector_field(file_a=_file_a, file_b=_file_b, test_file=_test_fi
 
     mask = np.zeros_like(x)
     mask[-1,1] = 1 # test of invalid vector plot
-    save(x, y, u, v, mask, 'tmp.txt')
+    save('tmp.txt', x, y, u, v, mask)
     fig, ax = plt.subplots(figsize=(6, 6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     decorators.remove_ticks_and_titles(fig)

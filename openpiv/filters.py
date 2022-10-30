@@ -102,7 +102,7 @@ def gaussian(
 def replace_outliers(
     u: np.ndarray,
     v: np.ndarray,
-    invalid_mask: np.ndarray,
+    flags: np.ndarray,
     w: Optional[np.ndarray]=None,
     method: str="localmean",
     max_iter: int=5,
@@ -137,7 +137,7 @@ def replace_outliers(
     w : 2d or 3d  np.ndarray
         the w velocity component field
 
-    invalid_mask : 2d array of positions with invalid vectors
+    flags : 2d array of positions with invalid vectors
 
     grid_mask : 2d array of positions masked by the user
 
@@ -165,7 +165,7 @@ def replace_outliers(
         been replaced
 
     """
-    # we shall now replace NaNs only at invalid_mask positions,
+    # we shall now replace NaNs only at flags positions,
     # regardless the grid_mask (which is a user-provided masked region)
 
     
@@ -175,8 +175,8 @@ def replace_outliers(
     # store grid_mask for reinforcement
     grid_mask = u.mask.copy()
 
-    u[invalid_mask] = np.nan
-    v[invalid_mask] = np.nan
+    u[flags] = np.nan
+    v[flags] = np.nan
     
     uf = replace_nans(
         u, method=method, max_iter=max_iter, tol=tol,
@@ -192,7 +192,7 @@ def replace_outliers(
     vf = np.ma.masked_array(vf, mask=grid_mask)
 
     if isinstance(w, np.ndarray):
-        w[invalid_mask] = np.nan
+        w[flags] = np.nan
         wf = replace_nans(
             w, method=method, max_iter=max_iter, tol=tol,
             kernel_size=kernel_size

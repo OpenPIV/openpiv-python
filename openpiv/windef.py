@@ -437,7 +437,7 @@ def piv(settings):
         txt_file = save_path / f'field_A{counter:04d}.txt'
         fig_name = save_path / f'field_A{counter:04d}.png'
 
-        tools.save(x, y, u, v, grid_mask, txt_file)
+        tools.save(txt_file, x, y, u, v, grid_mask, flags)
 
         if settings.show_plot or settings.save_plot:
             fig, _ = display_vector_field(
