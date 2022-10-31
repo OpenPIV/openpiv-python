@@ -25,7 +25,6 @@ from typing import Any, Union, List, Optional
 # import re
 
 import numpy as np
-import numpy.typing as npt
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
 from natsort import natsorted
@@ -109,6 +108,7 @@ def display_vector_field(
     
     """
 
+    # print(f' Loading {filename} which exists {filename.exists()}')
     a = np.loadtxt(filename)
     # parse
     x, y, u, v, mask, flags = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
@@ -126,6 +126,12 @@ def display_vector_field(
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
         ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])    
 
+
+    # first mask whatever has to be masked
+    u[mask.astype(bool)] = 0.
+    v[mask.astype(bool)] = 0.
+    
+    # now mark the valid/invalid vectors
     invalid = flags > 0 # mask.astype("bool")  
     valid = ~invalid
 
@@ -364,7 +370,6 @@ def save(
     v: np.ndarray, 
     mask: Optional[np.ndarray] = None,
     flags: Optional[np.ndarray] = None,
- 
     fmt: str="%8.4f", 
     delimiter: str="\t",
     )-> None:
