@@ -33,7 +33,7 @@ class PIVSettings:
     # Folder for the outputs
     save_path: pathlib.Path = filepath_images.parent
     # Root name of the output Folder for Result Files
-    save_folder_suffix: str = ''
+    save_folder_suffix: str = 'test1'
     # Format and Image Sequence
     frame_pattern_a: str = 'exp1_001_a.bmp'
     frame_pattern_b: str = 'exp1_001_b.bmp'
@@ -435,6 +435,7 @@ def piv(settings):
         # "save to a file"
 
         txt_file = save_path / f'field_A{counter:04d}.txt'
+        print(f'Saving to {txt_file}')
         fig_name = save_path / f'field_A{counter:04d}.png'
 
         tools.save(txt_file, x, y, u, v, grid_mask, flags)
