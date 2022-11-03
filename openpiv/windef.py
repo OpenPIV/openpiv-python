@@ -199,19 +199,18 @@ def prepare_images(
         frame_b = preprocess.invert(frame_b)
 
     if settings.show_all_plots:
-        _, ax = plt.subplots(1, 1)
+        _, ax = plt.subplots()
         ax.imshow(frame_a, cmap='Reds')
         ax.imshow(frame_b, cmap='Blues', alpha=.5)
+        ax.set_title('Frames overlayed')
         plt.show()
 
     if settings.static_mask is not None:
-        # for some unclear reason these are non-writable arrays
-        for frame in [frame_a, frame_b]:
-            tmp = frame.copy()
-            tmp[settings.static_mask] = 0
-            frame = tmp.copy()
 
         image_mask = settings.static_mask
+        frame_a = np.where(image_mask, 0, frame_a)
+        frame_b = np.where(image_mask, 0, frame_b)
+
     
         if settings.show_all_plots:
             _, ax = plt.subplots()
@@ -241,6 +240,7 @@ def prepare_images(
             ax1.imshow(mask_a)  # type: ignore
             ax2.imshow(frame_b) # type: ignore
             ax3.imshow(mask_b) # type: ignore
+            ax0.set_title('Masking')
 
     return (frame_a, frame_b, image_mask)
 
@@ -267,6 +267,14 @@ def piv(settings):
             settings,
         )
 
+        if settings.show_all_plots:
+            _, ax = plt.subplots(1,2)
+            ax[0].imshow(frame_a, cmap='gray')
+            ax[1].imshow(frame_b, cmap='gray')
+            ax[0].set_title('Frame A')
+            ax[1].set_title('Frame B')
+            plt.show()
+
         # "first pass"
         x, y, u, v, s2n = first_pass(
             frame_a,
@@ -276,7 +284,9 @@ def piv(settings):
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x, y, u, -v, color='b')
+            plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+            plt.gca().invert_yaxis()
+            plt.title('First pass')
 
         # " Image masking "
         # note that grid_mask keeps only the user-supplied image masking
@@ -284,16 +294,25 @@ def piv(settings):
         # marker
         if image_mask is None:
             grid_mask = np.zeros_like(u, dtype=bool)
-            mask_coords = None
         else:
-            mask_coords = preprocess.mask_coordinates(image_mask)
+            # mask_coords = preprocess.mask_coordinates(image_mask)
             # mark those points on the grid of PIV inside the mask
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            
+            grid_mask = scn.map_coordinates(image_mask, [y,x]).astype(bool)
 
 
         # mask the velocity
         u = np.ma.masked_array(u, mask=grid_mask)
         v = np.ma.masked_array(v, mask=grid_mask)
+
+
+        if settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+            plt.gca().invert_yaxis()
+            plt.title('Grid masked arrays')
+
 
         # validation also masks the u,v and returns another flags
         # the question is whether to merge the two masks or just keep for the 
@@ -306,8 +325,8 @@ def piv(settings):
         
 
         if settings.show_all_plots:
-            # plt.figure()
-            plt.quiver(x, y,  u, -1*v, color='r')
+            plt.figure()
+            plt.quiver(x, y,  u, v, color='r')
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after first pass validation new, inverted')
@@ -368,7 +387,7 @@ def piv(settings):
                 u,
                 v,
                 settings,
-                mask_coords=mask_coords
+                # mask_coords=mask_coords
             )
 
             # If the smoothing is active, we do it at each pass
@@ -383,8 +402,9 @@ def piv(settings):
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError('not a masked array anymore')
 
-            if hasattr(settings, 'image_mask') and settings.image_mask:
-                grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            if image_mask is not None:
+                # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+                grid_mask = scn.map_coordinates(image_mask, [y, x]).astype(bool)
                 u = np.ma.masked_array(u, mask=grid_mask)
                 v = np.ma.masked_array(v, mask=grid_mask)
             else:
@@ -413,27 +433,27 @@ def piv(settings):
         u = u.filled(0.)
         v = v.filled(0.)
 
-        # "scales the results pixel-> meter"
-        x, y, u, v = scaling.uniform(x, y, u, v,
-                                     scaling_factor=settings.scaling_factor)
-
         if image_mask is not None:
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            grid_mask = scn.map_coordinates(settings.static_mask, [y, x]).astype(bool)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
         else:
             u = np.ma.masked_array(u, np.ma.nomask)
             v = np.ma.masked_array(v, np.ma.nomask)
 
+
+        # "scales the results pixel-> meter"
+        x, y, u, v = scaling.uniform(x, y, u, v,
+                                     scaling_factor=settings.scaling_factor)
+
         # before saving we conver to the "physically relevant"
         # right-hand coordinate system with 0,0 at the bottom left
         # x to the right, y upwards
         # and so u,v
-
         x, y, u, v = transform_coordinates(x, y, u, v)
-        # import pdb; pdb.set_trace()
-        # "save to a file"
 
+        # Saving
         txt_file = save_path / f'field_A{counter:04d}.txt'
         print(f'Saving to {txt_file}')
         fig_name = save_path / f'field_A{counter:04d}.png'
@@ -697,7 +717,7 @@ def multipass_img_deform(
     u_old: np.ndarray,
     v_old: np.ndarray,
     settings: "PIVSettings",
-    mask_coords: Union[np.ndarray, None]=None,
+    # mask_coords: Union[np.ndarray, None]=None,
 ):
     """
         Multi pass of the PIV evaluation.
@@ -813,7 +833,7 @@ def multipass_img_deform(
         plt.gca().set_aspect(1.)
         plt.gca().invert_yaxis()
         plt.title('inside deform, invert')
-        plt.show()
+        # plt.show()
 
     # @TKauefer added another method to the windowdeformation, 'symmetric'
     # splits the onto both frames, takes more effort due to additional
@@ -849,11 +869,12 @@ def multipass_img_deform(
         if settings.deformation_method == 'symmetric':
             plt.figure()
             plt.imshow(frame_a-old_frame_a)
-            plt.show()
+            plt.title('New A - old A')
 
         plt.figure()
         plt.imshow(frame_b-old_frame_b)
-        plt.show()
+        plt.title('New B - old B')
+        
 
     # if do_sig2noise is True
     #     sig2noise_method = sig2noise_method
@@ -892,8 +913,10 @@ def multipass_img_deform(
     v += v_pre
 
     # reapply the image mask to the new grid
-    if mask_coords is not None:
-        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+    if settings.static_mask is not None:
+        # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+        grid_mask = scn.map_coordinates(settings.static_mask, [y, x]).astype(bool)
+        print(x.shape, y.shape, grid_mask.shape)
     else:
         grid_mask = np.zeros_like(u, dtype=bool)
 

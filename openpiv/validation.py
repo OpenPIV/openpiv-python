@@ -251,6 +251,7 @@ def typical_validation(
     if settings.show_all_plots:
         plt.figure()
         plt.quiver(u,v,color='b')
+        plt.gca().invert_yaxis()
         plt.title('Before (b) and global (m) local (k)')
 
     # flag = np.zeros(u.shape, dtype=bool)
