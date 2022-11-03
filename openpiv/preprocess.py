@@ -1,13 +1,11 @@
 """This module contains image processing routines that improve
 images prior to PIV processing."""
 
-import pathlib
-from typing import Tuple
 import numpy as np
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
+from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes,\
+     map_coordinates
 from skimage import img_as_float, exposure, img_as_ubyte
 from skimage import filters
-from skimage.util import invert
 from skimage.measure import find_contours, approximate_polygon, points_in_poly
 from skimage.transform import rescale
 import matplotlib.pyplot as plt
@@ -132,19 +130,36 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
     return mask_coords
 
 
-def prepare_mask_on_grid(x, y, mask_coords):
-    """ Converts mask coordinates of the image mask
-    to the grid of 1/0 on the x,y grid
-    Inputs:
-        x,y : grid of x,y points
-        mask_coords : array of coordinates in pixels of the image_mask
+# def prepare_mask_on_grid(x, y, mask_coords):
+#     """ Converts mask coordinates of the image mask
+#     to the grid of 1/0 on the x,y grid
+#     Inputs:
+#         x,y : grid of x,y points
+#         mask_coords : array of coordinates in pixels of the image_mask
 
-    Outputs:
-        grid of points of the mask, of the shape of x
+#     Outputs:
+#         grid of points of the mask, of the shape of x
     
+#     """
+#     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+#     return xymask.reshape(x.shape)
+
+def prepare_mask_on_grid(
+    x: np.ndarray,
+    y: np.ndarray,
+    image_mask: np.ndarray,
+)->np.array:
+    """_summary_
+
+    Args:
+        x (np.ndarray): x coordinates of vectors in pixels
+        y (np.ndarray): y coordinates of vectors in pixels
+        image_mask (np.ndarray): image of the mask, 1 or True is to be masked
+
+    Returns:
+        np.ndarray: boolean array of the size of x,y with 1 where the values are masked
     """
-    xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-    return xymask.reshape(x.shape)
+    return map_coordinates(image_mask, [y,x]).astype(bool)
 
 
 def normalize_array(array, axis = None):
