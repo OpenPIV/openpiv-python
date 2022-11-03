@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple, Union
 import numpy as np
 import scipy.ndimage as scn
+from skimage.util import invert
 
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
@@ -195,8 +196,8 @@ def prepare_images(
         ]
 
     if settings.invert is True:
-        frame_a = preprocess.invert(frame_a)
-        frame_b = preprocess.invert(frame_b)
+        frame_a = invert(frame_a)
+        frame_b = invert(frame_b)
 
     if settings.show_all_plots:
         _, ax = plt.subplots()
@@ -458,7 +459,7 @@ def piv(settings):
         print(f'Saving to {txt_file}')
         fig_name = save_path / f'field_A{counter:04d}.png'
 
-        tools.save(txt_file, x, y, u, v, grid_mask, flags)
+        tools.save(txt_file, x, y, u, v, flags, grid_mask)
 
         if settings.show_plot or settings.save_plot:
             fig, _ = display_vector_field(

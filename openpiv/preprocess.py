@@ -130,19 +130,19 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
     return mask_coords
 
 
-# def prepare_mask_on_grid(x, y, mask_coords):
-#     """ Converts mask coordinates of the image mask
-#     to the grid of 1/0 on the x,y grid
-#     Inputs:
-#         x,y : grid of x,y points
-#         mask_coords : array of coordinates in pixels of the image_mask
+def prepare_mask_from_polygon(x, y, mask_coords):
+    """ Converts mask coordinates of the image mask
+    to the grid of 1/0 on the x,y grid
+    Inputs:
+        x,y : grid of x,y points
+        mask_coords : array of coordinates in pixels of the image_mask
 
-#     Outputs:
-#         grid of points of the mask, of the shape of x
+    Outputs:
+        grid of points of the mask, of the shape of x
     
-#     """
-#     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-#     return xymask.reshape(x.shape)
+    """
+    xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
+    return xymask.reshape(x.shape)
 
 def prepare_mask_on_grid(
     x: np.ndarray,

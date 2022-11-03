@@ -41,14 +41,14 @@ u, v = filters.replace_outliers( u, v, flags, method='localmean', max_iter = 3, 
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 x, y, u, v = tools.transform_coordinates(x, y, u, v)
 # save to a file
-tools.save(path / 'test.txt', x, y, u, v, None, flags, fmt='%9.6f', delimiter='\t')
+tools.save(path / 'test.txt', x, y, u, v, flags, fmt='%9.6f', delimiter='\t')
 tools.display_vector_field( path / 'test.txt', scale=50, width=0.002)
 
 
 
 # masking using not optimal choice of the methods or parameters:
 masked_a, _ = preprocess.dynamic_masking(frame_a,method='edges',filter_size=7,threshold=0.005)
-masked_b, _ = preprocess.dynamic_masking(frame_b,method='intensity',filter_size=3,threshold=0.0)
+masked_b, _ = preprocess.dynamic_masking(frame_b,method='intensity',filter_size=3,threshold=0.005)
 plt.imshow(np.c_[masked_a,masked_b],cmap='gray')
 
 
@@ -78,6 +78,6 @@ u, v = filters.replace_outliers( u, v, flags, method='localmean', max_iter = 3, 
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 x, y, u, v = tools.transform_coordinates(x, y, u, v)
 # save to a file
-tools.save(path / 'test_masked.txt', x, y, u, v, None, flags, fmt='%9.6f', delimiter='\t')
+tools.save(path / 'test_masked.txt', x, y, u, v, flags, None, fmt='%9.6f', delimiter='\t')
 tools.display_vector_field( path / 'test_masked.txt', scale=50, width=0.002)
 

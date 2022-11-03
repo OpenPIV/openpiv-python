@@ -111,7 +111,7 @@ def display_vector_field(
     # print(f' Loading {filename} which exists {filename.exists()}')
     a = np.loadtxt(filename)
     # parse
-    x, y, u, v, mask, flags = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
+    x, y, u, v, flags, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
 
 
     if ax is None:
@@ -256,7 +256,13 @@ def imsave(filename, arr):
         _imsave(filename, arr)
 
 
-def convert16bitsTIF(filename, save_name):
+def convert_16bits_tif(filename, save_name):
+    """convert 16 bits TIFF to an openpiv readable image
+
+    Args:
+        filename (_type_): filename of a 16 bit TIFF
+        save_name (_type_): new image filename
+    """
     img = imread(filename)
     img2 = np.zeros([img.shape[0], img.shape[1]], dtype=np.int32)
     for I in range(img.shape[0]):
@@ -266,7 +272,21 @@ def convert16bitsTIF(filename, save_name):
     imsave(save_name, img2)
 
 
-def mark_background(threshold, list_img, filename):
+def mark_background(
+    threshold: float,
+    list_img: list,
+    filename: str
+    )->np.ndarray:
+    """marks background
+
+    Args:
+        threshold (float): threshold
+        list_img (list of images): _description_
+        filename (str): image filename to save the mask
+
+    Returns:
+        _type_: _description_
+    """
     list_frame = []
     for I in range(len(list_img)):
         list_frame.append(imread(list_img[I]))
@@ -368,8 +388,8 @@ def save(
     y: np.ndarray,
     u: np.ndarray,
     v: np.ndarray, 
-    mask: Optional[np.ndarray] = None,
     flags: Optional[np.ndarray] = None,
+    mask: Optional[np.ndarray] = None,
     fmt: str="%8.4f", 
     delimiter: str="\t",
     )-> None:
@@ -396,13 +416,13 @@ def save(
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
 
-    mask: 2d np.ndarray boolean, marks the image masked regions (dynamic and/or static)
-        default: None - will be all False
-
     flags : 2d np.ndarray
         a two dimensional integers array where elements corresponding to
         vectors: 0 - valid, 1 - invalid (, 2 - interpolated)
         default: None, will create all valid 0
+
+    mask: 2d np.ndarray boolean, marks the image masked regions (dynamic and/or static)
+        default: None - will be all False
 
 
     fmt : string
@@ -415,7 +435,7 @@ def save(
     Examples
     --------
 
-    openpiv.tools.save('field_001.txt', x, y, u, v, mask, flags,  fmt='%6.3f',
+    openpiv.tools.save('field_001.txt', x, y, u, v, flags, mask,  fmt='%6.3f',
                         delimiter='\t')
 
     """
@@ -430,7 +450,7 @@ def save(
         flags = np.zeros_like(u, dtype=int)
 
     # build output array
-    out = np.vstack([m.flatten() for m in [x, y, u, v, mask, flags]])
+    out = np.vstack([m.flatten() for m in [x, y, u, v, flags, mask]])
 
     # save data to file.
     np.savetxt(
@@ -446,9 +466,9 @@ def save(
         + delimiter
         + "v"
         + delimiter
-        + "mask"
+        + "flags"
         + delimiter
-        + "flags",
+        + "mask",
     )
 
 

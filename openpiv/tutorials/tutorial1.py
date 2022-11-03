@@ -18,14 +18,14 @@ u, v, sig2noise = pyprocess.extended_search_area_piv( frame_a, frame_b, \
 print(u,v,sig2noise)
 
 x, y = pyprocess.get_coordinates( image_size=frame_a.shape, search_area_size=64, overlap=16 )
-mask_s2n = validation.sig2noise_val(sig2noise, threshold = 1.2 )
-mask_g = validation.global_val( u, v, (-10, 10), (-10, 10) )
-mask = mask_s2n | mask_g
+flags_s2n = validation.sig2noise_val(sig2noise, threshold = 1.2 )
+flags_g = validation.global_val( u, v, (-10, 10), (-10, 10) )
+flags = flags_s2n | flags_g
 
-u, v = filters.replace_outliers( u, v, mask, method='localmean', max_iter=10, kernel_size=2)
+u, v = filters.replace_outliers( u, v, flags, method='localmean', max_iter=10, kernel_size=2)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
 x, y, u, v = tools.transform_coordinates(x, y, u, v)
-tools.save(x, y, u, v, mask, str(path / 'test_data.vec') )
+tools.save(str(path / 'test_data.vec') , x, y, u, v, flags)
 # tools.display_vector_field(path / 'test_data.vec', scale=75, width=0.0035)
 tools.display_vector_field(
     str(path / 'test_data.vec'), 

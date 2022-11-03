@@ -51,7 +51,7 @@ def test_display_vector_field(
     mask = np.zeros_like(x, dtype=int)
     flags = np.zeros_like(x, dtype=int)
     flags[-1,1] = 1 # test of invalid vector plot
-    save('tmp.txt', x, y, u, v, mask, flags)
+    save('tmp.txt', x, y, u, v, flags, mask)
     fig, ax = plt.subplots(figsize=(6, 6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     decorators.remove_ticks_and_titles(fig)
