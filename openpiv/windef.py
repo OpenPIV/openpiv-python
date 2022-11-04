@@ -236,12 +236,12 @@ def prepare_images(
         image_mask = np.logical_and(mask_a, mask_b)
 
         if settings.show_all_plots:
-            _, (ax0,ax1,ax2,ax3) = plt.subplots(2,2)
-            ax0.imshow(frame_a)  # type: ignore
-            ax1.imshow(mask_a)  # type: ignore
-            ax2.imshow(frame_b) # type: ignore
-            ax3.imshow(mask_b) # type: ignore
-            ax0.set_title('Masking')
+            _, ax = plt.subplots(2,2)
+            ax[0,0].imshow(frame_a)  # type: ignore
+            ax[0,1].imshow(mask_a)  # type: ignore
+            ax[1,0].imshow(frame_b) # type: ignore
+            ax[1,1].imshow(mask_b) # type: ignore
+            ax[0,0].set_title('Masking')
 
     return (frame_a, frame_b, image_mask)
 
@@ -436,7 +436,7 @@ def piv(settings):
 
         if image_mask is not None:
             # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-            grid_mask = scn.map_coordinates(settings.static_mask, [y, x]).astype(bool)
+            grid_mask = scn.map_coordinates(image_mask, [y, x]).astype(bool)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
         else:
