@@ -540,12 +540,15 @@ class Multiprocesser:
         """
         # load lists of images
 
-        print(data_dir)
-        print(pattern_a)
-        print(data_dir.exists())
-        print(sorted(data_dir.glob(pattern_a)))
+        # print('Inside Multiprocesser')
+        # print(f'data_dir = {data_dir}')
+        # print(f'pattern_a = {pattern_a}')
+        # print(f' dir exists: {data_dir.exists()}')
         
         self.files_a = natural_sort(list(data_dir.glob(pattern_a)))
+
+        # print(f'List of files:')
+        # print(f'{self.files_a}')
 
         if pattern_b == '(1+2),(2+3)':
             self.files_b = self.files_a[1:]

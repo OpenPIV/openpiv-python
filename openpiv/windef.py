@@ -177,9 +177,11 @@ def prepare_images(
     """
     image_mask = None
 
+    # print(f'Inside prepare_images {file_a}, {file_b}')
+
         # read images into numpy arrays
-    frame_a = tools.imread(settings.filepath_images / file_a)
-    frame_b = tools.imread(settings.filepath_images / file_b)
+    frame_a = tools.imread(file_a)
+    frame_b = tools.imread(file_b)
 
     
     # crop to roi
@@ -258,6 +260,8 @@ def piv(settings):
         # always use it in your custom function
 
         file_a, file_b, counter = args
+
+        # print(f'Inside func {file_a}, {file_b}, {counter}')
 
         # frame_a, frame_b are masked as black where we do not 
         # want to get vectors. later piv would mark it as completely black
@@ -487,6 +491,7 @@ def piv(settings):
     if not save_path.exists():
         # os.makedirs(save_path)
         save_path.mkdir(parents=True, exist_ok=True)
+
     task = Multiprocesser(
         data_dir=settings.filepath_images,
         pattern_a=settings.frame_pattern_a,
