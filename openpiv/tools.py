@@ -390,7 +390,7 @@ def save(
     v: np.ndarray, 
     flags: Optional[np.ndarray] = None,
     mask: Optional[np.ndarray] = None,
-    fmt: str="%8.4f", 
+    fmt: str="%.4ef", 
     delimiter: str="\t",
     )-> None:
     """Save flow field to an ascii file.
