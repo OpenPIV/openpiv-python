@@ -321,6 +321,9 @@ def piv(settings):
         u = u.filled(0.)
         v = v.filled(0.)
 
+        # pixel / frame -> pixel / second
+        u /= settings.dt 
+        v /= settings.dt
         # "scales the results pixel-> meter"
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)

@@ -329,7 +329,7 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     return list_bound
 
 
-def save(x, y, u, v, mask, filename, fmt="%8.4f", delimiter="\t"):
+def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
     """Save flow field to an ascii file.
 
     Parameters
