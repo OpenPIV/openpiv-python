@@ -447,7 +447,10 @@ def piv(settings):
             u = np.ma.masked_array(u, np.ma.nomask)
             v = np.ma.masked_array(v, np.ma.nomask)
 
-
+        # pixel / frame -> pixel / second
+        u /= settings.dt 
+        v /= settings.dt
+        
         # "scales the results pixel-> meter"
         x, y, u, v = scaling.uniform(x, y, u, v,
                                      scaling_factor=settings.scaling_factor)

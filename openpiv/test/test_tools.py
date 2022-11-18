@@ -56,7 +56,7 @@ def test_display_vector_field(
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     decorators.remove_ticks_and_titles(fig)
     fig.savefig('./tmp.png')
-    res = compare.compare_images('./tmp.png', test_file, 0.001)
+    res = compare.compare_images('./tmp.png', test_file, 0.05)
     assert res is None
 
 def test_file_patterns():
