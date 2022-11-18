@@ -1,8 +1,9 @@
-from openpiv.lib import replace_nans
-import numpy as np
-from scipy.signal import convolve
-
 """The openpiv.filters module contains some filtering/smoothing routines."""
+from typing import Tuple, Optional
+import numpy as np
+import numpy.typing as npt
+from scipy.signal import convolve
+from openpiv.lib import replace_nans
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -22,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def _gaussian_kernel(half_width=1):
+def _gaussian_kernel(half_width: int=1)-> np.ndarray:
     """A normalized 2D Gaussian kernel array
 
     Parameters
@@ -48,12 +49,11 @@ def _gaussian_kernel(half_width=1):
     return g / g.sum()
 
 
-def gaussian_kernel(sigma, truncate=4.0):
+def gaussian_kernel(sigma:float, truncate:float=4.0)->np.ndarray:
     """
     Return Gaussian that truncates at the given number of standard deviations.
     """
 
-    sigma = float(sigma)
     radius = int(truncate * sigma + 0.5)
 
     x, y = np.mgrid[-radius:radius + 1, -radius:radius + 1]
@@ -65,7 +65,11 @@ def gaussian_kernel(sigma, truncate=4.0):
     return k
 
 
-def gaussian(u, v, half_width=1):
+def gaussian(
+    u: np.ndarray,
+    v: np.ndarray,
+    half_width: int=1
+    )->Tuple[np.ndarray, np.ndarray]:
     """Smooths the velocity field with a Gaussian kernel.
 
     Parameters
@@ -95,8 +99,16 @@ def gaussian(u, v, half_width=1):
     return uf, vf
 
 
-def replace_outliers(u, v, w=None, method="localmean",
-                     max_iter=5, tol=1e-3, kernel_size=1):
+def replace_outliers(
+    u: np.ndarray,
+    v: np.ndarray,
+    flags: np.ndarray,
+    w: Optional[np.ndarray]=None,
+    method: str="localmean",
+    max_iter: int=5,
+    tol: float=1e-3,
+    kernel_size: int=1,
+    )-> Tuple[np.ndarray, ...]:
     """Replace invalid vectors in an velocity field using an iterative image
         inpainting algorithm.
 
@@ -125,6 +137,10 @@ def replace_outliers(u, v, w=None, method="localmean",
     w : 2d or 3d  np.ndarray
         the w velocity component field
 
+    flags : 2d array of positions with invalid vectors
+
+    grid_mask : 2d array of positions masked by the user
+
     max_iter : int
         the number of iterations
 
@@ -149,6 +165,19 @@ def replace_outliers(u, v, w=None, method="localmean",
         been replaced
 
     """
+    # we shall now replace NaNs only at flags positions,
+    # regardless the grid_mask (which is a user-provided masked region)
+
+    
+    if not isinstance(u, np.ma.MaskedArray):
+        u = np.ma.masked_array(u, mask=np.ma.nomask)
+        
+    # store grid_mask for reinforcement
+    grid_mask = u.mask.copy()
+
+    u[flags] = np.nan
+    v[flags] = np.nan
+    
     uf = replace_nans(
         u, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
@@ -158,11 +187,17 @@ def replace_outliers(u, v, w=None, method="localmean",
         kernel_size=kernel_size
     )
 
+ 
+    uf = np.ma.masked_array(uf, mask=grid_mask)
+    vf = np.ma.masked_array(vf, mask=grid_mask)
+
     if isinstance(w, np.ndarray):
+        w[flags] = np.nan
         wf = replace_nans(
             w, method=method, max_iter=max_iter, tol=tol,
             kernel_size=kernel_size
         )
+        wf = np.ma.masked_array(wf, mask=grid_mask)
         return uf, vf, wf
-
+    
     return uf, vf

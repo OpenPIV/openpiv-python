@@ -1,32 +1,35 @@
+from importlib_resources import files
 from openpiv import windef
 
 
-settings = windef.Settings()
 
+settings = windef.PIVSettings()
+print(settings)
 
-'Data related settings'
+# 'Data related settings'
 # Folder with the images to process
-settings.filepath_images = '../data/test1'
+settings.filepath_images = files('openpiv') / "data" / "test1"
 # Folder for the outputs
-settings.save_path = ''
+settings.save_path = settings.filepath_images.parent
+
 # Root name of the output Folder for Result Files
 settings.save_folder_suffix = 'Test_1'
 # Format and Image Sequence
 settings.frame_pattern_a = 'exp1_001_a.bmp'
 settings.frame_pattern_b = 'exp1_001_b.bmp'
 
-'Region of interest'
+# 'Region of interest'
 # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full' for full image
-settings.ROI = 'full'
+settings.roi = 'full'
 
-'Image preprocessing'
+# 'Image preprocessing'
 # 'None' for no masking, 'edges' for edges masking, 'intensity' for intensity masking
 # WARNING: This part is under development so better not to use MASKS
-settings.dynamic_masking_method = 'None'
+settings.dynamic_masking_method = None
 settings.dynamic_masking_threshold = 0.005
 settings.dynamic_masking_filter_size = 7
 
-'Processing Parameters'
+# 'Processing Parameters'
 settings.correlation_method = 'circular'  # 'circular' or 'linear'
 settings.normalized_correlation = False
 settings.num_iterations = 2  # select the number of PIV passes
@@ -46,7 +49,7 @@ settings.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
 settings.interpolation_order = 3
 settings.scaling_factor = 1  # scaling factor pixel/meter
 settings.dt = 1  # time between to frames (in seconds)
-'Signal to noise ratio options (only for the last pass)'
+# Signal to noise ratio options (only for the last pass)'
 # It is possible to decide if the S/N should be computed (for the last
 # pass) or not
 # 'True' or 'False' (only for the last pass)
@@ -57,31 +60,31 @@ settings.sig2noise_method = 'peak2peak'
 settings.sig2noise_mask = 2
 # If extract_sig2noise==False the values in the signal to noise ratio
 # output column are set to NaN
-'vector validation options'
+# 'vector validation options'
 # choose if you want to do validation of the first pass: True or False
 settings.validation_first_pass = True
 # only effecting the first pass of the interrogation the following passes
 # in the multipass will be validated
-'Validation Parameters'
+# 'Validation Parameters'
 # The validation is done at each iteration based on three filters.
 # The first filter is based on the min/max ranges. Observe that these values are defined in
 # terms of minimum and maximum displacement in pixel/frames.
-settings.MinMax_U_disp = (-30, 30)
-settings.MinMax_V_disp = (-30, 30)
+settings.min_max_u_disp = (-30, 30)
+settings.min_max_v_disp = (-30, 30)
 # The second filter is based on the global STD threshold
 settings.std_threshold = 7  # threshold of the std validation
 # The third filter is the median test (not normalized at the moment)
 settings.median_threshold = 3  # threshold of the median validation
 # On the last iteration, an additional validation can be done based on the S/N.
 settings.median_size = 1  # defines the size of the local median
-'Validation based on the signal to noise ratio'
+# 'Validation based on the signal to noise ratio'
 # Note: only available when extract_sig2noise==True and only for the last
 # pass of the interrogation
 # Enable the signal to noise ratio validation. Options: True or False
 settings.sig2noise_validate = False  # This is time consuming
 # minmum signal to noise ratio that is need for a valid vector
 settings.sig2noise_threshold = 1.2
-'Outlier replacement or Smoothing options'
+# 'Outlier replacement or Smoothing options'
 # Replacment options for vectors which are masked as invalid by the validation
 settings.replace_vectors = True  # Enable the replacment. Chosse: True or False
 settings.smoothn = True  # Enables smoothing of the displacemenet field
@@ -91,7 +94,7 @@ settings.filter_method = 'localmean'
 # maximum iterations performed to replace the outliers
 settings.max_filter_iteration = 4
 settings.filter_kernel_size = 2  # kernel size for the localmean method
-'Output options'
+# Output options'
 # Select if you want to save the plotted vectorfield: True or False
 settings.save_plot = False
 # Choose wether you want to see the vectorfield or not :True or False

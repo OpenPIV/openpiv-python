@@ -1,17 +1,14 @@
-from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
-import os
+import pathlib
+from importlib_resources import files
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-import os
+from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
 
 # we can run it from any folder
-path = os.path.dirname(os.path.abspath(__file__))
+path = files('openpiv') / "data" / "test4" 
 
-
-im_a  = tools.imread( os.path.join(path,'../data/test4/Camera1-0101.tif'))
-im_b  = tools.imread( os.path.join(path,'../data/test4/Camera1-0102.tif'))
+im_a  = tools.imread(  path / "Camera1-0101.tif")
+im_b  = tools.imread( path / "Camera1-0102.tif")
 
 plt.imshow(np.c_[im_a,im_b],cmap='gray')
 
@@ -37,19 +34,21 @@ u, v, sig2noise = pyprocess.extended_search_area_piv(
                                                        search_area_size = search_area_size, 
                                                        sig2noise_method = 'peak2peak')
 x, y = pyprocess.get_coordinates( image_size = frame_a.shape, search_area_size = search_area_size, overlap = overlap )
-u, v, mask = validation.global_val( u, v, (-300.,300.),(-300.,300.))
-u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1 )
-u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
+flags_g = validation.global_val( u, v, (-300.,300.),(-300.,300.))
+flags_s2n = validation.sig2noise_val(sig2noise, threshold = 1.1 )
+flags = flags_g | flags_s2n
+u, v = filters.replace_outliers( u, v, flags, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
+x, y, u, v = tools.transform_coordinates(x, y, u, v)
 # save to a file
-tools.save(x, y, u, v, mask, '../data/test4/test.txt', fmt='%9.6f', delimiter='\t')
-tools.display_vector_field('../data/test4/test.txt', scale=50, width=0.002)
+tools.save(path / 'test.txt', x, y, u, v, flags, fmt='%9.6f', delimiter='\t')
+tools.display_vector_field( path / 'test.txt', scale=50, width=0.002)
 
 
 
 # masking using not optimal choice of the methods or parameters:
 masked_a, _ = preprocess.dynamic_masking(frame_a,method='edges',filter_size=7,threshold=0.005)
-masked_b, _ = preprocess.dynamic_masking(frame_b,method='intensity',filter_size=3,threshold=0.0)
+masked_b, _ = preprocess.dynamic_masking(frame_b,method='intensity',filter_size=3,threshold=0.005)
 plt.imshow(np.c_[masked_a,masked_b],cmap='gray')
 
 
@@ -72,11 +71,13 @@ u, v, sig2noise = pyprocess.extended_search_area_piv(
                                                        search_area_size = search_area_size, 
                                                        sig2noise_method = 'peak2peak')
 x, y = pyprocess.get_coordinates( image_size = masked_a.shape, search_area_size = search_area_size, overlap = overlap )
-u, v, mask = validation.global_val( u, v, (-300.,300.),(-300.,300.))
-u, v, mask = validation.sig2noise_val( u, v, sig2noise, threshold = 1.1)
-u, v = filters.replace_outliers( u, v, method='localmean', max_iter = 3, kernel_size = 3)
+flags_g = validation.global_val( u, v, (-300.,300.),(-300.,300.))
+flags_s2n = validation.sig2noise_val( sig2noise, threshold = 1.1)
+flags = flags_g | flags_s2n
+u, v = filters.replace_outliers( u, v, flags, method='localmean', max_iter = 3, kernel_size = 3)
 x, y, u, v = scaling.uniform(x, y, u, v, scaling_factor = 96.52 )
+x, y, u, v = tools.transform_coordinates(x, y, u, v)
 # save to a file
-tools.save(x, y, u, v, mask, '../data/test4/test_masked.txt', fmt='%9.6f', delimiter='\t')
-tools.display_vector_field('../data/test4/test_masked.txt', scale=50, width=0.002)
+tools.save(path / 'test_masked.txt', x, y, u, v, flags, None, fmt='%9.6f', delimiter='\t')
+tools.display_vector_field( path / 'test_masked.txt', scale=50, width=0.002)
 

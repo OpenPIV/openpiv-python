@@ -18,12 +18,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
+import warnings
+from typing import Tuple
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
 
 
-def global_val(u, v, u_thresholds, v_thresholds):
+
+def global_val(
+    u: np.ndarray,
+    v: np.ndarray,
+    u_thresholds: Tuple[int, int],
+    v_thresholds: Tuple[int, int],
+    )-> np.ndarray:
     """Eliminate spurious vectors with a global threshold.
 
     This validation method tests for the spatial consistency of the data
@@ -49,36 +57,26 @@ def global_val(u, v, u_thresholds, v_thresholds):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
 
-    np.warnings.filterwarnings("ignore")
+    warnings.filterwarnings("ignore")
 
     ind = np.logical_or(
         np.logical_or(u < u_thresholds[0], u > u_thresholds[1]),
         np.logical_or(v < v_thresholds[0], v > v_thresholds[1]),
     )
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
-def global_std(u, v, std_threshold=5):
+def global_std(
+    u: np.ndarray,
+    v: np.ndarray,
+    std_threshold: int=5,
+    )->np.ndarray:
     """Eliminate spurious vectors with a global threshold defined by the
     standard deviation
 
@@ -101,15 +99,7 @@ def global_std(u, v, std_threshold=5):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -131,20 +121,14 @@ def global_std(u, v, std_threshold=5):
         print('Warning! probably a uniform shift data, do not use this filter')
         ind = ~ind
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
-def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
-    """Eliminate spurious vectors from cross-correlation signal to noise ratio.
-
-    Replace spurious vectors with zero if signal to noise ratio
-    is below a specified threshold.
+def sig2noise_val(
+    s2n: np.ndarray,
+    threshold: float=1.0,
+    )->np.ndarray:
+    """ Marks spurious vectors if signal to noise ratio is below a specified threshold.
 
     Parameters
     ----------
@@ -166,20 +150,8 @@ def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
 
     Returns
     -------
-    u : 2d or 3d np.ndarray
-        a two or three dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
 
-    v : 2d or 3d  np.ndarray
-        a two or three dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    w : 2d or 3d  np.ndarray
-        optional, a two or three dimensional array containing the w
-        (in z-direction) velocity component, where spurious vectors
-        have been replaced by NaN.
-
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     References
@@ -190,17 +162,7 @@ def sig2noise_val(u, v, s2n, w=None, threshold=1.05):
     """
     ind = s2n < threshold
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros_like(u, dtype=bool)
-    mask[ind] = True
-
-    if isinstance(w, np.ndarray):
-        w[ind] = np.nan
-        return u, v, w, mask
-
-    return u, v, mask
+    return ind 
 
 
 def local_median_val(u, v, u_threshold, v_threshold, size=1):
@@ -212,7 +174,7 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     specified threshold. The median is computed for both velocity components.
 
     The image masked areas (obstacles, reflections) are marked as masked array:
-       u = np.ma.masked(u, mask = image_mask)
+       u = np.ma.masked(u, flag = image_mask)
     and it should not be replaced by the local median, but remain masked. 
 
 
@@ -232,25 +194,12 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     Returns
     -------
-    u : 2d np.ndarray
-        a two dimensional array containing the u velocity component,
-        where spurious vectors have been replaced by NaN.
 
-    v : 2d np.ndarray
-        a two dimensional array containing the v velocity component,
-        where spurious vectors have been replaced by NaN.
-
-    mask : boolean 2d np.ndarray
+    flag : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
-    # make a copy of the data without the masked region, fill it also with 
-    # NaN and then use generic filter with nanmean
-    # 
 
-    u = np.ma.copy(u)
-    v = np.ma.copy(v)
-    
     # kernel footprint
     f = np.ones((2*size+1, 2*size+1))
     f[size,size] = 0
@@ -265,90 +214,103 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
-    u[ind] = np.nan
-    v[ind] = np.nan
-
-    mask = np.zeros(u.shape, dtype=bool)
-    mask[ind] = True
-
-    return u, v, mask
+    return ind
 
 
-def typical_validation(u, v, s2n, settings):
-
+def typical_validation(
+    u: np.ndarray,
+    v: np.ndarray,
+    s2n: np.ndarray,
+    settings: "PIVSettings"
+    )->np.ndarray:
     """
     validation using gloabl limits and std and local median, 
 
     with a special option of 'no_std' for the case of completely
-    uniform shift, e.g. in tests. 
+    uniform shift, e.g. in tests.
 
-    see Settings() for the parameters:
+    see windef.PIVSettings() for the parameters:
 
-    MinMaxU : two elements tuple
-        sets the limits of the u displacment component
-        Used for validation.
+        MinMaxU : two elements tuple
+            sets the limits of the u displacment component
+            Used for validation.
 
-    MinMaxV : two elements tuple
-        sets the limits of the v displacment component
-        Used for validation.
+        MinMaxV : two elements tuple
+            sets the limits of the v displacment component
+            Used for validation.
 
-    std_threshold : float
-        sets the  threshold for the std validation
+        std_threshold : float
+            sets the  threshold for the std validation
 
-    median_threshold : float
-        sets the threshold for the median validation
+        median_threshold : float
+            sets the threshold for the median validation
+
+    
     """
 
     if settings.show_all_plots:
         plt.figure()
         plt.quiver(u,v,color='b')
+        plt.gca().invert_yaxis()
+        plt.title('Before (b) and global (m) local (k)')
 
-    mask = np.zeros(u.shape, dtype=bool)
+    # flag = np.zeros(u.shape, dtype=bool)
 
-    u, v, mask_g = global_val(
-        u, v, settings.MinMax_U_disp, settings.MinMax_V_disp
-    )
-    # print(f"global filter invalidated {sum(mask_g.flatten())} vectors")
-    if settings.show_all_plots:
-        plt.quiver(u,v,color='m')
+    # Global validation
+    flag_g = global_val(u, v, settings.min_max_u_disp, settings.min_max_v_disp)
 
-    u, v, mask_s = global_std(
+    # u[flag_g] = np.ma.masked
+    # v[flag_g] = np.ma.masked
+
+    # if settings.show_all_plots:
+    #     plt.quiver(u, v, color='m')
+
+    flag_s = global_std(
         u, v, std_threshold=settings.std_threshold
     )
-    # print(f"std filter invalidated {sum(mask_s.flatten())} vectors")
-    if settings.show_all_plots:
-        plt.quiver(u,v,color='k')
+
+    # u[flag_s] = np.ma.masked
+    # v[flag_s] = np.ma.masked
+
+    # print(f"std filter invalidated {sum(flag_s.flatten())} vectors")
+    # if settings.show_all_plots:
+    #     plt.quiver(u,v,color='k')
     
 
-    u, v, mask_m = local_median_val(
+    flag_m = local_median_val(
         u,
         v,
         u_threshold=settings.median_threshold,
         v_threshold=settings.median_threshold,
         size=settings.median_size,
     )
-    if settings.show_all_plots:
-        plt.quiver(u,v,color='r')
+    
+    # u[flag_m] = np.ma.masked
+    # v[flag_m] = np.ma.masked
+    
+    # if settings.show_all_plots:
+    #     plt.quiver(u,v,color='r')
 
-    # print(f"median filter invalidated {sum(mask_m.flatten())} vectors")
-    mask = mask + mask_g + mask_m + mask_s
+    # print(f"median filter invalidated {sum(flag_m.flatten())} vectors")
+    flag = flag_g | flag_m | flag_s
 
 
     if settings.sig2noise_validate:
-        u, v, mask_s2n = sig2noise_val(
-            u, v, s2n,
-            threshold=settings.sig2noise_threshold
-        )
-        # print(f"s2n filter invalidated {sum(mask_s2n.flatten())} vectors")
-        if settings.show_all_plots:
-            plt.quiver(u,v,color='g')
-            plt.show()
+        flag_s2n = sig2noise_val(s2n, settings.sig2noise_threshold)
+        
+        # u[flag_s2n] = np.ma.masked
+        # v[flag_s2n] = np.ma.masked
 
-        if settings.show_all_plots and sum(mask_s2n.flatten()): # if not all NaN
+        # print(f"s2n filter invalidated {sum(flag_s2n.flatten())} vectors")
+        # if settings.show_all_plots:
+        #     plt.quiver(u,v,color='g')
+        #     plt.show()
+
+        if settings.show_all_plots and sum(flag_s2n.flatten()): # if not all NaN
             plt.figure()
-            plt.hist(s2n[s2n>0].flatten(),31)
+            plt.hist( s2n[s2n>0], 31)
             plt.show()
 
-        mask += mask_s2n
+        flag += flag_s2n
 
-    return u, v, mask
+    return flag

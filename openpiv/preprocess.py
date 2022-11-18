@@ -1,13 +1,15 @@
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes
-from skimage import img_as_float, exposure, img_as_ubyte
-from skimage.filters import sobel, threshold_otsu
-from skimage.measure import find_contours, approximate_polygon, points_in_poly
-from skimage.transform import rescale
-from openpiv.tools import imread
-import numpy as np
-import matplotlib.pyplot as plt
 """This module contains image processing routines that improve
 images prior to PIV processing."""
+
+import numpy as np
+from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes,\
+     map_coordinates
+from skimage import img_as_float, exposure, img_as_ubyte
+from skimage import filters
+from skimage.measure import find_contours, approximate_polygon, points_in_poly
+from skimage.transform import rescale
+import matplotlib.pyplot as plt
+from openpiv.tools import imread
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -25,6 +27,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 
 
 def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
@@ -75,7 +78,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     blurback = img_as_ubyte(gaussian_filter(image, filter_size))
     if method == "edges":
         # identify edges
-        edges = sobel(blurback)
+        edges = filters.sobel(blurback)
         blur_edges = gaussian_filter(edges, 21)
         # create the boolean mask
         mask = blur_edges > threshold
@@ -85,7 +88,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     elif method == "intensity":
         background = gaussian_filter(median_filter(image, filter_size),
                                      filter_size)
-        mask = background > threshold_otsu(background)
+        mask = background > filters.threshold_otsu(background)
         imcopy[mask] = 0
     else:
         raise ValueError(f"method {method} is not implemented")
@@ -121,13 +124,13 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
         coords = approximate_polygon(contour, tolerance=tolerance)
         if len(coords) > min_length:
             if plot:
-                plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=2)
+                plt.plot(coords[:, 1], coords[:, 0], '-r', linewidth=3)
             mask_coords = coords.copy()
 
     return mask_coords
 
 
-def prepare_mask_on_grid(x, y, mask_coords):
+def prepare_mask_from_polygon(x, y, mask_coords):
     """ Converts mask coordinates of the image mask
     to the grid of 1/0 on the x,y grid
     Inputs:
@@ -139,7 +142,24 @@ def prepare_mask_on_grid(x, y, mask_coords):
     
     """
     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
-    return xymask.reshape(x.shape).astype(np.int)
+    return xymask.reshape(x.shape)
+
+def prepare_mask_on_grid(
+    x: np.ndarray,
+    y: np.ndarray,
+    image_mask: np.ndarray,
+)->np.array:
+    """_summary_
+
+    Args:
+        x (np.ndarray): x coordinates of vectors in pixels
+        y (np.ndarray): y coordinates of vectors in pixels
+        image_mask (np.ndarray): image of the mask, 1 or True is to be masked
+
+    Returns:
+        np.ndarray: boolean array of the size of x,y with 1 where the values are masked
+    """
+    return map_coordinates(image_mask, [y,x]).astype(bool)
 
 
 def normalize_array(array, axis = None):
@@ -161,7 +181,7 @@ def normalize_array(array, axis = None):
     
     """
     array = array.astype(np.float32)
-    if axis == None:
+    if axis is None:
         return((array - np.nanmin(array)) / (np.nanmax(array) - np.nanmin(array)))
     else:
         return((array - np.nanmin(array, axis = axis)) / 
@@ -187,7 +207,7 @@ def standardize_array(array, axis = None):
     
     """
     array = array.astype(np.float32)
-    if axis == None:
+    if axis is None:
         return((array - np.nanmean(array) / np.nanstd(array)))  
     else:
         return((array - np.nanmean(array, axis = axis) / np.nanstd(array, axis = axis)))
@@ -250,7 +270,7 @@ def intensity_clip(img, min_val = 0, max_val = None, flag = 'clip'):
     elif flag == 'cap':
         flag_min, flag_max = min_val, max_val
     img[img < min_val] = flag_min
-    if max_val != None:
+    if max_val is not None:
         img[img > max_val] = flag_max
     return img
 
@@ -276,7 +296,7 @@ def high_pass(img, sigma = 5, clip = False):
     """
     low_pass = gaussian_filter(img, sigma = sigma)
     img -= low_pass
-    if clip == True:
+    if clip:
         img[img < 0] = 0
     return img
 
@@ -307,15 +327,15 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
         a filtered two dimensional array of the input image
     
     """
-    high_pass = img - gaussian_filter(img, sigma_1)
-    img_blur = gaussian_filter(high_pass * high_pass, sigma = sigma_2)
+    _high_pass = img - gaussian_filter(img, sigma_1)
+    img_blur = gaussian_filter(_high_pass * _high_pass, sigma = sigma_2)
     den = np.sqrt(img_blur)
     img = np.divide( # stops image from being all black
-        high_pass, den,
+        _high_pass, den,
         out = np.zeros_like(img),
         where = (den != 0.0)
     )    
-    if clip == True: 
+    if clip:
         img[img < 0] = 0 
     img = (img - img.min()) / (img.max() - img.min())
     return img
@@ -404,14 +424,14 @@ def gen_min_background(img_list, resize = 255):
     
     """
     background = imread(img_list[0])
-    if resize != None:
+    if resize is not None:
         background = normalize_array(background) * resize
     for img in img_list: 
         if img == img_list: # the original image is already included, so skip it in the for loop
             pass
         else:
             img = imread(img)
-            if resize != None:
+            if resize is not None:
                 img = normalize_array(img) * resize
             background = np.min(np.array([background, img]), axis = 0)
     return(background)
@@ -441,7 +461,7 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
     
     """
     for img_file in img_list:
-        if resize != None:
+        if resize is not None:
             img = normalize_array(imread(img_file)) * resize
         else:
             img = imread(img_file)
@@ -541,7 +561,7 @@ def stretch_image(img,
     y_axis += 1 # set so zero = no stretch
     x_axis += 1
 
-    if x_axis < 1: x_axis = 1
-    if y_axis < 1: y_axis = 1
-        
+    x_axis = max(x_axis, 1)
+    y_axis = max(y_axis, 1)
+
     return rescale(img, (y_axis, x_axis))

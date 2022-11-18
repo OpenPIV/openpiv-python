@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """The openpiv.tools module is a collection of utilities and tools.
 """
 
@@ -19,40 +18,44 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import glob
 import sys
-import os.path
+import pathlib
 import multiprocessing
+from typing import Any, Union, List, Optional
+# import re
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
+from natsort import natsorted
 
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
 from skimage.feature import canny
 
-import re
 
-def natural_sort(l): 
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-    return sorted(l, key=alphanum_key)
+def natural_sort(file_list: List[pathlib.Path])-> List[pathlib.Path]:
+    """ Creates naturally sorted list """
+    # convert = lambda text: int(text) if text.isdigit() else text.lower()
+    # alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    # return sorted(file_list, key=alphanum_key)
+    return natsorted(file_list, key=str)
 
-def unique(array):
+def sorted_unique(array: np.ndarray)->np.ndarray:
+    """Creates sorted unique array """
     uniq, index = np.unique(array, return_index=True)
     return uniq[index.argsort()]
 
 
 def display_vector_field(
-    filename,
-    on_img=False,
-    image_name="None",
-    window_size=32,
-    scaling_factor=1,
-    widim=False,
-    ax=None,
-    width=0.0025,
+    filename: Union[pathlib.Path, str],
+    on_img: Optional[bool]=False,
+    image_name: Optional[Union[pathlib.Path,str]]=None,
+    window_size: Optional[int]=32,
+    scaling_factor: Optional[float]=1.,
+    ax: Optional[Any]=None,
+    width: Optional[float]=0.0025,
+    show_invalid: Optional[bool]=True,
     **kw
 ):
     """ Displays quiver plot of the data stored in the file 
@@ -78,8 +81,8 @@ def display_vector_field(
         when on_img is True, provide the scaling factor to scale the background
         image to the vector field
     
-    widim : bool, optional, default is False
-        when widim == True, the y values are flipped, i.e. y = y.max() - y
+    show_invalid: bool, show or not the invalid vectors, default is True
+
         
     Key arguments   : (additional parameters, optional)
         *scale*: [None | float]
@@ -98,16 +101,17 @@ def display_vector_field(
                                            width=0.0025) 
 
     --- vector field on top of image
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt', on_img=True, 
-                                          image_name='exp1_001_a.bmp', 
+    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True, 
+                                          image_name=Path('exp1_001_a.bmp'), 
                                           window_size=32, scaling_factor=70, 
                                           scale=100, width=0.0025)
     
     """
 
+    # print(f' Loading {filename} which exists {filename.exists()}')
     a = np.loadtxt(filename)
     # parse
-    x, y, u, v, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4]
+    x, y, u, v, flags, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
 
 
     if ax is None:
@@ -120,9 +124,15 @@ def display_vector_field(
         im = negative(im)  # plot negative of the image for more clarity
         xmax = np.amax(x) + window_size / (2 * scaling_factor)
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
-        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
+        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])    
 
-    invalid = mask.astype("bool")  
+
+    # first mask whatever has to be masked
+    u[mask.astype(bool)] = 0.
+    v[mask.astype(bool)] = 0.
+    
+    # now mark the valid/invalid vectors
+    invalid = flags > 0 # mask.astype("bool")  
     valid = ~invalid
 
     # visual conversion for the data on image
@@ -132,12 +142,27 @@ def display_vector_field(
     #     y = y.max() - y
     #     v *= -1
 
-    if len(x[invalid]) > 0:  
+    ax.quiver(
+        x[valid],
+        y[valid],
+        u[valid],
+        v[valid],
+        color="b",
+        width=width,
+        **kw
+        )
+        
+    if show_invalid and len(invalid) > 0:
         ax.quiver(
-                x[invalid], y[invalid], u[invalid], v[invalid], \
-                    color="r", width=width, **kw)
-    ax.quiver(x[valid], y[valid], u[valid], v[valid], \
-        color="b", width=width, **kw)
+                x[invalid],
+                y[invalid],
+                u[invalid],
+                v[invalid],
+                color="r",
+                width=width,
+                **kw,
+                )
+    
     
     # if on_img is False:
     #     ax.invert_yaxis()
@@ -183,7 +208,15 @@ def imread(filename, flatten=0):
     return im
 
 
-def rgb2gray(rgb):
+def rgb2gray(rgb: np.ndarray)->np.ndarray:
+    """converts rgb image to gray 
+
+    Args:
+        rgb (_type_): numpy.ndarray, image size, three channels
+
+    Returns:
+        gray: numpy.ndarray of the same shape, one channel
+    """
     return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
 
 
@@ -223,7 +256,13 @@ def imsave(filename, arr):
         _imsave(filename, arr)
 
 
-def convert16bitsTIF(filename, save_name):
+def convert_16bits_tif(filename, save_name):
+    """convert 16 bits TIFF to an openpiv readable image
+
+    Args:
+        filename (_type_): filename of a 16 bit TIFF
+        save_name (_type_): new image filename
+    """
     img = imread(filename)
     img2 = np.zeros([img.shape[0], img.shape[1]], dtype=np.int32)
     for I in range(img.shape[0]):
@@ -233,7 +272,21 @@ def convert16bitsTIF(filename, save_name):
     imsave(save_name, img2)
 
 
-def mark_background(threshold, list_img, filename):
+def mark_background(
+    threshold: float,
+    list_img: list,
+    filename: str
+    )->np.ndarray:
+    """marks background
+
+    Args:
+        threshold (float): threshold
+        list_img (list of images): _description_
+        filename (str): image filename to save the mask
+
+    Returns:
+        _type_: _description_
+    """
     list_frame = []
     for I in range(len(list_img)):
         list_frame.append(imread(list_img[I]))
@@ -329,11 +382,24 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     return list_bound
 
 
-def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
+def save(
+    filename: Union[pathlib.Path,str],
+    x: np.ndarray,
+    y: np.ndarray,
+    u: np.ndarray,
+    v: np.ndarray, 
+    flags: Optional[np.ndarray] = None,
+    mask: Optional[np.ndarray] = None,
+    fmt: str="%8.4f", 
+    delimiter: str="\t",
+    )-> None:
     """Save flow field to an ascii file.
 
     Parameters
     ----------
+    filename : string
+        the path of the file where to save the flow field
+
     x : 2d np.ndarray
         a two dimensional array containing the x coordinates of the
         interrogation window centers, in pixels.
@@ -350,12 +416,14 @@ def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
         a two dimensional array containing the v velocity components,
         in pixels/seconds.
 
-    mask : 2d np.ndarray
-        a two dimensional boolen array where elements corresponding to
-        invalid vectors are True.
+    flags : 2d np.ndarray
+        a two dimensional integers array where elements corresponding to
+        vectors: 0 - valid, 1 - invalid (, 2 - interpolated)
+        default: None, will create all valid 0
 
-    filename : string
-        the path of the file where to save the flow field
+    mask: 2d np.ndarray boolean, marks the image masked regions (dynamic and/or static)
+        default: None - will be all False
+
 
     fmt : string
         a format string. See documentation of numpy.savetxt
@@ -367,7 +435,7 @@ def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
     Examples
     --------
 
-    openpiv.tools.save( x, y, u, v, 'field_001.txt', fmt='%6.3f',
+    openpiv.tools.save('field_001.txt', x, y, u, v, flags, mask,  fmt='%6.3f',
                         delimiter='\t')
 
     """
@@ -375,8 +443,14 @@ def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
         u = u.filled(0.)
         v = v.filled(0.)
 
+    if mask is None:
+        mask = np.zeros_like(u, dtype=int)
+
+    if flags is None:
+        flags = np.zeros_like(u, dtype=int)
+
     # build output array
-    out = np.vstack([m.flatten() for m in [x, y, u, v, mask]])
+    out = np.vstack([m.flatten() for m in [x, y, u, v, flags, mask]])
 
     # save data to file.
     np.savetxt(
@@ -391,6 +465,8 @@ def save(x, y, u, v, mask, filename, fmt="%.4e", delimiter="\t"):
         + "u"
         + delimiter
         + "v"
+        + delimiter
+        + "flags"
         + delimiter
         + "mask",
     )
@@ -411,7 +487,11 @@ def display(message):
 
 
 class Multiprocesser:
-    def __init__(self, data_dir, pattern_a, pattern_b=None):
+    def __init__(self,
+    data_dir: pathlib.Path,
+    pattern_a: str,
+    pattern_b: Optional[str]=None,
+    )->None:
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets
@@ -460,9 +540,15 @@ class Multiprocesser:
         """
         # load lists of images
 
-        self.files_a = natural_sort(
-            glob.glob(os.path.join(os.path.abspath(data_dir), pattern_a))
-        )
+        # print('Inside Multiprocesser')
+        # print(f'data_dir = {data_dir}')
+        # print(f'pattern_a = {pattern_a}')
+        # print(f' dir exists: {data_dir.exists()}')
+        
+        self.files_a = natural_sort(list(data_dir.glob(pattern_a)))
+
+        # print(f'List of files:')
+        # print(f'{self.files_a}')
 
         if pattern_b == '(1+2),(2+3)':
             self.files_b = self.files_a[1:]
@@ -474,9 +560,7 @@ class Multiprocesser:
             self.files_b = self.files_a[1::2]
             self.files_a = self.files_a[0::2]
         else:
-            self.files_b = sorted(
-                glob.glob(os.path.join(os.path.abspath(data_dir), pattern_b))
-            )
+            self.files_b = sorted(data_dir.glob(pattern_b))
 
         # number of images
         self.n_files = len(self.files_a)
@@ -490,7 +574,7 @@ class Multiprocesser:
                 'Something failed loading the image file. There should be an equal number of "a" and "b" files.'
             )
 
-        if not len(self.files_a):
+        if len(self.files_a) == 0:
             raise ValueError(
                 "Something failed loading the image file. No images were found. Please check directory and image template name."
             )

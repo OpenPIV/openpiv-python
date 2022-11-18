@@ -29,6 +29,7 @@ Contents:
    src/installation_instruction
    src/tutorial1
    src/windef
+   src/masking
    src/developers
    src/api_reference
    src/faq

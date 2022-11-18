@@ -1,9 +1,11 @@
-from openpiv.tools import imread, save, display_vector_field, transform_coordinates
-from openpiv.pyprocess import extended_search_area_piv, get_coordinates
+""" tests windef functionality """
 import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.testing import compare, decorators
+from openpiv.tools import imread, save, display_vector_field, transform_coordinates
+from openpiv.pyprocess import extended_search_area_piv, get_coordinates
+
 
 _file_a = pathlib.Path(__file__).parent / '../data/test1/exp1_001_a.bmp'
 _file_b = pathlib.Path(__file__).parent / '../data/test1/exp1_001_b.bmp'
@@ -12,13 +14,23 @@ _test_file = pathlib.Path(__file__).parent / 'test_tools.png'
 
 
 def test_imread(image_file=_file_a):
-    a = imread(image_file)
-    assert a.shape == (369, 511)
-    assert a[0, 0] == 8
-    assert a[-1, -1] == 15
+    """test imread
+
+    Args:
+        image_file (_type_, optional): image path and filename. Defaults to _file_a.
+    """
+    frame_a = imread(image_file)
+    assert frame_a.shape == (369, 511)
+    assert frame_a[0, 0] == 8
+    assert frame_a[-1, -1] == 15
 
 
-def test_display_vector_field(file_a=_file_a, file_b=_file_b, test_file=_test_file):
+def test_display_vector_field(
+    file_a=_file_a,
+    file_b=_file_b,
+    test_file=_test_file
+    ):
+    """ tests display vector field """
     a = imread(file_a)
     b = imread(file_b)
 
@@ -26,7 +38,7 @@ def test_display_vector_field(file_a=_file_a, file_b=_file_b, test_file=_test_fi
     overlap = 16
     search_area_size = 40
 
-    u, v, s2n = extended_search_area_piv(a, b, window_size,
+    u, v, _ = extended_search_area_piv(a, b, window_size,
                                          search_area_size=search_area_size,
                                          overlap=overlap,
                                          correlation_method='circular',
@@ -36,9 +48,10 @@ def test_display_vector_field(file_a=_file_a, file_b=_file_b, test_file=_test_fi
 
     x, y, u, v = transform_coordinates(x, y, u, v)
 
-    mask = np.zeros_like(x)
-    mask[-1,1] = 1 # test of invalid vector plot
-    save(x, y, u, v, mask, 'tmp.txt')
+    mask = np.zeros_like(x, dtype=int)
+    flags = np.zeros_like(x, dtype=int)
+    flags[-1,1] = 1 # test of invalid vector plot
+    save('tmp.txt', x, y, u, v, flags, mask)
     fig, ax = plt.subplots(figsize=(6, 6))
     display_vector_field('tmp.txt', on_img=True, image_name=file_a, ax=ax)
     decorators.remove_ticks_and_titles(fig)

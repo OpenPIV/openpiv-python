@@ -155,6 +155,8 @@ def smoothn(
   error(nargchk(1,12,nargin));
   z0=None,W=None,s=None,MaxIter=100,TolZ=1e-3
   """
+    is_masked = False
+
     if type(y) == ma.core.MaskedArray:  # masked array
         is_masked = True
         mask = y.mask
@@ -526,7 +528,7 @@ def InitialGuess(y, I):
     k = array(z.shape)
     m = ceil(k / 10) + 1
     d = []
-    for i in xrange(len(k)):
+    for i in range(len(k)):
         d.append(arange(m[i], k[i]))
     d = np.array(d).astype(int)
     z[d] = 0.0
@@ -568,7 +570,7 @@ def peaks(n):
     xp = arange(n)
     [x, y] = meshgrid(xp, xp)
     z = np.zeros_like(x).astype(float)
-    for i in xrange(n / 5):
+    for i in range(n // 5):
         x0 = random() * n
         y0 = random() * n
         sdx = random() * n / 4.0

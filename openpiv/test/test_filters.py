@@ -68,10 +68,16 @@ def test_replace_nans():
 
 def test_replace_outliers():
     """ test of replacing outliers """
-    v = np.ones((9, 9))
-    v[1:-1, 1:-1] = np.nan
-    u = v.copy()
-    uf, vf = filters.replace_outliers(u, v)
+    v = np.ma.array(np.ones((5, 5)), mask=np.ma.nomask)
+    v[3:,3:] = np.ma.masked
 
-    assert np.sum(np.isnan(u)) == 7 ** 2
-    assert np.allclose(np.ones((9, 9)), uf)
+    v_copy = np.ma.copy(v) # without NaNs
+
+    v[1, 1] = np.nan
+    invalid_mask = np.isnan(v)
+    grid_mask = np.zeros_like(v, dtype=bool)
+    u = v.copy()
+    uf, _ = filters.replace_outliers(u,v, invalid_mask)
+
+    assert np.ma.allclose(v_copy,uf)
+    assert isinstance(uf, np.ma.MaskedArray)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Oct  4 14:04:04 2019
 
@@ -6,88 +5,253 @@ Created on Fri Oct  4 14:04:04 2019
 @modified: Alex, Erich
 """
 
-
-import os
+import pathlib
+from dataclasses import dataclass
+from typing import Optional, Tuple, Union
 import numpy as np
 import scipy.ndimage as scn
+from skimage.util import invert
+
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
 
-from openpiv.tools import imread, Multiprocesser, display_vector_field, \
-    transform_coordinates
-from openpiv import validation, filters, tools, preprocess, scaling
+from importlib_resources import files
+from openpiv.tools import Multiprocesser, display_vector_field, transform_coordinates
+from openpiv import validation, filters, tools, scaling, preprocess
 from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
     get_field_shape
 from openpiv import smoothn
-from skimage.util import invert
 
-def simple_multipass(frame_a, frame_b, windows = None):
-    """ Simple windows deformation multipass run with 
-    default settings
+
+@dataclass
+class PIVSettings:
+    """ All the PIV settings for the batch analysis with multi-processing and
+    window deformation. Default settings are set at the initiation
     """
-    settings = Settings() # default, see below
+    # "Data related settings"
+    # Folder with the images to process
+    filepath_images: Union[pathlib.Path, str] = files('openpiv') / "data" / "test1"  # type: ignore
+    # Folder for the outputs
+    save_path: pathlib.Path = filepath_images.parent
+    # Root name of the output Folder for Result Files
+    save_folder_suffix: str = 'test1'
+    # Format and Image Sequence
+    frame_pattern_a: str = 'exp1_001_a.bmp'
+    frame_pattern_b: str = 'exp1_001_b.bmp'
 
-    if windows is not None:
-        settings.num_iterations = len(windows)
-        settings.windowsizes = windows
-        settings.overlap = [int(w/2) for w in windows]
+    # "Region of interest"
+    # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
+    # for full image
+    roi: Union[Tuple[int, int, int, int], str] = "full"
 
-    x, y, u, v, s2n = first_pass(
-                                frame_a,
-                                frame_b,
-                                settings
-                                )
+    # "Image preprocessing"
+    # Every image would be processed separately and the
+    # average mask is applied to both A, B, but it's varying
+    # for the frames sequence
+    #: None for no masking
+    #: 'edges' for edges masking, 
+    #: 'intensity' for intensity masking
+    dynamic_masking_method: Optional[str] = None # ['edge','intensity']
+    dynamic_masking_threshold: float = 0.005
+    dynamic_masking_filter_size: int = 7
 
+    # Static masking applied to all images, A,B
+    static_mask: Optional[np.ndarray] = None # or a boolean matrix of image shape
 
-    u = np.ma.masked_array(u, mask=np.ma.nomask)
-    v = np.ma.masked_array(v, mask=np.ma.nomask)
+    # "Processing Parameters"
+    correlation_method: str="circular"  # ['circular', 'linear']
+    normalized_correlation: bool=False
 
-    if settings.validation_first_pass:
-        u, v, mask = validation.typical_validation(u, v, s2n, settings)
+    # add the interroagtion window size for each pass.
+    # For the moment, it should be a power of 2
+    windowsizes: Tuple[int, ...]=(64,32,16)
     
-    u, v = filters.replace_outliers(u, v)
+    # The overlap of the interroagtion window for each pass.
+    overlap: Tuple[int, ...] = (32, 16, 8)  # This is 50% overlap
 
-    if settings.smoothn:
-            u,_,_,_ = smoothn.smoothn(u, s=settings.smoothn_p)
-            v,_,_,_ = smoothn.smoothn(v, s=settings.smoothn_p)
-    # multipass 
-    for i in range(1, settings.num_iterations):
+    # Has to be a value with base two. In general window size/2 is a good
+    # choice.
 
-        x, y, u, v, s2n, mask = multipass_img_deform(
+    num_iterations: int = len(windowsizes)  # select the number of PIV
+    # passes
+
+    # methode used for subpixel interpolation:
+    # 'gaussian','centroid','parabolic'
+    subpixel_method: str = "gaussian"
+    # use vectorized sig2noise and subpixel approximation functions
+    use_vectorized: bool = False
+    # 'symmetric' or 'second image', 'symmetric' splits the deformation
+    # both images, while 'second image' does only deform the second image.
+    deformation_method: str = 'symmetric'  # 'symmetric' or 'second image'
+    # order of the image interpolation for the window deformation
+    interpolation_order: int=3
+    scaling_factor: float = 1.0  # scaling factor pixel/meter
+    dt: float = 1.0  # time between to frames (in seconds)
+
+    # Signal to noise ratio:
+    # we can decide to estimate it or not at every vector position
+    # we can decided if we use it for validation or only store it for 
+    # later post-processing
+    # plus we need some parameters for threshold validation and for the 
+    # calculations:
+
+    sig2noise_method: Optional[str]="peak2mean" # or "peak2peak" or "None"
+    # select the width of the masked to masked out pixels next to the main
+    # peak
+    sig2noise_mask: int=2
+    # If extract_sig2noise::False the values in the signal to noise ratio
+    # output column are set to NaN
+    
+    # "Validation based on the signal to noise ratio"
+    # Note: only available when extract_sig2noise::True and only for the
+    # last pass of the interrogation
+    # Enable the signal to noise ratio validation. Options: True or False
+    # sig2noise_validate: False  # This is time consuming
+    # minmum signal to noise ratio that is need for a valid vector
+    sig2noise_threshold: float=1.0
+    sig2noise_validate: bool=True # when it's False we can save time by not
+    #estimating sig2noise ratio at all, so we can set both sig2noise_method to None 
+    
+
+    # "vector validation options"
+    # choose if you want to do validation of the first pass: True or False
+    validation_first_pass: bool=True
+    # only effecting the first pass of the interrogation the following
+    # passes
+    # in the multipass will be validated
+
+    # "Validation Parameters"
+    # The validation is done at each iteration based on three filters.
+    # The first filter is based on the min/max ranges. Observe that these
+    # values are defined in
+    # terms of minimum and maximum displacement in pixel/frames.
+    min_max_u_disp: Tuple=(-30, 30)
+    min_max_v_disp: Tuple=(-30, 30)
+    # The second filter is based on the global STD threshold
+    std_threshold: int=10  # threshold of the std validation
+    # The third filter is the median test (not normalized at the moment)
+    median_threshold: int=3  # threshold of the median validation
+    # On the last iteration, an additional validation can be done based on
+    # the S/N.
+    median_size: int=1  # defines the size of the local median
+
+
+
+    # "Outlier replacement or Smoothing options"
+    # Replacment options for vectors which are masked as invalid by the
+    # validation
+    # Choose: True or False
+    replace_vectors: bool=True  # Enable the replacement.
+    smoothn: bool=False  # Enables smoothing of the displacement field
+    smoothn_p: float=0.05  # This is a smoothing parameter
+    # select a method to replace the outliers:
+    # 'localmean', 'disk', 'distance'
+    filter_method: str="localmean"
+    # maximum iterations performed to replace the outliers
+    max_filter_iteration: int=4
+    filter_kernel_size: int=2  # kernel size for the localmean method
+    
+    # "Output options"
+    # Select if you want to save the plotted vectorfield: True or False
+    save_plot: bool=False
+    # Choose wether you want to see the vectorfield or not:True or False
+    show_plot: bool=False
+    scale_plot: int=100  # select a value to scale the quiver plot of
+    # the vectorfield run the script with the given settings
+
+    show_all_plots: bool=False
+
+    invert: bool=False  # for the test_invert
+
+def prepare_images(
+    file_a: pathlib.Path,
+    file_b: pathlib.Path,
+    settings: "PIVSettings",
+    )-> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """ prepares two images for the PIV pass
+
+    Args:
+        file_a (pathlib.Path): filename of frame A
+        file_b (pathlib.Path): filename of frame B
+        settings (_type_): windef.Settings() 
+    """
+    image_mask = None
+
+    # print(f'Inside prepare_images {file_a}, {file_b}')
+
+        # read images into numpy arrays
+    frame_a = tools.imread(file_a)
+    frame_b = tools.imread(file_b)
+
+    
+    # crop to roi
+    if settings.roi == "full":
+        pass
+    else:
+        frame_a = frame_a[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+        frame_b = frame_b[
+            settings.roi[0]:settings.roi[1],
+            settings.roi[2]:settings.roi[3]
+        ]
+
+    if settings.invert is True:
+        frame_a = invert(frame_a)
+        frame_b = invert(frame_b)
+
+    if settings.show_all_plots:
+        _, ax = plt.subplots()
+        ax.imshow(frame_a, cmap='Reds')
+        ax.imshow(frame_b, cmap='Blues', alpha=.5)
+        ax.set_title('Frames overlayed')
+        plt.show()
+
+    if settings.static_mask is not None:
+
+        image_mask = settings.static_mask
+        frame_a = np.where(image_mask, 0, frame_a)
+        frame_b = np.where(image_mask, 0, frame_b)
+
+    
+        if settings.show_all_plots:
+            _, ax = plt.subplots()
+            ax.set_title('Masked frames')
+            ax.imshow(np.c_[frame_a, frame_b])
+    
+
+    if settings.dynamic_masking_method in ("edge", "intensity"):
+        frame_a, mask_a = preprocess.dynamic_masking(
             frame_a,
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
+        )
+        frame_b, mask_b = preprocess.dynamic_masking(
             frame_b,
-            i,
-            x,
-            y,
-            u,
-            v,
-            settings
+            method=settings.dynamic_masking_method,
+            filter_size=settings.dynamic_masking_filter_size,
+            threshold=settings.dynamic_masking_threshold,
         )
 
-        # If the smoothing is active, we do it at each pass
-        # but not the last one
-        if settings.smoothn is True and i < settings.num_iterations-1:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
-            )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
-            )
+        image_mask = np.logical_and(mask_a, mask_b)
 
-    # replance NaNs by zeros
-    u = u.filled(0.)
-    v = v.filled(0.)
+        if settings.show_all_plots:
+            _, ax = plt.subplots(2,2)
+            ax[0,0].imshow(frame_a)  # type: ignore
+            ax[0,1].imshow(mask_a)  # type: ignore
+            ax[1,0].imshow(frame_b) # type: ignore
+            ax[1,1].imshow(mask_b) # type: ignore
+            ax[0,0].set_title('Masking')
 
-    # # "scales the results pixel-> meter"
-    # x, y, u, v = scaling.uniform(x, y, u, v,
-    #                                 scaling_factor=settings.scaling_factor)
-
-    x, y, u, v = transform_coordinates(x, y, u, v)
-    return (x,y,u,v,s2n)
+    return (frame_a, frame_b, image_mask)
 
 
 def piv(settings):
     """ the func fuction is the "frame" in which the PIV evaluation is done """
+
+    # note that settings is in the outer scope of piv()
 
     def func(args):
         """A function to process each image pair."""
@@ -97,78 +261,24 @@ def piv(settings):
 
         file_a, file_b, counter = args
 
-        # counter2=str(counter2)
-        #####################
-        # Here goes you code
-        #####################
+        # print(f'Inside func {file_a}, {file_b}, {counter}')
 
-        " read images into numpy arrays"
-        frame_a = imread(os.path.join(settings.filepath_images, file_a))
-        frame_b = imread(os.path.join(settings.filepath_images, file_b))
-
-        # Miguel: I just had a quick look, and I do not understand the reason
-        # for this step.
-        #  I propose to remove it.
-        # frame_a = (frame_a*1024).astype(np.int32)
-        # frame_b = (frame_b*1024).astype(np.int32)
-
-        " crop to ROI"
-        if settings.ROI == "full":
-            frame_a = frame_a
-            frame_b = frame_b
-        else:
-            frame_a = frame_a[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
-            frame_b = frame_b[
-                settings.ROI[0]:settings.ROI[1],
-                settings.ROI[2]:settings.ROI[3]
-            ]
-
-        if settings.invert is True:
-            frame_a = invert(frame_a)
-            frame_b = invert(frame_b)
+        # frame_a, frame_b are masked as black where we do not 
+        # want to get vectors. later piv would mark it as completely black
+        # and set s2n to invalid
+        frame_a, frame_b, image_mask = prepare_images(
+            file_a,
+            file_b,
+            settings,
+        )
 
         if settings.show_all_plots:
-            fig, ax = plt.subplots(1, 1)
-            ax.imshow(frame_a, cmap=plt.get_cmap('Reds'))
-            ax.imshow(frame_b, cmap=plt.get_cmap('Blues'), alpha=.5)
+            _, ax = plt.subplots(1,2)
+            ax[0].imshow(frame_a, cmap='gray')
+            ax[1].imshow(frame_b, cmap='gray')
+            ax[0].set_title('Frame A')
+            ax[1].set_title('Frame B')
             plt.show()
-
-        if settings.static_masking:
-            frame_a[settings.static_mask] = 0
-            frame_b[settings.static_mask] = 0
-        
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(1,2)
-                ax[0].imshow(frame_a)
-                ax[1].imshow(frame_b)
-        
-
-        if settings.dynamic_masking_method in ("edge", "intensity"):
-            frame_a, mask_a = preprocess.dynamic_masking(
-                frame_a,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            frame_b, mask_b = preprocess.dynamic_masking(
-                frame_b,
-                method=settings.dynamic_masking_method,
-                filter_size=settings.dynamic_masking_filter_size,
-                threshold=settings.dynamic_masking_threshold,
-            )
-            if settings.show_all_plots:
-                fig, ax = plt.subplots(2,2)
-                ax[0,0].imshow(frame_a)
-                ax[0,1].imshow(mask_a)
-                ax[1,0].imshow(frame_b)
-                ax[1,1].imshow(mask_b)
-                # plt.gca().invert_yaxis()
-                # plt.gca().set_aspect(1.)
-                # plt.title('after first pass, invert')
-                # plt.show()
 
         # "first pass"
         x, y, u, v, s2n = first_pass(
@@ -179,54 +289,63 @@ def piv(settings):
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x, y, u, -v, color='b')
-            # plt.gca().invert_yaxis()
-            # plt.gca().set_aspect(1.)
-            # plt.title('after first pass, invert')
-            # plt.show()
+            plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+            plt.gca().invert_yaxis()
+            plt.title('First pass')
 
         # " Image masking "
-        if settings.image_mask:
-            image_mask = np.logical_and(mask_a, mask_b)
-            mask_coords = preprocess.mask_coordinates(image_mask)
-            # mark those points on the grid of PIV inside the mask
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-
-            # mask the velocity
-            u = np.ma.masked_array(u, mask=grid_mask)
-            v = np.ma.masked_array(v, mask=grid_mask)
+        # note that grid_mask keeps only the user-supplied image masking
+        # the invalid vectors are treated separately using a different
+        # marker
+        if image_mask is None:
+            grid_mask = np.zeros_like(u, dtype=bool)
         else:
-            mask_coords = []
-            u = np.ma.masked_array(u, mask=np.ma.nomask)
-            v = np.ma.masked_array(v, mask=np.ma.nomask)
+            # mask_coords = preprocess.mask_coordinates(image_mask)
+            # mark those points on the grid of PIV inside the mask
+            # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            
+            grid_mask = scn.map_coordinates(image_mask, [y,x]).astype(bool)
 
-        if settings.validation_first_pass:
-            u, v, mask = validation.typical_validation(u, v, s2n, settings)
+
+        # mask the velocity
+        u = np.ma.masked_array(u, mask=grid_mask)
+        v = np.ma.masked_array(v, mask=grid_mask)
+
 
         if settings.show_all_plots:
-            # plt.figure()
-            plt.quiver(x, y,  u, -v, color='r')
+            plt.figure()
+            plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+            plt.gca().invert_yaxis()
+            plt.title('Grid masked arrays')
+
+
+        # validation also masks the u,v and returns another flags
+        # the question is whether to merge the two masks or just keep for the 
+        # reference
+        if settings.validation_first_pass:
+            flags = validation.typical_validation(u, v, s2n, settings)
+        else:
+            flags = np.zeros_like(u, dtype=bool)
+        
+        
+
+        if settings.show_all_plots:
+            plt.figure()
+            plt.quiver(x, y,  u, v, color='r')
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after first pass validation new, inverted')
             plt.show()
 
         # "filter to replace the values that where marked by the validation"
-        if settings.num_iterations == 1 and settings.replace_vectors:
+        if (settings.num_iterations == 1 and settings.replace_vectors) \
+            or (settings.num_iterations > 1):
             # for multi-pass we cannot have holes in the data
             # after the first pass
             u, v = filters.replace_outliers(
                 u,
                 v,
-                method=settings.filter_method,
-                max_iter=settings.max_filter_iteration,
-                kernel_size=settings.filter_kernel_size,
-            )
-        # don't even check if it's true or false
-        elif settings.num_iterations > 1:
-            u, v = filters.replace_outliers(
-                u,
-                v,
+                flags,
                 method=settings.filter_method,
                 max_iter=settings.max_filter_iteration,
                 kernel_size=settings.filter_kernel_size,
@@ -234,40 +353,37 @@ def piv(settings):
 
             # "adding masks to add the effect of all the validations"
         if settings.smoothn:
-            u, dummy_u1, dummy_u2, dummy_u3 = smoothn.smoothn(
-                u, s=settings.smoothn_p
+            u, *_ = smoothn.smoothn(
+                u,
+                s=settings.smoothn_p
             )
-            v, dummy_v1, dummy_v2, dummy_v3 = smoothn.smoothn(
-                v, s=settings.smoothn_p
+            v, *_ = smoothn.smoothn(
+                v,
+                s=settings.smoothn_p
             )
 
-        if settings.image_mask:
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            # enforce grid_mask that possibly destroyed by smoothing
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
-        else:
-            u = np.ma.masked_array(u, np.ma.nomask)
-            v = np.ma.masked_array(v, np.ma.nomask)
+
 
         if settings.show_all_plots:
             plt.figure()
-            plt.quiver(x, y, u, -v)
+            plt.quiver(x, y, u, -1*v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('before multi pass, inverted')
             plt.show()
 
-        if not isinstance(u, np.ma.MaskedArray):
-            raise ValueError("Expected masked array")
+        # if not isinstance(u, np.ma.MaskedArray):
+        #     raise ValueError("Expected masked array")
 
-        """ Multi pass """
-
+        # Multi pass
         for i in range(1, settings.num_iterations):
+            # if not isinstance(u, np.ma.MaskedArray):
+            #     raise ValueError("Expected masked array")
 
-            if not isinstance(u, np.ma.MaskedArray):
-                raise ValueError("Expected masked array")
-
-            x, y, u, v, s2n, mask = multipass_img_deform(
+            x, y, u, v, grid_mask, flags = multipass_img_deform(
                 frame_a,
                 frame_b,
                 i,
@@ -276,7 +392,7 @@ def piv(settings):
                 u,
                 v,
                 settings,
-                mask_coords=mask_coords
+                # mask_coords=mask_coords
             )
 
             # If the smoothing is active, we do it at each pass
@@ -291,8 +407,9 @@ def piv(settings):
             if not isinstance(u, np.ma.MaskedArray):
                 raise ValueError('not a masked array anymore')
 
-            if hasattr(settings, 'image_mask') and settings.image_mask:
-                grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            if image_mask is not None:
+                # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+                grid_mask = scn.map_coordinates(image_mask, [y, x]).astype(bool)
                 u = np.ma.masked_array(u, mask=grid_mask)
                 v = np.ma.masked_array(v, mask=grid_mask)
             else:
@@ -309,7 +426,7 @@ def piv(settings):
 
         if settings.show_all_plots and settings.num_iterations > 1:
             plt.figure()
-            plt.quiver(x, y, u, -v)
+            plt.quiver(x, y, u, -1*v)
             plt.gca().invert_yaxis()
             plt.gca().set_aspect(1.)
             plt.title('after multi pass, before saving, inverted')
@@ -321,57 +438,63 @@ def piv(settings):
         u = u.filled(0.)
         v = v.filled(0.)
 
-        # pixel / frame -> pixel / second
-        u /= settings.dt 
-        v /= settings.dt
-        # "scales the results pixel-> meter"
-        x, y, u, v = scaling.uniform(x, y, u, v,
-                                     scaling_factor=settings.scaling_factor)
-
-        if settings.image_mask:
-            grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+        if image_mask is not None:
+            # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+            grid_mask = scn.map_coordinates(image_mask, [y, x]).astype(bool)
             u = np.ma.masked_array(u, mask=grid_mask)
             v = np.ma.masked_array(v, mask=grid_mask)
         else:
             u = np.ma.masked_array(u, np.ma.nomask)
             v = np.ma.masked_array(v, np.ma.nomask)
 
+        # pixel / frame -> pixel / second
+        u /= settings.dt 
+        v /= settings.dt
+        
+        # "scales the results pixel-> meter"
+        x, y, u, v = scaling.uniform(x, y, u, v,
+                                     scaling_factor=settings.scaling_factor)
+
         # before saving we conver to the "physically relevant"
         # right-hand coordinate system with 0,0 at the bottom left
         # x to the right, y upwards
         # and so u,v
-
         x, y, u, v = transform_coordinates(x, y, u, v)
-        # import pdb; pdb.set_trace()
-        # "save to a file"
-        tools.save(x, y, u, v, mask,
-                   os.path.join(save_path, "field_A%03d.txt" % counter),
-                   delimiter="\t")
-        # "some other stuff that one might want to use"
+
+        # Saving
+        txt_file = save_path / f'field_A{counter:04d}.txt'
+        print(f'Saving to {txt_file}')
+        fig_name = save_path / f'field_A{counter:04d}.png'
+
+        tools.save(txt_file, x, y, u, v, flags, grid_mask)
+
         if settings.show_plot or settings.save_plot:
-            Name = os.path.join(save_path, "Image_A%03d.png" % counter)
             fig, _ = display_vector_field(
-                os.path.join(save_path, "field_A%03d.txt" % counter),
+                txt_file, 
                 scale=settings.scale_plot,
             )
             if settings.save_plot is True:
-                fig.savefig(Name)
+                fig.savefig(fig_name)
             if settings.show_plot is True:
                 plt.show()
 
         print(f"Image Pair {counter + 1}")
-        print(file_a.rsplit('/')[-1], file_b.rsplit('/')[-1])
+        print(file_a.stem, file_b.stem)
 
+    # if teh settings.save_path is a string convert it to the Path
+    settings.filepath_images = pathlib.Path(settings.filepath_images) 
+    settings.save_path = pathlib.Path(settings.save_path)
     # "Below is code to read files and create a folder to store the results"
-    save_path = os.path.join(
-        settings.save_path,
-        "Open_PIV_results_"
-        + str(settings.windowsizes[settings.num_iterations-1])
-        + "_"
-        + settings.save_folder_suffix,
-    )
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
+    save_path_string = \
+        f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+
+    save_path = \
+        settings.save_path / save_path_string
+
+    if not save_path.exists():
+        # os.makedirs(save_path)
+        save_path.mkdir(parents=True, exist_ok=True)
+
     task = Multiprocesser(
         data_dir=settings.filepath_images,
         pattern_a=settings.frame_pattern_a,
@@ -556,8 +679,10 @@ def first_pass(frame_a, frame_b, settings):
     u : 2d np.array
         array containing the u displacement for every interrogation window
 
-    u : 2d np.array
+    v : 2d np.array
         array containing the u displacement for every interrogation window
+    
+    s2n: 2d np.array of the signal to noise ratio
 
     """
 
@@ -593,101 +718,86 @@ def first_pass(frame_a, frame_b, settings):
 
 
 def multipass_img_deform(
-    frame_a,
-    frame_b,
-    current_iteration,
-    x_old,
-    y_old,
-    u_old,
-    v_old,
-    settings,
-    mask_coords=[],
+    frame_a: np.ndarray,
+    frame_b: np.ndarray,
+    current_iteration: int,
+    x_old: np.ndarray,
+    y_old: np.ndarray,
+    u_old: np.ndarray,
+    v_old: np.ndarray,
+    settings: "PIVSettings",
+    # mask_coords: Union[np.ndarray, None]=None,
 ):
-    # window_size,
-    # overlap,
-    # iterations,
-    # current_iteration,
-    # x_old,
-    # y_old,
-    # u_old,
-    # v_old,
-    # correlation_method="circular",
-    # normalized_correlation=False,
-    # subpixel_method="gaussian",
-    # deformation_method="symmetric",
-    # sig2noise_method="peak2peak",
-    # sig2noise_threshold=1.0,
-    # sig2noise_mask=2,
-    # interpolation_order=1,
-
     """
-    Multi pass of the PIV evaluation.
+        Multi pass of the PIV evaluation.
 
-    This function does the PIV evaluation of the second and other passes.
-    It returns the coordinates of the interrogation window centres,
-    the displacement u, v for each interrogation window as well as
-    the signal to noise ratio array (which is full of NaNs if opted out)
+        This function does the PIV evaluation of the second and other passes.
+        It returns the coordinates of the interrogation window centres,
+        the displacement u, v for each interrogation window as well as
+        the signal to noise ratio array (which is full of NaNs if opted out)
 
 
-    Parameters
-    ----------
-    frame_a : 2d np.ndarray
-        the first image
+        Parameters
+        ----------
+        frame_a : 2d np.ndarray
+            the first image
 
-    frame_b : 2d np.ndarray
-        the second image
+        frame_b : 2d np.ndarray
+            the second image
 
-    window_size : tuple of ints
-         the size of the interrogation window
+        window_size : tuple of ints
+            the size of the interrogation window
 
-    overlap : tuple of ints
-        the overlap of the interrogation window, e.g. window_size/2
+        overlap : tuple of ints
+            the overlap of the interrogation window, e.g. window_size/2
 
-    x_old : 2d np.ndarray
-        the x coordinates of the vector field of the previous pass
+        x_old : 2d np.ndarray
+            the x coordinates of the vector field of the previous pass
 
-    y_old : 2d np.ndarray
-        the y coordinates of the vector field of the previous pass
+        y_old : 2d np.ndarray
+            the y coordinates of the vector field of the previous pass
 
-    u_old : 2d np.ndarray
-        the u displacement of the vector field of the previous pass
-        in case of the image mask - u_old and v_old are MaskedArrays
+        u_old : 2d np.ndarray
+            the u displacement of the vector field of the previous pass
+            in case of the image mask - u_old and v_old are MaskedArrays
 
-    v_old : 2d np.ndarray
-        the v displacement of the vector field of the previous pass
+        v_old : 2d np.ndarray
+            the v displacement of the vector field of the previous pass
 
-    subpixel_method: string
-        the method used for the subpixel interpolation.
-        one of the following methods to estimate subpixel location of the peak:
-        'centroid' [replaces default if correlation map is negative],
-        'gaussian' [default if correlation map is positive],
-        'parabolic'
+        subpixel_method: string
+            the method used for the subpixel interpolation.
+            one of the following methods to estimate subpixel location of the peak:
+            'centroid' [replaces default if correlation map is negative],
+            'gaussian' [default if correlation map is positive],
+            'parabolic'
 
-    interpolation_order : int
-        the order of the spline interpolation used for the image deformation
+        interpolation_order : int
+            the order of the spline interpolation used for the image deformation
 
-    mask_coords : list of x,y coordinates (pixels) of the image mask,
-        default is an empty list
+        mask_coords : list of x,y coordinates (pixels) of the image mask,
+            default is an empty list
 
-    Returns
-    -------
-    x : 2d np.array
-        array containg the x coordinates of the interrogation window centres
+        Returns
+        -------
+        x : 2d np.array
+            array containg the x coordinates of the interrogation window centres
 
-    y : 2d np.array
-        array containg the y coordinates of the interrogation window centres
+        y : 2d np.array
+            array containg the y coordinates of the interrogation window centres
 
-    u : 2d np.array
-        array containing the horizontal displacement for every interrogation
-        window [pixels]
+        u : 2d np.array
+            array containing the horizontal displacement for every interrogation
+            window [pixels]
 
-    u : 2d np.array
-        array containing the vertical displacement for every interrogation
-        window it returns values in [pixels]
+        u : 2d np.array
+            array containing the vertical displacement for every interrogation
+            window it returns values in [pixels]
 
-    s2n : 2D np.array of signal to noise ratio values
+        grid_mask : 2d boolean np.array with the image mask in the x,y coordinates
 
-    """
+        flags : 2D np.array of integers, flags marking 0 - valid, 1 - invalid vectors
+
+        """
 
     if not isinstance(u_old, np.ma.MaskedArray):
         raise ValueError('Expected masked array')
@@ -698,8 +808,8 @@ def multipass_img_deform(
     # are the coordinates of the old grid. x_int and y_int are the coordinates
     # of the new grid
 
-    window_size = settings.windowsizes[current_iteration]
-    overlap = settings.overlap[current_iteration]
+    window_size = settings.windowsizes[current_iteration] # integer only
+    overlap = settings.overlap[current_iteration] # integer only, won't work for rectangular windows
 
     x, y = get_rect_coordinates(frame_a.shape,
                            window_size,
@@ -709,20 +819,19 @@ def multipass_img_deform(
     # plus the coordinate system for y is now from top to bottom
     # and RectBivariateSpline wants an increasing set
 
+    # 1D arrays for the interpolation
     y_old = y_old[:, 0]
-    # y_old = y_old[::-1]
     x_old = x_old[0, :]
 
     y_int = y[:, 0]
-    # y_int = y_int[::-1]
     x_int = x[0, :]
 
     # interpolating the displacements from the old grid onto the new grid
     # y befor x because of numpy works row major
-    ip = RectBivariateSpline(y_old, x_old, u_old.filled(0.))
+    ip = RectBivariateSpline(y_old, x_old, np.ma.filled(u_old, 0.))
     u_pre = ip(y_int, x_int)
 
-    ip2 = RectBivariateSpline(y_old, x_old, v_old.filled(0.))
+    ip2 = RectBivariateSpline(y_old, x_old, np.ma.filled(v_old, 0.))
     v_pre = ip2(y_int, x_int)
 
     # if settings.show_plot:
@@ -733,7 +842,7 @@ def multipass_img_deform(
         plt.gca().set_aspect(1.)
         plt.gca().invert_yaxis()
         plt.title('inside deform, invert')
-        plt.show()
+        # plt.show()
 
     # @TKauefer added another method to the windowdeformation, 'symmetric'
     # splits the onto both frames, takes more effort due to additional
@@ -769,11 +878,12 @@ def multipass_img_deform(
         if settings.deformation_method == 'symmetric':
             plt.figure()
             plt.imshow(frame_a-old_frame_a)
-            plt.show()
+            plt.title('New A - old A')
 
         plt.figure()
         plt.imshow(frame_b-old_frame_b)
-        plt.show()
+        plt.title('New B - old B')
+        
 
     # if do_sig2noise is True
     #     sig2noise_method = sig2noise_method
@@ -782,6 +892,7 @@ def multipass_img_deform(
 
     # so we use here default circular not normalized correlation:
     # if we did not want to validate every step, remove the method
+    # and save some time on cross-correlations
     if settings.sig2noise_validate is False:
         settings.sig2noise_method = None
 
@@ -798,9 +909,11 @@ def multipass_img_deform(
         use_vectorized = settings.use_vectorized,
     )
 
+    # get_field_shape expects tuples for rectangular windows
     shapes = np.array(get_field_shape(frame_a.shape,
                                       window_size,
-                                      overlap))
+                                      overlap)
+                                      )
     u = u.reshape(shapes)
     v = v.reshape(shapes)
     s2n = s2n.reshape(shapes)
@@ -809,218 +922,112 @@ def multipass_img_deform(
     v += v_pre
 
     # reapply the image mask to the new grid
-    if settings.image_mask:
-        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-        u = np.ma.masked_array(u, mask=grid_mask)
-        v = np.ma.masked_array(v, mask=grid_mask)
+    if settings.static_mask is not None:
+        # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
+        grid_mask = scn.map_coordinates(settings.static_mask, [y, x]).astype(bool)
+        print(x.shape, y.shape, grid_mask.shape)
     else:
-        u = np.ma.masked_array(u, np.ma.nomask)
-        v = np.ma.masked_array(v, np.ma.nomask)
+        grid_mask = np.zeros_like(u, dtype=bool)
+
+    u = np.ma.masked_array(u, mask=grid_mask)
+    v = np.ma.masked_array(v, mask=grid_mask)
 
     # validate in the multi-pass by default
-    u, v, mask = validation.typical_validation(u, v, s2n, settings)
+    flags = validation.typical_validation(u, v, s2n, settings)
 
-    if np.all(mask):
+    if np.all(flags):
         raise ValueError("Something happened in the validation")
 
-    if not isinstance(u, np.ma.MaskedArray):
-        raise ValueError('not a masked array anymore')
-
-    if settings.show_all_plots:
-        plt.figure()
-        nans = np.nonzero(mask)[0]
-        plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
-        plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
-        plt.gca().invert_yaxis()
-        plt.gca().set_aspect(1.)
-        plt.title('After sig2noise, inverted')
-        plt.show()
+    # if settings.show_all_plots:
+    #     plt.figure()
+    #     nans = np.nonzero(flags)[0]
+    #     plt.quiver(x[~nans], y[~nans], u[~nans], -v[~nans], color='b')
+    #     plt.quiver(x[nans], y[nans], u[nans], -v[nans], color='r')
+    #     plt.gca().invert_yaxis()
+    #     plt.gca().set_aspect(1.)
+    #     plt.title('After sig2noise, inverted')
+    #     plt.show()
 
     # we have to replace outliers
     u, v = filters.replace_outliers(
         u,
         v,
+        flags,
         method=settings.filter_method,
         max_iter=settings.max_filter_iteration,
         kernel_size=settings.filter_kernel_size,
     )
 
-    # reapply the image mask to the new grid
-    if settings.image_mask:
-        grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-        u = np.ma.masked_array(u, mask=grid_mask)
-        v = np.ma.masked_array(v, mask=grid_mask)
-    else:
-        u = np.ma.masked_array(u, np.ma.nomask)
-        v = np.ma.masked_array(v, np.ma.nomask)
-
     if settings.show_all_plots:
         plt.figure()
-        plt.quiver(x, y, u, -v, color='r')
-        plt.quiver(x, y, u_pre, -1*v_pre, color='b')
+        plt.quiver(x, y, u, v, color='r')
+        plt.quiver(x, y, u_pre, v_pre, color='b')
         plt.gca().invert_yaxis()
         plt.gca().set_aspect(1.)
         plt.title(' after replaced outliers, red, invert')
         plt.show()
 
-    return x, y, u, v, s2n, mask
+    return x, y, u, v, grid_mask, flags
 
-
-class FrozenClass(object):
-    __isfrozen = False
-
-    def __setattr__(self, key, value):
-        if self.__isfrozen and not hasattr(self, key):
-            raise TypeError("%r is a frozen class" % self)
-        object.__setattr__(self, key, value)
-
-    def _freeze(self):
-        self.__isfrozen = True
-
-
-class Settings(FrozenClass):
-    def __init__(self):
-        # "Data related settings"
-        # Folder with the images to process
-        self.filepath_images = "."
-        # Folder for the outputs
-        self.save_path = "./res"
-        # Root name of the output Folder for Result Files
-        self.save_folder_suffix = "Test_4"
-        # Format and Image Sequence
-        self.frame_pattern_a = 'exp1_001_a.bmp'
-        self.frame_pattern_b = 'exp1_001_b.bmp'
-
-        # "Region of interest"
-        # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
-        # for full image
-        self.ROI = "full"
-
-        # "Image preprocessing"
-        # 'None' for no masking, 'edges' for edges masking, 'intensity' for
-        # intensity masking
-        # WARNING: This part is under development so better not to use MASKS
-        self.dynamic_masking_method = "None"
-        self.dynamic_masking_threshold = 0.005
-        self.dynamic_masking_filter_size = 7
-
-        # "Processing Parameters"
-        self.correlation_method = "circular"  # 'circular' or 'linear'
-        self.normalized_correlation = False
-
-        # add the interroagtion window size for each pass.
-        # For the moment, it should be a power of 2
-        self.windowsizes = (
-            64,
-            32,
-            16,
-        )  # if longer than n iteration the rest is ignored
-        # The overlap of the interroagtion window for each pass.
-        self.overlap = (32, 16, 8)  # This is 50% overlap
-        # Has to be a value with base two. In general window size/2 is a good
-        # choice.
-
-        self.num_iterations = len(self.windowsizes)  # select the number of PIV
-        # passes
-
-        # methode used for subpixel interpolation:
-        # 'gaussian','centroid','parabolic'
-        self.subpixel_method = "gaussian"
-        # use vectorized sig2noise and subpixel approximation functions
-        self.use_vectorized = False
-        # 'symmetric' or 'second image', 'symmetric' splits the deformation
-        # both images, while 'second image' does only deform the second image.
-        self.deformation_method = 'symmetric'  # 'symmetric' or 'second image'
-        # order of the image interpolation for the window deformation
-        self.interpolation_order = 3
-        self.scaling_factor = 1  # scaling factor pixel/meter
-        self.dt = 1  # time between to frames (in seconds)
-
-        # "Signal to noise ratio options (only for the last pass)"
-        # It is possible to decide if the S/N should be computed (for the last
-        # pass) or not
-        # 'True' or 'False' (only for the last pass)
-        # self.extract_sig2noise = False
-        # method used to calculate the signal to noise ratio 'peak2peak' or
-        # 'peak2mean'
-        self.sig2noise_method = "peak2peak"  # or "peak2mean" or "None"
-        # select the width of the masked to masked out pixels next to the main
-        # peak
-        self.sig2noise_mask = 2
-        # If extract_sig2noise==False the values in the signal to noise ratio
-        # output column are set to NaN
-
-        # "vector validation options"
-        # choose if you want to do validation of the first pass: True or False
-        self.validation_first_pass = True
-        # only effecting the first pass of the interrogation the following
-        # passes
-        # in the multipass will be validated
-
-        # "Validation Parameters"
-        # The validation is done at each iteration based on three filters.
-        # The first filter is based on the min/max ranges. Observe that these
-        # values are defined in
-        # terms of minimum and maximum displacement in pixel/frames.
-        self.MinMax_U_disp = (-30, 30)
-        self.MinMax_V_disp = (-30, 30)
-        # The second filter is based on the global STD threshold
-        self.std_threshold = 10  # threshold of the std validation
-        # The third filter is the median test (not normalized at the moment)
-        self.median_threshold = 3  # threshold of the median validation
-        # On the last iteration, an additional validation can be done based on
-        # the S/N.
-        self.median_size = 1  # defines the size of the local median
-
-        # "Validation based on the signal to noise ratio"
-        # Note: only available when extract_sig2noise==True and only for the
-        # last pass of the interrogation
-        # Enable the signal to noise ratio validation. Options: True or False
-        # self.sig2noise_validate = False  # This is time consuming
-        # minmum signal to noise ratio that is need for a valid vector
-        self.sig2noise_threshold = 1.0
-        self.sig2noise_validate = True
-
-        # "Outlier replacement or Smoothing options"
-        # Replacment options for vectors which are masked as invalid by the
-        # validation
-        # Choose: True or False
-        self.replace_vectors = True  # Enable the replacement.
-        self.smoothn = True  # Enables smoothing of the displacement field
-        self.smoothn_p = 0.05  # This is a smoothing parameter
-        # select a method to replace the outliers:
-        # 'localmean', 'disk', 'distance'
-        self.filter_method = "localmean"
-        # maximum iterations performed to replace the outliers
-        self.max_filter_iteration = 4
-        self.filter_kernel_size = 2  # kernel size for the localmean method
-        
-        # "Output options"
-        # Select if you want to save the plotted vectorfield: True or False
-        self.save_plot = True
-        # Choose wether you want to see the vectorfield or not :True or False
-        self.show_plot = True
-        self.scale_plot = 100  # select a value to scale the quiver plot of
-        # the vectorfield run the script with the given settings
-
-        self.image_mask = False
-
-        self.show_all_plots = False
-
-        self.invert = False  # for the test_invert
-        
-        self.static_masking = False
-        self.static_mask = None
-
-        self._freeze()
-
-
-if __name__ == "__main__":
-    """ Run windef.py as a script:
-
-    python windef.py
-
+def simple_multipass(
+    frame_a: np.ndarray,
+    frame_b: np.ndarray,
+    settings: "PIVSettings",
+    windows: Optional[Tuple[int, ...]]=None,
+    )->Tuple:
+    """ Simple windows deformation multipass run with 
+    default settings
     """
 
-    settings = Settings()
-    piv(settings)
+    if windows is not None:
+        settings.num_iterations = len(windows)
+        settings.windowsizes = windows
+        settings.overlap = tuple(int(w/2) for w in windows)
+
+    x, y, u, v, s2n = first_pass(
+                                frame_a,
+                                frame_b,
+                                settings
+                                )
+
+    grid_mask = np.zeros_like(u, dtype=bool)
+
+    u = np.ma.array(u, mask=grid_mask)
+    v = np.ma.array(v, mask=grid_mask)
+
+    flags = validation.typical_validation(u, v, s2n, settings)
+    u, v = filters.replace_outliers(u, v, flags)
+
+    # multipass 
+    for i in range(1, settings.num_iterations):
+
+        x, y, u, v, grid_mask, flags = multipass_img_deform(
+            frame_a,
+            frame_b,
+            i,
+            x,
+            y,
+            u,
+            v,
+            settings
+        )
+
+    # replance NaNs by zeros
+    u = np.ma.fix_invalid(u, fill_value=0.)
+    v = np.ma.fix_invalid(v, fill_value=0.)
+
+    # note the use of .data for masked arrays
+    x, y, u, v = transform_coordinates(x, y, u.data, v.data) 
+    return (x, y, u, v, flags)
+
+
+
+# if __name__ == "__main__":
+#     """ Run windef.py as a script:
+
+#     python windef.py
+
+#     """
+
+#     settings = PIVSettings()
+#     piv(settings)
