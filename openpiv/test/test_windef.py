@@ -273,7 +273,7 @@ def test_simple_rectangular_window():
     settings.subpixel_method = 'gaussian'
     settings.sig2noise_mask = 2
 
-    x, y, u, v, flags = windef.simple_multipass(
+    x, y, _,_,_ = windef.simple_multipass(
         frame_a,
         frame_b,
         settings,
@@ -290,7 +290,7 @@ def test_simple_rectangular_window():
     settings.overlap = ((16, 32), (8, 16))
     settings.num_iterations = 2
 
-    x, y, u, v, flags = windef.simple_multipass(
+    x, y, _, _, _ = windef.simple_multipass(
         frame_a,
         frame_b,
         settings,
