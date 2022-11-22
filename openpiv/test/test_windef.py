@@ -265,6 +265,15 @@ def test_simple_rectangular_window():
     print('test simple pass with rectangular windows')
 
     settings = windef.PIVSettings()
+
+
+    x, y, _,_,_ = windef.simple_multipass(
+        frame_a,
+        frame_b,
+        settings,
+    )
+    
+        
     settings.windowsizes = ((64, 32),)
     settings.overlap = ((32, 16),)
     settings.num_iterations = 1
