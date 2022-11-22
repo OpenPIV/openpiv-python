@@ -972,17 +972,22 @@ def multipass_img_deform(
 def simple_multipass(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
-    settings: "PIVSettings",
-    windows: Optional[Tuple[int, ...]]=None,
+    settings: Optional["PIVSettings"]=None,
     )->Tuple:
-    """ Simple windows deformation multipass run with 
-    default settings
-    """
+    """_summary_
 
-    if windows is not None:
-        settings.num_iterations = len(windows)
-        settings.windowsizes = windows
-        settings.overlap = tuple(int(w/2) for w in windows)
+    Args:
+        frame_a (np.ndarray): frame A image as an array
+        frame_b (np.ndarray): frame B,
+        settings (Optional[&quot;PIVSettings&quot;], optional): _description_. Defaults to None.
+
+    Returns:
+        Tuple: _description_
+    """
+    if settings is None:
+        settings = PIVSettings()
+        settings.windowsizes = (64, 32)
+        settings.overlap = (32, 16)
 
     x, y, u, v, s2n = first_pass(
                                 frame_a,
