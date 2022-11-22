@@ -972,13 +972,16 @@ def multipass_img_deform(
 def simple_multipass(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
-    settings: "PIVSettings",
+    settings: Optional["PIVSettings"]=None,
     windows: Optional[Tuple[int, ...]]=None,
     )->Tuple:
     """ Simple windows deformation multipass run with 
     default settings
     """
 
+    if settings is None:
+        settings = PIVSettings()
+        
     if windows is not None:
         settings.num_iterations = len(windows)
         settings.windowsizes = windows
