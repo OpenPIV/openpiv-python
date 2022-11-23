@@ -163,6 +163,8 @@ class PIVSettings:
 
     invert: bool=False  # for the test_invert
 
+    fmt: str="%.4e"
+
 def prepare_images(
     file_a: pathlib.Path,
     file_b: pathlib.Path,
@@ -466,7 +468,7 @@ def piv(settings):
         print(f'Saving to {txt_file}')
         fig_name = save_path / f'field_A{counter:04d}.png'
 
-        tools.save(txt_file, x, y, u, v, flags, grid_mask)
+        tools.save(txt_file, x, y, u, v, flags, grid_mask, fmt=settings.fmt)
 
         if settings.show_plot or settings.save_plot:
             fig, _ = display_vector_field(
