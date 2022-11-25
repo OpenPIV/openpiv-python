@@ -8,7 +8,7 @@ import numpy as np
 
 from skimage.util import random_noise
 from skimage import img_as_ubyte
-from scipy.ndimage import shift
+from scipy.ndimage import shift_img
 
 threshold = 0.25
 
@@ -23,11 +23,11 @@ threshold = 0.25
 
 
 # <------
-shift_u = -3  # shift to the left, should be placed in columns, axis=1
+shift_u = -3.5  # shift to the left, should be placed in columns, axis=1
 # ^
 # |
 # |
-shift_v = 2   # shift upwards, should be placed in rows, axis=0 
+shift_v = 2.5   # shift upwards, should be placed in rows, axis=0 
 
 
 def create_pair(image_size=32, u=shift_u, v=shift_v):
@@ -42,7 +42,7 @@ def create_pair(image_size=32, u=shift_u, v=shift_v):
 
     # frame_b = np.roll(np.roll(frame_a, u, axis=1), v, axis=0)
     # scipy shift allows to shift by floating values
-    frame_b = shift(frame_a, (v, u), mode='wrap')
+    frame_b = shift_img(frame_a, (v, u), mode='wrap')
 
     # fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     # ax[0].imshow(frame_a, cmap=plt.cm.gray)
