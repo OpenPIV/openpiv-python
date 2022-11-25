@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.fft import rfft2, irfft2
-from scipy.ndimage import shift
+from scipy.ndimage import shift_img
 
 # In[3]:
 
@@ -58,7 +58,7 @@ def fft_correlate_strided_images(image_a, image_b):
 
 # let's make two images of 32 x 32 pixels
 a = np.random.rand(64, 64)
-b = shift(a, (-3.5, 2.5)).real
+b = shift_img(a, (-3.5, 2.5))
 
 
 # In[6]:
