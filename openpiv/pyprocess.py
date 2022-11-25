@@ -729,7 +729,7 @@ def fft_correlate_images(
     if correlation_method == "linear":
         # have to be normalized, mainly because of zero padding
         size = s1 + s2 - 1
-        fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+        fsize = 2 ** np.ceil(np.log2(size)).astype(int) - 1
         fslice = (slice(0, image_a.shape[0]),
                   slice((fsize[0]-s1[0])//2, (fsize[0]+s1[0])//2),
                   slice((fsize[1]-s1[1])//2, (fsize[1]+s1[1])//2))
@@ -741,7 +741,7 @@ def fft_correlate_images(
         f2b = rfft2(image_b)
         corr = fftshift(irfft2(f2a * f2b).real, axes=(-2, -1))
     else:
-        print("method is not implemented!")
+        print(f"correlation method {correlation_method } is not implemented")
 
     if normalized_correlation:
         corr = corr/(s2[0]*s2[1])  # for extended search area
@@ -839,7 +839,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft",
     elif correlation_method == "direct":
         corr = convolve2d(window_a, window_b[::-1, ::-1], "full")
     else:
-        raise ValueError("method is not implemented")
+        print(f"correlation method {correlation_method } is not implemented")
 
     return corr
 
