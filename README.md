@@ -36,7 +36,7 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
 ## Or `conda` 
 
-    conda install -c conda-forge openpiv
+    conda install -c alexlib openpiv
     
     
 ### To build from source
