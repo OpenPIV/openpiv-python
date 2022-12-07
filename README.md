@@ -6,13 +6,7 @@
 
 
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
-
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/version.svg)](https://anaconda.org/conda-forge/openpiv)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/downloads.svg)](https://anaconda.org/conda-forge/openpiv)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/installer/conda.svg)](https://conda.anaconda.org/conda-forge)
-
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/platforms.svg)](https://anaconda.org/conda-forge/openpiv)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/openpiv/badges/license.svg)](https://anaconda.org/conda-forge/openpiv)
+[![Anaconda-Server Badge](https://anaconda.org/alexlib/openpiv/badges/version.svg)](https://anaconda.org/alexlib/openpiv)
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
