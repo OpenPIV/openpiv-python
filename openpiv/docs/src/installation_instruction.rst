@@ -31,12 +31,11 @@ Installation
 
 Use `conda` :: 
 
-    conda install -c conda-forge openpiv
+    conda install -c alexlib openpiv
 
 Or use `pip` :: 
 
-    pip install numpy cython
-    pip install openpiv --pre
+    pip install openpiv
     
 Get OpenPIV source code!
 ========================
