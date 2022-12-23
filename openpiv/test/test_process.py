@@ -9,6 +9,7 @@ import numpy as np
 from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift
+import pkg_resources as pkg
 
 threshold = 0.25
 
@@ -125,7 +126,25 @@ def test_process_extended_search_area():
 
 
 def test_sig2noise_ratio():
-    return False
+    """ s2n ratio test """
+    from openpiv import tools 
+    im1 = pkg.resource_filename("openpiv", "data/test1/exp1_001_a.bmp")
+    im2 = pkg.resource_filename("openpiv", "data/test1/exp1_001_b.bmp")
+
+    frame_a = tools.imread(im1)
+    frame_b = tools.imread(im2)
+    
+    u, v, s2n = piv(
+        frame_a.astype(np.int32),
+        frame_b.astype(np.int32),
+        window_size=32,
+        search_area_size=64,
+        sig2noise_method="peak2peak",
+        subpixel_method="gaussian"
+    )   
+    # print(s2n.flatten().min(),s2n.mean(),s2n.max())
+    assert np.allclose(s2n.mean(), 1.422, rtol=1e-3)
+    assert np.allclose(s2n.max(), 2.264, rtol=1e-3)
 
 
 def test_fft_correlate():
