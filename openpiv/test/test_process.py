@@ -8,7 +8,8 @@ import numpy as np
 
 from skimage.util import random_noise
 from skimage import img_as_ubyte
-from scipy.ndimage import shift_img
+from scipy.ndimage import shift
+import pkg_resources as pkg
 
 threshold = 0.25
 
