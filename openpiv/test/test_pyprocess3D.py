@@ -4,6 +4,8 @@ import numpy as np
 from skimage.util import random_noise
 from skimage import img_as_ubyte
 
+from scipy.ndimage import shift as shift_img
+
 # import warnings
 
 threshold = 0.1
@@ -23,7 +25,7 @@ def create_pair(image_size=32, u=3, v=2, w=1):
     # bottom left corner, and the image is rolled from the
     # top left corner
 
-    frame_b = np.roll(np.roll(np.roll(frame_a, w, axis=2), u, axis=1), v, axis=0)
+    frame_b = shift_img(frame_a, (v, u, w))
     return frame_a.astype(np.int32), frame_b.astype(np.int32)
 
 
