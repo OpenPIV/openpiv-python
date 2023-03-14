@@ -245,7 +245,7 @@ def smoothn(
     Lambda = zeros(sizy)
     for i in axis:
         # create a 1 x d array (so e.g. [1,1] for a 2D case
-        siz0 = ones((1, y.ndim), dtype=np.int)[0]
+        siz0 = ones((1, y.ndim), dtype=int)[0]
         siz0[i] = sizy[i]
         # cos(pi*(reshape(1:sizy(i),siz0)-1)/sizy(i)))
         # (arange(1,sizy[i]+1).reshape(siz0) - 1.)/sizy[i]
