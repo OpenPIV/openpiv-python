@@ -128,7 +128,7 @@ def minimize_polynomial(
     # in the future, break this into three Z subvolumes to further reduce errors.
     polynomial_iw = np.array([x*0+1,
                               x,     y,     Z, 
-                              x*Y,   x*Z,   y*Z,
+                              x*y,   x*Z,   y*Z,
                               x**2,  y**2,  Z**2,
                               x**3,  x*x*y, x*x*Z,
                               y**3,  x*y*y, y*y*Z,
@@ -206,7 +206,7 @@ def project_points(
 def project_to_z(
     cam_struct: dict,
     image_points: np.ndarray,
-    z: np.ndarray
+    z: float
 ):
     """Project object points to image points.
     
@@ -218,8 +218,8 @@ def project_to_z(
         A dictionary structure of camera parameters.
     image_points : 2D np.ndarray
         Image coordinates. The ndarray is structured like [x, y].
-    z : int, np.ndarray
-        An int or array specifying Z (depth) values to project to.
+    z : float
+        A float specifying the Z (depth) value to project to.
         
     Returns
     -------
@@ -230,7 +230,6 @@ def project_to_z(
     Z : 1D np.ndarray
         Projected world z-coordinates.
         
-    
     """ 
     _check_parameters(cam_struct)
     
@@ -273,10 +272,10 @@ def get_image_mapping(
         
     Returns
     -------
-    X : 1D np.ndarray
-        Projected world x-coordinates.
-    Y : 1D np.ndarray
-        Projected world y-coordinates.
+    X : 2D np.ndarray
+        Mappings for x-coordinates.
+    Y : 2D np.ndarray
+        Mappings for y-coordinates.
     scale : float
         Image to world scale factor.
         
