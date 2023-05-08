@@ -222,9 +222,6 @@ def project_points(
     """ 
     _check_parameters(cam_struct)
     
-    if not isinstance(object_points, np.ndarray):
-        object_points = np.array(object_points).T
-    
     cx, cy = cam_struct["principal"]
     
     
@@ -252,7 +249,7 @@ def project_points(
             axis=0
         ),
         np.concatenate(
-            (object_points.T, np.ones((1, object_points.T.shape[1]))),
+            (object_points, np.ones((1, object_points.shape[1]))),
             axis=0
         )
     )
@@ -304,7 +301,7 @@ def project_points(
     Xp = ij[0, :]
     Yp = ij[1, :]
     
-    return np.array([Xp, Yp,]).T
+    return np.array([Xp, Yp,])
 
 
 # Copyright (c) 2022 Ron Shnapp
@@ -468,9 +465,9 @@ def minimize_camera_params(
         res = minimize(
             func_to_minimize,
             params_to_minimize,
-            method='BFGS',
-            options={'maxiter': max_iter},
-            jac = '2-point'
+            method="BFGS",
+            options={"maxiter": max_iter},
+            jac = "2-point"
         )
         
     return cam_struct

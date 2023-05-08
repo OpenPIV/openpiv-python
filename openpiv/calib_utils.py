@@ -20,7 +20,7 @@ def get_reprojection_error(
         Projection function with the following signiture:
         RMSE = func(cam_struct, object_points).
     object_points: 2D np.ndarray
-        A numpy array containing [x, y, z] object points.
+        A numpy array containing [X, Y, Z] object points.
     image_points: 2D np.ndarray
         A numpy array containing [x, y] image points.
         
@@ -29,11 +29,6 @@ def get_reprojection_error(
     RMSE : float
         Root mean square (RMS) error of camera paramerters.
     """
-    if not isinstance(object_points, np.ndarray):
-        object_points = np.array(object_points).T
-    
-    if not isinstance(image_points, np.ndarray):
-        image_points = np.array(image_points).T
         
     res = proj_func(
         cam_struct,
@@ -46,7 +41,7 @@ def get_reprojection_error(
         np.sqrt(
             np.sum(
                 np.square(error),
-                axis=1
+                axis=0
             )
         )
     )
