@@ -306,7 +306,7 @@ def get_image_mapping(
     Z = x*0.
     
     # project image coordinates to world points
-    world_x, world_y, _ = calib_polynomial.project_to_z(
+    world_x, world_y, _ = project_to_z(
         cam_struct,
         [x, y],
         Z
@@ -352,7 +352,7 @@ def get_image_mapping(
     Y = np.squeeze(Y.reshape(-1, 1))
     
     # project world points to image coordinates
-    mapped_grid = calib_polynomial.project_points(
+    mapped_grid = project_points(
         cam_struct,
         [X, Y, Z]
     )
