@@ -110,6 +110,9 @@ def minimize_polynomial(
         A dictionary structure of optimized camera parameters.
         
     """
+    object_points = np.array(object_points, dtype=float)
+    image_points = np.array(image_points, dtype=float)
+    
     x = image_points[0]
     y = image_points[1]
     
@@ -180,6 +183,8 @@ def project_points(
     """ 
     _check_parameters(cam_struct)
     
+    object_points = np.array(object_points, dtype=float)
+    
     X = object_points[0]
     Y = object_points[1]
     Z = object_points[2]
@@ -233,9 +238,11 @@ def project_to_z(
     """ 
     _check_parameters(cam_struct)
     
+    image_points = np.array(image_points, dtype=float)
+    
     x = image_points[0]
     y = image_points[1]
-    Z = z
+    Z = np.array(z, dtype=float)
     
     polynomial_iw = np.array([x*0+1,
                               x,     y,     Z, 
@@ -255,108 +262,3 @@ def project_to_z(
     Zp = ijk[:, 2]
     
     return np.array([Xp, Yp, Zp])
-
-
-# This script was originally from Theo's polynomial calibration repository.
-def get_image_mapping(
-    cam_struct: dict,
-):
-    """Get image Mapping.
-    
-    Get image mapping for rectifying 2D images.
-    
-    Parameters
-    ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
-        
-    Returns
-    -------
-    X : 2D np.ndarray
-        Mappings for x-coordinates.
-    Y : 2D np.ndarray
-        Mappings for y-coordinates.
-    scale : float
-        Image to world scale factor.
-        
-    Notes
-    -----
-    The Scale value is only applicable if the image and object points are 
-    not normalized.
-    
-    """
-    
-    # create a meshgrid for every x and y pixel for back projection.
-    py, px = np.meshgrid(
-        np.arange(0, cam_struct["resolution"][1]),
-        np.arange(0, cam_struct["resolution"][0]),
-        indexing="ij"
-    )
-    
-    image_grid = np.concatenate(
-        [py.reshape(-1, 1), px.reshape(-1, 1)],
-        axis=1
-    )
-    
-    x = image_grid[:, 1]
-    y = image_grid[:, 0]
-    
-    # We set Z to zero since there is no depth
-    Z = x*0.
-    
-    # project image coordinates to world points
-    world_x, world_y, _ = project_to_z(
-        cam_struct,
-        [x, y],
-        Z
-    )
-    
-    world_x = world_x.reshape(cam_struct["resolution"], order='C')
-    world_y = world_y.reshape(cam_struct["resolution"], order='C')
-    
-    # get scale
-    lower_bound_X = np.min(np.absolute(world_x[:, 0]))
-    upper_bound_X = np.min(np.absolute(world_x[:, -1]))
-    lower_bound_Y = np.min(np.absolute(world_x[0, :]))
-    upper_bound_Y = np.min(np.absolute(world_x[-1, :]))
-    
-    scale_X = (lower_bound_X + upper_bound_X) / np.size(world_x, 1)
-    scale_Y = (lower_bound_Y + upper_bound_Y) / np.size(world_x, 0)
-    
-    Scale = min(scale_X, scale_Y)
-    
-    # get border limits
-    min_X = np.min(world_x)
-    max_X = np.max(world_x)
-    min_Y = np.min(world_y)
-    max_Y = np.max(world_y)
-    
-    # create a meshgrid for every x and y point for forward projection.
-    X, Y = np.meshgrid(
-        np.linspace(
-            min_X + scale_X,
-            max_X, 
-            num=cam_struct["resolution"][0], 
-            endpoint=True
-        ),
-        np.linspace(
-            min_Y + scale_Y,
-            max_Y, 
-            num=cam_struct["resolution"][1], 
-            endpoint=True
-        )
-    )
-    
-    X = np.squeeze(X.reshape(-1, 1))
-    Y = np.squeeze(Y.reshape(-1, 1))
-    
-    # project world points to image coordinates
-    mapped_grid = project_points(
-        cam_struct,
-        [X, Y, Z]
-    )
-    
-    mapped_grid_x = mapped_grid[0].reshape(cam_struct["resolution"])
-    mapped_grid_y = mapped_grid[1].reshape(cam_struct["resolution"])
-    
-    return np.array([mapped_grid_x, mapped_grid_y]), Scale

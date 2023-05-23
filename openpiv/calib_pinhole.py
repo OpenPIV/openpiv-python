@@ -197,113 +197,6 @@ def calculate_rotation_matrix(
     return rotation_matrix
 
 
-def project_points(
-    cam_struct: dict,
-    object_points: np.ndarray
-):
-    """Project object points to image points.
-    
-    Project object, or real world points, to image points.
-    
-    Parameters
-    ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
-    object_points : 2D np.ndarray
-        Real world coordinates. The ndarray is structured like [X, Y, Z].
-        
-    Returns
-    -------
-    x : 1D np.ndarray
-        Projected image x-coordinates.
-    y : 1D np.ndarray
-        Projected image y-coordinates.
-    
-    """ 
-    _check_parameters(cam_struct)
-    
-    cx, cy = cam_struct["principal"]
-    
-    
-    R = cam_struct["rotation"]
-    T = cam_struct["translation"]
-    fx, fy = cam_struct["focal"]
-    
-    # Here, we create a transformation matrix and homogenize the object points.
-    # Then, we transform the object points to camera points via dot product.
-    # The transformation matrix is defined by the following:
-    # [ R     | T ]
-    # [ 0 0 0 | 1 ]
-    # where R is the rotation matrix and T is the translation vector.
-    # The object points are like the following:
-    # [P]
-    # [1]
-    # where P is the object points.
-    
-    Wc = np.dot(
-        np.concatenate(
-            [
-                np.hstack((R, T[:, np.newaxis])),
-                np.array([[0, 0, 0, 1]])
-            ], 
-            axis=0
-        ),
-        np.concatenate(
-            (object_points, np.ones((1, object_points.shape[1]))),
-            axis=0
-        )
-    )
-    
-    # the camera coordinates
-    Xc = Wc[0, :]
-    Yc = Wc[1, :]
-    Zc = Wc[2, :]
-    
-    # Wc = R'(object_points - T)
-#    Xc = R[0, 0] * (object_points[:, 0] - T[0]) +\
-#         R[0, 1] * (object_points[:, 1] - T[1]) +\
-#         R[0, 2] * (object_points[:, 2] - T[2])
-    
-#    Yc = R[1, 0] * (object_points[:, 0] - T[0]) +\
-#         R[1, 1] * (object_points[:, 1] - T[1]) +\
-#         R[1, 2] * (object_points[:, 2] - T[2])
-    
-#    Zc = R[2, 0] * (object_points[:, 0] - T[0]) +\
-#         R[2, 1] * (object_points[:, 1] - T[1]) +\
-#         R[2, 2] * (object_points[:, 2] - T[2])
-    
-    # normalize coordinates
-    Xn = Xc / Zc
-    Yn = Yc / Zc
-    
-    # distortion correction
-    Xd, Yd = eta_zeta_from_bRinv(
-        cam_struct,
-        Xn,
-        Yn
-    )
-    
-    # intrinsic matrix
-    K = np.array(
-       [[fx, 0,  cx],
-        [0,  fy, cy],
-        [0,  0,  1]],
-        dtype=float
-    )
-    
-    # projection to image coordinates
-    ij = np.dot(
-        K, 
-        np.array([Xd, Yd, Xd * 0. + 1.])
-    )
-    
-    # image coordinates
-    Xp = ij[0, :]
-    Yp = ij[1, :]
-    
-    return np.array([Xp, Yp,])
-
-
 # Copyright (c) 2022 Ron Shnapp
 # Originally incorporated from myPTV as the previous non-linear
 # distortion model had undefined behavior. In the furure, we could incorporate
@@ -374,6 +267,177 @@ def eta_zeta_from_bRinv(
     return eta, zeta
 
 
+def project_points(
+    cam_struct: dict,
+    object_points: np.ndarray
+):
+    """Project object points to image points.
+    
+    Project object, or real world points, to image points.
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    object_points : 2D np.ndarray
+        Real world coordinates. The ndarray is structured like [X, Y, Z].
+        
+    Returns
+    -------
+    x : 1D np.ndarray
+        Projected image x-coordinates.
+    y : 1D np.ndarray
+        Projected image y-coordinates.
+    
+    """ 
+    _check_parameters(cam_struct)    
+    
+    object_points = np.array(object_points, dtype=float)
+    
+    R = cam_struct["rotation"]
+    T = cam_struct["translation"]
+    fx, fy = cam_struct["focal"]
+    cx, cy = cam_struct["principal"]
+    
+    # Here, we create a transformation matrix and homogenize the object points.
+    # Then, we transform the object points to camera points via dot product.
+    # The transformation matrix is defined by the following:
+    # [ R     | T ]
+    # [ 0 0 0 | 1 ]
+    # where R is the rotation matrix and T is the translation vector.
+    # The object points are like the following:
+    # [P]
+    # [1]
+    # where P is the object points.
+    
+    # We could also transform the world coordinates to camera coordinates using
+    # R * P + T. This wwould be slighly less computationally intensive.
+    
+    Wc = np.dot(
+        np.concatenate(
+            [
+                np.hstack((R, T[:, np.newaxis])),
+                np.array([[0, 0, 0, 1]])
+            ], 
+            axis=0
+        ),
+        np.concatenate(
+            [object_points, np.ones((1, object_points.shape[1]))],
+            axis=0
+        )
+    )
+    
+    # the camera coordinates
+    Xc = Wc[0, :]
+    Yc = Wc[1, :]
+    Zc = Wc[2, :]
+    
+    # Wc = R'(object_points - T)
+#    Xc = R[0, 0] * (object_points[:, 0] - T[0]) +\
+#         R[0, 1] * (object_points[:, 1] - T[1]) +\
+#         R[0, 2] * (object_points[:, 2] - T[2])
+    
+#    Yc = R[1, 0] * (object_points[:, 0] - T[0]) +\
+#         R[1, 1] * (object_points[:, 1] - T[1]) +\
+#         R[1, 2] * (object_points[:, 2] - T[2])
+    
+#    Zc = R[2, 0] * (object_points[:, 0] - T[0]) +\
+#         R[2, 1] * (object_points[:, 1] - T[1]) +\
+#         R[2, 2] * (object_points[:, 2] - T[2])
+    
+    # normalize coordinates
+    Xn = Xc / Zc
+    Yn = Yc / Zc
+    
+    # distortion correction
+    Xd, Yd = eta_zeta_from_bRinv(
+        cam_struct,
+        Xn,
+        Yn
+    )
+    
+    # intrinsic matrix
+    K = np.array(
+       [[fx, 0,  cx],
+        [0,  fy, cy],
+        [0,  0,  1]],
+        dtype=float
+    )
+    
+    # projection to image coordinates
+    ij = np.dot(
+        K, 
+        np.array([Xd, Yd, Xd * 0. + 1.])
+    )
+        
+    # image coordinates
+    Xp = ij[0, :]
+    Yp = ij[1, :]
+    
+    return np.array([Xp, Yp])
+    
+    
+def project_to_z(
+    cam_struct: dict,
+    image_points: np.ndarray,
+    z: float
+):
+    """Project object points to image points.
+    
+    Project object, or real world points, to image points.
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    image_points : 2D np.ndarray
+        Image coordinates. The ndarray is structured like [x, y].
+    z : float
+        A float specifying the Z (depth) value to project to.
+        
+    Returns
+    -------
+    X : 1D np.ndarray
+        Projected world x-coordinates.
+    Y : 1D np.ndarray
+        Projected world y-coordinates.
+    Z : 1D np.ndarray
+        Projected world z-coordinates.
+    
+    """ 
+    _check_parameters(cam_struct)    
+    
+    R = cam_struct["rotation"]
+    T = cam_struct["translation"]
+    fx, fy = cam_struct["focal"]
+    cx, cy = cam_struct["principal"]
+    
+    # make image points homogeneous
+    ip = np.concatenate(
+            [image_points, np.ones((1, image_points.shape[1]))],
+            axis=0
+        )
+    
+    # intrinsic matrix
+    K = np.array(
+       [[fx, 0,  cx],
+        [0,  fy, cy],
+        [0,  0,  1]],
+        dtype=float
+    )
+    
+    # unproject to camera coordinates
+    ijk = np.dot(
+        np.inv(K), 
+        ip
+    )
+    
+    # normalize coordinates
+    Xn = ijk[0] / ijk[2]
+    Yn = ijk[1] / ijk[2]
+    Zn = ijk[2] / ijk[2]
+
+
 def minimize_camera_params(
     cam_struct: dict,
     object_points: list,
@@ -416,6 +480,9 @@ def minimize_camera_params(
     _check_parameters(cam_struct)
     
     from scipy.optimize import minimize
+    
+    object_points = np.array(object_points, dtype=float)
+    image_points = np.array(image_points, dtype=float)
     
     # For each iteration, calculate the RMS error of this function. The input is a numpy
     # array to meet the requirements of scipy's minimization functions.
@@ -471,3 +538,5 @@ def minimize_camera_params(
         )
         
     return cam_struct
+
+
