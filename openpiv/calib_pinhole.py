@@ -35,7 +35,7 @@ def _check_parameters(
     
     if cam_struct["distortion"].shape != (2,5):
         raise ValueError(
-            "Distortion correction matrix must be a 3x5 numpy array"
+            "Distortion correction matrix must be a 2x5 numpy array"
         )
     
     if not isinstance(cam_struct["focal"], (tuple, list, np.ndarray)):
@@ -62,10 +62,10 @@ def _check_parameters(
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
-    translation: np.ndarray=np.ones(3, dtype=float),
-    orientation: np.ndarray=np.ones(3, dtype=float),
-    rotation: np.ndarray=np.zeros((3,3), dtype=float),
-    distortion: np.ndarray=np.zeros((2,5), dtype=float),
+    translation: np.ndarray=np.ones(3, dtype="float64"),
+    orientation: np.ndarray=np.ones(3, dtype="float64"),
+    rotation: np.ndarray=np.eye(3, 3, dtype="float64"),
+    distortion: np.ndarray=np.zeros((2,5), dtype="float64"),
     focal: Tuple[float, float]=[1.0, 1.0],
     principal: Tuple[float, float]=None
     
@@ -96,7 +96,7 @@ def generate_camera_params(
     
     Returns
     -------
-    camera_struct : dict
+    cam_struct : dict
         A dictionary structure of camera parameters.
     
     Examples
@@ -117,22 +117,24 @@ def generate_camera_params(
     if principal is None:
         principal = [resolution[0] / 2, resolution[1] / 2]
     
-    translation = np.array(translation, dtype=float)
-    orientation = np.array(orientation, dtype=float)
+    # cast to arrays
+    translation = np.array(translation, dtype="float64")
+    orientation = np.array(orientation, dtype="float64")
+        
+    # create the dictionary structure
+    cam_struct = {}
+    cam_struct["name"] = cam_name
+    cam_struct["resolution"] = resolution
+    cam_struct["translation"] = translation
+    cam_struct["orientation"] = orientation
+    cam_struct["rotation"] = rotation
+    cam_struct["distortion"] = distortion
+    cam_struct["focal"] = focal
+    cam_struct["principal"] = principal
     
-    camera_struct = {}
-    camera_struct["name"] = cam_name
-    camera_struct["resolution"] = resolution
-    camera_struct["translation"] = translation
-    camera_struct["orientation"] = orientation
-    camera_struct["rotation"] = rotation
-    camera_struct["distortion"] = distortion
-    camera_struct["focal"] = focal
-    camera_struct["principal"] = principal
-    
-    _check_parameters(camera_struct)
+    _check_parameters(cam_struct)
             
-    return camera_struct
+    return cam_struct
 
 
 def calculate_rotation_matrix(
@@ -185,7 +187,7 @@ def calculate_rotation_matrix(
             [0, np.cos(tx),-np.sin(tx)],
             [0, np.sin(tx), np.cos(tx)]
         ],
-        dtype=float
+        dtype="float64"
     )
     
     rot_y = np.array(
@@ -194,7 +196,7 @@ def calculate_rotation_matrix(
             [        0,   1,        0],
             [-np.sin(ty), 0, np.cos(ty)]
         ], 
-        dtype=float
+        dtype="float64"
     )
     
     rot_z = np.array(
@@ -203,7 +205,7 @@ def calculate_rotation_matrix(
             [np.sin(tz), np.cos(tz), 0],
             [       0,          0,   1]
         ], 
-        dtype=float
+        dtype="float64"
     )
     
     rotation_matrix = np.dot(
@@ -255,7 +257,7 @@ def eta_zeta_from_bRinv(
     https://github.com/ronshnapp/MyPTV
     
     """
-    _check_parameters(camera_struct)
+    _check_parameters(cam_struct)
     
     Z3 = np.array([eta_, zeta_, eta_**2, zeta_**2, eta_ * zeta_])
 
@@ -318,8 +320,8 @@ def project_points(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
     >>> camera_parameters = calib_pinhole.generate_camera_params(
             name="cam1", 
@@ -355,14 +357,14 @@ def project_points(
     """ 
     _check_parameters(cam_struct)    
     
-    object_points = np.array(object_points, dtype=float)
+    object_points = np.array(object_points, dtype="float64")
     
     R = cam_struct["rotation"]
     T = cam_struct["translation"]
     fx, fy = cam_struct["focal"]
     cx, cy = cam_struct["principal"]
 
-    # camera transformation to camera coordinates
+    # transformation to camera coordinates
     Wc = np.dot(
         R,
         object_points
@@ -375,10 +377,10 @@ def project_points(
         
     # normalize coordinates
     Wn_x = Wc_x / Wc_h
-    Wn_y = Wc_x / Wc_h 
+    Wn_y = Wc_y / Wc_h 
     
     # distortion correction
-    Wd_x, Wd_y = calib_pinhole.eta_zeta_from_bRinv(
+    Wd_x, Wd_y = eta_zeta_from_bRinv(
         cam_struct,
         Wn_x,
         Wn_y
@@ -426,8 +428,8 @@ def project_to_z(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
     >>> camera_parameters = calib_pinhole.generate_camera_params(
             name="cam1", 
@@ -469,7 +471,7 @@ def project_to_z(
     """
     _check_parameters(cam_struct) 
     
-    x, y = np.array(image_points, dtype=float)
+    x, y = np.array(image_points, dtype="float64")
     
     R = cam_struct["rotation"]
     T = cam_struct["translation"]
@@ -497,7 +499,7 @@ def project_to_z(
     X = ((-Tz + z) / dz)*dx + Tx
     Y = ((-Tz + z) / dz)*dy + Ty
 
-    return np.array([X, Y, np.ones_like(X) * z], dtype=float)
+    return np.array([X, Y, np.ones_like(X) * z], dtype="float64")
 
 
 def minimize_camera_params(
@@ -535,7 +537,7 @@ def minimize_camera_params(
         
     Returns
     -------
-    camera_struct : dict
+    cam_struct : dict
         A dictionary structure of optimized camera parameters.
     
     Notes
@@ -604,8 +606,8 @@ def minimize_camera_params(
     
     from scipy.optimize import minimize
     
-    object_points = np.array(object_points, dtype=float)
-    image_points = np.array(image_points, dtype=float)
+    object_points = np.array(object_points, dtype="float64")
+    image_points = np.array(image_points, dtype="float64")
     
     # For each iteration, calculate the RMS error of this function. The input is a numpy
     # array to meet the requirements of scipy's minimization functions.
