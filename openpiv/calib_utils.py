@@ -1,30 +1,188 @@
 import numpy as np
 
 
-def detect_markers(
+def get_circular_template(
+    window_size,
+    template_radius,
+    val=1
+):
+    """Create a circle template.
+    
+    Create a circle template based on the temnplate radius and window size.
+    This template can be correlated with an image to find features such as
+    marker detection on calibration plates.
+    
+    Parameters
+    ----------
+    window_size : int
+        A square window size.
+    template_radius : int
+        The radius of the circle in the template.
+    val : float, optional
+        The value set to the circular elements in the template.
+        
+    Returns
+    -------
+    template : 2D np.ndarray
+        A 2D np.ndarray of dtype np.float32 containing a centralized circular
+        element.
+    
+    Examples
+    --------
+    from openpiv.calib_utils import get_cross_template
+    
+    >>> get_cross_template(
+            window_size=32,
+            template_radius=5,
+            val=255
+        )
+    
+    """
+    # make sure input is integers
+    window_size = int(window_size)
+    template_radius = int(template_radius)
+    
+    # get template size
+    template_size = 2*template_radius + 1
+    
+    # make sure template size is smaller than window size
+    if template_size >= window_size:
+        raise ValueError(
+            "template_radius is too large for given window_size."
+        )
+        
+    disk = np.zeros(
+        (template_size, template_size),
+        dtype="float32"
+    )
+
+
+    ys, xs = np.indices([template_size, template_size])
+
+    dist = np.sqrt(
+        (ys - template_radius)**2 +
+        (xs - template_radius)**2
+    )
+
+    disk[dist <= template_radius] = 255.
+
+    template = np.zeros(
+        (window_size, window_size), 
+        dtype= "float32"
+    )
+    
+    template[
+        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius,
+        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius] =\
+        disk
+    
+    return template
+
+
+def get_cross_template(
+    window_size,
+    template_radius,
+    val=1
+):
+    """Create a cross template.
+    
+    Create a cross template based on the temnplate radius and window size. The
+    line width of the cross is found by int(template_radius / 6) + 1. This 
+    template can be correlated with an image to find features such as marker 
+    detection on calibration plates.
+    
+    Parameters
+    ----------
+    window_size : int
+        A square window size.
+    template_radius : int
+        The radius of the cross in the template.
+    val : float, optional
+        The value set to the cross elements in the template.
+        
+    Returns
+    -------
+    template : 2D np.ndarray
+        A 2D np.ndarray of dtype np.float32 containing a centralized cross
+        element.
+    
+    Examples
+    --------
+    from openpiv.calib_utils import get_cross_template
+    
+    >>> get_cross_template(
+            window_size=48,
+            template_radius=11,
+            val=255
+        )
+    
+    """
+    # make sure input is integers
+    window_size = int(window_size)
+    template_radius = int(template_radius)
+    
+    # get template size
+    template_size = 2*template_radius + 1
+    
+    # make sure template size is smaller than window size
+    if template_size >= window_size:
+        raise ValueError(
+            "template_radius is too large for given window_size."
+        )
+        
+    cross = np.zeros(
+        (template_size, template_size),
+        dtype="float32"
+    )
+    
+    ys, xs = np.abs(
+        np.indices([template_size, template_size]) - template_radius
+    )
+    
+    line_width = int(template_radius / 6) + 1
+        
+    cross[ys < line_width] = val
+    cross[xs < line_width] = val
+    
+    template = np.zeros(
+        (window_size, window_size), 
+        dtype= "float32"
+    )
+    
+    template[
+        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius,
+        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius] =\
+        cross
+    
+    return template
+
+
+def detect_markers_local(
     image: np.ndarray,
     roi: list=None,
     window_size: int=64,
-    overlap: int=None,
+    overlap = None,
     template_type: str="dot",
-    template_radius: int=5,
+    template_radius: int=7,
+    correlation_method: str="circular",
+    min_peak_height: float=0.25,
     merge_radius: int=10,
-    min_count: float=10
+    merge_iter: int=5,
+    min_count: float=2,
+    return_count=False
 ):
     """Detect calibration markers.
     
     Detect circular and cross calibration markers. The markers are first detected
     based on correlating a local window with a template. The position of the
-    marker in the local windows is found by finding the maximum of that window, 
-    which correlates to the best match with the template. Then, false positives
-    are removed by specifying the minimum count a marker is detected. Once the
-    estimated target points are found, the local windows around the targets are
-    correlated with the template and the final peak is fitted with a centroid
-    estimator to get subpixel accuracy.
+    marker in the local windows is found by locating the maximum of that window, 
+    which correlates to the best match with the template. Finally, false positives
+    are removed by specifying the minimum count a marker is detected and the 
+    minimum correlation coefficient of that marker's peak.
     
     Parameters
     ----------
-    image : np.ndarray of shape (n, m)
+    image : 2D np.ndarray
         A two dimensional array of pixel intensities of the shape (n, m).
     roi : list, optional
         A four element list containing min x, y and max x, y in pixels.
@@ -38,7 +196,7 @@ def detect_markers(
         automatically set to 75% of the window size. Step size can be
         calculated as window_size - overlap. The higher the overlap, the better
         markers are registered but at the expense of performance and memory. 
-    template_type : str, optional
+    template_type : str {'dot', 'cross'}, optional
         The template type used for matching. Currently, there are two options:
         dot and cross. It is important to select the right one when template
         matching.
@@ -47,33 +205,63 @@ def detect_markers(
         the same radius as the markers in pixels, if not larger. Improperly set
         template radius will reduce quality of marker detection and the subpixel 
         fitting.
-    merge_radius : ing, optional
+    correlation_method : str {'circular'. 'linear'}, optional
+        A string that indicates what type of correlation to perform.
+        
+        ``circular``
+        The input is not padded and thus is faster and less memory intesive than
+        its padded counterpart.
+        
+        ``linear``
+        The input is padded by the next power of 2 to remove periodic frequencies.
+        This requires substantially more computational resources and time.
+    min_peak_height : float, optional
+        Reject correlation peaks below threshold to help remove false positives.
+    merge_radius : int, optional
         The merge radius when detecting the number of times a marker is found.
         Typically, the merge radius should be 5 to 10.
+    merge_iter : int, optional
+        The number of iterations to merge neighboring points inside the
+        merge radius threshold.
     min_count : float, optional
         The minimum amount a marker is detected. Helps to remove false
         positives on marker detection.
+    return_count : bool, optional
+        Return the number of times a marker gets counted. This can be used to
+        find the ideal threshold to find the correct markers.
     
     Returns
     -------
-    markers : np.ndarray of shape (n, 2)
+    markers : 2D np.ndarray
         Marker positions in [x, y]'.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_image
     
-    Notes
-    -----
-    The subpixel fitting is performed by a 3 point gaussian or centroid estimator 
-    In the future, a gaussian peak fitting algorithm based on the pseudo-inverse
-    (computed by SVD) could be used as a generalized least-squares solution.
-    As the pseudo-inverse only has to be computed once, the algorithm would
-    theroetically be fast while enabling n x n pixels, where n is an integer that 
-    is the half-width of the fitting kernel, to be used when peak fitting. This 
-    may be more accurate for wider peaks as more information is used in the subpixel 
-    estimation.
+    >>> cal_img = cal_image(z=0)
+    
+    >>> marks_pos, counts = detect_markers2(
+            cal_img,
+            window_size = 64,
+            template_radius=5,
+            min_peak_height = 0.2,
+            merge_radius = 10,
+            merge_iter=5,
+            min_count=8,
+            return_count=True
+        )
+        
+    >>> marks_pos
+    
+    >>> counts
     
     """
     from openpiv.pyprocess import get_field_shape, get_coordinates,\
                                   sliding_window_array, fft_correlate_images,\
-                                  find_all_first_peaks    
+                                  find_all_first_peaks  
     
     # @ErichZimmer
     # Note to developers, this function was originally written as a prototype
@@ -100,37 +288,21 @@ def detect_markers(
     image /= image.max() # normalize
     image *= 255. # scale
     
+    # pad image so markers near the border are detected better
+    image_padded =  np.pad(image, window_size, mode="constant")
+    pad_off = window_size
+    
     # create template
     if template_type == "dot":
-        template_size = 2*template_radius + 1
-        
-        disk = np.zeros(
-            (template_size, template_size),
-            dtype="float32"
+        template = get_circular_template(
+            window_size,
+            template_radius
         )
-        
-        template = np.zeros(
-            (window_size, window_size), 
-            dtype= "float32"
-        )
-        
-        xs, ys = np.indices([template_size, template_size])
-        
-        dist = np.sqrt(
-            (ys - template_radius)**2 +
-            (xs - template_radius)**2
-        )
-        
-        disk[dist <= template_radius] = 255.
-             
-        template[
-            window_size // 2 - template_radius - 1 : window_size // 2 + template_radius,
-            window_size // 2 - template_radius - 1 : window_size // 2 + template_radius] =\
-             disk
     
     elif template_type == "cross":
-        raise ValueError(
-            "Lost due to an unexpected microsoft update :("
+        template = get_cross_template(
+            window_size,
+            template_radius
         )
         
     else:
@@ -138,17 +310,16 @@ def detect_markers(
             "template_type must be either 'dot' or 'cross'"
         )
     
-    # if overlap is None, set overlap to 75% of window size
+    # if overlap is None, set overlap to 80% of window size
     if overlap is None:
-        overlap = window_size - window_size * 0.25
+        overlap = window_size - window_size * 0.2
     
     # make sure window_size and overlap are integers
     window_size = int(window_size)
     overlap = int(overlap)
-    
-    # get local sub-windows for template matching
+                   
     sub_windows = sliding_window_array(
-        image,
+        image_padded,
         [window_size, window_size],
         [overlap, overlap]
     )
@@ -157,41 +328,40 @@ def detect_markers(
     # of the template in the right location
     sub_windows = sub_windows[:, ::-1, ::-1]
     
-    # broadcast template to came shape as sub_windows
+    # broadcast template to same shape as sub_windows
     template = np.broadcast_to(template, sub_windows.shape)
     
-    # normalized linear cross correlation
+    # normalized cross correlation
     corr = fft_correlate_images(
         sub_windows,
         template,
         normalized_correlation = True,
-        correlation_method = "linear"
+        correlation_method = correlation_method
     )
-
-    # reshape field
+        
+    # get field shape
     field_shape = get_field_shape(
-        image.shape,
+        image_padded.shape,
         window_size,
         overlap
     )
     
     # get location of peaks
-    max_ind = find_all_first_peaks(
-        corr
-    )[0][:, 1:]
+    max_ind, peaks = find_all_first_peaks(
+        corr,
+    )
+        
+    max_ind_x = max_ind[:, 2]
+    max_ind_y = max_ind[:, 1]
     
-    max_ind_x = max_ind[:, 1]
-    max_ind_y = max_ind[:, 0]
-    
+    # reshape field (this is not actually needed)
     max_ind_x = max_ind_x.reshape(field_shape)
     max_ind_y = max_ind_y.reshape(field_shape)
-    
-    # delete corr and sub_windows as we no longer need it
-    del corr, sub_windows
+    peaks = peaks.reshape(field_shape)
     
     # create a grid
     grid_x, grid_y = get_coordinates(
-        image.shape,
+        image_padded.shape,
         window_size,
         overlap,
         center_on_field=False
@@ -201,7 +371,7 @@ def detect_markers(
     pos_x = grid_x + max_ind_x
     pos_y = grid_y + max_ind_y
     
-    # find points near sub window borders
+    # find points near sub window borders and with low peak heights
     flags = np.zeros_like(pos_x).astype(bool, copy=False)
     n_exclude = 3
     
@@ -209,8 +379,9 @@ def detect_markers(
     flags[max_ind_y < n_exclude] = True
     flags[max_ind_x > window_size - n_exclude - 1] = True
     flags[max_ind_y > window_size - n_exclude - 1] = True
+    flags[peaks < min_peak_height] = True
     
-    # set flagged elements to nan
+    # remove flagged elements
     pos_x = pos_x[~flags]
     pos_y = pos_y[~flags]
     
@@ -232,7 +403,7 @@ def detect_markers(
         ) <= merge_radius
     
     # get mean of clusters iteratively
-    for _ in range(8):
+    for _ in range(merge_iter):
         for ind in range(pos.shape[0]):
             pos[ind, :] = np.mean(
                 pos[clusters[ind, :], :].reshape(-1, 2),
@@ -241,7 +412,6 @@ def detect_markers(
     
     # convert to integers by rounding everything down
     pos = np.floor(pos)
-    
 
     # count the number of copies
     pos, count = np.unique(
@@ -251,90 +421,28 @@ def detect_markers(
     )
     
     # remove positions that are not detected enough times
-    pos = pos[count >= min_count]
+    pos = pos[count >= min_count, :]
+    count = count[count >= min_count]
     
-    # create new windows at specific locations
-    new_grid_x = pos[:, 0] - window_size // 2
-    new_grid_y = pos[:, 1] - window_size // 2
+    # remove padding offsets
+    pos -= pad_off
     
-    new_grid_x[new_grid_x < 0] = 0
-    new_grid_y[new_grid_y < 0] = 0
+    # find points outside of image
+    flags = np.zeros_like(pos[:, 0]).astype(bool, copy=False)
     
-    new_grid_x_e = np.reshape(new_grid_x, (-1, 1, 1)).astype(int)
-    new_grid_y_e = np.reshape(new_grid_y, (-1, 1, 1)).astype(int)
+    n_exclude = 8
+    flags[pos[:, 0] < n_exclude] = True
+    flags[pos[:, 1] < n_exclude] = True
+    flags[pos[:, 0] > image.shape[1] - n_exclude - 1] = True
+    flags[pos[:, 1] > image.shape[0] - n_exclude - 1] = True
+    
+    # remove points outside of image
+    pos = pos[~flags]
 
-    win_x, win_y = np.meshgrid(
-        np.arange(0, window_size), 
-        np.arange(0, window_size)
-    )
-    
-    win_x = win_x[np.newaxis,:,:] + new_grid_x_e
-    win_y = win_y[np.newaxis,:,:] + new_grid_y_e
-    
-    sub_windows = image[win_y, win_x][:, ::-1, ::-1]
-    
-    # broadcast template to new stack size
-    template = np.broadcast_to(template[0, :, :], sub_windows.shape)
-    
-    # normalized linear cross correlation
-    corr = fft_correlate_images(
-        sub_windows,
-        template,
-        normalized_correlation = True,
-        correlation_method = "linear"
-    )
-    
-    # get location of peaks
-    new_max_ind = find_all_first_peaks(
-        corr
-    )[0][:, 1:]
-    
-    new_max_ind_x = new_max_ind[:, 1]
-    new_max_ind_y = new_max_ind[:, 0]
-    
-    # add grid to peak indexes to get estimated location
-    new_pos_x = new_grid_x + new_max_ind_x + off_x
-    new_pos_y = new_grid_y + new_max_ind_y + off_y
-    
-    # now get subpixel offset
-    n_halfwidth = 5
-    
-    centroid_grid_x = centroid_grid_y = np.arange(
-        -n_halfwidth,
-        n_halfwidth + 1,
-        dtype=float
-    )
-    
-    centroid_x, centroid_y = np.meshgrid(
-        centroid_grid_x,
-        centroid_grid_y
-    )
-    
-    # TODO: optimize this loop and add protection from peaks near edges
-    for ind in range(corr.shape[0]):
-        corr_crop_slice = (
-            ind,
-            slice(
-                new_max_ind_x[ind] - n_halfwidth,
-                new_max_ind_x[ind] + n_halfwidth + 1,
-            ),        
-            slice(
-                new_max_ind_y[ind] - n_halfwidth,
-                new_max_ind_y[ind] + n_halfwidth + 1,
-            )
-        )
-        
-        corr_sec = corr[corr_crop_slice]
-        
-        corr_sum = np.sum(corr_sec)
-        
-        shift_x = np.sum(centroid_x * corr_sec) / corr_sum
-        shift_y = np.sum(centroid_y * corr_sec) / corr_sum
-        
-        new_pos_x[ind] = new_pos_x[ind] + shift_x
-        new_pos_y[ind] = new_pos_y[ind] + shift_y
-    
-    return np.array([new_pos_x, new_pos_y], dtype=float).T
+    if return_count == True:
+        return pos, count
+    else:
+        return pos
 
 
 def get_reprojection_error(
@@ -369,32 +477,26 @@ def get_reprojection_error(
     --------
     >>> import numpy as np
     >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
     
-    >>> path_to_calib = "../openpiv/data/test5/test_cal.csv"
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
-            path_to_calib,
-            unpack = True,
-            skiprows=1,
-            delimiter = ','
-        )
-        
     >>> camera_parameters = calib_polynomial.generate_camera_params(
-            "cam1", 
-            [1024, 1024]
+            name="cam1", 
+            [img_size_x, img_size_y]
         )
         
     >>> camera_parameters = calib_polynomial.minimize_polynomial(
             camera_parameters,
             np.array([obj_x, obj_y, obj_z]),
-            np.array([img_x0, img_y0])
+            np.array([img_x, img_y])
         )
     
     >>> calib_utils.get_reprojection_error(
             camera_parameters2, 
             calib_polynomial.project_points,
             [obj_x, obj_y, obj_z],
-            [img_x0, img_y0]
+            [img_x, img_y]
         )
     
     """
@@ -450,32 +552,26 @@ def get_los_error(
     --------
     >>> import numpy as np
     >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
     
-    >>> path_to_calib = "../openpiv/data/test5/test_cal.csv"
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
-            path_to_calib,
-            unpack = True,
-            skiprows=1,
-            delimiter = ','
-        )
-        
     >>> camera_parameters = calib_polynomial.generate_camera_params(
-            "cam1", 
-            [1024, 1024]
+            name="cam1", 
+            [img_size_x, img_size_y]
         )
         
     >>> camera_parameters = calib_polynomial.minimize_polynomial(
             camera_parameters,
             np.array([obj_x, obj_y, obj_z]),
-            np.array([img_x0, img_y0])
+            np.array([img_x, img_y])
         )
     
     >>> calib_utils.get_los_error(
             camera_parameters2,
             calib_polynomial.project_to_z,
             calib_polynomial.project_points,
-            z = -5
+            z = 0
         )
         
     """
@@ -548,17 +644,41 @@ def get_image_mapping(
     
     Returns
     -------
-    X : 2D np.ndarray
+    x : 2D np.ndarray
         Mappings for x-coordinates.
-    Y : 2D np.ndarray
+    y : 2D np.ndarray
         Mappings for y-coordinates.
     scale : float
         Image to world scale factor.
         
-    Notes
-    -----
-    Scale is only applicable if the image and object points are
-    not normalized.
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> camera_parameters = calib_polynomial.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+        
+    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+            camera_parameters,
+            np.array([obj_x, obj_y, obj_z]),
+            np.array([img_x, img_y])
+        )
+    
+    >>> mappings, scale = get_image_mapping(
+            camera_parameters,
+            calib_polynomial.project_to_z,
+            calib_polynomial.project_points
+        )
+        
+    >>> mappings
+    
+    >>> scale
     
     """
     
