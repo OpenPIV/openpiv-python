@@ -29,9 +29,9 @@ def get_circular_template(
     
     Examples
     --------
-    from openpiv.calib_utils import get_cross_template
+    from openpiv.calib_utils import get_circular_template
     
-    >>> get_cross_template(
+    >>> get_circular_template(
             window_size=32,
             template_radius=5,
             val=255
@@ -243,7 +243,7 @@ def detect_markers_local(
     
     >>> cal_img = cal_image(z=0)
     
-    >>> marks_pos, counts = detect_markers2(
+    >>> marks_pos, counts = calib_utils.detect_markers_local(
             cal_img,
             window_size = 64,
             template_radius=5,
@@ -670,7 +670,7 @@ def get_image_mapping(
             np.array([img_x, img_y])
         )
     
-    >>> mappings, scale = get_image_mapping(
+    >>> mappings, scale = calib_utils.get_image_mapping(
             camera_parameters,
             calib_polynomial.project_to_z,
             calib_polynomial.project_points
