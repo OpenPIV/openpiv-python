@@ -33,7 +33,7 @@ def _check_parameters(
             "Rotation must be a 3x3 numpy array"
         )
     
-    if cam_struct["distortion"].shape != (3,5):
+    if cam_struct["distortion"].shape != (2,5):
         raise ValueError(
             "Distortion correction matrix must be a 3x5 numpy array"
         )
@@ -63,9 +63,9 @@ def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
     translation: np.ndarray=np.ones(3, dtype=float),
-    orientation: np.ndarray= np.ones(3, dtype=float),
+    orientation: np.ndarray=np.ones(3, dtype=float),
     rotation: np.ndarray=np.zeros((3,3), dtype=float),
-    distortion: np.ndarray=np.zeros((3,5), dtype=float),
+    distortion: np.ndarray=np.zeros((2,5), dtype=float),
     focal: Tuple[float, float]=[1.0, 1.0],
     principal: Tuple[float, float]=None
     
@@ -80,14 +80,14 @@ def generate_camera_params(
         Name of camera.
     resolution : tuple[int, int]
         Resolution of camera in x and y axes respectively.
-    translation : tuple[int, int, int]
+    translation : 1D np.ndarray-like
         Location of camera origin/center in x, y, and z axes respectively.
-    orientation : np.ndarray
+    orientation : 1D np.ndarray-like
         Orientation of camera in x, y, z axes respectively.
-    rotation : np.ndarray
+    rotation : 2D np.ndarray
         Rotational camera parameter for camera system.
-    distortion : np.ndarray
-        Radial distortion compensation matrix for a camera.
+    distortion : 2D np.ndarray
+        Distortion compensation matrix for a camera.
     focal : tuple[float, float]
         Focal distance/magnification of camera-lense system for x any y axis
         espectively.
@@ -99,10 +99,26 @@ def generate_camera_params(
     camera_struct : dict
         A dictionary structure of camera parameters.
     
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> camera_parameters = calib_pinhole.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
     """    
     # default principal point is half of image resolution
     if principal is None:
         principal = [resolution[0] / 2, resolution[1] / 2]
+    
+    translation = np.array(translation, dtype=float)
+    orientation = np.array(orientation, dtype=float)
     
     camera_struct = {}
     camera_struct["name"] = cam_name
@@ -152,6 +168,7 @@ def calculate_rotation_matrix(
     --------
     rotation_matrix : 2D np.ndarray
         A 3x3 rotation matrix.
+    
     """
     _check_parameters(cam_struct)
     
@@ -201,6 +218,9 @@ def calculate_rotation_matrix(
 # Originally incorporated from myPTV as the previous non-linear
 # distortion model had undefined behavior. In the furure, we could incorporate
 # the distortion model used by OpenCV.
+
+# @ErichZimemr - Changes (May 30, 2023):
+# Added parameters checks, modified function for use with this module.
 def eta_zeta_from_bRinv(
     cam_struct: dict,
     eta_: np.ndarray, 
@@ -235,7 +255,8 @@ def eta_zeta_from_bRinv(
     https://github.com/ronshnapp/MyPTV
     
     """
-
+    _check_parameters(camera_struct)
+    
     Z3 = np.array([eta_, zeta_, eta_**2, zeta_**2, eta_ * zeta_])
 
     e_ = np.dot(cam_struct["distortion"], Z3)
@@ -288,6 +309,48 @@ def project_points(
         Projected image x-coordinates.
     y : 1D np.ndarray
         Projected image y-coordinates.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    
+    >>> camera_parameters = calib_pinhole.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_focal = True,
+            correct_distortion = False,
+            iterations=5
+        )
+    
+    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_focal = True,
+            correct_distortion = True,
+            iterations=5
+        )
+        
+    >>> ij = calib_pinhole.project_points(
+            camera_parameters,
+            obj_points
+        )
+    >>> ij
+    
+    >>> img_points
     
     """ 
     _check_parameters(cam_struct)    
@@ -298,93 +361,44 @@ def project_points(
     T = cam_struct["translation"]
     fx, fy = cam_struct["focal"]
     cx, cy = cam_struct["principal"]
-    
-    # Here, we create a transformation matrix and homogenize the object points.
-    # Then, we transform the object points to camera points via dot product.
-    # The transformation matrix is defined by the following:
-    # [ R     | T ]
-    # [ 0 0 0 | 1 ]
-    # where R is the rotation matrix and T is the translation vector.
-    # The object points are like the following:
-    # [P]
-    # [1]
-    # where P is the object points.
-    
-    # We could also transform the world coordinates to camera coordinates using
-    # R * P + T. This wwould be slighly less computationally intensive.
-    
+
+    # camera transformation to camera coordinates
     Wc = np.dot(
-        np.concatenate(
-            [
-                np.hstack((R, T[:, np.newaxis])),
-                np.array([[0, 0, 0, 1]])
-            ], 
-            axis=0
-        ),
-        np.concatenate(
-            [object_points, np.ones((1, object_points.shape[1]))],
-            axis=0
-        )
-    )
-    
+        R,
+        object_points
+    ) + T[:, np.newaxis]
+        
     # the camera coordinates
-    Xc = Wc[0, :]
-    Yc = Wc[1, :]
-    Zc = Wc[2, :]
-    
-    # Wc = R'(object_points - T)
-#    Xc = R[0, 0] * (object_points[:, 0] - T[0]) +\
-#         R[0, 1] * (object_points[:, 1] - T[1]) +\
-#         R[0, 2] * (object_points[:, 2] - T[2])
-    
-#    Yc = R[1, 0] * (object_points[:, 0] - T[0]) +\
-#         R[1, 1] * (object_points[:, 1] - T[1]) +\
-#         R[1, 2] * (object_points[:, 2] - T[2])
-    
-#    Zc = R[2, 0] * (object_points[:, 0] - T[0]) +\
-#         R[2, 1] * (object_points[:, 1] - T[1]) +\
-#         R[2, 2] * (object_points[:, 2] - T[2])
-    
+    Wc_x = Wc[0, :]
+    Wc_y = Wc[1, :]
+    Wc_h = Wc[2, :]
+        
     # normalize coordinates
-    Xn = Xc / Zc
-    Yn = Yc / Zc
+    Wn_x = Wc_x / Wc_h
+    Wn_y = Wc_x / Wc_h 
     
     # distortion correction
-    Xd, Yd = eta_zeta_from_bRinv(
+    Wd_x, Wd_y = calib_pinhole.eta_zeta_from_bRinv(
         cam_struct,
-        Xn,
-        Yn
+        Wn_x,
+        Wn_y
     )
     
-    # intrinsic matrix
-    K = np.array(
-       [[fx, 0,  cx],
-        [0,  fy, cy],
-        [0,  0,  1]],
-        dtype=float
-    )
+    # rescale coordinates
+    x = Wd_x * fx + cx
+    y = Wd_y * fy + cy
     
-    # projection to image coordinates
-    ij = np.dot(
-        K, 
-        np.array([Xd, Yd, Xd * 0. + 1.])
-    )
-        
-    # image coordinates
-    Xp = ij[0, :]
-    Yp = ij[1, :]
-    
-    return np.array([Xp, Yp])
+    return np.array([x, y])
     
     
 def project_to_z(
     cam_struct: dict,
     image_points: np.ndarray,
-    z: float
+    z
 ):
-    """Project object points to image points.
+    """Project image points to world points.
     
-    Project object, or real world points, to image points.
+    Project image points to world points at specified z-plane.
     
     Parameters
     ----------
@@ -393,7 +407,7 @@ def project_to_z(
     image_points : 2D np.ndarray
         Image coordinates. The ndarray is structured like [x, y].
     z : float
-        A float specifying the Z (depth) value to project to.
+        A float specifying the Z (depth) plane to project to.
         
     Returns
     -------
@@ -403,46 +417,94 @@ def project_to_z(
         Projected world y-coordinates.
     Z : 1D np.ndarray
         Projected world z-coordinates.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_points
     
-    """ 
-    _check_parameters(cam_struct)    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    
+    >>> camera_parameters = calib_pinhole.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_focal = True,
+            correct_distortion = False,
+            iterations=5
+        )
+    
+    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_focal = True,
+            correct_distortion = True,
+            iterations=5
+        )
+        
+    >>> ij = calib_pinhole.project_points(
+            camera_parameters,
+            obj_points
+        )
+    >>> ij
+    
+    >>> calib_pinhole.project_to_z(
+            camera_parameters,
+            ij,
+            z=obj_points[2]
+        )
+    
+    >>> obj_points
+        
+    """
+    _check_parameters(cam_struct) 
+    
+    x, y = np.array(image_points, dtype=float)
     
     R = cam_struct["rotation"]
     T = cam_struct["translation"]
     fx, fy = cam_struct["focal"]
     cx, cy = cam_struct["principal"]
     
-    # make image points homogeneous
-    ip = np.concatenate(
-            [image_points, np.ones((1, image_points.shape[1]))],
-            axis=0
-        )
+    # normalize image coordinates
+    Wn_x = (x - cx) / fx
+    Wn_y = (y - cy) / fy
+    Wn_z = np.ones_like(Wn_x)
     
-    # intrinsic matrix
-    K = np.array(
-       [[fx, 0,  cx],
-        [0,  fy, cy],
-        [0,  0,  1]],
-        dtype=float
+    # inverse rotation
+    dx, dy, dz = np.dot(
+        R.T,
+        [Wn_x, Wn_y, Wn_z]
     )
     
-    # unproject to camera coordinates
-    ijk = np.dot(
-        np.inv(K), 
-        ip
+    # inverse translation
+    Tx, Ty, Tz = np.dot(
+        R.T,
+        -T[:, np.newaxis]
     )
     
-    # normalize coordinates
-    Xn = ijk[0] / ijk[2]
-    Yn = ijk[1] / ijk[2]
-    Zn = ijk[2] / ijk[2]
+    # camera coordinates to world coordinates
+    X = ((-Tz + z) / dz)*dx + Tx
+    Y = ((-Tz + z) / dz)*dy + Ty
+
+    return np.array([X, Y, np.ones_like(X) * z], dtype=float)
 
 
 def minimize_camera_params(
     cam_struct: dict,
     object_points: list,
     image_points: list,
-    correct_focal: bool = False,
+    correct_instrinsic: bool = False,
     correct_distortion: bool = False,
     max_iter: int = 1000,
     iterations: int = 3
@@ -462,8 +524,8 @@ def minimize_camera_params(
         A 2D np.ndarray containing [x, y, z] object points.
     image_points : np.ndarray
         A 2D np.ndarray containing [x, y] image points.
-    correct_focal : bool
-        If true, minimize the focal distance.
+    correct_instrinsic : bool
+        If true, minimize the instrinsic matrix.
     correct_distortion : bool
         If true, mininmize the distortion model.
     max_iter : int
@@ -475,6 +537,67 @@ def minimize_camera_params(
     -------
     camera_struct : dict
         A dictionary structure of optimized camera parameters.
+    
+    Notes
+    -----
+    When minimizing the camera parameters, it is important that the parameters are
+    estimated first before distortion correction. This allows a better estimation
+    of the camera parameters and distortion coefficients. For instance, if one were
+    to calibrate the camera intrinsic and distortion coefficients before moving the
+    camera to the lab apparatus, it would be important to calibrate the camera
+    parameters before the distortion model to ensure a better convergence and thus,
+    lower root mean sqaure (RMS) errors. This can be done in the following procedure:
+    
+    1. Place the camera directly in front of a planar calibration plate.
+    
+    2. Estimate camera parameters with out distortion correction.
+    
+    3. Estimate distortion model coefficients and refine camera parameters.
+    
+    4. Place camera in lab apparatus.
+    
+    5. Calibrate camera again without distortion or intrinsic correction.
+    
+    A brief example is shown below. More can be found in the example PIV lab
+    experiments.
+    
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> camera_parameters = calib_pinhole.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+     >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_instrinsic = True,
+            correct_distortion = False,
+            iterations=5
+        )
+    
+    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+            camera_parameters, 
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y],
+            correct_instrinsic = True,
+            correct_distortion = True,
+            iterations=5
+        )
+    
+    >>> calib_utils.get_reprojection_error(
+            camera_parameters, 
+            calib_pinhole.project_points,
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y]
+        )
     
     """
     _check_parameters(cam_struct)
@@ -489,9 +612,9 @@ def minimize_camera_params(
     def func_to_minimize(x):
         cam_struct["translation"] = x[0:3]
         cam_struct["orientation"] = x[3:6]
-        cam_struct["principal"] = x[6:8]
         
-        if correct_focal == True:
+        if correct_instrinsic == True:
+            cam_struct["principal"] = x[6:8]
             cam_struct["focal"] = x[8:10]
             
         if correct_distortion == True:
@@ -519,7 +642,6 @@ def minimize_camera_params(
         cam_struct["focal"],
         cam_struct["distortion"][0, :],
         cam_struct["distortion"][1, :]
-#        cam_struct["distortion"][2, :]
     ]
     
     params_to_minimize = np.hstack(
