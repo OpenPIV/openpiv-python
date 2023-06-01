@@ -330,7 +330,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_focal = True,
+            correct_instrinsic = True,
             correct_distortion = False,
             iterations=5
         )
@@ -339,7 +339,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_focal = True,
+            correct_instrinsic = True,
             correct_distortion = True,
             iterations=5
         )
@@ -438,7 +438,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_focal = True,
+            correct_instrinsic = True,
             correct_distortion = False,
             iterations=5
         )
@@ -447,7 +447,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_focal = True,
+            correct_instrinsic = True,
             correct_distortion = True,
             iterations=5
         )
