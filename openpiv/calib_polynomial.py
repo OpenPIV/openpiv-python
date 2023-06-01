@@ -73,6 +73,19 @@ def generate_camera_params(
     -------
     camera_struct : dict
         A dictionary structure of camera parameters.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> camera_parameters = calib_polynomial.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
     
     """    
     camera_struct = {}
@@ -109,7 +122,35 @@ def minimize_polynomial(
     camera_struct : dict
         A dictionary structure of optimized camera parameters.
         
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> camera_parameters = calib_polynomial.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+            camera_parameters,
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y]
+        )
+        
+    >>> calib_utils.get_reprojection_error(
+            camera_parameters, 
+            calib_polynomial.project_points,
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y]
+        )
+        
     """
+    _check_parameters(camera_struct)
+    
     object_points = np.array(object_points, dtype=float)
     image_points = np.array(image_points, dtype=float)
     
@@ -179,6 +220,35 @@ def project_points(
         Projected image x-coordinates.
     y : 1D np.ndarray
         Projected image y-coordinates.
+        
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    
+    >>> camera_parameters = calib_polynomial.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+            camera_parameters,
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y]
+        )
+        
+    >>> calib_polynomial.project_points(
+            camera_parameters,
+            obj_points
+        )
+        
+    >>> img_points
     
     """ 
     _check_parameters(cam_struct)
@@ -213,9 +283,9 @@ def project_to_z(
     image_points: np.ndarray,
     z: float
 ):
-    """Project object points to image points.
+    """Project image points to world points.
     
-    Project object, or real world points, to image points.
+    Project image points to world points at specified z-plane.
     
     Parameters
     ----------
@@ -224,7 +294,7 @@ def project_to_z(
     image_points : 2D np.ndarray
         Image coordinates. The ndarray is structured like [x, y].
     z : float
-        A float specifying the Z (depth) value to project to.
+        A float specifying the Z (depth) plane to project to.
         
     Returns
     -------
@@ -234,6 +304,42 @@ def project_to_z(
         Projected world y-coordinates.
     Z : 1D np.ndarray
         Projected world z-coordinates.
+    
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.data.test5 import cal_points
+    
+    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    
+    >>> camera_parameters = calib_polynomial.generate_camera_params(
+            name="cam1", 
+            [img_size_x, img_size_y]
+        )
+    
+    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+            camera_parameters,
+            [obj_x, obj_y, obj_z],
+            [img_x, img_y]
+        )
+        
+    >>> ij = calib_polynomial.project_points(
+            camera_parameters,
+            obj_points
+        )
+    >>> ij
+    
+    >>> calib_polynomial.project_to_z(
+            camera_parameters,
+            ij,
+            z=obj_points[2]
+        )
+    
+    >>> obj_points  
         
     """ 
     _check_parameters(cam_struct)
