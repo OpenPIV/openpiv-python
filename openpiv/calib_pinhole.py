@@ -35,7 +35,7 @@ def _check_parameters(
     
     if cam_struct["distortion"].shape != (8,):
         raise ValueError(
-            "Distortion correction matrix must be a 2x5 numpy array"
+            "Distortion coefficients must be an 8 element 1D numpy ndarray"
         )
     
     if not isinstance(cam_struct["focal"], (tuple, list, np.ndarray)):
