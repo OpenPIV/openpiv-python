@@ -33,7 +33,7 @@ def _check_parameters(
             "Rotation must be a 3x3 numpy array"
         )
     
-    if cam_struct["distortion"].shape != (2,5):
+    if cam_struct["distortion"].shape != (8,):
         raise ValueError(
             "Distortion correction matrix must be a 2x5 numpy array"
         )
@@ -62,10 +62,10 @@ def _check_parameters(
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
-    translation: np.ndarray=np.ones(3, dtype="float64"),
-    orientation: np.ndarray=np.ones(3, dtype="float64"),
+    translation: np.ndarray=[0, 0, 1],
+    orientation: np.ndarray=np.zeros(3, dtype="float64"),
     rotation: np.ndarray=np.eye(3, 3, dtype="float64"),
-    distortion: np.ndarray=np.zeros((2,5), dtype="float64"),
+    distortion: np.ndarray=np.zeros(8, dtype="float64"),
     focal: Tuple[float, float]=[1.0, 1.0],
     principal: Tuple[float, float]=None
     
@@ -137,7 +137,7 @@ def generate_camera_params(
     return cam_struct
 
 
-def calculate_rotation_matrix(
+def get_rotation_matrix(
     cam_struct: dict
 ):
     """Calculate a rotation matrix for a camera.
@@ -216,78 +216,108 @@ def calculate_rotation_matrix(
     return rotation_matrix
 
 
-# Copyright (c) 2022 Ron Shnapp
-# Originally incorporated from myPTV as the previous non-linear
-# distortion model had undefined behavior. In the furure, we could incorporate
-# the distortion model used by OpenCV.
-
-# @ErichZimemr - Changes (May 30, 2023):
-# Added parameters checks, modified function for use with this module.
-def eta_zeta_from_bRinv(
+def undistort_points(
     cam_struct: dict,
-    eta_: np.ndarray, 
-    zeta_: np.ndarray
+    x: np.ndarray, 
+    y: np.ndarray
 ):
-    """Non-linear distortion correction
+    """Undistort normalized points.
     
-    Non-linear distortion correction solved by linearizing the error
-    term with the Taylor series expantion. 
+    Undistort normalized camera points using a radial and tangential distortion
+    model. 
     
     Parameters
     ----------
     cam_struct : dict
         A dictionary structure of camera parameters.
     x : 1D np.ndarray
-        Projected image x-coordinates.
+        Distorted x-coordinates.
     y : 1D np.ndarray
-        Projected image y-coordinates.
+        Distorted y-coordinates.
+        
+    Returns
+    -------
+    xd : 1D np.ndarray
+        Undistorted x-coordinates.
+    yd : 1D np.ndarray
+        Undistorted y-coordinates.
+    
+    Notes
+    -----
+    Distortion model is based off of OpenCV. The direct link where the distortion 
+    model was accessed is provided below.
+    https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
+    
+    """
+    _check_parameters(cam_struct)  
+    
+    k = cam_struct["distortion"]
+    
+    r2 = x*x + y*y
+    r4 = r2 * r2
+    r6 = r4 * r2
+    
+    num = 1 + k[0]*r2 + k[1]*r4 + k[4]*r6
+    den = 1 + k[5]*r2 + k[6]*r4 + k[7]*r6
+    
+    delta_x = k[2]*2*x*y + k[3]*(r2 + 2*x*x)
+    delta_y = k[2]*(r2 + 2*y*y) + k[3]*2*x*y
+    
+    xd = x*(num/den) + delta_x
+    yd = y*(num/den) + delta_y
+    
+    return xd, yd
+
+
+def distort_points(
+    cam_struct: dict,
+    xd: np.ndarray, 
+    yd: np.ndarray
+):
+    """Distort normalized points.
+    
+    Distort normalized camera points using a radial and tangential distortion
+    model. 
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    xd : 1D np.ndarray
+        Undistorted x-coordinates.
+    yd : 1D np.ndarray
+        Undistorted y-coordinates.
         
     Returns
     -------
     x : 1D np.ndarray
-        Projected image x-coordinates.
+        Distorted x-coordinates.
     y : 1D np.ndarray
-        Projected image y-coordinates.
+        Distorted y-coordinates.
     
     Notes
     -----
-    Copyright (c) 2022 Ron Shnapp
-    This function was taken from myPTV and is copyrighted under MIT licenses.
-    The link to the repository is provided below.
-    https://github.com/ronshnapp/MyPTV
+    Distortion model is based off of OpenCV. The direct link where the distortion 
+    model was accessed is provided below.
+    https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
     
     """
-    _check_parameters(cam_struct)
+    _check_parameters(cam_struct)  
     
-    Z3 = np.array([eta_, zeta_, eta_**2, zeta_**2, eta_ * zeta_])
-
-    e_ = np.dot(cam_struct["distortion"], Z3)
-
-    # calculating the derivatives of the error term:
-    e_0 = e_[0]
-    a, b, c, d, ee = cam_struct["distortion"][0,:]
-    e_eta_0 = a + 2*c*eta_ + ee*zeta_
-    e_zeta_0 = b + 2*d*zeta_ + ee*eta_
-
-    e_1 = e_[1]
-    a, b, c, d, ee = cam_struct["distortion"][1,:]
-    e_eta_1 = a + 2*c*eta_ + ee*zeta_
-    e_zeta_1 = b + 2*d*zeta_ + ee*eta_
-
-    A11 = 1.0 + e_eta_0
-    A12 = e_zeta_0
-    A21 = e_eta_1
-    A22 = 1.0 + e_zeta_1
-
-    rhs1 = eta_*(1.0 + e_eta_0) + zeta_*e_zeta_0 - e_0
-    rhs2 = zeta_*(1.0 + e_zeta_1) + eta_*e_eta_1 - e_1
-
-    Ainv = np.array([[A22, -A12],[-A21, A11]]) / (A11*A22 - A12*A21)
+    k = cam_struct["distortion"]
     
-    eta = Ainv[0, 0] * rhs1 + Ainv[0, 1] * rhs1
-    zeta = Ainv[1, 0] * rhs2 + Ainv[1, 1] * rhs2
+    r2 = xd*xd + yd*yd
 
-    return eta, zeta
+    num = 1 + ((k[7]*r2 + k[6])*r2 + k[5])*r2
+    den = 1 + ((k[4]*r2 + k[1])*r2 + k[0])*r2
+
+    deltaX = 2*k[2]*xd*yd + k[3]*(r2 + 2*xd*xd);
+    deltaY = k[2]*(r2 + 2*yd*yd) + 2*k[3]*xd*yd;
+
+    x = (xd - deltaX)*(num/den);
+    y = (yd - deltaY)*(num/den);
+    
+    return x, y
 
 
 def project_points(
@@ -380,7 +410,7 @@ def project_points(
     Wn_y = Wc_y / Wc_h 
     
     # distortion correction
-    Wd_x, Wd_y = eta_zeta_from_bRinv(
+    Wd_x, Wd_y = undistort_points(
         cam_struct,
         Wn_x,
         Wn_y
@@ -479,14 +509,20 @@ def project_to_z(
     cx, cy = cam_struct["principal"]
     
     # normalize image coordinates
-    Wn_x = (x - cx) / fx
-    Wn_y = (y - cy) / fy
-    Wn_z = np.ones_like(Wn_x)
+    Wd_x = (x - cx) / fx
+    Wd_y = (y - cy) / fy
+    
+    # undistort points
+    Wn_x, Wn_y = distort_points(
+        cam_struct,
+        Wd_x,
+        Wd_y
+    )
     
     # inverse rotation
     dx, dy, dz = np.dot(
         R.T,
-        [Wn_x, Wn_y, Wn_z]
+        [Wn_x, Wn_y, np.ones_like(Wn_x)]
     )
     
     # inverse translation
@@ -620,10 +656,9 @@ def minimize_camera_params(
             cam_struct["focal"] = x[8:10]
             
         if correct_distortion == True:
-            cam_struct["distortion"][0, :] = x[10:15]
-            cam_struct["distortion"][1, :] = x[15:20]
+            cam_struct["distortion"]= x[10:19]
         
-        cam_struct["rotation"] = calculate_rotation_matrix(
+        cam_struct["rotation"] = get_rotation_matrix(
             cam_struct
         )
         
@@ -642,8 +677,7 @@ def minimize_camera_params(
         cam_struct["orientation"],
         cam_struct["principal"],
         cam_struct["focal"],
-        cam_struct["distortion"][0, :],
-        cam_struct["distortion"][1, :]
+        cam_struct["distortion"]
     ]
     
     params_to_minimize = np.hstack(
