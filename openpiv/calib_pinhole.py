@@ -261,7 +261,7 @@ def undistort_points(
     den = 1 + k[5]*r2 + k[6]*r4 + k[7]*r6
     
     delta_x = k[2]*2*x*y + k[3]*(r2 + 2*x*x)
-    delta_y = k[2]*(r2 + 2*y*y) + k[3]*2*x*y
+    delta_y = k[3]*2*x*y + k[2]*(r2 + 2*y*y)
     
     xd = x*(num/den) + delta_x
     yd = y*(num/den) + delta_y
@@ -311,11 +311,11 @@ def distort_points(
     num = 1 + ((k[7]*r2 + k[6])*r2 + k[5])*r2
     den = 1 + ((k[4]*r2 + k[1])*r2 + k[0])*r2
 
-    deltaX = 2*k[2]*xd*yd + k[3]*(r2 + 2*xd*xd);
-    deltaY = k[2]*(r2 + 2*yd*yd) + 2*k[3]*xd*yd;
+    deltaX = 2*k[2]*xd*yd + k[3]*(r2 + 2*xd*xd)
+    deltaY = 2*k[3]*xd*yd + k[2]*(r2 + 2*yd*yd)
 
-    x = (xd - deltaX)*(num/den);
-    y = (yd - deltaY)*(num/den);
+    x = (xd - deltaX) * (num/den)
+    y = (yd - deltaY) * (num/den)
     
     return x, y
 
