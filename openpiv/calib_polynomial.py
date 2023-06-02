@@ -50,8 +50,8 @@ def _check_parameters(
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
-    poly_wi: np.ndarray=np.ones((2,19), dtype=float).T,
-    poly_iw: np.ndarray=np.ones((3,19), dtype=float).T
+    poly_wi: np.ndarray=np.ones((2,19), dtype="float32").T,
+    poly_iw: np.ndarray=np.ones((3,19), dtype="float32").T
     
 ):
     """Create a camera parameter structure.
@@ -71,7 +71,7 @@ def generate_camera_params(
     
     Returns
     -------
-    camera_struct : dict
+    cam_struct : dict
         A dictionary structure of camera parameters.
         
     Examples
@@ -88,15 +88,15 @@ def generate_camera_params(
         )
     
     """    
-    camera_struct = {}
-    camera_struct["name"] = cam_name
-    camera_struct["resolution"] = resolution
-    camera_struct["poly_wi"] = poly_wi
-    camera_struct["poly_iw"] = poly_iw
+    cam_struct = {}
+    cam_struct["name"] = cam_name
+    cam_struct["resolution"] = resolution
+    cam_struct["poly_wi"] = poly_wi
+    cam_struct["poly_iw"] = poly_iw
     
-    _check_parameters(camera_struct)
+    _check_parameters(cam_struct)
     
-    return camera_struct
+    return cam_struct
 
 
 def minimize_polynomial(
@@ -119,7 +119,7 @@ def minimize_polynomial(
         
     Returns
     -------
-    camera_struct : dict
+    cam_struct : dict
         A dictionary structure of optimized camera parameters.
         
     Examples
@@ -149,10 +149,10 @@ def minimize_polynomial(
         )
         
     """
-    _check_parameters(camera_struct)
+    _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype=float)
-    image_points = np.array(image_points, dtype=float)
+    object_points = np.array(object_points, dtype="float32")
+    image_points = np.array(image_points, dtype="float32")
     
     x = image_points[0]
     y = image_points[1]
@@ -182,14 +182,14 @@ def minimize_polynomial(
     # world to image (forward projection)
     coeff_wi, _, _, _ = np.linalg.lstsq(
         polynomial_wi,
-        np.array(image_points, dtype=float).T, 
+        np.array(image_points, dtype="float32").T, 
         rcond=None
     )
     
     # image to world (back projection)
     coeff_iw, _, _, _ = np.linalg.lstsq(
         polynomial_iw,
-        np.array(object_points, dtype=float).T, 
+        np.array(object_points, dtype="float32").T, 
         rcond=None
     )
 
@@ -229,8 +229,8 @@ def project_points(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float32")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float32")
     
     >>> camera_parameters = calib_polynomial.generate_camera_params(
             name="cam1", 
@@ -253,7 +253,7 @@ def project_points(
     """ 
     _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype=float)
+    object_points = np.array(object_points, dtype="float32")
     
     X = object_points[0]
     Y = object_points[1]
@@ -313,8 +313,8 @@ def project_to_z(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype=float)
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype=float)
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float32")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float32")
     
     >>> camera_parameters = calib_polynomial.generate_camera_params(
             name="cam1", 
@@ -344,11 +344,11 @@ def project_to_z(
     """ 
     _check_parameters(cam_struct)
     
-    image_points = np.array(image_points, dtype=float)
+    image_points = np.array(image_points, dtype="float32")
     
     x = image_points[0]
     y = image_points[1]
-    Z = np.array(z, dtype=float)
+    Z = np.array(z, dtype="float32")
     
     polynomial_iw = np.array([x*0+1,
                               x,     y,     Z, 

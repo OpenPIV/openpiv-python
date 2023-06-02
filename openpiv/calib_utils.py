@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple
 
 
 def get_circular_template(
@@ -390,7 +391,7 @@ def detect_markers_local(
     pos_y += off_y
     
     # create 2D array of coordinates
-    pos = np.array([pos_x, pos_y], dtype=float).T
+    pos = np.array([pos_x, pos_y], dtype="float32").T
 
     # find clusters
     clusters = np.sqrt(
@@ -443,6 +444,261 @@ def detect_markers_local(
         return pos, count
     else:
         return pos
+
+
+# @author: Theo
+# Created on Thu Mar 25 21:03:47 2021
+
+# @ErichZimemr - Changes (June 2, 2023):
+# Revised function
+def show_calibration_image(
+    image: np.ndarray, 
+    markers: np.ndarray, 
+    radius: int=30
+):
+    """Plot markers on image.
+    
+    Plot markers on image and their associated index. This allows one to find the
+    origin, x-axis, and y-axis point indexes for object-image point matching.
+    
+    Parameters
+    ----------
+    image : 2D np.ndarray
+        A 2D array containing grayscale pixel intensities.
+    markers : 2D np.ndarray
+        A 2D array containing image marker coordinates in [x, y]`.
+    radius : int, optional
+        The radius of the circle drawn around the marker point.
+    
+    Returns
+    -------
+    None
+    
+    Examples
+    --------
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_image
+    
+    >>> cal_img = cal_image(z=0)
+    
+    >>> marks_pos = calib_utils.detect_markers_local(
+            cal_img,
+            window_size = 64,
+            template_radius=5,
+            min_peak_height = 0.2,
+            merge_radius = 10,
+            merge_iter=5,
+            min_count=8,
+        )
+    
+    >>> show_calibration_image(
+        cal_img,
+        marks_pos
+    )
+    
+    """
+    from PIL import Image, ImageFont, ImageDraw
+    from matplotlib import pyplot as plt
+    
+    # funtction to show th clalibration iamge with numbers and circles
+    plt.close('all')
+    
+    marker_numbers=np.arange(0,np.size(markers[:,0]))
+    
+    image_p = Image.fromarray(np.uint8((image/np.max(image[::]))*255))
+    
+    draw = ImageDraw.Draw(image_p)
+    font = ImageFont.truetype("arial.ttf", 35)
+    
+    for i in range(0, np.size(markers, 0)):
+        x, y=markers[i,:]
+        draw.text((x, y), str(marker_numbers[i]), fill=(255),
+                  anchor='mb',font=font)
+        
+    plt.figure(1)
+    fig, ax = plt.subplots(1)
+    ax.imshow(image_p)
+    
+    for marker in markers:
+        x, y = marker
+        c = plt.Circle((x, y), radius, color='red', linewidth=2, fill=False)
+        ax.add_patch(c)
+        
+    plt.show()
+    plt.pause(1)
+    
+    
+# @author: Theo
+# Created on Thu Mar 25 21:03:47 2021
+
+# @ErichZimemr - Changes (June 2, 2023):
+# Revised function
+def get_obj_img_pairs(
+    img_points: np.ndarray,
+    origin_ind: int,
+    x_ind: int,
+    y_ind: int,
+    grid_size: Tuple[int, int],
+    spacing: float,
+    z: float
+):
+    """ Match object and image points.
+    
+    Match object and image points. 
+    
+    Parameters
+    ----------
+    img_points : 2D np.ndarray
+        2D np.ndarray of [x, y]` coordinates.
+    origin_ind : int
+        Index to define the origin.
+    x_ind : int
+        Index for the point to define the x-axis.
+    y_ind : int
+        Index for the point to define the y-axis.
+    grid_size : tuple[int, int]
+        Grid size for the x- and y-axis.
+    spacing : float
+        Grid spacing in millimeters.
+    z : float
+        The z plane where the calibration plate is located.
+    
+    Returns
+    -------
+    img_points : 2D np.ndarray
+        2D matched image points of [x, y]` coordinates.
+    obj_points : 2D np.ndarray
+        2D matched object points of [x, y, z]` coordinates.
+    
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.data.test5 import cal_image
+    
+    >>> cal_img = cal_image(z=0)
+    
+    >>> marks_pos = calib_utils.detect_markers_local(
+            cal_img,
+            window_size = 64,
+            template_radius=5,
+            min_peak_height = 0.2,
+            merge_radius = 10,
+            merge_iter=5,
+            min_count=8,
+        )
+    
+    Here, we get the indexes for the origin, x-axis, and y-axis. Index 118
+    corresponds to the selected origin, while index 132 and 119 defines the 
+    x-axis and y-axis respectively.
+    
+    >>> show_calibration_image(
+        cal_img,
+        marks_pos
+    )
+    
+    >>> img_points, obj_points = get_obj_img_pairs(
+            marks_pos,
+            orig_ind=118,
+            x_ind=132,
+            y_ind=119,
+            grid_size=[15, 15],
+            spacing=30,
+            z=0
+        )
+        
+    
+    
+    """
+    # rearrange image coordinates
+    coords = np.zeros_like(img_points)
+    coords[:, 0] = img_points[:, 1] # y
+    coords[:, 1] = img_points[:, 0] # x
+    
+    # get and set origin
+    origin  = coords[origin_ind, :]
+    search_x = coords[x_ind, :] - origin
+    search_y = coords[y_ind, :] - origin
+    
+    # build meshgrid large enough to contain any possible origin position
+    range_y = np.arange(-grid_size[1] + 1, grid_size[1]) 
+    range_x = np.arange(-grid_size[0] + 1, grid_size[0])
+    
+    y_0, x_0 = np.meshgrid(
+        range_y*search_y[0],
+        range_x*search_x[0], 
+        indexing='ij'
+    )
+    y_1, x_1 = np.meshgrid(
+        range_y*search_y[1],
+        range_x*search_x[1],
+        indexing='ij'
+    )
+
+    # new meshgrid with origin at [0,0]
+    y_s = y_0 + y_1 + origin[0]
+    y_s = y_s
+    x_s = x_0 + x_1 + origin[1]
+
+    # search points to find the nearest points on
+    y_s = np.reshape(y_s, (-1,1))
+    x_s = np.reshape(x_s, (-1,1))
+    search_points = np.concatenate((y_s,x_s), axis=-1)
+
+    # create a mask to reduce the size of the search grid
+    min_y = np.min(coords[:,0])
+    max_y = np.max(coords[:,0])
+    min_x = np.min(coords[:,1])
+    max_x = np.max(coords[:,1])
+    
+    tol_y = np.floor(abs((search_y[0] + search_x[0])/2))
+    tol_x = np.floor(abs((search_y[1] + search_x[1])/2))
+    
+    con_1 = ((min_y - tol_y) <= search_points[:,0]) &\
+            ((max_y + tol_y) >= search_points[:,0])
+    con_2 = ((min_x - tol_x) <= search_points[:,1]) &\
+            ((max_x + tol_x) >= search_points[:,1])
+    
+    con_comb = con_1 & con_2
+    search_points = search_points[np.where(con_comb)]
+
+    # calculate the euclidean distance between the search grid points and the marker coordinates
+    # to determine the nearest neighbours
+    dist = cdist(search_points, coords)
+    val_object_grid_index = np.argmin(dist, axis=0)
+    search_points = search_points[val_object_grid_index, :]
+    
+    # get the markers in the right oder
+    dist_2 = cdist(search_points, coords)
+    right_order_index = np.argmin(dist_2, axis=1)
+    image_points = img_points[right_order_index, :]
+    
+    if np.size(val_object_grid_index) != np.size(right_order_index):
+        raise('A problem related to the point matching occured')
+
+    # create the object grid
+    object_mesh_y, object_mesh_x = np.meshgrid(
+        range_x*spacing,
+        range_y*spacing,
+        indexing='ij'
+    )
+    object_mesh_y = object_mesh_y
+    object_mesh_y = np.reshape(object_mesh_y, (-1,1))
+    object_mesh_x = np.reshape(object_mesh_x, (-1,1))
+    
+    object_points = np.concatenate(
+        (object_mesh_x, object_mesh_y, np.zeros_like(object_mesh_x) + z),
+        axis=-1
+    )
+    
+    
+    object_points = object_points[np.where(con_comb)]
+    object_points = object_points[val_object_grid_index]
+
+    return image_points, object_points
 
 
 def get_reprojection_error(
@@ -592,7 +848,7 @@ def get_los_error(
     y = image_grid[:, 0]
     
     # get depth
-    Z = x*0 + z
+    Z = np.zeros_like(x) + z
     
     # project image coordinates to world points
     X, Y, Z = project_to_z_func(
@@ -698,7 +954,7 @@ def get_image_mapping(
     y = image_grid[:, 0]
     
     # We set Z to zero since there is no depth
-    Z = x*0.
+    Z = np.zeros_like(x)
     
     # project image coordinates to world points
     world_x, world_y, _ = project_to_z_func(

@@ -512,7 +512,7 @@ def project_to_z(
     Wd_x = (x - cx) / fx
     Wd_y = (y - cy) / fy
     
-    # undistort points
+    # distort points
     Wn_x, Wn_y = distort_points(
         cam_struct,
         Wd_x,
