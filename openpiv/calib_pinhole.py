@@ -647,6 +647,16 @@ def minimize_camera_params(
     object_points = np.array(object_points, dtype="float64")
     image_points = np.array(image_points, dtype="float64")
     
+     if object_points.shape[1] < 6:
+        raise ValueError(
+            "Too little points to calibrate"
+        )
+    
+    if object_points.shape[1] != image_points.shape[1]:
+        raise ValueError(
+            "Object point image point size mismatch"
+        )
+    
     # For each iteration, calculate the RMS error of this function. The input is a numpy
     # array to meet the requirements of scipy's minimization functions.
     def func_to_minimize(x):

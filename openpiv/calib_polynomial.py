@@ -154,6 +154,16 @@ def minimize_polynomial(
     object_points = np.array(object_points, dtype="float32")
     image_points = np.array(image_points, dtype="float32")
     
+    if object_points.shape[1] < 27:
+        raise ValueError(
+            "Too little points to calibrate"
+        )
+    
+    if object_points.shape[1] != image_points.shape[1]:
+        raise ValueError(
+            "Object point image point size mismatch"
+        )
+        
     x = image_points[0]
     y = image_points[1]
     
