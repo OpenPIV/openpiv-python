@@ -647,7 +647,7 @@ def minimize_camera_params(
     object_points = np.array(object_points, dtype="float64")
     image_points = np.array(image_points, dtype="float64")
     
-     if object_points.shape[1] < 6:
+    if object_points.shape[1] < 6:
         raise ValueError(
             "Too little points to calibrate"
         )

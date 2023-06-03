@@ -25,7 +25,7 @@ def get_circular_template(
     Returns
     -------
     template : 2D np.ndarray
-        A 2D np.ndarray of dtype np.float32 containing a centralized circular
+        A 2D np.ndarray of dtype np.float64 containing a centralized circular
         element.
     
     Examples
@@ -54,7 +54,7 @@ def get_circular_template(
         
     disk = np.zeros(
         (template_size, template_size),
-        dtype="float32"
+        dtype="float64"
     )
 
 
@@ -69,7 +69,7 @@ def get_circular_template(
 
     template = np.zeros(
         (window_size, window_size), 
-        dtype= "float32"
+        dtype= "float64"
     )
     
     template[
@@ -104,7 +104,7 @@ def get_cross_template(
     Returns
     -------
     template : 2D np.ndarray
-        A 2D np.ndarray of dtype np.float32 containing a centralized cross
+        A 2D np.ndarray of dtype np.float64 containing a centralized cross
         element.
     
     Examples
@@ -133,7 +133,7 @@ def get_cross_template(
         
     cross = np.zeros(
         (template_size, template_size),
-        dtype="float32"
+        dtype="float64"
     )
     
     ys, xs = np.abs(
@@ -147,7 +147,7 @@ def get_cross_template(
     
     template = np.zeros(
         (window_size, window_size), 
-        dtype= "float32"
+        dtype= "float64"
     )
     
     template[
@@ -234,10 +234,10 @@ def detect_markers_local(
     Returns
     -------
     markers : 2D np.ndarray
-        Marker positions in [x, y]'.
+        Marker positions in [x, y]' image coordinates.
     
     counts : 2D np.ndarray, optional
-        Marker counts in [x, y]. Returned id return_count is True.
+        Marker counts in [x, y]. Returned if return_count is True.
         
     Examples
     --------
@@ -272,8 +272,8 @@ def detect_markers_local(
     # for the OpenPIV c++ version. However, it was refined in order to be useful
     # for the Python version of OpenPIV.
     
-    # data type conversion to float32
-    image = image.astype("float32")
+    # data type conversion to float64
+    image = image.astype("float64")
     
     # set ROI if needed
     off_x = off_y = 0
@@ -394,7 +394,7 @@ def detect_markers_local(
     pos_y += off_y
     
     # create 2D array of coordinates
-    pos = np.array([pos_x, pos_y], dtype="float32").T
+    pos = np.array([pos_x, pos_y], dtype="float64").T
 
     # find clusters
     clusters = np.sqrt(
@@ -442,6 +442,7 @@ def detect_markers_local(
     
     # remove points outside of image
     pos = pos[~flags]
+    count = count[~flags]
 
     if return_count == True:
         return pos, count
@@ -474,7 +475,7 @@ def detect_markers_blobs(
     Returns
     -------
     markers : 2D np.ndarray
-        Marker positions in [x, y]'.
+        Marker positions in [x, y]' image coordinates.
     
     Examples
     --------
@@ -495,7 +496,7 @@ def detect_markers_blobs(
     """
     from scipy.ndimage import label, labeled_comprehension, center_of_mass, find_objects
     
-    image = image.astype("float32")
+    image = image.astype("float64")
     
     # set ROI if needed
     off_x = off_y = 0
@@ -542,10 +543,10 @@ def detect_markers_blobs(
         valid_labels_ind
     )
     
-    _pos = np.array(_pos, dtype="float32")
+    _pos = np.array(_pos, dtype="float64")
     
     # rearrange x and y coordinates and apply roi offsets
-    pos = np.empty_like(_pos, dtype="float32")
+    pos = np.empty_like(_pos, dtype="float64")
     
     pos[:, 0] = _pos[:, 1] + off_x
     pos[:, 1] = _pos[:, 0] + off_y
@@ -578,7 +579,7 @@ def show_calibration_image(
     image : 2D np.ndarray
         A 2D array containing grayscale pixel intensities.
     markers : 2D np.ndarray
-        A 2D array containing image marker coordinates in [x, y]`.
+        A 2D array containing image marker coordinates in [x, y]` image coordinates.
     radius : int, optional
         The radius of the circle drawn around the marker point.
     
@@ -606,7 +607,7 @@ def show_calibration_image(
             min_count=8,
         )
     
-    >>> show_calibration_image(
+    >>> calib_utils.show_calibration_image(
         cal_img,
         marks_pos
     )
@@ -648,23 +649,25 @@ def show_calibration_image(
 
 # @ErichZimemr - Changes (June 2, 2023):
 # Revised function
-def get_obj_img_pairs(
-    img_points: np.ndarray,
+def get_pairs_anal(
+    image_points: np.ndarray,
     origin_ind: int,
     x_ind: int,
     y_ind: int,
     grid_size: Tuple[int, int],
     spacing: float,
     z: float
-):
-    """ Match object and image points.
+): 
+    """Match object points to image points analytically.
     
-    Match object and image points. 
+    Match object points to image points. This is only applicable for planar 
+    calibration plates that are relatively perpendicular to the camera position
+    (e.g., no rotation) and non-severe distortion.
     
     Parameters
     ----------
-    img_points : 2D np.ndarray
-        2D np.ndarray of [x, y]` coordinates.
+    image_points : 2D np.ndarray
+        2D np.ndarray of [x, y]` image coordinates.
     origin_ind : int
         Index to define the origin.
     x_ind : int
@@ -680,10 +683,10 @@ def get_obj_img_pairs(
     
     Returns
     -------
-    img_points : 2D np.ndarray
-        2D matched image points of [x, y]` coordinates.
-    obj_points : 2D np.ndarray
-        2D matched object points of [x, y, z]` coordinates.
+    image_points : 2D np.ndarray
+        2D matched image points of [x, y]` in image coordinates.
+    object_points : 2D np.ndarray
+        2D matched object points of [X, Y, Z]` in world coordinates.
     
     Examples
     --------
@@ -707,12 +710,12 @@ def get_obj_img_pairs(
     corresponds to the selected origin, while index 132 and 119 defines the 
     x-axis and y-axis respectively.
     
-    >>> show_calibration_image(
+    >>> calib_utils.show_calibration_image(
         cal_img,
         marks_pos
     )
     
-    >>> img_points, obj_points = get_obj_img_pairs(
+    >>> img_points, obj_points = calib_utils.get_pairs_anal(
             marks_pos,
             orig_ind=118,
             x_ind=132,
@@ -726,9 +729,9 @@ def get_obj_img_pairs(
     from scipy.spatial.distance import cdist
 
     # rearrange image coordinates
-    coords = np.zeros_like(img_points)
-    coords[:, 0] = img_points[:, 1] # y
-    coords[:, 1] = img_points[:, 0] # x
+    coords = np.zeros_like(image_points)
+    coords[:, 0] = image_points[:, 1] # y
+    coords[:, 1] = image_points[:, 0] # x
     
     # get and set origin
     origin  = coords[origin_ind, :]
@@ -786,7 +789,7 @@ def get_obj_img_pairs(
     # get the markers in the right oder
     dist_2 = cdist(search_points, coords)
     right_order_index = np.argmin(dist_2, axis=1)
-    image_points = img_points[right_order_index, :]
+    image_points = image_points[right_order_index, :]
     
     if np.size(val_object_grid_index) != np.size(right_order_index):
         raise('A problem related to the point matching occured')
@@ -805,7 +808,6 @@ def get_obj_img_pairs(
         (object_mesh_x, object_mesh_y, np.zeros_like(object_mesh_x) + z),
         axis=-1
     )
-    
     
     object_points = object_points[np.where(con_comb)]
     object_points = object_points[val_object_grid_index]
