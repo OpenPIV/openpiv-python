@@ -235,11 +235,14 @@ def detect_markers_local(
     -------
     markers : 2D np.ndarray
         Marker positions in [x, y]'.
+    
+    counts : 2D np.ndarray, optional
+        Marker counts in [x, y]. Returned id return_count is True.
         
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv import calib_utils
     >>> from openpiv.data.test5 import cal_image
     
     >>> cal_img = cal_image(z=0)
@@ -446,6 +449,115 @@ def detect_markers_local(
         return pos
 
 
+def detect_markers_blobs(
+    image: np.ndarray,
+    roi: list=None,
+    min_area: int = None,
+    max_area: int = None
+):
+    """Detect blob markers.
+    
+    Detect blob markers by labeling an image, removing outliers by thresholding, and
+    finding the center of mass of the labels.
+    
+    Parameters
+    ----------
+    image : 2D np.ndarray
+        A two dimensional array of pixel intensities of the shape (n, m).
+    roi : list, optional
+        A four element list containing min x, y and max x, y in pixels.
+    min_area : int, optional
+        The minimum amount of pixels a labeled marker can have.
+    max_area : int, optional
+        The maximum amount of pixels a labeled marker can have.
+        
+    Returns
+    -------
+    markers : 2D np.ndarray
+        Marker positions in [x, y]'.
+    
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from openpiv import calib_utils
+    >>> from openpiv.data.test5 import cal_image
+    
+    >>> cal_img = cal_image(z=0)
+    
+    >>> marks_poss = calib_utils.detect_markers_globs(
+            cal_img,
+            roi=[0, 0, None, 950],
+            min_area=50
+        )
+        
+    >>> marks_pos
+    
+    """
+    from scipy.ndimage import label, labeled_comprehension, center_of_mass, find_objects
+    
+    image = image.astype("float32")
+    
+    # set ROI if needed
+    off_x = off_y = 0
+    
+    if roi is not None:
+        off_x = roi[0]
+        off_y = roi[1]
+        
+        image = image[
+            roi[1] : roi[3], # y-axis
+            roi[0] : roi[2]  # x-axis
+        ]
+    
+    # scale the image to [0, 255]
+    image[image < 0] = 0. # cut negative pixel intensities
+    image /= image.max() # normalize
+    image *= 255. # scale
+    
+    # label possible markers
+    labels, n_labels = label(image)
+    
+    labels_ind = np.arange(1, n_labels + 1)
+    
+    # get label area
+    label_area = np.zeros(n_labels)
+    for i in labels_ind:
+        label_area[i-1] = np.sum(labels == i)
+    
+    # remove invalid areas
+    flag = np.zeros(n_labels, dtype=bool)
+
+    if min_area is not None:
+        flag[label_area < min_area] = True
+    
+    if max_area is not None:
+        flag[label_area > max_area] = True
+    
+    valid_labels_ind = labels_ind[~flag]
+    
+    # get center of mass of valid labels
+    _pos = center_of_mass(
+        image,
+        labels,
+        valid_labels_ind
+    )
+    
+    _pos = np.array(_pos, dtype="float32")
+    
+    # rearrange x and y coordinates and apply roi offsets
+    pos = np.empty_like(_pos, dtype="float32")
+    
+    pos[:, 0] = _pos[:, 1] + off_x
+    pos[:, 1] = _pos[:, 0] + off_y
+    
+    # sort so the results behave like detect_markers_local
+    order = np.lexsort(
+        (pos[:, 1], pos[:, 0])
+    )
+    
+    return pos[order]
+
+
 # @author: Theo
 # Created on Thu Mar 25 21:03:47 2021
 
@@ -479,7 +591,7 @@ def show_calibration_image(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv import calib_utils
     >>> from openpiv.data.test5 import cal_image
     
     >>> cal_img = cal_image(z=0)
@@ -576,7 +688,7 @@ def get_obj_img_pairs(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv import calib_utils
     >>> from openpiv.data.test5 import cal_image
     
     >>> cal_img = cal_image(z=0)
@@ -609,10 +721,10 @@ def get_obj_img_pairs(
             spacing=30,
             z=0
         )
-        
-    
     
     """
+    from scipy.spatial.distance import cdist
+
     # rearrange image coordinates
     coords = np.zeros_like(img_points)
     coords[:, 0] = img_points[:, 1] # y
@@ -755,8 +867,7 @@ def get_reprojection_error(
             [img_x, img_y]
         )
     
-    """
-        
+    """ 
     res = proj_func(
         cam_struct,
         object_points
