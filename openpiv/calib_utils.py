@@ -122,7 +122,6 @@ def detect_markers_local(
     roi: list=None,
     window_size: int=64,
     overlap = None,
-    correlation_method: str="circular",
     min_peak_height: float=0.025,
     merge_radius: int=10,
     merge_iter: int=5,
