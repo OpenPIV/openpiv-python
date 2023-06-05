@@ -3,7 +3,6 @@ from typing import Tuple
 
 
 def get_circular_template(
-    window_size,
     template_radius,
     val=1
 ):
@@ -15,8 +14,6 @@ def get_circular_template(
     
     Parameters
     ----------
-    window_size : int
-        A square window size.
     template_radius : int
         The radius of the circle in the template.
     val : float, optional
@@ -39,24 +36,16 @@ def get_circular_template(
         )
     
     """
-    # make sure input is integers
-    window_size = int(window_size)
+    # make sure input is integer
     template_radius = int(template_radius)
     
     # get template size
     template_size = 2*template_radius + 1
-    
-    # make sure template size is smaller than window size
-    if template_size >= window_size:
-        raise ValueError(
-            "template_radius is too large for given window_size."
-        )
         
     disk = np.zeros(
         (template_size, template_size),
         dtype="float64"
     )
-
 
     ys, xs = np.indices([template_size, template_size])
 
@@ -67,21 +56,10 @@ def get_circular_template(
 
     disk[dist <= template_radius] = 255.
 
-    template = np.zeros(
-        (window_size, window_size), 
-        dtype= "float64"
-    )
-    
-    template[
-        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius,
-        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius] =\
-        disk
-    
-    return template
+    return disk
 
 
 def get_cross_template(
-    window_size,
     template_radius,
     val=1
 ):
@@ -94,8 +72,6 @@ def get_cross_template(
     
     Parameters
     ----------
-    window_size : int
-        A square window size.
     template_radius : int
         The radius of the cross in the template.
     val : float, optional
@@ -112,24 +88,16 @@ def get_cross_template(
     from openpiv.calib_utils import get_cross_template
     
     >>> get_cross_template(
-            window_size=48,
             template_radius=11,
             val=255
         )
     
     """
-    # make sure input is integers
-    window_size = int(window_size)
+    # make sure input is integer
     template_radius = int(template_radius)
     
     # get template size
     template_size = 2*template_radius + 1
-    
-    # make sure template size is smaller than window size
-    if template_size >= window_size:
-        raise ValueError(
-            "template_radius is too large for given window_size."
-        )
         
     cross = np.zeros(
         (template_size, template_size),
@@ -145,46 +113,41 @@ def get_cross_template(
     cross[ys < line_width] = val
     cross[xs < line_width] = val
     
-    template = np.zeros(
-        (window_size, window_size), 
-        dtype= "float64"
-    )
-    
-    template[
-        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius,
-        window_size // 2 - template_radius - 1 : window_size // 2 + template_radius] =\
-        cross
-    
-    return template
+    return cross
 
 
 def detect_markers_local(
     image: np.ndarray,
+    template: np.ndarray,
     roi: list=None,
     window_size: int=64,
     overlap = None,
-    template_type: str="dot",
-    template_radius: int=7,
     correlation_method: str="circular",
-    min_peak_height: float=0.25,
+    min_peak_height: float=0.025,
     merge_radius: int=10,
     merge_iter: int=5,
     min_count: float=2,
+    refine_pos: bool=False,
     return_count=False
 ):
     """Detect calibration markers.
     
     Detect circular and cross calibration markers. The markers are first detected
-    based on correlating a local window with a template. The position of the
-    marker in the local windows is found by locating the maximum of that window, 
-    which correlates to the best match with the template. Finally, false positives
-    are removed by specifying the minimum count a marker is detected and the 
-    minimum correlation coefficient of that marker's peak.
+    based on correlating the image with a template. Then, the correlation matrix
+    is split into sub-windows where the position of the markers in the local windows 
+    is found by locating the maximum of that window, which correlates to the best
+    match with the template. Next, false positives are removed by specifying the 
+    minimum count a marker is detected and the minimum correlation coefficient of 
+    that marker's peak. Finally, a gaussian peak fit based on psuedo-inverse via
+    singular value decomposition is performed.
     
     Parameters
     ----------
     image : 2D np.ndarray
         A two dimensional array of pixel intensities of the shape (n, m).
+    template : 2D np.ndarray
+        A square two dimensional array of the shape (n, m) which is to be correlated
+        with the image to extract features. Must be of odd shape (e.g., [5, 5]).
     roi : list, optional
         A four element list containing min x, y and max x, y in pixels.
     window_size : int, optional
@@ -197,25 +160,6 @@ def detect_markers_local(
         automatically set to 75% of the window size. Step size can be
         calculated as window_size - overlap. The higher the overlap, the better
         markers are registered but at the expense of performance and memory. 
-    template_type : str {'dot', 'cross'}, optional
-        The template type used for matching. Currently, there are two options:
-        dot and cross. It is important to select the right one when template
-        matching.
-    template_radius : int, optional
-        The radius of the dot or cross in the template. Should be roughly
-        the same radius as the markers in pixels, if not larger. Improperly set
-        template radius will reduce quality of marker detection and the subpixel 
-        fitting.
-    correlation_method : str {'circular'. 'linear'}, optional
-        A string that indicates what type of correlation to perform.
-        
-        ``circular``
-        The input is not padded and thus is faster and less memory intesive than
-        its padded counterpart.
-        
-        ``linear``
-        The input is padded by the next power of 2 to remove periodic frequencies.
-        This requires substantially more computational resources and time.
     min_peak_height : float, optional
         Reject correlation peaks below threshold to help remove false positives.
     merge_radius : int, optional
@@ -227,6 +171,10 @@ def detect_markers_local(
     min_count : float, optional
         The minimum amount a marker is detected. Helps to remove false
         positives on marker detection.
+    refine_pos : bool, optional
+        Refine the position of the markers with a gaussian peak fit. The gaussian
+        peak fitting algorithm is a hit or miss, so checking the RMS error for
+        improments is important.
     return_count : bool, optional
         Return the number of times a marker gets counted. This can be used to
         find the ideal threshold to find the correct markers.
@@ -238,23 +186,31 @@ def detect_markers_local(
     
     counts : 2D np.ndarray, optional
         Marker counts in [x, y]. Returned if return_count is True.
-        
+    
+    Notes
+    -----
+    The gaussian subpixel fitting algorithm is basically a hit or miss when it comes
+    to improving the marker locations. Because of this, it is not recommended to use
+    this parameter unless there is a noticable decrease in RMS errors.
+    
     Examples
     --------
     >>> import numpy as np
     >>> from openpiv import calib_utils
     >>> from openpiv.data.test5 import cal_image
     
-    >>> cal_img = cal_image(z=0)
+    >>> cal_img = cal_image(preproc = True)
+    
+    >>> template = calib_utils.get_circular_template(radius = 7)
     
     >>> marks_pos, counts = calib_utils.detect_markers_local(
             cal_img,
+            template,
             window_size = 64,
-            template_radius=5,
-            min_peak_height = 0.2,
+            min_peak_height = 0.03,
             merge_radius = 10,
             merge_iter=5,
-            min_count=8,
+            min_count=5,
             return_count=True
         )
         
@@ -272,8 +228,49 @@ def detect_markers_local(
     # for the OpenPIV c++ version. However, it was refined in order to be useful
     # for the Python version of OpenPIV.
     
+    # make sure template size is smaller than window size
+    if template.shape[0] >= window_size:
+        raise ValueError(
+            "template_radius is too large for given window_size."
+        )
+    
+    # if overlap is None, set overlap to 75% of window size
+    if overlap is None:
+        overlap = window_size - window_size * 0.25
+    
+    # make sure window_size and overlap are integers
+    window_size = int(window_size)
+    overlap = int(overlap)
+    
     # data type conversion to float64
     image = image.astype("float64")
+    
+    # scale the image to [0, 255]
+    image[image < 0] = 0. # cut negative pixel intensities
+    image /= image.max() # normalize
+    image *= 255. # scale
+    
+    # now pad tempalte to window size
+    template_padded = np.zeros(
+        (image.shape[0], image.shape[1]), 
+        dtype= "float64"
+    )
+    
+    temp_half_x = template.shape[1] // 2
+    temp_half_y = template.shape[0] // 2
+    
+    template_padded[
+        template_padded.shape[0] // 2 - temp_half_y - 1 : template_padded.shape[0] // 2 + temp_half_y - 0,
+        template_padded.shape[1] // 2 - temp_half_x - 1 : template_padded.shape[1] // 2 + temp_half_x - 0] =\
+        template
+    
+    # normalized cross correlation
+    corr = fft_correlate_images(
+        image[np.newaxis, :, :],
+        template_padded[np.newaxis, :, :],
+        normalized_correlation = True,
+        correlation_method = "linear"
+    )[0, ::-1, ::-1] # flipped due to convolution theroem
     
     # set ROI if needed
     off_x = off_y = 0
@@ -282,77 +279,32 @@ def detect_markers_local(
         off_x = roi[0]
         off_y = roi[1]
         
-        image = image[
+        corr_cut = corr[
             roi[1] : roi[3], # y-axis
             roi[0] : roi[2]  # x-axis
         ]
     
-    # scale the image to [0, 255]
-    image[image < 0] = 0. # cut negative pixel intensities
-    image /= image.max() # normalize
-    image *= 255. # scale
-    
-    # pad image so markers near the border are detected better
-    image_padded =  np.pad(image, window_size, mode="constant")
+    # now pad by window size
+    corr_padded = np.pad(corr_cut, window_size, mode="constant")
     pad_off = window_size
     
-    # create template
-    if template_type == "dot":
-        template = get_circular_template(
-            window_size,
-            template_radius
-        )
-    
-    elif template_type == "cross":
-        template = get_cross_template(
-            window_size,
-            template_radius
-        )
-        
-    else:
-        raise ValueError(
-            "template_type must be either 'dot' or 'cross'"
-        )
-    
-    # if overlap is None, set overlap to 80% of window size
-    if overlap is None:
-        overlap = window_size - window_size * 0.2
-    
-    # make sure window_size and overlap are integers
-    window_size = int(window_size)
-    overlap = int(overlap)
-                   
-    sub_windows = sliding_window_array(
-        image_padded,
+    # get sub-windows of correlation matrix
+    corr_windows = sliding_window_array(
+        corr_padded,
         [window_size, window_size],
         [overlap, overlap]
-    )
-    
-    # flip the sub_windows so the cross-correlation places the best fit
-    # of the template in the right location
-    sub_windows = sub_windows[:, ::-1, ::-1]
-    
-    # broadcast template to same shape as sub_windows
-    template = np.broadcast_to(template, sub_windows.shape)
-    
-    # normalized cross correlation
-    corr = fft_correlate_images(
-        sub_windows,
-        template,
-        normalized_correlation = True,
-        correlation_method = correlation_method
-    )
-        
+    )    
+   
     # get field shape
     field_shape = get_field_shape(
-        image_padded.shape,
+        corr_padded.shape,
         window_size,
         overlap
     )
     
     # get location of peaks
     max_ind, peaks = find_all_first_peaks(
-        corr,
+        corr_windows
     )
         
     max_ind_x = max_ind[:, 2]
@@ -365,7 +317,7 @@ def detect_markers_local(
     
     # create a grid
     grid_x, grid_y = get_coordinates(
-        image_padded.shape,
+        corr_padded.shape,
         window_size,
         overlap,
         center_on_field=False
@@ -443,7 +395,71 @@ def detect_markers_local(
     # remove points outside of image
     pos = pos[~flags]
     count = count[~flags]
+    
+    if refine_pos == True:
+        # kernel size for gaussian estimator
+        n_halfwidth = 5
 
+        _sx, _sy = np.meshgrid(
+            np.arange(
+                -n_halfwidth,
+                n_halfwidth + 1,
+                dtype=float
+            ),
+            np.arange(
+                -n_halfwidth,
+                n_halfwidth + 1,
+                dtype=float
+            )
+        )
+        
+        nx, ny = _sx.shape
+        
+        _sx = np.ravel(_sx)
+        _sy = np.ravel(_sy)
+        
+        s_arr = np.array(
+            [_sx, _sy, _sx**2, _sy**2, np.ones_like(_sx)], 
+            dtype=float
+        )
+        
+        s_arr = np.reshape(
+            np.concatenate(s_arr),
+            (5, nx * ny)
+        ).T
+        
+        # we use a psuedo-inverse via SVD so wi can solve a system of equations.
+        # using the least squares methods is preferable here, though.
+        s_inv = np.linalg.pinv(s_arr)
+                        
+        # TODO: optimize this loop
+        for ind in range(pos.shape[0]): 
+            x, y = pos[ind, :].astype(int)
+            
+            slices = (
+                slice(
+                    y - n_halfwidth,
+                    y + n_halfwidth + 1),
+                slice(
+                    x - n_halfwidth,
+                    x + n_halfwidth + 1
+                )
+            )
+
+            corr_sec = np.ravel(corr[slices])
+            corr_sec[corr_sec <= 0] = 1e-6
+            
+            coef = np.dot(s_inv, np.log(corr_sec))
+            
+            sx = 1 / np.sqrt(-2 * coef[2])
+            sy = 1 / np.sqrt(-2 * coef[3])
+            
+            shift_x = coef[0] * np.square(sx)
+            shift_y = coef[1] * np.square(sy)
+            
+            pos[ind, 0] = x + shift_x
+            pos[ind, 1] = y + shift_y
+        
     if return_count == True:
         return pos, count
     else:
@@ -453,8 +469,8 @@ def detect_markers_local(
 def detect_markers_blobs(
     image: np.ndarray,
     roi: list=None,
-    min_area: int = None,
-    max_area: int = None
+    min_area: int=None,
+    max_area: int=None
 ):
     """Detect blob markers.
     
@@ -656,7 +672,7 @@ def get_pairs_anal(
     y_ind: int,
     grid_size: Tuple[int, int],
     spacing: float,
-    z: float
+    z: float=0
 ): 
     """Match object points to image points analytically.
     
@@ -669,16 +685,16 @@ def get_pairs_anal(
     image_points : 2D np.ndarray
         2D np.ndarray of [x, y]` image coordinates.
     origin_ind : int
-        Index to define the origin.
+        Index of the point to define the origin.
     x_ind : int
-        Index for the point to define the x-axis.
+        Index of the point to define the x-axis.
     y_ind : int
-        Index for the point to define the y-axis.
+        Index of the point to define the y-axis.
     grid_size : tuple[int, int]
         Grid size for the x- and y-axis.
     spacing : float
         Grid spacing in millimeters.
-    z : float
+    z : float, optional
         The z plane where the calibration plate is located.
     
     Returns
