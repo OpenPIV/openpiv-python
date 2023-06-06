@@ -2,6 +2,179 @@ import numpy as np
 from typing import Tuple
 
 
+__all__ = [
+    "preprocess_image",
+    "get_circular_template",
+    "get_cross_template",
+    "detect_markers_local",
+    "detect_markers_blobs",
+    "show_calibration_image",
+    "get_pairs_anal",
+    "get_reprojection_error",
+    "get_los_error",
+    "get_image_mapping"
+]
+
+
+def preprocess_image(
+    image: np.ndarray,
+    threshold: float,
+    mask: np.ndarray=None,
+    roi: list=None,
+    highpass_sigma: float=None,
+    lowpass_sigma: float=None,
+    variance_sigma1: float=None,
+    variance_sigma2: float=None,
+    morph_size: int=None,
+    morph_iter: int=2,
+    median_size: int=None
+):
+    """Preprocess calibration image.
+    
+    Preprocess calibration image for feature extraction. The final image is a
+    boolean 2D np.ndarray of shame(n, m). To avoid unwarranted mutation of the
+    original calibration image, the passed image is explicitly copied.
+    
+    Parameters
+    ----------
+    image : 2D np.ndarray
+        A two dimensional array of pixel intensities of the shape (n, m).
+    threshold : float
+        The threshold used for image binarization. It is a good idea to start with
+        a low threshold and slowly increase it in order to get an optimal threshold.
+    mask : 2D np.ndarray, optional
+        A 2D boolean np.ndarray where True elements are kept and False elements are
+        set to zero.
+    roi : list, optional
+        A four element list containing min x, y and max x, y in pixels. If a mask
+        exists, the roi is concatenated with the mask.
+    highpass_sigma : float. optional
+        If not None, perform a high pass filter on the calibration image. Pixel
+        intensities below zero are clipped.
+    lowpass_sigma : float, optional
+        If not None, perform a low pass filter on the calibration image.
+    variance_sigma1, variance_sigma2 : float, optional
+        If not None, perform a local variance normalization filter. I is best to
+        start with a sigma around 1 to 5 and increase them until most of the 
+        background is removed.
+    morph_size : int, optional
+        If not None, perform erosion and dilation morph_iter amount of times.
+        This helps remove noise and non-marker elements.
+    morph_iter : int, optional
+        The number of iterations to perform the erosion and dilation morphological
+        operations.
+    median_size : int, odd, optional
+        If not None, perform a median filter on the calibration image.
+        
+    returns
+    -------
+    bool_image : 2D np.ndarray
+        The binariazed boolean calibration image of shape (n, m).
+        
+    """
+    from openpiv.preprocess import high_pass, local_variance_normalization
+    from scipy.ndimage import median_filter, gaussian_filter, grey_dilation, grey_erosion
+    from scipy.signal import convolve2d
+    
+    cal_img = image.copy()
+    cal_img = cal_img.astype(float, copy=False)
+    cal_img /= cal_img.max()
+    
+    if roi is not None:
+        if mask is None:
+            mask = np.ones_like(cal_img, dtype=bool)
+        
+        con_mask = np.zeros_like(mask, dtype=mask.dtype)
+        
+        con_mask[
+            roi[1] : roi[3], # y-axis
+            roi[0] : roi[2]  # x-axis
+        ] = 1
+        
+        np.multiply(
+            mask,
+            con_mask,
+            out=mask
+        )
+    
+    if highpass_sigma is not None:
+        cal_img = high_pass(
+            cal_img,
+            sigma=highpass_sigma,
+            clip=True
+        )
+        
+    if lowpass_sigma is not None:
+        cal_img = gaussian_filter(
+            cal_img,
+            sigma=lowpass_sigma,
+            truncate=4
+        )
+        
+    if variance_sigma1 is not None and\
+        variance_sigma2 is not None:
+        cal_img = local_variance_normalization(
+            cal_img,
+            variance_sigma1,
+            variance_sigma2,
+            clip=True
+        )
+    
+    if morph_size is not None:
+        if morph_size % 2 != 1:
+            raise ValueError(
+                "Morphology size must be odd"
+            )
+        
+        for _ in range(morph_iter):
+            cal_img = grey_erosion(
+                cal_img,
+                size=morph_size,
+                mode="constant",
+                cval=0.
+            )
+        
+        for _ in range(morph_iter):
+            cal_img = grey_dilation(
+                cal_img,
+                size=morph_size,
+                mode="constant",
+                cval=0.
+            )
+            
+    if median_size is not None:
+        if median_size % 2 != 1:
+            raise ValueError(
+                "Median width must be odd"
+            )
+        
+        cal_img = median_filter(
+            cal_img,
+            size=median_size,
+            mode="mirror"
+        )
+            
+    # binarization
+    cal_img = np.where(cal_img > threshold, 1, 0).astype(bool, copy=False)
+    
+    # if a mask is supplied, copy it to minimize unwarranted mutations
+    if mask is not None:
+        if roi is not None:
+            copy = False
+        else:
+            copy = True
+        
+        mask = mask.astype(bool, copy=copy)
+        
+        np.multiply(
+            cal_img,
+            mask,
+            out=cal_img
+        )
+            
+    return cal_img
+
+
 def get_circular_template(
     template_radius,
     val=1
@@ -284,7 +457,7 @@ def detect_markers_local(
         ]
     
     # now pad by window size
-    corr_padded = np.pad(corr_cut, window_size, mode="constant")
+    corr_padded = np.pad(corr, window_size, mode="constant")
     pad_off = window_size
     
     # get sub-windows of correlation matrix
@@ -397,7 +570,7 @@ def detect_markers_local(
     
     if refine_pos == True:
         # kernel size for gaussian estimator
-        n_halfwidth = 5
+        n_halfwidth = 3
 
         _sx, _sy = np.meshgrid(
             np.arange(
@@ -500,7 +673,7 @@ def detect_markers_blobs(
     
     >>> cal_img = cal_image(z=0)
     
-    >>> marks_poss = calib_utils.detect_markers_globs(
+    >>> marks_poss = calib_utils.detect_markers_blobs(
             cal_img,
             roi=[0, 0, None, 950],
             min_area=50
