@@ -2,25 +2,12 @@ import numpy as np
 from typing import Tuple
 
 
-__all__ = [
-    "preprocess_image",
-    "get_circular_template",
-    "get_cross_template",
-    "detect_markers_local",
-    "detect_markers_blobs",
-    "show_calibration_image",
-    "get_pairs_anal",
-    "get_reprojection_error",
-    "get_los_error",
-    "get_image_mapping"
-]
-
-
 def preprocess_image(
     image: np.ndarray,
     threshold: float,
     mask: np.ndarray=None,
     roi: list=None,
+    invert: bool=False,
     highpass_sigma: float=None,
     lowpass_sigma: float=None,
     variance_sigma1: float=None,
@@ -48,9 +35,11 @@ def preprocess_image(
     roi : list, optional
         A four element list containing min x, y and max x, y in pixels. If a mask
         exists, the roi is concatenated with the mask.
+    invert : bool, optional
+        If True, invert the image.
     highpass_sigma : float. optional
-        If not None, perform a high pass filter on the calibration image. Pixel
-        intensities below zero are clipped.
+        If not None, perform a high pass filter. Pixel intensities below zero are 
+        clipped.
     lowpass_sigma : float, optional
         If not None, perform a low pass filter on the calibration image.
     variance_sigma1, variance_sigma2 : float, optional
@@ -64,7 +53,7 @@ def preprocess_image(
         The number of iterations to perform the erosion and dilation morphological
         operations.
     median_size : int, odd, optional
-        If not None, perform a median filter on the calibration image.
+        If not None, perform a median filter.
         
     returns
     -------
@@ -97,6 +86,9 @@ def preprocess_image(
             out=mask
         )
     
+    if invert == True:
+        cal_img = 1.0 - cal_img
+    
     if highpass_sigma is not None:
         cal_img = high_pass(
             cal_img,
@@ -119,7 +111,7 @@ def preprocess_image(
             variance_sigma2,
             clip=True
         )
-    
+        
     if morph_size is not None:
         if morph_size % 2 != 1:
             raise ValueError(
@@ -293,6 +285,7 @@ def detect_markers_local(
     image: np.ndarray,
     template: np.ndarray,
     roi: list=None,
+    pad_input: bool=False,
     window_size: int=64,
     overlap = None,
     min_peak_height: float=0.025,
@@ -300,7 +293,11 @@ def detect_markers_local(
     merge_iter: int=5,
     min_count: float=2,
     refine_pos: bool=False,
-    return_count=False
+    refine_radius: int=3,
+    refine_iter: int=5,
+    refine_cutoff: float=0.5,
+    return_count: bool=False,
+    return_corr: bool=False
 ):
     """Detect calibration markers.
     
@@ -319,9 +316,13 @@ def detect_markers_local(
         A two dimensional array of pixel intensities of the shape (n, m).
     template : 2D np.ndarray
         A square two dimensional array of the shape (n, m) which is to be correlated
-        with the image to extract features. Must be of odd shape (e.g., [5, 5]).
+        with the image to extract features. Must be of odd shape (e.g., [5, 5]) and
+        elements must be either 0 or 1.
     roi : list, optional
         A four element list containing min x, y and max x, y in pixels.
+    pad_input : bool, optional
+        If True, pad the input image by the size of the window so markers near the
+        borders of the image or ROI are dectected more times.
     window_size : int, optional
         The size of the window used to search for the marker. Must be even 
         and smaller than the distance between two markers in pixels. A good
@@ -344,12 +345,21 @@ def detect_markers_local(
         The minimum amount a marker is detected. Helps to remove false
         positives on marker detection.
     refine_pos : bool, optional
-        Refine the position of the markers with a gaussian peak fit. The gaussian
-        peak fitting algorithm is a hit or miss, so checking the RMS error for
-        improments is important.
+        Refine the position of the markers with a gaussian peak fit.
+    refine_radius : int, optional
+        The radius of the gaussian kernel. The radius should be similar to the 
+        radius of the marker radius. However, if the radius is greater than
+        n_exclude, which is predetermined to be 8, the radius is set to 7.
+    refine_iter : int, optional
+        The amount of iterations to perform the gaussian subpixel estimation.
+    refine_cutoff : float, optional
+        The cutoff number to stop iterating. Should be between 0.25 to 0.5.
     return_count : bool, optional
         Return the number of times a marker gets counted. This can be used to
         find the ideal threshold to find the correct markers.
+    return_corr : bool, optional
+        Return the correlation of the image and template. This can be used to
+        determine the tempalte radius.
     
     Returns
     -------
@@ -394,6 +404,7 @@ def detect_markers_local(
     from openpiv.pyprocess import get_field_shape, get_coordinates,\
                                   sliding_window_array, fft_correlate_images,\
                                   find_all_first_peaks  
+    from skimage.feature import match_template
     
     # @ErichZimmer
     # Note to developers, this function was originally written as a prototype
@@ -406,6 +417,18 @@ def detect_markers_local(
             "template_radius is too large for given window_size."
         )
     
+    # get roi 
+    off_x = off_y = 0
+    
+    if roi is not None:
+        off_x = roi[0]
+        off_y = roi[1]
+
+        corr_slice = (
+            slice(roi[1], roi[3]),
+            slice(roi[0], roi[2])
+        )
+    
     # if overlap is None, set overlap to 75% of window size
     if overlap is None:
         overlap = window_size - window_size * 0.25
@@ -416,50 +439,40 @@ def detect_markers_local(
     
     # data type conversion to float64
     image = image.astype("float64")
+    template = template.astype("float64")
     
     # scale the image to [0, 255]
     image[image < 0] = 0. # cut negative pixel intensities
     image /= image.max() # normalize
     image *= 255. # scale
     
-    # now pad tempalte to window size
-    template_padded = np.zeros(
-        (image.shape[0], image.shape[1]), 
-        dtype= "float64"
+    corr = match_template(
+        image - image.mean(),
+        template,
+        pad_input=True
     )
-    
-    temp_half_x = template.shape[1] // 2
-    temp_half_y = template.shape[0] // 2
-    
-    template_padded[
-        template_padded.shape[0] // 2 - temp_half_y - 1 : template_padded.shape[0] // 2 + temp_half_y - 0,
-        template_padded.shape[1] // 2 - temp_half_x - 1 : template_padded.shape[1] // 2 + temp_half_x - 0] =\
-        template
-    
-    # normalized cross correlation
-    corr = fft_correlate_images(
-        image[np.newaxis, :, :],
-        template_padded[np.newaxis, :, :],
-        normalized_correlation = True,
-        correlation_method = "linear"
-    )[0, ::-1, ::-1] # flipped due to convolution theroem
-    
-    # set ROI if needed
-    off_x = off_y = 0
-    
+
+
     if roi is not None:
-        off_x = roi[0]
-        off_y = roi[1]
+        corr_cut = corr[corr_slice]
+    else:
+        corr_cut = corr
+
+    if pad_input == True:
+        corr_padded = np.pad(
+            corr_cut, 
+            window_size,
+            mode="constant"
+        )
+
+        img_field_shape = corr_padded.shape
+        pad_off = window_size
         
-        corr_cut = corr[
-            roi[1] : roi[3], # y-axis
-            roi[0] : roi[2]  # x-axis
-        ]
-    
-    # now pad by window size
-    corr_padded = np.pad(corr, window_size, mode="constant")
-    pad_off = window_size
-    
+    else:
+        corr_padded = corr_cut
+        img_field_shape = corr_padded.shape
+        pad_off = 0
+
     # get sub-windows of correlation matrix
     corr_windows = sliding_window_array(
         corr_padded,
@@ -469,7 +482,7 @@ def detect_markers_local(
    
     # get field shape
     field_shape = get_field_shape(
-        corr_padded.shape,
+        img_field_shape,
         window_size,
         overlap
     )
@@ -489,7 +502,7 @@ def detect_markers_local(
     
     # create a grid
     grid_x, grid_y = get_coordinates(
-        corr_padded.shape,
+        img_field_shape,
         window_size,
         overlap,
         center_on_field=False
@@ -563,6 +576,8 @@ def detect_markers_local(
     flags[pos[:, 1] < n_exclude] = True
     flags[pos[:, 0] > image.shape[1] - n_exclude - 1] = True
     flags[pos[:, 1] > image.shape[0] - n_exclude - 1] = True
+    flags[np.isnan(pos[:, 0])] = True
+    flags[np.isnan(pos[:, 1])] = True
     
     # remove points outside of image
     pos = pos[~flags]
@@ -570,17 +585,18 @@ def detect_markers_local(
     
     if refine_pos == True:
         # kernel size for gaussian estimator
-        n_halfwidth = 3
+        if refine_radius >= n_exclude:
+            refine_radius = n_exclude - 1
 
         _sx, _sy = np.meshgrid(
             np.arange(
-                -n_halfwidth,
-                n_halfwidth + 1,
+                -refine_radius,
+                refine_radius + 1,
                 dtype=float
             ),
             np.arange(
-                -n_halfwidth,
-                n_halfwidth + 1,
+                -refine_radius,
+                refine_radius + 1,
                 dtype=float
             )
         )
@@ -600,42 +616,69 @@ def detect_markers_local(
             (5, nx * ny)
         ).T
         
-        # we use a psuedo-inverse via SVD so wi can solve a system of equations.
+        # we use a psuedo-inverse via SVD so we can solve a system of equations.
         # using the least squares methods is preferable here, though.
         s_inv = np.linalg.pinv(s_arr)
                         
         # TODO: optimize this loop
         for ind in range(pos.shape[0]): 
-            x, y = pos[ind, :].astype(int)
+            x, y = pos[ind, :]
+                            
+            for _ in range(refine_iter):
+                x = int(x)
+                y = int(y)
             
-            slices = (
-                slice(
-                    y - n_halfwidth,
-                    y + n_halfwidth + 1),
-                slice(
-                    x - n_halfwidth,
-                    x + n_halfwidth + 1
+                slices = (
+                    slice(
+                        y - refine_radius,
+                        y + refine_radius + 1),
+                    slice(
+                        x - refine_radius,
+                        x + refine_radius + 1
+                    )
                 )
-            )
 
-            corr_sec = np.ravel(corr[slices])
-            corr_sec[corr_sec <= 0] = 1e-6
+                corr_sec = np.ravel(corr[slices])
+                corr_sec[corr_sec <= 0] = 1e-6
+
+                coef = np.dot(s_inv, np.log(corr_sec))
+                
+                if coef[2] < 0 or coef[3] < 0:
+                    sx = 1 / np.sqrt(-2 * coef[2])
+                    sy = 1 / np.sqrt(-2 * coef[3])
+
+                    shift_x = coef[0] * np.square(sx)
+                    shift_y = coef[1] * np.square(sy)
+                else:
+                    shift_x = 0
+                    shift_y = 0
+
+                new_x = x + shift_x
+                new_y = y + shift_y
+                
+                d = np.sqrt((x - new_x)**2 + (y - new_y)**2)
+                
+                x = new_x
+                y = new_y
+                                
+                if d < refine_cutoff:
+                    break
             
-            coef = np.dot(s_inv, np.log(corr_sec))
-            
-            sx = 1 / np.sqrt(-2 * coef[2])
-            sy = 1 / np.sqrt(-2 * coef[3])
-            
-            shift_x = coef[0] * np.square(sx)
-            shift_y = coef[1] * np.square(sy)
-            
-            pos[ind, 0] = x + shift_x
-            pos[ind, 1] = y + shift_y
-        
+            pos[ind, 0] = x
+            pos[ind, 1] = y
+    
+    return_list = [
+        pos.T
+    ]
+    
+    
     if return_count == True:
-        return pos, count
-    else:
-        return pos
+        return_list.append(count)
+    
+    if return_corr == True:
+        return_list.append(corr)
+    
+    return return_list
 
 
 def detect_markers_blobs(
@@ -682,7 +725,7 @@ def detect_markers_blobs(
     >>> marks_pos
     
     """
-    from scipy.ndimage import label, labeled_comprehension, center_of_mass, find_objects
+    from scipy.ndimage import label, center_of_mass
     
     image = image.astype("float64")
     
@@ -721,7 +764,7 @@ def detect_markers_blobs(
     
     if max_area is not None:
         flag[label_area > max_area] = True
-    
+
     valid_labels_ind = labels_ind[~flag]
     
     # get center of mass of valid labels
@@ -744,7 +787,7 @@ def detect_markers_blobs(
         (pos[:, 1], pos[:, 0])
     )
     
-    return pos[order]
+    return pos[order].T
 
 
 # @author: Theo
@@ -804,6 +847,8 @@ def show_calibration_image(
     from PIL import Image, ImageFont, ImageDraw
     from matplotlib import pyplot as plt
     
+    markers = markers.T
+    
     # funtction to show th clalibration iamge with numbers and circles
     plt.close('all')
     
@@ -831,7 +876,76 @@ def show_calibration_image(
     plt.show()
     plt.pause(1)
     
+
+def get_simple_grid(
+    nx: int,
+    ny: int,
+    z: int,
+    x_ind: int,
+    y_ind: int,
+    spacing: float=1.0
+):
+    """Make a simple rectangular grid.
     
+    Create a simple rectangular grid with the origin based on the index of the
+    selected point. This allows an arbitrary size grid and location of origin.
+    
+    Parameters
+    ----------
+    nx : int
+        Number of markers in the x-axis.
+    ny : int
+        Number of markers in the y-axis.
+    z : float, optional
+        The z plane where the calibration plate is located.
+    x_ind : int
+        Index of the point to define the x-axis.
+    y_ind : int
+        Index of the point to define the y-axis.
+    spacing : float, optional
+        Grid spacing in millimeters.
+    
+    Returns 
+    -------
+    object_points : 2D np.ndarray
+        2D object points of [X, Y, Z] in world coordinates.
+        
+    Examples
+    --------
+    >> from openpiv.calib_utils import get_simple_grid
+    
+    >>> object_points = get_simple_grid(
+        nx = 9,
+        ny = 9,
+        z = 0,
+        x_ind = 4,
+        y_ind = 4   
+        
+    >>> object_points
+    
+    """
+    range_x = np.arange(nx)
+    range_y = np.arange(ny)
+    
+    origin_x = range_x[x_ind]
+    origin_y = range_y[y_ind]
+    
+    range_x -= origin_x
+    range_y -= origin_y
+    
+    range_x *= spacing
+    range_y *= spacing
+    
+    x, y = np.meshgrid(range_x, range_y)
+    
+    object_points = np.array(
+        [x.ravel(), y.ravel(), np.zeros_like(x).ravel() + z],
+        dtype="float64"
+    )
+    
+    return object_points
+
+
 # @author: Theo
 # Created on Thu Mar 25 21:03:47 2021
 
@@ -916,6 +1030,8 @@ def get_pairs_anal(
     """
     from scipy.spatial.distance import cdist
 
+    image_points = image_points.T
+    
     # rearrange image coordinates
     coords = np.zeros_like(image_points)
     coords[:, 0] = image_points[:, 1] # y
@@ -988,7 +1104,7 @@ def get_pairs_anal(
         range_y*spacing,
         indexing='ij'
     )
-    object_mesh_y = object_mesh_y
+    
     object_mesh_y = np.reshape(object_mesh_y, (-1,1))
     object_mesh_x = np.reshape(object_mesh_x, (-1,1))
     
@@ -1000,7 +1116,93 @@ def get_pairs_anal(
     object_points = object_points[np.where(con_comb)]
     object_points = object_points[val_object_grid_index]
 
-    return image_points, object_points
+    return image_points.T, object_points.T
+
+
+def get_pairs_proj(
+    cam_struct: dict,
+    proj_func: "function",
+    object_points: np.ndarray,
+    image_points: np.ndarray,
+    tolerance: float=5
+): 
+    """Match object points to image points via projection.
+    
+    Match object points to imahge points by projection with a rough calibration
+    of at least 6 points. This method is more reliable than matching image points
+    to object points based on analyitics since image points and object points are
+    being projected and compared to each other to find a best match. This allows
+    non-planar calibration plates to be used.
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    proj_func : function
+        Projection function with the following signiture:
+        res = func(cam_struct, object_points).
+    image_points : 2D np.ndarray
+        2D np.ndarray of [x, y]` image coordinates.
+    object_points : 2D np.ndarray
+        2D np.ndarray of [X, Y, Z]` world coordinates.
+    tolerance : float, optional
+        The maximum RMS error between the image point and an object point.
+    
+    Returns
+    -------
+    img_points : 2D np.ndarray
+        2D matched image points of [x, y] in image coordinates.
+    obj_points : 2D np.ndarray
+        2D matched object points of [x, y, z] in world coordinates.
+    
+    Notes
+    -----
+    This function is used when a rough calibration is performed over some points of
+    the calibration plate. These points are usually manually selected and given
+    world point coordinates. At least 9 points for a pinhole model or 19 points for
+    a polynomial model are needed since this gives a good enough calibration to pair
+    the correct object points to image points.
+    
+    """
+    object_points = np.array(object_points, dtype="float64")
+    image_points = np.array(image_points, dtype="float64")
+    
+    image_points_proj = proj_func(
+        cam_struct,
+        object_points
+    )
+    
+    obj_pairs = []
+    img_pairs = []
+    
+    for i in range(image_points.shape[1]):
+        min_j = -1
+        min_rmse = 1000
+        
+        for j in range(image_points_proj.shape[1]):
+            rmse = np.mean(
+                np.sqrt(
+                    np.square(
+                        image_points[:, i] - image_points_proj[:, j]
+                    ),
+                )
+            )
+            
+            if rmse < min_rmse:
+                min_rmse = rmse
+                min_j = j
+        
+        if min_rmse < tolerance:
+            if min_j == -1:
+                continue
+                
+            obj_pairs.append(object_points[:, min_j])
+            img_pairs.append(image_points[:, i])
+    
+    return (
+        np.array(img_pairs, dtype="float64").T, 
+        np.array(obj_pairs, dtype="float64").T
+    )
 
 
 def get_reprojection_error(
@@ -1248,7 +1450,7 @@ def get_image_mapping(
     
     image_grid = np.concatenate(
         [py.reshape(-1, 1), px.reshape(-1, 1)],
-        axis=1
+        axis=-1
     )
     
     x = image_grid[:, 1]

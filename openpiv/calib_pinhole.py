@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-from calib_utils import get_reprojection_error
+from openpiv.calib_utils import get_reprojection_error
 
 
 def _check_parameters(
@@ -60,7 +60,7 @@ def _check_parameters(
             
 
 def generate_camera_params(
-    cam_name: str,
+    name: str,
     resolution: Tuple[int, int],
     translation: np.ndarray=[0, 0, 1],
     orientation: np.ndarray=np.zeros(3, dtype="float64"),
@@ -76,7 +76,7 @@ def generate_camera_params(
     
     Parameters
     ----------
-    cam_name : str
+    name : str
         Name of camera.
     resolution : tuple[int, int]
         Resolution of camera in x and y axes respectively.
@@ -113,27 +113,34 @@ def generate_camera_params(
         )
     
     """    
-    # default principal point is half of image resolution
-    if principal is None:
-        principal = [resolution[0] / 2, resolution[1] / 2]
-    
     # cast to arrays
     translation = np.array(translation, dtype="float64")
     orientation = np.array(orientation, dtype="float64")
+    distortion = np.array(distortion, dtype="float64")
         
     # create the dictionary structure
     cam_struct = {}
-    cam_struct["name"] = cam_name
+    cam_struct["name"] = name
     cam_struct["resolution"] = resolution
     cam_struct["translation"] = translation
     cam_struct["orientation"] = orientation
     cam_struct["rotation"] = rotation
     cam_struct["distortion"] = distortion
     cam_struct["focal"] = focal
-    cam_struct["principal"] = principal
     
+    if principal is not None:
+        cam_struct["principal"] = principal
+    else:
+        # temporary place holder
+        cam_struct["principal"] = [0, 0]
+    
+    # check parameters here
     _check_parameters(cam_struct)
-            
+    
+    # default principal point is half of image resolution
+    if principal is None:
+        cam_struct["principal"] = [resolution[0] / 2, resolution[1] / 2]
+        
     return cam_struct
 
 
@@ -364,7 +371,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = False,
             iterations=5
         )
@@ -373,7 +380,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = True,
             iterations=5
         )
@@ -472,7 +479,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = False,
             iterations=5
         )
@@ -481,7 +488,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = True,
             iterations=5
         )
@@ -544,17 +551,16 @@ def minimize_camera_params(
     cam_struct: dict,
     object_points: list,
     image_points: list,
-    correct_instrinsic: bool = False,
+    correct_intrinsic: bool = False,
     correct_distortion: bool = False,
     max_iter: int = 1000,
     iterations: int = 3
 ):
     """Minimize camera parameters.
     
-    Minimize camera parameters using Nelder-Mead optimization. To do this,
-    the root mean square error (RMS error) is calculated for each iteration. The
-    set of parameters with the lowest RMS error is returned (which is hopefully correct
-    the minimum).
+    Minimize camera parameters using BFGS optimization. To do this, the root mean
+    square error (RMS error) is calculated for each iteration. The set of parameters
+    with the lowest RMS error is returned (which is hopefully correct the minimum).
     
     Parameters
     ----------
@@ -564,7 +570,7 @@ def minimize_camera_params(
         A 2D np.ndarray containing [x, y, z] object points.
     image_points : np.ndarray
         A 2D np.ndarray containing [x, y] image points.
-    correct_instrinsic : bool
+    correct_intrinsic : bool
         If true, minimize the instrinsic matrix.
     correct_distortion : bool
         If true, mininmize the distortion model.
@@ -593,6 +599,7 @@ def minimize_camera_params(
     2. Estimate camera parameters with out distortion correction.
     
     3. Estimate distortion model coefficients and refine camera parameters.
+        Note: It may be best to use least squares minimization first.
     
     4. Place camera in lab apparatus.
     
@@ -618,7 +625,7 @@ def minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = False,
             iterations=5
         )
@@ -627,7 +634,7 @@ def minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_instrinsic = True,
+            correct_intrinsic = True,
             correct_distortion = True,
             iterations=5
         )
@@ -647,7 +654,7 @@ def minimize_camera_params(
     object_points = np.array(object_points, dtype="float64")
     image_points = np.array(image_points, dtype="float64")
     
-    if object_points.shape[1] < 6:
+    if object_points.shape[1] < 9:
         raise ValueError(
             "Too little points to calibrate"
         )
@@ -663,12 +670,12 @@ def minimize_camera_params(
         cam_struct["translation"] = x[0:3]
         cam_struct["orientation"] = x[3:6]
         
-        if correct_instrinsic == True:
+        if correct_intrinsic == True:
             cam_struct["principal"] = x[6:8]
             cam_struct["focal"] = x[8:10]
             
         if correct_distortion == True:
-            cam_struct["distortion"]= x[10:19]
+            cam_struct["distortion"] = x[10:19]
         
         cam_struct["rotation"] = get_rotation_matrix(
             cam_struct
@@ -702,11 +709,9 @@ def minimize_camera_params(
         res = minimize(
             func_to_minimize,
             params_to_minimize,
-            method="BFGS",
+            method="bfgs",
             options={"maxiter": max_iter},
             jac = "2-point"
         )
         
     return cam_struct
-
-

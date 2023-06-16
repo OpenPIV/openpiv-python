@@ -50,8 +50,8 @@ def _check_parameters(
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
-    poly_wi: np.ndarray=np.ones((2,19), dtype="float32").T,
-    poly_iw: np.ndarray=np.ones((3,19), dtype="float32").T
+    poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
+    poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T
     
 ):
     """Create a camera parameter structure.
@@ -151,10 +151,10 @@ def minimize_polynomial(
     """
     _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype="float32")
-    image_points = np.array(image_points, dtype="float32")
+    object_points = np.array(object_points, dtype="float64")
+    image_points = np.array(image_points, dtype="float64")
     
-    if object_points.shape[1] < 27:
+    if object_points.shape[1] < 19:
         raise ValueError(
             "Too little points to calibrate"
         )
@@ -192,16 +192,23 @@ def minimize_polynomial(
     # world to image (forward projection)
     coeff_wi, _, _, _ = np.linalg.lstsq(
         polynomial_wi,
-        np.array(image_points, dtype="float32").T, 
+        np.array(image_points, dtype="float64").T, 
         rcond=None
     )
     
     # image to world (back projection)
     coeff_iw, _, _, _ = np.linalg.lstsq(
         polynomial_iw,
-        np.array(object_points, dtype="float32").T, 
+        np.array(object_points, dtype="float64").T, 
         rcond=None
     )
+    
+    # SVD based solution to system of equations
+#    coeff_wi = np.array(image_points, dtype="float64") @ np.linalg.pinv(polynomial_wi.T)
+#    coeff_wi = coeff_wi.T
+    
+#    coeff_iw = np.array(object_points, dtype="float64") @ np.linalg.pinv(polynomial_iw.T)
+#    coeff_iw = coeff_iw.T
 
     cam_struct["poly_wi"] = coeff_wi
     cam_struct["poly_iw"] = coeff_iw
@@ -239,8 +246,8 @@ def project_points(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float32")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float32")
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
     >>> camera_parameters = calib_polynomial.generate_camera_params(
             name="cam1", 
@@ -263,7 +270,7 @@ def project_points(
     """ 
     _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype="float32")
+    object_points = np.array(object_points, dtype="float64")
     
     X = object_points[0]
     Y = object_points[1]
@@ -277,15 +284,12 @@ def project_points(
                               Y**3,  X*Y*Y, Y*Y*Z,
                               X*Z*Z, Y*Z*Z, X*Y*Z]).T
     
-    ij = np.dot(
+    img_points = np.dot(
         polynomial_wi,
         cam_struct["poly_wi"]
-    )
+    ).T
     
-    Xp = ij[:, 0]
-    Yp = ij[:, 1]
-    
-    return np.array([Xp, Yp])
+    return img_points.astype("float64", copy=False)
 
 
 def project_to_z(
@@ -323,8 +327,8 @@ def project_to_z(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float32")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float32")
+    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
+    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
     >>> camera_parameters = calib_polynomial.generate_camera_params(
             name="cam1", 
@@ -354,11 +358,11 @@ def project_to_z(
     """ 
     _check_parameters(cam_struct)
     
-    image_points = np.array(image_points, dtype="float32")
+    image_points = np.array(image_points, dtype="float64")
     
     x = image_points[0]
     y = image_points[1]
-    Z = np.array(z, dtype="float32")
+    Z = np.array(z, dtype="float64")
     
     polynomial_iw = np.array([x*0+1,
                               x,     y,     Z, 
@@ -368,13 +372,9 @@ def project_to_z(
                               y**3,  x*y*y, y*y*Z,
                               x*Z*Z, y*Z*Z, x*y*Z]).T
     
-    ijk = np.dot(
+    obj_points = np.dot(
         polynomial_iw,
         cam_struct["poly_iw"]
-    )
+    ).T
     
-    Xp = ijk[:, 0]
-    Yp = ijk[:, 1]
-    Zp = ijk[:, 2]
-    
-    return np.array([Xp, Yp, Zp])
+    return obj_points.astype("float64", copy=False)
