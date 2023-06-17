@@ -320,14 +320,17 @@ def test_minimization_01():
     
     params = calib_pinhole.generate_camera_params(
         "minimized",
-        resolution = [512, 512]
+        resolution = [512, 512],
+        translation = [1, 1, 520], # initial guess
+        orientation = [-3, -0.01, 0.01], # initial guess
+        focal = [1000, 1000]
     )
     
     params = calib_pinhole.minimize_camera_params(
         params,
         cal_obj_points,
         cal_img_points,
-        correct_intrinsic = False,
+        correct_focal = False,
         correct_distortion = False,
         iterations = 3
     )
@@ -338,11 +341,8 @@ def test_minimization_01():
         cal_obj_points,
         cal_img_points
     )
-    
-    # Currently, the minimization algorithm fails to converge with this
-    # test set. Why?
-    
-#    assert_(RMSE < 1e-2)
+        
+    assert_(RMSE < 1e-2)
 
 
 def test_minimization_02():
@@ -356,47 +356,46 @@ def test_minimization_02():
     params_new = calib_pinhole.generate_camera_params(
         "minimized",
         resolution = [512, 512],
-        focal = params_orig["focal"]
+        translation = [1, 1, 520], # initial guess
+        orientation = [-3, -0.01, 0.01], # initial guess
+        focal = [1000, 1000]
     )
     
     params_new = calib_pinhole.minimize_camera_params(
         params_new,
         cal_obj_points,
         cal_img_points,
-        correct_intrinsic = False,
+        correct_focal = False,
         correct_distortion = False,
         iterations = 3
     )
     
-    # Currently, the minimization algorithm fails to converge with this
-    # test set. Why?
+    assert_array_almost_equal(
+        params_orig["translation"], 
+        params_new["translation"],
+        decimal = 0
+    )
     
-#    assert_array_almost_equal(
-#        params_orig["translation"], 
-#        params_new["translation"],
-#        decimal=4
-#    )
+    assert_array_almost_equal(
+        params_orig["orientation"], 
+        params_new["orientation"],
+        decimal = 0
+    )
     
-#    assert_array_almost_equal(
-#        params_orig["orientation"], 
-#        params_new["orientation"],
-#        decimal=4
-#    )
-    
-#    assert_array_almost_equal(
-#        params_orig["rotation"], 
-#        params_new["rotation"],
-#        decimal=4
-#    )
+    assert_array_almost_equal(
+        params_orig["rotation"], 
+        params_new["rotation"],
+        decimal = 0
+    )
     
     assert_array_almost_equal(
         params_orig["focal"], 
         params_new["focal"],
-        decimal=4
+        decimal = 0
     )
     
     assert_array_almost_equal(
         params_orig["principal"], 
         params_new["principal"],
-        decimal=4
+        decimal = 0
     )

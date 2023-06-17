@@ -371,7 +371,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = False,
             iterations=5
         )
@@ -380,7 +380,7 @@ def project_points(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = True,
             iterations=5
         )
@@ -479,7 +479,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = False,
             iterations=5
         )
@@ -488,7 +488,7 @@ def project_to_z(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = True,
             iterations=5
         )
@@ -551,7 +551,7 @@ def minimize_camera_params(
     cam_struct: dict,
     object_points: list,
     image_points: list,
-    correct_intrinsic: bool = False,
+    correct_focal: bool = False,
     correct_distortion: bool = False,
     max_iter: int = 1000,
     iterations: int = 3
@@ -570,8 +570,8 @@ def minimize_camera_params(
         A 2D np.ndarray containing [x, y, z] object points.
     image_points : np.ndarray
         A 2D np.ndarray containing [x, y] image points.
-    correct_intrinsic : bool
-        If true, minimize the instrinsic matrix.
+    correct_focal : bool
+        If true, minimize the focal point.
     correct_distortion : bool
         If true, mininmize the distortion model.
     max_iter : int
@@ -625,7 +625,7 @@ def minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = False,
             iterations=5
         )
@@ -634,7 +634,7 @@ def minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
-            correct_intrinsic = True,
+            correct_focal = True,
             correct_distortion = True,
             iterations=5
         )
@@ -669,9 +669,9 @@ def minimize_camera_params(
     def func_to_minimize(x):
         cam_struct["translation"] = x[0:3]
         cam_struct["orientation"] = x[3:6]
+        cam_struct["principal"] = x[6:8]
         
-        if correct_intrinsic == True:
-            cam_struct["principal"] = x[6:8]
+        if correct_focal == True:
             cam_struct["focal"] = x[8:10]
             
         if correct_distortion == True:
