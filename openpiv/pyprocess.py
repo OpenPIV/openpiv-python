@@ -1,8 +1,14 @@
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
 
+
 from typing import Optional, Tuple, Union
-from collections.abc import Callable
+import sys
+if sys.version_info >= 3.10:
+    from collections.abc import Callable
+else:
+    from typing import Callable
+
 import numpy.lib.stride_tricks
 import numpy as np
 from numpy import log
