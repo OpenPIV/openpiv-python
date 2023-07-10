@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-from openpiv.calib_utils import get_reprojection_error
+from openpiv.calib_utils import get_reprojection_error, get_los_error
 
 
 def _check_parameters(
@@ -33,9 +33,25 @@ def _check_parameters(
             "Rotation must be a 3x3 numpy array"
         )
     
-    if cam_struct["distortion"].shape != (8,):
+    if cam_struct["distortion_model"].lower() not in ["brown", "polynomial"]:
         raise ValueError(
-            "Distortion coefficients must be an 8 element 1D numpy ndarray"
+            "Distortion model must be either OpenCV or polynomial"
+        )
+        
+    if cam_struct["distortion1"].shape != (8,):
+        raise ValueError(
+            "Radial and tangential distortion coefficients must be " +\
+             "an 8 element 1D numpy ndarray"
+        )
+    
+    if not isinstance(cam_struct["distortion2"], np.ndarray):
+        raise ValueError(
+            "Polynomial distortion coefficients must be a numpy ndarray"
+        )
+        
+    if cam_struct["distortion2"].shape != (4, 6):
+        raise ValueError(
+            "Polynomial distortion coefficients must be a 4x6 numpy ndarray"
         )
     
     if not isinstance(cam_struct["focal"], (tuple, list, np.ndarray)):
@@ -65,7 +81,9 @@ def generate_camera_params(
     translation: np.ndarray=[0, 0, 1],
     orientation: np.ndarray=np.zeros(3, dtype="float64"),
     rotation: np.ndarray=np.eye(3, 3, dtype="float64"),
-    distortion: np.ndarray=np.zeros(8, dtype="float64"),
+    distortion_model: str="polynomial",
+    distortion1: np.ndarray=np.zeros(8, dtype="float64"),
+    distortion2: np.ndarray=None,
     focal: Tuple[float, float]=[1.0, 1.0],
     principal: Tuple[float, float]=None
     
@@ -86,8 +104,21 @@ def generate_camera_params(
         Orientation of camera in x, y, z axes respectively.
     rotation : 2D np.ndarray
         Rotational camera parameter for camera system.
-    distortion : 2D np.ndarray
-        Distortion compensation matrix for a camera.
+    distortion_model : str
+        The type of distortion model to use.
+        
+        ``brown``
+        The Brown model follows the distortion model incorperated by OpenCV.
+        It consists of a radian and tangential model to compensate for distortion.
+        
+        ``polynomial``
+        The polynomial model is used for in general distortion compensation. It
+        consists of a 3rd order polynomial in the x and y axes.
+        
+    distortion1 : 2D np.ndarray
+       Radial and tangential distortion compensation matrix for a camera.
+    distortion2 : 2D np.ndarray
+       3rd order polynomial distortion compensation matrix for a camera.
     focal : tuple[float, float]
         Focal distance/magnification of camera-lense system for x any y axis
         espectively.
@@ -116,7 +147,18 @@ def generate_camera_params(
     # cast to arrays
     translation = np.array(translation, dtype="float64")
     orientation = np.array(orientation, dtype="float64")
-    distortion = np.array(distortion, dtype="float64")
+    distortion1 = np.array(distortion1, dtype="float64")
+    
+    if distortion2 == None:
+        distortion2 = np.array(
+            [
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0],
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0]
+            ],
+            dtype="float64"
+        )
         
     # create the dictionary structure
     cam_struct = {}
@@ -125,7 +167,9 @@ def generate_camera_params(
     cam_struct["translation"] = translation
     cam_struct["orientation"] = orientation
     cam_struct["rotation"] = rotation
-    cam_struct["distortion"] = distortion
+    cam_struct["distortion_model"] = distortion_model
+    cam_struct["distortion1"] = distortion1
+    cam_struct["distortion2"] = distortion2
     cam_struct["focal"] = focal
     
     if principal is not None:
@@ -223,10 +267,10 @@ def get_rotation_matrix(
     return rotation_matrix
 
 
-def undistort_points(
+def undistort_points1(
     cam_struct: dict,
-    x: np.ndarray, 
-    y: np.ndarray
+    xd: np.ndarray, 
+    yd: np.ndarray
 ):
     """Undistort normalized points.
     
@@ -237,16 +281,16 @@ def undistort_points(
     ----------
     cam_struct : dict
         A dictionary structure of camera parameters.
-    x : 1D np.ndarray
+    xd : 1D np.ndarray
         Distorted x-coordinates.
-    y : 1D np.ndarray
+    yd : 1D np.ndarray
         Distorted y-coordinates.
         
     Returns
     -------
-    xd : 1D np.ndarray
+    x : 1D np.ndarray
         Undistorted x-coordinates.
-    yd : 1D np.ndarray
+    y : 1D np.ndarray
         Undistorted y-coordinates.
     
     Notes
@@ -258,28 +302,76 @@ def undistort_points(
     """
     _check_parameters(cam_struct)  
     
-    k = cam_struct["distortion"]
+    k = cam_struct["distortion1"]
     
-    r2 = x*x + y*y
+    r2 = xd*xd + yd*yd
     r4 = r2 * r2
     r6 = r4 * r2
     
     num = 1 + k[0]*r2 + k[1]*r4 + k[4]*r6
     den = 1 + k[5]*r2 + k[6]*r4 + k[7]*r6
     
-    delta_x = k[2]*2*x*y + k[3]*(r2 + 2*x*x)
-    delta_y = k[3]*2*x*y + k[2]*(r2 + 2*y*y)
+    delta_x = k[2]*2*xd*yd + k[3]*(r2 + 2*xd*xd)
+    delta_y = k[3]*2*xd*yd + k[2]*(r2 + 2*yd*yd)
     
-    xd = x*(num/den) + delta_x
-    yd = y*(num/den) + delta_y
+    x = xd*(num / den) + delta_x
+    y = yd*(num / den) + delta_y
     
-    return xd, yd
+    return x, y
 
 
-def distort_points(
+def undistort_points2(
     cam_struct: dict,
     xd: np.ndarray, 
     yd: np.ndarray
+):
+    """Undistort normalized points.
+    
+    Undistort normalized camera points using a polynomial distortion model. 
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    xd : 1D np.ndarray
+        Distorted x-coordinates.
+    yd : 1D np.ndarray
+        Distorted y-coordinates.
+        
+    Returns
+    -------
+    x : 1D np.ndarray
+        Undistorted x-coordinates.
+    y : 1D np.ndarray
+        Undistorted y-coordinates.
+    
+    Notes
+    -----
+    Distortion model is inspired by MyPTV. The link is provided below.
+    https://github.com/ronshnapp/MyPTV/tree/master/myptv
+    
+    The polynomial is of the 2nd order type, with the coefficients arranged
+    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows any
+    distortion in the x and y axes to be compensated. However, the polynomial
+    model is not stable when extrapolating, so beware of artifcacts.
+    
+    """
+    _check_parameters(cam_struct)
+    
+    k1, k2, _, _ = cam_struct["distortion2"]
+    
+    poly = np.array([np.ones_like(xd), xd, yd, xd**2, yd**2, xd * yd])
+    
+    x = np.dot(k1, poly)
+    y = np.dot(k2, poly)
+    
+    return x, y
+
+
+def distort_points1(
+    cam_struct: dict,
+    x: np.ndarray, 
+    y: np.ndarray
 ):
     """Distort normalized points.
     
@@ -290,16 +382,16 @@ def distort_points(
     ----------
     cam_struct : dict
         A dictionary structure of camera parameters.
-    xd : 1D np.ndarray
+    x : 1D np.ndarray
         Undistorted x-coordinates.
-    yd : 1D np.ndarray
+    y : 1D np.ndarray
         Undistorted y-coordinates.
         
     Returns
     -------
-    x : 1D np.ndarray
+    xd : 1D np.ndarray
         Distorted x-coordinates.
-    y : 1D np.ndarray
+    yd : 1D np.ndarray
         Distorted y-coordinates.
     
     Notes
@@ -311,27 +403,81 @@ def distort_points(
     """
     _check_parameters(cam_struct)  
     
-    k = cam_struct["distortion"]
+    k = cam_struct["distortion1"]
     
-    r2 = xd*xd + yd*yd
+    r2 = x*x + y*y
     r4 = r2 * r2
     r6 = r4 * r2
     
     den = 1 + k[0]*r2 + k[1]*r4 + k[4]*r6
     num = 1 + k[5]*r2 + k[6]*r4 + k[7]*r6
     
-    delta_x = k[2]*2*xd*yd + k[3]*(r2 + 2*xd*xd)
-    delta_y = k[3]*2*xd*yd + k[2]*(r2 + 2*yd*yd)
+    delta_x = k[2]*2*x*y + k[3]*(r2 + 2*x*x)
+    delta_y = k[3]*2*x*y + k[2]*(r2 + 2*y*y)
 
-    x = (xd - delta_x) * (num/den)
-    y = (yd - delta_y) * (num/den)
+    xd = (x - delta_x) * (num / den)
+    yd = (y - delta_y) * (num / den)
     
-    return x, y
+    return xd, yd
+
+
+def distort_points2(
+    cam_struct: dict,
+    x: np.ndarray, 
+    y: np.ndarray
+):
+    """Distort normalized points.
+    
+    Distort normalized camera points using a polynomial distortion model. 
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        A dictionary structure of camera parameters.
+    x : 1D np.ndarray
+        Undistorted x-coordinates.
+    y : 1D np.ndarray
+        Undistorted y-coordinates.
+        
+    Returns
+    -------
+    xd : 1D np.ndarray
+        Distorted x-coordinates.
+    yd : 1D np.ndarray
+        Distorted y-coordinates.
+    
+    Notes
+    -----
+    Distortion model is inspired by MyPTV. The link is provided below.
+    https://github.com/ronshnapp/MyPTV/tree/master/myptv
+    
+    The polynomial is of the 2nd order type, with the coefficients arranged
+    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows any
+    distortion in the x and y axes to be compensated. However, the polynomial
+    model is not stable when extrapolating, so beware of artifcacts.
+    
+    To compute the inverse of the distortion model, we simply minimize a new
+    inverse matrix by projecting world points into image points and correcting
+    for distortion. This approach is different from MyPTV as it does not use
+    a Taylor Series expansion on the error terms for inversion.
+    
+    """
+    _check_parameters(cam_struct)  
+    
+    _, _, k1, k2 = cam_struct["distortion2"]
+    
+    poly = np.array([np.ones_like(x), x, y, x**2, y**2, x * y])
+    
+    xd = np.dot(k1, poly)
+    yd = np.dot(k2, poly)
+    
+    return xd, yd
 
 
 def project_points(
     cam_struct: dict,
-    object_points: np.ndarray
+    object_points: np.ndarray,
+    correct_distortion: bool = True
 ):
     """Project object points to image points.
     
@@ -343,6 +489,8 @@ def project_points(
         A dictionary structure of camera parameters.
     object_points : 2D np.ndarray
         Real world coordinates. The ndarray is structured like [X, Y, Z].
+    correct_distortion : bool
+        If true, perform distortion correction.
         
     Returns
     -------
@@ -418,16 +566,23 @@ def project_points(
     Wn_x = Wc_x / Wc_h
     Wn_y = Wc_y / Wc_h 
     
-    # distortion correction
-    Wd_x, Wd_y = undistort_points(
-        cam_struct,
-        Wn_x,
-        Wn_y
-    )
+    if correct_distortion == True:
+        if cam_struct["distortion_model"].lower() == "brown":
+            Wn_x, Wn_y = undistort_points1(
+                cam_struct,
+                Wn_x,
+                Wn_y
+            )
+        else:
+            Wn_x, Wn_y = undistort_points2(
+                cam_struct,
+                Wn_x,
+                Wn_y
+            )
     
     # rescale coordinates
-    x = Wd_x * fx + cx
-    y = Wd_y * fy + cy
+    x = Wn_x * fx + cx
+    y = Wn_y * fy + cy
     
     return np.array([x, y])
     
@@ -458,7 +613,7 @@ def project_to_z(
         Projected world y-coordinates.
     Z : 1D np.ndarray
         Projected world z-coordinates.
-        
+    
     Examples
     --------
     >>> import numpy as np
@@ -516,17 +671,24 @@ def project_to_z(
     T = cam_struct["translation"]
     fx, fy = cam_struct["focal"]
     cx, cy = cam_struct["principal"]
-    
+        
     # normalize image coordinates
-    Wd_x = (x - cx) / fx
-    Wd_y = (y - cy) / fy
+    Wn_x = (x - cx) / fx
+    Wn_y = (y - cy) / fy
     
-    # distort points
-    Wn_x, Wn_y = distort_points(
-        cam_struct,
-        Wd_x,
-        Wd_y
-    )
+    if cam_struct["distortion_model"].lower() == "brown":
+        Wn_x, Wn_y = distort_points1(
+            cam_struct,
+            Wn_x,
+            Wn_y
+        )
+    else:
+        Wn_x, Wn_y = distort_points2(
+            cam_struct,
+            Wn_x,
+            Wn_y
+        )
+        
     
     # inverse rotation
     dx, dy, dz = np.dot(
@@ -608,6 +770,10 @@ def minimize_camera_params(
     A brief example is shown below. More can be found in the example PIV lab
     experiments.
     
+    On a side note, for a decent calibration to occur, at least 20 points are needed. For
+    attaining a rough estimate for marker detection purposes, at least 9 points
+    are needed (of course, this is excuding distortion correction).
+    
     Examples
     --------
     >>> import numpy as np
@@ -673,14 +839,19 @@ def minimize_camera_params(
         
         if correct_focal == True:
             cam_struct["focal"] = x[8:10]
-            
-        if correct_distortion == True:
-            cam_struct["distortion"] = x[10:19]
         
         cam_struct["rotation"] = get_rotation_matrix(
             cam_struct
         )
         
+        if correct_distortion == True:
+            if cam_struct["distortion_model"].lower() == "brown":
+                cam_struct["distortion1"] = x[10:18]
+            else:
+                pass
+                cam_struct["distortion2"][0, :] = x[18:24]
+                cam_struct["distortion2"][1, :] = x[24:30]
+                
         RMS_error = get_reprojection_error(
             cam_struct,
             project_points,
@@ -696,7 +867,8 @@ def minimize_camera_params(
         cam_struct["orientation"],
         cam_struct["principal"],
         cam_struct["focal"],
-        cam_struct["distortion"]
+        cam_struct["distortion1"],
+        cam_struct["distortion2"].ravel()
     ]
     
     params_to_minimize = np.hstack(
@@ -713,5 +885,52 @@ def minimize_camera_params(
             options={"maxiter": max_iter},
             jac = "2-point"
         )
-        
+    
+    if correct_distortion == True:
+        if cam_struct["distortion_model"].lower() == "polynomial": 
+            # Since I couldn't get an inverse model to work using the linearization
+            # of the error terms via Taylor Series expansion, I deceded to explicitly
+            # compute it like in the polynomial camera model.
+            
+            fx, fy = cam_struct["focal"]
+            cx, cy = cam_struct["principal"]
+    
+            obj_img_points = project_points(
+                cam_struct,
+                object_points,
+                correct_distortion=False
+            )
+            
+            x1, y1 = image_points
+            x2, y2 = obj_img_points
+            
+            # normalize the points
+            x1 = (x1 - cx) / fx
+            x2 = (x2 - cx) / fx
+            
+            y1 = (y1 - cy) / fy
+            y2 = (y2 - cy) / fy
+            
+            # create polynomials
+            poly1 = np.array([np.ones_like(x1), x1, y1, x1**2, y1**2, x1*y1])
+#            poly2 = np.array([np.ones_like(x2), x2, y2, x2**2, y2**2, x2*y2])
+            
+            # minimize the polynomials
+#            coeff1 = np.linalg.lstsq(
+#                poly2.T,
+#                np.array([x1, x1], dtype="float64").T, 
+#               rcond=None
+#            )[0].T
+            
+            coeff2 = np.linalg.lstsq(
+                poly1.T,
+                np.array([x2, y2], dtype="float64").T, 
+                rcond=None
+            )[0].T
+            
+#            cam_struct["distortion2"][0, :] = coeff1[0, :]
+#            cam_struct["distortion2"][1, :] = coeff1[1, :]
+            cam_struct["distortion2"][2, :] = coeff2[0, :]
+            cam_struct["distortion2"][3, :] = coeff2[1, :]
+    
     return cam_struct
