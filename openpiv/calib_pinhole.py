@@ -848,7 +848,6 @@ def minimize_camera_params(
             if cam_struct["distortion_model"].lower() == "brown":
                 cam_struct["distortion1"] = x[10:18]
             else:
-                pass
                 cam_struct["distortion2"][0, :] = x[18:24]
                 cam_struct["distortion2"][1, :] = x[24:30]
                 
@@ -918,7 +917,7 @@ def minimize_camera_params(
             # minimize the polynomials
 #            coeff1 = np.linalg.lstsq(
 #                poly2.T,
-#                np.array([x1, x1], dtype="float64").T, 
+#                np.array([x1, y1], dtype="float64").T, 
 #               rcond=None
 #            )[0].T
             
