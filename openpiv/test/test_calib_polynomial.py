@@ -71,6 +71,18 @@ def test_parameters_initialization():
     assert_("resolution" in params)
     assert_("poly_wi" in params)
     assert_("poly_iw" in params)
+    
+    assert_(len(params["resolution"]) == 2)
+    
+    assert_equal(
+        params["poly_wi"].shape,
+        [19, 2]
+    )
+    
+    assert_equal(
+        params["poly_iw"].shape,
+        [19, 3]
+    )
 
 
 def test_minimization_01():    

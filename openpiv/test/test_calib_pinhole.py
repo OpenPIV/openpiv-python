@@ -36,7 +36,8 @@ def get_test_camera_params():
         resolution = resolution,
         translation = translation,
         orientation = orientation,
-        distortion = distortion,
+        distortion_model = "brown",
+        distortion1 = distortion,
         focal = focal,
         principal = principal
     )
@@ -90,11 +91,27 @@ def test_parameters_input():
             rotation=np.zeros([3,2])
         )
         
-        # not 8 element vector 
+        # wrong distortion model
         calib_pinhole.generate_camera_params(
             "name",
             resolution=[0, 0],
-            distortion=np.zeros(7)
+            distortion_model="non-existent <random symbols here>",
+        )
+        
+        # not 8 element vector for brown model 
+        calib_pinhole.generate_camera_params(
+            "name",
+            resolution=[0, 0],
+            distortion_model="brown",
+            distortion1=np.zeros(7)
+        )
+        
+        # not 4 x 6 matrix for polynomial model 
+        calib_pinhole.generate_camera_params(
+            "name",
+            resolution=[0, 0],
+            distortion_model="polynomial",
+            distortion2=np.zeros([4, 3])
         )
         
         # not 2 element list-like
@@ -137,10 +154,43 @@ def test_parameters_initialization():
     assert_("translation" in params)
     assert_("orientation" in params)
     assert_("rotation" in params)
-    assert_("distortion" in params)
+    assert_("distortion_model" in params)
+    assert_("distortion1" in params)
+    assert_("distortion2" in params)
     assert_("focal" in params)
     assert_("principal" in params)
     
+    assert_(len(params["resolution"]) == 2)
+    
+    assert_equal(
+        params["translation"].shape,
+        [3, ]
+    )
+    
+    assert_equal(
+        params["orientation"].shape,
+        [3, ]
+    )
+    
+    assert_equal(
+        params["rotation"].shape,
+        [3, 3]
+    )
+    
+    assert_equal(
+        params["distortion1"].shape,
+        [8, ]
+    )
+    
+    assert_equal(
+        params["distortion2"].shape,
+        [4, 6]
+    )
+    
+    assert_(len(params["focal"]) == 2)
+    
+    assert_(len(params["principal"]) == 2)
+        
 
 def test_rotation_matrix_01():
     params = calib_pinhole.generate_camera_params(
@@ -204,7 +254,6 @@ def test_projection_01(
         Z, Z_new,
         decimal=4
     )
-
 
 def test_projection_02():
     params = get_test_camera_params()
@@ -312,7 +361,10 @@ def test_projection_05():
     )
 
 
-def test_minimization_01():        
+@pytest.mark.parametrize("model", ("brown", "polynomial"))
+def test_minimization_01(
+    model: str
+):        
     cal_data = np.load("./test_calibration_points.npz")
     
     cal_obj_points = cal_data["obj_points"]
@@ -323,7 +375,8 @@ def test_minimization_01():
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
         orientation = [-3, -0.01, 0.01], # initial guess
-        focal = [1000, 1000]
+        focal = [1000, 1000],
+        distortion_model = model
     )
     
     params = calib_pinhole.minimize_camera_params(
@@ -345,7 +398,10 @@ def test_minimization_01():
     assert_(RMSE < 1e-2)
 
 
-def test_minimization_02():
+@pytest.mark.parametrize("model", ("brown", "polynomial"))
+def test_minimization_02(
+    model: str
+):        
     params_orig = get_test_camera_params()
     
     cal_data = np.load("./test_calibration_points.npz")
@@ -358,7 +414,8 @@ def test_minimization_02():
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
         orientation = [-3, -0.01, 0.01], # initial guess
-        focal = [1000, 1000]
+        focal = [1000, 1000],
+        distortion_model = model
     )
     
     params_new = calib_pinhole.minimize_camera_params(
@@ -373,29 +430,29 @@ def test_minimization_02():
     assert_array_almost_equal(
         params_orig["translation"], 
         params_new["translation"],
-        decimal = 0
+        decimal = 1
     )
     
     assert_array_almost_equal(
         params_orig["orientation"], 
         params_new["orientation"],
-        decimal = 0
+        decimal = 1
     )
     
     assert_array_almost_equal(
         params_orig["rotation"], 
         params_new["rotation"],
-        decimal = 0
+        decimal = 1
     )
     
     assert_array_almost_equal(
         params_orig["focal"], 
         params_new["focal"],
-        decimal = 0
+        decimal = 1
     )
     
     assert_array_almost_equal(
         params_orig["principal"], 
         params_new["principal"],
-        decimal = 0
+        decimal = 1
     )
