@@ -132,18 +132,9 @@ def sig2noise_val(
 
     Parameters
     ----------
-    u : 2d or 3d np.ndarray
-        a two or three dimensional array containing the u velocity component.
-
-    v : 2d or 3d np.ndarray
-        a two or three dimensional array containing the v velocity component.
-
     s2n : 2d np.ndarray
         a two or three dimensional array containing the value  of the signal to
         noise ratio from cross-correlation function.
-    w : 2d or 3d np.ndarray
-        a two or three dimensional array containing the w (in z-direction)
-        velocity component.
 
     threshold: float
         the signal to noise ratio threshold value.
