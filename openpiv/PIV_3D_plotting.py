@@ -313,7 +313,7 @@ def quiver_3D(
     colors = [c for c, d in zip(colors, df) if d > 0] + list(
         chain(*[[c, c] for c, d in zip(colors, df) if d > 0])
     )
-    # colors in ax.quiver 3d is really fucked up/ will probably change with updates:
+    # colors in ax.quiver 3d will probably change with updates:
     # requires list with: first len(u) entries define the colors of the shaft, then the next len(u)*2 entries define
     # the color ofleft and right arrow head side in alternating order. Try for example:
     # colors = ["red" for i in range(len(cf))] + list(chain(*[["blue", "yellow"] for i in range(len(cf))]))
