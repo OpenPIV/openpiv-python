@@ -5,9 +5,10 @@ include LICENSE.txt
 include MILESTONES
 include TODO
 
-recursive-include openpiv/docs *
-recursive-include openpiv/examples *
+recursive-include openpiv/tutorials *
 recursive-include openpiv/test *
+recursive-exclude openpiv/data *
+recursive-exclude openpiv/docs *
 recursive-exclude openpiv/test/__pycache__ *
 recursive-exclude openpiv/examples/notebooks/.ipynb_checkpoints *
 
@@ -21,4 +22,4 @@ recursive-include openpiv *.py
 recursive-include openpiv *.pyx
 recursive-include openpiv *.rst
 recursive-include openpiv *.tif
-include cysetuptools.py
+
