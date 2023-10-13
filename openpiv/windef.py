@@ -975,7 +975,7 @@ def simple_multipass(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
     settings: Optional["PIVSettings"]=None,
-    )->Tuple:
+    )->Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """_summary_
 
     Args:
