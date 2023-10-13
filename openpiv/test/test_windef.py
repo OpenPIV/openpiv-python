@@ -10,8 +10,8 @@ from openpiv import windef
 from openpiv.test import test_process
 
 frame_a, frame_b = test_process.create_pair(image_size=256)
-shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
-                              test_process.threshold
+shift_u, shift_v, threshold = test_process.SHIFT_U, test_process.SHIFT_V, \
+                              test_process.THRESHOLD
 
 # this test are created only to test the displacement evaluation of the
 # function the validation methods are not tested here ant therefore
