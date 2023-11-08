@@ -1,40 +1,30 @@
 name: Build and upload to PyPI
-
-# Build on every branch push, tag push, and pull request change:
-# on: [push, pull_request]
-# on: [pull_request]
-# Alternatively, to publish when a (published) GitHub Release is created, use the following:
 on:
-   release:
-     types: [published]
+  release:
+    types: [published]
 
 jobs:
-  build-n-publish:
+  build-and-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.10]
+        poetry-version: [1.5.0]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4.5.0
+      - uses: actions/setup-python@v4.5.0
         with:
-          python-version: 3.10
-      - name: Install pypa/build
-        run: >-
-          python -m
-          pip install
-          build
-          --user
-      - name: Build a binary wheel and a source tarball
-        run: >-
-          python -m
-          build
-          --sdist
-          --wheel
-          --outdir dist/
-          .
-      - name: Publish distribution 📦 to PyPI
-        # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-        uses: pypa/gh-action-pypi-publish@master
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          # repository_url: https://pypi.org/legacy/
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Publish
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          poetry config pypi-token.pypi $PYPI_TOKEN
+          poetry publish --build
