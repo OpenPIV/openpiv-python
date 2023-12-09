@@ -2,10 +2,19 @@ import numpy as np
 from typing import Tuple
 
 
+__all__ = [
+    "generate_camera_params",
+    "project_points",
+    "project_to_z",
+    "minimize_polynomial"
+]
+
+
 def _check_parameters(
     cam_struct: dict
 ):
     """Check camera parameters"""
+    
     if type(cam_struct["name"]) != str:
         raise ValueError(
             "Camera name must be a string"
@@ -45,13 +54,19 @@ def _check_parameters(
         raise ValueError(
             "There must be 19 coefficients in the image to world polynomial"
         )
+        
+    if cam_struct["dtype"] not in ["float32", "float64"]:
+        raise ValueError(
+            "Dtype is not supported for camera calibration"
+        )
 
 
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
     poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
-    poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T
+    poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T,
+    dtype: str="float64"
     
 ):
     """Create a camera parameter structure.
@@ -68,6 +83,8 @@ def generate_camera_params(
         19 coefficients for world to image polynomial calibration in [x, y]'.
     poly_iw : np.ndarray
         19 coefficients for image to world polynomial calibration in [X, Y, Z]'.
+    dtype : str
+        The dtype used in the projections.
     
     Returns
     -------
@@ -93,6 +110,7 @@ def generate_camera_params(
     cam_struct["resolution"] = resolution
     cam_struct["poly_wi"] = poly_wi
     cam_struct["poly_iw"] = poly_iw
+    cam_struct["dtype"] = dtype
     
     _check_parameters(cam_struct)
     
@@ -151,8 +169,10 @@ def minimize_polynomial(
     """
     _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype="float64")
-    image_points = np.array(image_points, dtype="float64")
+    dtype = cam_struct["dtype"]
+    
+    object_points = np.array(object_points, dtype=dtype)
+    image_points = np.array(image_points, dtype=dtype)
     
     if object_points.shape[1] < 19:
         raise ValueError(
@@ -171,39 +191,49 @@ def minimize_polynomial(
     Y = object_points[1]
     Z = object_points[2]
 
-    polynomial_wi = np.array([X*0+1,
-                              X,     Y,     Z, 
-                              X*Y,   X*Z,   Y*Z,
-                              X**2,  Y**2,  Z**2,
-                              X**3,  X*X*Y, X*X*Z,
-                              Y**3,  X*Y*Y, Y*Y*Z,
-                              X*Z*Z, Y*Z*Z, X*Y*Z]).T
+    polynomial_wi = np.array(
+        [
+            np.ones_like(X),
+            X,     Y,     Z, 
+            X*Y,   X*Z,   Y*Z,
+            X**2,  Y**2,  Z**2,
+            X**3,  X*X*Y, X*X*Z,
+            Y**3,  X*Y*Y, Y*Y*Z,
+            X*Z*Z, Y*Z*Z, X*Y*Z
+        ],
+        dtype=dtype
+    ).T
     
     # in the future, break this into three Z subvolumes to further reduce errors.
-    polynomial_iw = np.array([x*0+1,
-                              x,     y,     Z, 
-                              x*y,   x*Z,   y*Z,
-                              x**2,  y**2,  Z**2,
-                              x**3,  x*x*y, x*x*Z,
-                              y**3,  x*y*y, y*y*Z,
-                              x*Z*Z, y*Z*Z, x*y*Z]).T
+    polynomial_iw = np.array(
+        [
+            np.ones_like(x),
+            x,     y,     Z, 
+            x*y,   x*Z,   y*Z,
+            x**2,  y**2,  Z**2,
+            x**3,  x*x*y, x*x*Z,
+            y**3,  x*y*y, y*y*Z,
+            x*Z*Z, y*Z*Z, x*y*Z
+        ],
+        dtype=dtype
+    ).T
     
 
     # world to image (forward projection)
     coeff_wi, _, _, _ = np.linalg.lstsq(
         polynomial_wi,
-        np.array(image_points, dtype="float64").T, 
+        image_points.T, 
         rcond=None
-    )
+    ).astype(dtype, copy=False)
     
     # image to world (back projection)
     coeff_iw, _, _, _ = np.linalg.lstsq(
         polynomial_iw,
-        np.array(object_points, dtype="float64").T, 
+        object_points.T, 
         rcond=None
-    )
+    ).astype(dtype, copy=False)
     
-    # SVD based solution to system of equations
+    # psuedo-inverse based solution to system of equations
 #    coeff_wi = np.array(image_points, dtype="float64") @ np.linalg.pinv(polynomial_wi.T)
 #    coeff_wi = coeff_wi.T
     
@@ -270,26 +300,33 @@ def project_points(
     """ 
     _check_parameters(cam_struct)
     
-    object_points = np.array(object_points, dtype="float64")
+    dtype = cam_struct["dtype"]
+    
+    object_points = np.array(object_points, dtype=dtype)
     
     X = object_points[0]
     Y = object_points[1]
     Z = object_points[2]
     
-    polynomial_wi = np.array([X*0+1,
-                              X,     Y,     Z, 
-                              X*Y,   X*Z,   Y*Z,
-                              X**2,  Y**2,  Z**2,
-                              X**3,  X*X*Y, X*X*Z,
-                              Y**3,  X*Y*Y, Y*Y*Z,
-                              X*Z*Z, Y*Z*Z, X*Y*Z]).T
+    polynomial_wi = np.array(
+        [
+            np.ones_like(X),
+            X,     Y,     Z, 
+            X*Y,   X*Z,   Y*Z,
+            X**2,  Y**2,  Z**2,
+            X**3,  X*X*Y, X*X*Z,
+            Y**3,  X*Y*Y, Y*Y*Z,
+            X*Z*Z, Y*Z*Z, X*Y*Z
+        ],
+        dtype=dtype
+    ).T
     
     img_points = np.dot(
         polynomial_wi,
         cam_struct["poly_wi"]
     ).T
     
-    return img_points.astype("float64", copy=False)
+    return img_points.astype(dtype, copy=False)
 
 
 def project_to_z(
@@ -358,23 +395,30 @@ def project_to_z(
     """ 
     _check_parameters(cam_struct)
     
-    image_points = np.array(image_points, dtype="float64")
+    dtype = cam_struct["dtype"]
+    
+    image_points = np.array(image_points, dtype=dtype)
     
     x = image_points[0]
     y = image_points[1]
-    Z = np.array(z, dtype="float64")
+    Z = np.array(z, dtype=dtype)
     
-    polynomial_iw = np.array([x*0+1,
-                              x,     y,     Z, 
-                              x*y,   x*Z,   y*Z,
-                              x**2,  y**2,  Z**2,
-                              x**3,  x*x*y, x*x*Z,
-                              y**3,  x*y*y, y*y*Z,
-                              x*Z*Z, y*Z*Z, x*y*Z]).T
+    polynomial_iw = np.array(
+        [
+            np.ones_like(x),
+            x,     y,     Z, 
+            x*y,   x*Z,   y*Z,
+            x**2,  y**2,  Z**2,
+            x**3,  x*x*y, x*x*Z,
+            y**3,  x*y*y, y*y*Z,
+            x*Z*Z, y*Z*Z, x*y*Z
+        ],
+        dtype=dtype
+    ).T
     
     obj_points = np.dot(
         polynomial_iw,
         cam_struct["poly_iw"]
     ).T
     
-    return obj_points.astype("float64", copy=False)
+    return obj_points.astype(dtype, copy=False)
