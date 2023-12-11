@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from openpiv import pyprocess, tools
-import pkg_resources as pkg
+from importlib_resources import files
 
 # import numpy as np
 
@@ -71,8 +71,8 @@ def piv_example():
 
     """
     # if im1 is None and im2 is None:
-    im1 = pkg.resource_filename("openpiv", "data/test1/exp1_001_a.bmp")
-    im2 = pkg.resource_filename("openpiv", "data/test1/exp1_001_b.bmp")
+    im1 = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+    im2 = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')    
 
     frame_a = tools.imread(im1)
     frame_b = tools.imread(im2)
