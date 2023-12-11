@@ -101,22 +101,21 @@ def _get_angle(
 
 def find_corners(
     image_points: np.ndarray,
-    threshold: float=135,
     asymmetric: bool=False
 ):
     """Locate corners of a rectangle using a convex hull.
     
     Locate the corners of a rectangle that may be distorted by obtaining
     the perimeter points using a convex hull of the image points and
-    sorting and thresholding the perimeter points by its angle between two
-    neighboring points.
+    sorting the perimeter points by its angle between two neighboring 
+    points. For a symmetric grid, the first four points are assumed to be
+    the correct corner candidates, otherwise the first six points are
+    selected.
     
     Parameter
     ---------
     image_points : 2D np.ndarray
         A 2D array of image points in [x, y]' image coordinates.
-    threshold : float, optional
-        The maximum angle a corner candidate can have.
     asymmetric: bool, optional
         If true, validate that 6 corners have been found instead of 4.
         
@@ -140,7 +139,7 @@ def find_corners(
     min_ind = 0
     max_ind = candidates.shape[0]-1
     
-    corners = []
+    angles = []
     for i, corner in enumerate(candidates):
         
         ind1 = i - 1
@@ -157,8 +156,9 @@ def find_corners(
         
         angle = _get_angle(corner, point1, point2)
                 
-        if angle < threshold:
-            corners.append(corner)
+        angles.append(angle)
+        
+    indexes = np.argsort(angles)
     
     num_corners = 4
     
@@ -168,15 +168,11 @@ def find_corners(
             "Asymmetric grid detection is not currently implemented"
         )
     
-    if len(corners) != num_corners:
-        raise ValueError(
-            "{} corner(s) of {} found. ".format(len(corners), num_corners) +
-            "This is most likely caused by an incorrect threshold."
-        )
+    corners = candidates[indexes[:num_corners]]
     
     corners = np.array(corners, dtype="float64").T
     
-    return _reorder_corners(corners)
+    return corners
 
 
 def find_nearest_points(
