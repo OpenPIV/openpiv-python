@@ -560,7 +560,7 @@ class Multiprocesser:
             self.files_b = self.files_a[1::2]
             self.files_a = self.files_a[0::2]
         else:
-            self.files_b = sorted(data_dir.glob(pattern_b))
+            self.files_b = natural_sort(list(data_dir.glob(pattern_b)))
 
         # number of images
         self.n_files = len(self.files_a)

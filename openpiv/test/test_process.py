@@ -1,15 +1,14 @@
-from openpiv.pyprocess import extended_search_area_piv as piv
-from openpiv.pyprocess import fft_correlate_images, \
-                              correlation_to_displacement
-import matplotlib.pyplot as plt
-
 import numpy as np
-
-
+import matplotlib.pyplot as plt
 from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift as shift_img
-import pkg_resources as pkg
+# import pkg_resources as pkg
+from importlib_resources import files
+from openpiv.pyprocess import extended_search_area_piv as piv
+from openpiv.pyprocess import fft_correlate_images, \
+                              correlation_to_displacement
+
 
 threshold = 0.25
 
@@ -128,8 +127,9 @@ def test_process_extended_search_area():
 def test_sig2noise_ratio():
     """ s2n ratio test """
     from openpiv import tools 
-    im1 = pkg.resource_filename("openpiv", "data/test1/exp1_001_a.bmp")
-    im2 = pkg.resource_filename("openpiv", "data/test1/exp1_001_b.bmp")
+    im1 = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+    im2 = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
+    
 
     frame_a = tools.imread(im1)
     frame_b = tools.imread(im2)
