@@ -172,7 +172,7 @@ def find_corners(
     
     corners = np.array(corners, dtype="float64").T
     
-    return corners
+    return _reorder_corners(corners)
 
 
 def find_nearest_points(
