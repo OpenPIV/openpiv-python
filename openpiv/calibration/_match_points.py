@@ -39,7 +39,7 @@ def _reorder_corners(
     
     index = np.argsort(theta)
     
-    corners = corners.T[index].T
+    corners = corners[:, index]
     
     dist1 = np.sqrt(
         (corners[0][0] - corners[0][1])**2 + 
@@ -53,7 +53,7 @@ def _reorder_corners(
 
     if dist2 > dist1:
         new_index = [3, 0, 1, 2]
-        corners = corners.T[new_index].T
+        corners = corners[:, new_index]
         
     return corners
 
@@ -133,8 +133,6 @@ def find_corners(
     indexes = ConvexHull(image_points.T).vertices
     
     candidates = image_points.T[indexes]
-
-    corners = []
     
     min_ind = 0
     max_ind = candidates.shape[0]-1
@@ -220,7 +218,7 @@ def find_nearest_points(
         min_dist = np.min(dist, axis=0)
         index = index[min_dist < threshold]
         
-    return np.array([image_points[0][index], image_points[1][index]], dtype="float64")
+    return nimage_points[:, index]
 
 
 def _find_line_points(
@@ -306,7 +304,7 @@ def reorder_image_points(
     """Reorder marker points in ascending order.
     
     Reorder marker points in ascending order so that they could be assigned
-    world/lab coordinates. This algorithm worker by first locating all
+    world/lab coordinates. This algorithm works by first locating all
     points in the y-axis in-between two corner points. Then, estimated 
     locations of the marker points in the x-axis are created and the nearest
     marker point is assumed to be the correct point. 
@@ -431,7 +429,7 @@ def reorder_image_points(
         )[1]
     )
     
-    reordered_img_pairs = reordered_img_pairs.T[good_ind].T
+    reordered_img_pairs = reordered_img_pairs[:, good_ind]
     num_points_recovered = reordered_img_pairs.shape[1]
     
     if num_points_recovered != np.prod(grid_size):

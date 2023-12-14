@@ -12,6 +12,7 @@ __all__ = [
     "preprocess_image",
     "get_circular_template",
     "get_cross_template",
+    "get_new_template",
     "detect_markers_template",
     "detect_markers_blobs"
 ]
@@ -210,31 +211,32 @@ def get_circular_template(
     from openpiv.calib_utils import get_circular_template
     
     >>> get_circular_template(
-            window_size=32,
             template_radius=5,
             val=255
         )
     
     """
     # make sure input is integer
-    template_radius = int(template_radius)
+    dot_radius = int(template_radius)
     
     # get template size
-    template_size = 2*template_radius + 1
+    dot_size = 2*template_radius + 1
         
     disk = np.zeros(
-        (template_size, template_size),
+        (dot_size, dot_size),
         dtype="float64"
     )
 
-    ys, xs = np.indices([template_size, template_size])
+    ys, xs = np.indices([dot_size, dot_size])
 
     dist = np.sqrt(
-        (ys - template_radius)**2 +
-        (xs - template_radius)**2
+        (ys - dot_radius)**2 +
+        (xs - dot_radius)**2
     )
 
-    disk[dist <= template_radius] = 255.
+    disk[dist <= dot_radius] = val
+    
+    
 
     return disk
 
@@ -300,11 +302,50 @@ def get_cross_template(
     return cross
 
 
-def _find_local_max_from_corr(
+def get_new_template(
+    image: np.ndarray,
+    pos_x: np.ndarray,
+    pos_y: np.ndarray,
+    template_radius: int,
+    dtype: str="float64"
+):
+    numel = pos_x.shape[0]
+        
+    min_x = template_radius
+    min_y = template_radius
+    max_x = image.shape[1] - template_radius - 1
+    max_y = image.shape[0] - template_radius - 1
+
+    template = np.zeros((template_radius*2 + 1, template_radius*2 + 1), dtype=dtype)
+    denom = 0
+    
+     # Note: this loop can easily be optimized
+    for i in range(numel):
+        x, y = int(pos_x[i]), int(pos_y[i])
+                
+        if not ((min_x < x < max_x) and (min_y < y < max_y)):
+            continue
+            
+        lx = x - template_radius
+        rx = x + template_radius + 1
+        ly = y - template_radius
+        ry = y + template_radius + 1
+        
+        img_cut = image[ly:ry, lx:rx]
+                        
+        template += img_cut
+        denom += 1
+    
+    if denom != 0:
+        template /= denom
+    
+    return template
+
+
+def _find_local_max(
     corr: np.ndarray,
     window_size: int=64,
-    overlap: int=None,
-    vectorize: bool=True
+    overlap: int=32,
 ):
     """Find a local maximum from correlation matrix.
     
@@ -324,10 +365,6 @@ def _find_local_max_from_corr(
         The amount of overlaping pixels for each window. The higher the overlap, 
         the better local maximums are registered but at the expense of performance 
         and memory. 
-    vectorize : bool, optional
-        If True, use a numpy vectorization to subdivide the correlation matrix and
-        locate the local maximums. Vectorization uses a lot more memory than the
-        non-vectorized version.
         
     Returns
     -------
@@ -344,41 +381,20 @@ def _find_local_max_from_corr(
         overlap
     )
         
-    if vectorize == True:
-        # get sub-windows of correlation matrix
-        corr_windows = sliding_window_array(
-            corr,
-            [window_size, window_size],
-            [overlap, overlap]
-        )    
+    # get sub-windows of correlation matrix
+    corr_windows = sliding_window_array(
+        corr,
+        [window_size, window_size],
+        [overlap, overlap]
+    )    
 
+    # get location of peaks
+    max_ind, peaks = find_all_first_peaks(
+        corr_windows
+    )
 
-        # get location of peaks
-        max_ind, peaks = find_all_first_peaks(
-            corr_windows
-        )
-        
-        max_ind_x = max_ind[:, 2]
-        max_ind_y = max_ind[:, 1]
-    
-    else:
-        max_ind_x = np.zeros(np.prod(field_shape), dtype="float64")
-        max_ind_y = np.zeros(np.prod(field_shape), dtype="float64")
-        
-        for i in range(field_shape[0]):
-            y1 = i * (window_size - overlap)
-            y2 = y1 + window_size
-            
-            for j in range(field_shape[1]):
-                x1 = j * (window_size - overlap)
-                x2 = x1 + window_size
-                                
-                ind, peak = find_first_peak(
-                    corr[y1:y2, x1:x2]
-                )
-                max_ind_y[i * field_shape[1] + j] = ind[0]
-                max_ind_x[i * field_shape[1] + j] = ind[1]
-    
+    max_ind_x = max_ind[:, 2]
+    max_ind_y = max_ind[:, 1]
     
     # reshape field (this is not actually needed)
     max_ind_x = max_ind_x.reshape(field_shape)
@@ -427,8 +443,8 @@ def _merge_points(
 
     # find clusters
     clusters = np.hypot(
-        pos[:, 0].reshape(-1, 1) - pos[:, 0].reshape(1,-1),
-        pos[:, 1].reshape(-1, 1) - pos[:, 1].reshape(1,-1)
+        pos_x.reshape(-1, 1) - pos_x.reshape(1, -1),
+        pos_y.reshape(-1, 1) - pos_y.reshape(1, -1)
     ) <= merge_radius
 
     # get mean of clusters iteratively
@@ -450,13 +466,175 @@ def _merge_points(
     )
     
     # remove positions that are not detected enough times
-    new_pos = new_pos[count >= min_count, :]
-    count = count[count >= min_count]
+    good_ind = count >= min_count
+    
+    new_pos = new_pos[good_ind, :]
+    count = count[good_ind]
     
     pos_x = new_pos[:, 0]
     pos_y = new_pos[:, 1]
     
     return pos_x, pos_y, count
+
+
+def _detect_markers(
+    image: np.ndarray,
+    template: np.ndarray,
+    roi: tuple,
+    window_size: int,
+    overlap: int,
+    min_peak_height: float,
+    merge_radius: float,
+    merge_iter: int,
+    min_count: int
+):
+    """Detect marker point candidates.
+    
+    Detect marker point candidates by template correlation and thresholding.
+    The template is correlated globally for faster image processing and uses
+    a normalized correlation technique using sum of squared differences.
+    
+    Parameters
+    ----------
+    image : 2D np.ndarray
+        A two dimensional array of pixel intensities of the shape (n, m).
+    template : 2D np.ndarray
+        A square two dimensional array of the shape (n, m) which is to be correlated
+        with the image to extract features. Must be of odd shape (e.g., [5, 5]) and
+        elements must be either 0 or 1.
+    roi : list, optional
+        A four element list containing min x, y and max x, y in pixels.
+    window_size : int, optional
+        The size of the window used to search for the marker. Must be even 
+        and smaller than the distance between two markers in pixels. A good
+        rule of thumb is to set the window size to slightly smaller than the
+        mean marker spacing.
+    overlap : int, optional
+        The amount of overlaping pixels for each window. If None, overlap is
+        automatically set to 75% of the window size. Step size can be
+        calculated as window_size - overlap. The higher the overlap, the better
+        markers are registered but at the expense of performance and memory. 
+    min_peak_height : float, optional
+        Reject correlation peaks below threshold to help remove false positives.
+    merge_radius : int, optional
+        The merge radius when detecting the number of times a marker is found.
+        Typically, the merge radius should be 5 to 10.
+    merge_iter : int, optional
+        The number of iterations to merge neighboring points inside the
+        merge radius threshold.
+        
+    Returns
+    -------.
+    pos_x, pos_y : np.ndarray
+        An one dimensional array containing local peak indexes of the shape (n,).
+    peaks : np.ndarray
+        An one dimensional array containing local peak heights of the shape (n,).
+    count : np.ndarray
+        An one dimensional array containing local peak counts of the shape (n,).
+    corr : np.ndarray
+        A two dimensional array containing the tempalte-image correlation field.
+    
+    """
+    # get roi 
+    off_x = off_y = 0
+    
+    if roi is not None:
+        off_x = roi[0]
+        off_y = roi[1]
+
+        corr_slice = (
+            slice(roi[1], roi[3]),
+            slice(roi[0], roi[2])
+        )
+        
+    corr = match_template(
+        image,
+        template,
+        pad_input=True
+    )
+
+    if roi is not None:
+        corr_cut = corr[corr_slice]
+    else:
+        corr_cut = corr
+
+    corr_padded = np.pad(
+        corr_cut, 
+        window_size,
+        mode="constant"
+    )
+
+    corr_field_shape = corr_padded.shape
+    pad_off = window_size
+
+    max_ind_x, max_ind_y, peaks = _find_local_max(
+        corr_padded,
+        window_size,
+        overlap
+    )
+
+    # create a grid
+    grid_x, grid_y = get_coordinates(
+        corr_field_shape,
+        window_size,
+        overlap,
+        center_on_field=False
+    ) - np.array([window_size // 2])
+
+    # add grid to peak indexes to get estimated location
+    pos_x = grid_x + max_ind_x
+    pos_y = grid_y + max_ind_y
+
+    # find points near sub window borders and with low peak heights
+    flags = np.zeros_like(pos_x).astype(bool, copy=False)
+    p_exclude = 3
+
+    flags[max_ind_x < p_exclude] = True
+    flags[max_ind_y < p_exclude] = True
+    flags[max_ind_x > window_size - p_exclude - 1] = True
+    flags[max_ind_y > window_size - p_exclude - 1] = True
+    flags[peaks < min_peak_height] = True
+
+    # remove flagged elements
+    pos_x = pos_x[~flags]
+    pos_y = pos_y[~flags]
+
+    # add offsets from roi
+    pos_x += off_x
+    pos_y += off_y
+
+    pos_x, pos_y, count = _merge_points(
+        pos_x,
+        pos_y,
+        merge_radius,
+        merge_iter,
+        min_count
+    )
+
+    # remove padding offsets
+    pos_x -= pad_off
+    pos_y -= pad_off
+
+    # find points outside of image
+    flags = np.zeros_like(pos_x).astype(bool, copy=False)
+
+    n_exclude = 8
+    flags[pos_x < n_exclude] = True
+    flags[pos_y < n_exclude] = True
+    flags[pos_x > image.shape[1] - n_exclude - 1] = True
+    flags[pos_y > image.shape[0] - n_exclude - 1] = True
+    flags[np.isnan(pos_x)] = True
+    flags[np.isnan(pos_y)] = True
+
+    # remove points outside of image
+    pos_x = pos_x[~flags]
+    pos_y = pos_y[~flags]
+    count = count[~flags]
+    
+    # find mass of markers
+    
+    
+    return pos_x, pos_y, count, corr
 
 
 def _subpixel_approximation(
@@ -470,9 +648,9 @@ def _subpixel_approximation(
     """Iterative subpixel marker refinement.
     
     Subpixel iterative marker refinement using least squares 2D gaussian
-    peak fitting. Least squares is performed by taking the pseudo inverse 
-    of a matrix and matrix multiplying it to the logarithm of the correlation
-    matrix.
+    peak fitting. Least squares minimization is performed by taking the 
+    pseudo inverse of a matrix and multiplying it to the logarithm of the 
+    correlation matrix.
     
     Paramters
     ---------
@@ -527,7 +705,7 @@ def _subpixel_approximation(
     ).T
 
     # we use a psuedo-inverse via SVD so we can solve a system of equations.
-    # using iterative least squares methods is preferable here, though.
+    # using iterative nonlinear methods is preferable here, though.
     s_inv = np.linalg.pinv(s_arr)
 
     # TODO: optimize this loop
@@ -583,198 +761,16 @@ def _subpixel_approximation(
     return new_pos_x, new_pos_y
 
 
-def _get_new_template(
-    image: np.ndarray,
-    pos_x: np.ndarray,
-    pos_y: np.ndarray,
-    template_radius: int,
-    dtype: str="float64"
-):
-    numel = pos_x.shape[0]
-        
-    min_x = template_radius
-    min_y = template_radius
-    max_x = image.shape[1] - template_radius - 1
-    max_y = image.shape[0] - template_radius - 1
-
-    template = np.zeros((template_radius*2 + 1, template_radius*2 + 1), dtype=dtype)
-    denom = 0
-    
-     # Note: this loop can easily be optimized
-    for i in range(numel):
-        x, y = int(pos_x[i]), int(pos_y[i])
-                
-        if ((min_x < x < max_x) and (min_y < y < max_y)) != True:
-            continue
-            
-        lx = x - template_radius
-        rx = x + template_radius + 1
-        ly = y - template_radius
-        ry = y + template_radius + 1
-        
-        img_cut = image[ly:ry, lx:rx]
-                        
-        template += img_cut
-        denom += 1
-    
-    if denom != 0:
-        template /= denom
-    
-    return template
-
-
-def _detect_markers(
-    image: np.ndarray,
-    template: np.ndarray,
-    roi: tuple,
-    pad_corr: bool,
-    window_size: int,
-    overlap: int,
-    min_peak_height: float,
-    merge_radius: float,
-    merge_iter: int,
-    min_count: int
-):
-    # get roi 
-    off_x = off_y = 0
-    
-    if roi is not None:
-        off_x = roi[0]
-        off_y = roi[1]
-
-        corr_slice = (
-            slice(roi[1], roi[3]),
-            slice(roi[0], roi[2])
-        )
-        
-    corr = match_template(
-        image - image.mean(),
-        template,
-        pad_input=True
-    )
-
-    if roi is not None:
-        corr_cut = corr[corr_slice]
-    else:
-        corr_cut = corr
-
-    if pad_corr == True:
-        corr_padded = np.pad(
-            corr_cut, 
-            window_size,
-            mode="constant"
-        )
-
-        img_field_shape = corr_padded.shape
-        pad_off = window_size
-
-    else:
-        corr_padded = corr_cut
-        img_field_shape = corr_padded.shape
-        pad_off = 0
-
-    # get sub-windows of correlation matrix
-    corr_windows = sliding_window_array(
-        corr_padded,
-        [window_size, window_size],
-        [overlap, overlap]
-    )    
-
-    # get field shape
-    field_shape = get_field_shape(
-        img_field_shape,
-        window_size,
-        overlap
-    )
-
-    # get location of peaks
-    max_ind, peaks = find_all_first_peaks(
-        corr_windows
-    )
-
-    max_ind_x = max_ind[:, 2]
-    max_ind_y = max_ind[:, 1]
-
-    # reshape field (this is not actually needed)
-    max_ind_x = max_ind_x.reshape(field_shape)
-    max_ind_y = max_ind_y.reshape(field_shape)
-    peaks = peaks.reshape(field_shape)
-
-    # create a grid
-    grid_x, grid_y = get_coordinates(
-        img_field_shape,
-        window_size,
-        overlap,
-        center_on_field=False
-    ) - np.array([window_size // 2])
-
-    # add grid to peak indexes to get estimated location
-    pos_x = grid_x + max_ind_x
-    pos_y = grid_y + max_ind_y
-
-    # find points near sub window borders and with low peak heights
-    flags = np.zeros_like(pos_x).astype(bool, copy=False)
-    p_exclude = 3
-
-    flags[max_ind_x < p_exclude] = True
-    flags[max_ind_y < p_exclude] = True
-    flags[max_ind_x > window_size - p_exclude - 1] = True
-    flags[max_ind_y > window_size - p_exclude - 1] = True
-    flags[peaks < min_peak_height] = True
-
-    # remove flagged elements
-    pos_x = pos_x[~flags]
-    pos_y = pos_y[~flags]
-
-    # add offsets from roi
-    pos_x += off_x
-    pos_y += off_y
-
-    pos_x, pos_y, count = _merge_points(
-        pos_x,
-        pos_y,
-        merge_radius,
-        merge_iter,
-        min_count
-    )
-
-    # remove padding offsets
-    pos_x -= pad_off
-    pos_y -= pad_off
-
-    # find points outside of image
-    flags = np.zeros_like(pos_x).astype(bool, copy=False)
-
-    n_exclude = 8
-    flags[pos_x < n_exclude] = True
-    flags[pos_y < n_exclude] = True
-    flags[pos_x > image.shape[1] - n_exclude - 1] = True
-    flags[pos_y > image.shape[0] - n_exclude - 1] = True
-    flags[np.isnan(pos_x)] = True
-    flags[np.isnan(pos_y)] = True
-
-    # remove points outside of image
-    pos_x = pos_x[~flags]
-    pos_y = pos_y[~flags]
-    count = count[~flags]
-
-    return pos_x, pos_y, count, corr
-
-
 def detect_markers_template(
     image: np.ndarray,
     template: np.ndarray,
     roi: list=None,
-    pad_corr: bool=False,
     window_size: int=64,
     overlap: int=None,
-    min_peak_height: float=0.025,
+    min_peak_height: float=0.5,
     merge_radius: int=10,
     merge_iter: int=5,
     min_count: float=2,
-    refine_template: bool=True,
-    refine_temp_radius: int=None,
-    refine_temp_tolerance: float=0.009,
     refine_pos: bool=False,
     refine_radius: int=3,
     refine_iter: int=5,
@@ -814,9 +810,6 @@ def detect_markers_template(
         automatically set to 75% of the window size. Step size can be
         calculated as window_size - overlap. The higher the overlap, the better
         markers are registered but at the expense of performance and memory. 
-    pad_corr : bool, optional
-        If True, pad the correlation matrix by the size of the window so markers
-        near the borders of the image or ROI are dectected more times.
     min_peak_height : float, optional
         Reject correlation peaks below threshold to help remove false positives.
     merge_radius : int, optional
@@ -825,9 +818,6 @@ def detect_markers_template(
     merge_iter : int, optional
         The number of iterations to merge neighboring points inside the
         merge radius threshold.
-    refine_template : bool, optional
-        Refine the template based on the detected local maximas and the
-        calibration image.
     refine_pos : bool, optional
         Refine the position of the markers with a gaussian peak fit.
     refine_radius : int, optional
@@ -852,7 +842,6 @@ def detect_markers_template(
     -------
     markers : 2D np.ndarray
         Marker positions in [x, y]' image coordinates.
-    
     counts : 2D np.ndarray, optional
         Marker counts in [x, y]'. Returned if return_count is True.
     
@@ -876,7 +865,7 @@ def detect_markers_template(
             cal_img,
             template,
             window_size = 64,
-            min_peak_height = 0.03,
+            min_peak_height = 0.5,
             merge_radius = 10,
             merge_iter=5,
             min_count=5,
@@ -913,16 +902,15 @@ def detect_markers_template(
     image = image.astype("float64")
     template = template.astype("float64")
     
-    # scale the image to [0, 255]
+    # scale the image to [0, 1]
     image[image < 0] = 0. # cut negative pixel intensities
     image /= image.max() # normalize
-    image *= 255. # scale
+#    image *= 255. # rescale
     
     pos_x, pos_y, counts, corr = _detect_markers(
         image,
         template,
         roi,
-        pad_corr,
         window_size,
         overlap,
         min_peak_height,
@@ -930,42 +918,11 @@ def detect_markers_template(
         merge_iter,
         min_count
     )
-    
-    if refine_template == True:
-        if refine_temp_radius is None:
-            refine_temp_radius = int(((template.shape[0] - 1) / 2) * 1.25)
-            
-        new_template = _get_new_template(
-            image,
-            pos_x,
-            pos_y,
-            refine_temp_radius
-        )
-        
-        new_template /= new_template.max()
-        
-        new_template = np.array(
-            new_template > refine_temp_tolerance,
-            dtype="float64"
-        )
-                
-        pos_x, pos_y, counts, corr = _detect_markers(
-            image,
-            new_template,
-            roi,
-            pad_corr,
-            window_size,
-            overlap,
-            min_peak_height,
-            merge_radius,
-            merge_iter,
-            min_count
-        )
-    
-    n_exclude = 5
+
+    max_radius = 8
     if refine_pos == True:
-        if refine_radius >= n_exclude:
-            refine_radius = n_exclude - 1
+        if refine_radius > max_radius:
+            refine_radius = max_radius
         
         pos_x, pos_y = _subpixel_approximation(
             corr,
@@ -1052,10 +1009,10 @@ def detect_markers_blobs(
             roi[0] : roi[2]  # x-axis
         ]
     
-    # scale the image to [0, 255]
+    # scale the image to [0, 1]
     image[image < 0] = 0. # cut negative pixel intensities
     image /= image.max() # normalize
-    image *= 255. # scale
+#    image *= 255. # scale
     
     # label possible markers
     labels, n_labels = label(image)
