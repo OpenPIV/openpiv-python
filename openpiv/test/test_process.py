@@ -1,5 +1,5 @@
+""" Testing basic PIV processes """
 import numpy as np
-import matplotlib.pyplot as plt
 from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift as shift_img
@@ -8,9 +8,11 @@ from importlib_resources import files
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.pyprocess import fft_correlate_images, \
                               correlation_to_displacement
+from openpiv import tools 
 
 
-threshold = 0.25
+
+THRESHOLD = 0.25
 
 # define "PIV" shift, i.e. creating u,v values that we want to get
 # -5.5 pixels to the left and 3.2 pixels upwards
@@ -19,18 +21,18 @@ threshold = 0.25
 # the second value is 1 pixel positive to the right 
 # shifted_digit_image=shift(some_digit_image,[2,1]) 
 # so we expect to get later
-# shift(image, [-1*shift_v, shift_u])
+# shift(image, [-1*SHIFT_V, SHIFT_U])
 
 
 # <------
-shift_u = -3.5  # shift to the left, should be placed in columns, axis=1
+SHIFT_U = -3.5  # shift to the left, should be placed in columns, axis=1
 # ^
 # |
 # |
-shift_v = 2.5   # shift upwards, should be placed in rows, axis=0 
+SHIFT_V = 2.5   # shift upwards, should be placed in rows, axis=0 
 
 
-def create_pair(image_size=32, u=shift_u, v=shift_v):
+def create_pair(image_size=32, u=SHIFT_U, v=SHIFT_V):
     """ creates a pair of images with a roll/shift """
     frame_a = np.zeros((image_size, image_size))
     frame_a = random_noise(frame_a)
@@ -60,16 +62,16 @@ def test_piv():
     # extended_search_area_piv returns image based coordinate system
     u, v, _ = piv(frame_a, frame_b, window_size=32)
     print(u, v)
-    assert np.allclose(u, shift_u, atol=threshold)
-    assert np.allclose(v, shift_v, atol=threshold)
+    assert np.allclose(u, SHIFT_U, atol=THRESHOLD)
+    assert np.allclose(v, SHIFT_V, atol=THRESHOLD)
 
 
 def test_piv_smaller_window():
     """ test of the search area larger than the window """
     frame_a, frame_b = create_pair(image_size=32, u=-3.5, v=-2.1)
     u, v, _ = piv(frame_a, frame_b, window_size=16, search_area_size=32)
-    assert np.allclose(u, -3.5, atol=threshold)
-    assert np.allclose(v, -2.1, atol=threshold)
+    assert np.allclose(u, -3.5, atol=THRESHOLD)
+    assert np.allclose(v, -2.1, atol=THRESHOLD)
 
 
 def test_extended_search_area():
@@ -80,10 +82,10 @@ def test_extended_search_area():
                   search_area_size=32, 
                   overlap=0)
 
-    assert np.allclose(u, -3.5, atol=threshold)
-    assert np.allclose(v, -2.1, atol=threshold)
-    # assert dist(u, shift_u) < threshold
-    # assert dist(v, shift_v) < threshold
+    assert np.allclose(u, -3.5, atol=THRESHOLD)
+    assert np.allclose(v, -2.1, atol=THRESHOLD)
+    # assert dist(u, SHIFT_U) < THRESHOLD
+    # assert dist(v, SHIFT_V) < THRESHOLD
 
 
 def test_extended_search_area_overlap():
@@ -94,8 +96,8 @@ def test_extended_search_area_overlap():
                   search_area_size=32,
                   overlap=8)
     print(f"\n u={u}\n v={v}\n")
-    assert np.allclose(u, shift_u, atol=threshold)
-    assert np.allclose(v, shift_v, atol=threshold)
+    assert np.allclose(u, SHIFT_U, atol=THRESHOLD)
+    assert np.allclose(v, SHIFT_V, atol=THRESHOLD)
 
 
 def test_extended_search_area_sig2noise():
@@ -110,8 +112,8 @@ def test_extended_search_area_sig2noise():
         subpixel_method="gaussian"
     )
 
-    assert np.allclose(u, -3.5, atol=threshold)
-    assert np.allclose(v, 2.1, atol=threshold)
+    assert np.allclose(u, -3.5, atol=THRESHOLD)
+    assert np.allclose(v, 2.1, atol=THRESHOLD)
 
 
 def test_process_extended_search_area():
@@ -120,13 +122,12 @@ def test_process_extended_search_area():
     u, v, _ = piv(frame_a, frame_b, window_size=16,
                   search_area_size=32, dt=2., overlap=0)
 
-    assert np.allclose(u, shift_u/2., atol=threshold)
-    assert np.allclose(v, shift_v/2., atol=threshold)
+    assert np.allclose(u, SHIFT_U/2., atol=THRESHOLD)
+    assert np.allclose(v, SHIFT_V/2., atol=THRESHOLD)
 
 
 def test_sig2noise_ratio():
     """ s2n ratio test """
-    from openpiv import tools 
     im1 = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
     im2 = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
     
@@ -148,9 +149,10 @@ def test_sig2noise_ratio():
 
 
 def test_fft_correlate():
+    """ test of the fft correlation """
     frame_a, frame_b = create_pair(image_size=32)
     corr = fft_correlate_images(frame_a, frame_b)
     u, v = correlation_to_displacement(corr[np.newaxis, ...], 1, 1)
-    assert np.allclose(u, shift_u, atol=threshold)
-    assert np.allclose(v, shift_v, atol=threshold)
+    assert np.allclose(u, SHIFT_U, atol=THRESHOLD)
+    assert np.allclose(v, SHIFT_V, atol=THRESHOLD)
 

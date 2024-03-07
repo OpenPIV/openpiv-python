@@ -31,36 +31,41 @@ from natsort import natsorted
 
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
-from skimage.feature import canny
 
 
-def natural_sort(file_list: List[pathlib.Path])-> List[pathlib.Path]:
+def natural_sort(file_list: List[pathlib.Path]) -> List[pathlib.Path]:
     """ Creates naturally sorted list """
     # convert = lambda text: int(text) if text.isdigit() else text.lower()
     # alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     # return sorted(file_list, key=alphanum_key)
     return natsorted(file_list, key=str)
 
-def sorted_unique(array: np.ndarray)->np.ndarray:
+
+def sorted_unique(array: np.ndarray) -> np.ndarray:
     """Creates sorted unique array """
     uniq, index = np.unique(array, return_index=True)
     return uniq[index.argsort()]
 
 
-def display_vector_field(
-    filename: Union[pathlib.Path, str],
-    on_img: Optional[bool]=False,
-    image_name: Optional[Union[pathlib.Path,str]]=None,
-    window_size: Optional[int]=32,
-    scaling_factor: Optional[float]=1.,
-    ax: Optional[Any]=None,
-    width: Optional[float]=0.0025,
-    show_invalid: Optional[bool]=True,
+def display_vector_field_from_arrays(
+    x: np.ndarray,
+    y: np.ndarray,
+    u: np.ndarray,
+    v: np.ndarray,
+    flags: np.ndarray,
+    mask: np.ndarray,
+    on_img: Optional[bool] = False,
+    image_name: Optional[Union[pathlib.Path, str]] = None,
+    window_size: Optional[int] = 32,
+    scaling_factor: Optional[float] = 1.,
+    ax: Optional[Any] = None,
+    width: Optional[float] = 0.0025,
+    show_invalid: Optional[bool] = True,
     **kw
 ):
-    """ Displays quiver plot of the data stored in the file 
-    
-    
+    """ Displays quiver plot of the data in five arrays: x,y,u,v and flags 
+
+
     Parameters
     ----------
     filename :  string
@@ -80,20 +85,20 @@ def display_vector_field(
     scaling_factor : float, optional
         when on_img is True, provide the scaling factor to scale the background
         image to the vector field
-    
+
     show_invalid: bool, show or not the invalid vectors, default is True
 
-        
+
     Key arguments   : (additional parameters, optional)
         *scale*: [None | float]
         *width*: [None | float]
-    
-    
+
+
     See also:
     ---------
     matplotlib.pyplot.quiver
-    
-        
+
+
     Examples
     --------
     --- only vector field
@@ -105,14 +110,18 @@ def display_vector_field(
                                           image_name=Path('exp1_001_a.bmp'), 
                                           window_size=32, scaling_factor=70, 
                                           scale=100, width=0.0025)
-    
+
     """
 
-    # print(f' Loading {filename} which exists {filename.exists()}')
-    a = np.loadtxt(filename)
-    # parse
-    x, y, u, v, flags, mask = a[:, 0], a[:, 1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
+    if isinstance(u, np.ma.MaskedArray):
+        u = u.filled(0.)
+        v = v.filled(0.)
 
+    if mask is None:
+        mask = np.zeros_like(u, dtype=int)
+
+    if flags is None:
+        flags = np.zeros_like(u, dtype=int)
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -124,15 +133,14 @@ def display_vector_field(
         im = negative(im)  # plot negative of the image for more clarity
         xmax = np.amax(x) + window_size / (2 * scaling_factor)
         ymax = np.amax(y) + window_size / (2 * scaling_factor)
-        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])    
-
+        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
 
     # first mask whatever has to be masked
     u[mask.astype(bool)] = 0.
     v[mask.astype(bool)] = 0.
-    
+
     # now mark the valid/invalid vectors
-    invalid = flags > 0 # mask.astype("bool")  
+    invalid = flags > 0  # mask.astype("bool")
     valid = ~invalid
 
     # visual conversion for the data on image
@@ -150,23 +158,148 @@ def display_vector_field(
         color="b",
         width=width,
         **kw
-        )
-        
+    )
+
     if show_invalid and len(invalid) > 0:
         ax.quiver(
-                x[invalid],
-                y[invalid],
-                u[invalid],
-                v[invalid],
-                color="r",
-                width=width,
-                **kw,
-                )
-    
-    
+            x[invalid],
+            y[invalid],
+            u[invalid],
+            v[invalid],
+            color="r",
+            width=width,
+            **kw,
+        )
+
     # if on_img is False:
     #     ax.invert_yaxis()
-    
+
+    ax.set_aspect(1.)
+    # fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
+
+    plt.show()
+
+    return fig, ax
+
+
+def display_vector_field(
+    filename: Union[pathlib.Path, str],
+    on_img: Optional[bool] = False,
+    image_name: Optional[Union[pathlib.Path, str]] = None,
+    window_size: Optional[int] = 32,
+    scaling_factor: Optional[float] = 1.,
+    ax: Optional[Any] = None,
+    width: Optional[float] = 0.0025,
+    show_invalid: Optional[bool] = True,
+    **kw
+):
+    """ Displays quiver plot of the data stored in the file 
+
+
+    Parameters
+    ----------
+    filename :  string
+        the absolute path of the text file
+
+    on_img : Bool, optional
+        if True, display the vector field on top of the image provided by 
+        image_name
+
+    image_name : string, optional
+        path to the image to plot the vector field onto when on_img is True
+
+    window_size : int, optional
+        when on_img is True, provide the interrogation window size to fit the 
+        background image to the vector field
+
+    scaling_factor : float, optional
+        when on_img is True, provide the scaling factor to scale the background
+        image to the vector field
+
+    show_invalid: bool, show or not the invalid vectors, default is True
+
+
+    Key arguments   : (additional parameters, optional)
+        *scale*: [None | float]
+        *width*: [None | float]
+
+
+    See also:
+    ---------
+    matplotlib.pyplot.quiver
+
+
+    Examples
+    --------
+    --- only vector field
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, 
+                                           width=0.0025) 
+
+    --- vector field on top of image
+    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True, 
+                                          image_name=Path('exp1_001_a.bmp'), 
+                                          window_size=32, scaling_factor=70, 
+                                          scale=100, width=0.0025)
+
+    """
+
+    # print(f' Loading {filename} which exists {filename.exists()}')
+    a = np.loadtxt(filename)
+    # parse
+    x, y, u, v, flags, mask = a[:, 0], a[:,
+                                         1], a[:, 2], a[:, 3], a[:, 4], a[:, 5]
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    if on_img is True:  # plot a background image
+        im = imread(image_name)
+        im = negative(im)  # plot negative of the image for more clarity
+        xmax = np.amax(x) + window_size / (2 * scaling_factor)
+        ymax = np.amax(y) + window_size / (2 * scaling_factor)
+        ax.imshow(im, cmap="Greys_r", extent=[0.0, xmax, 0.0, ymax])
+
+    # first mask whatever has to be masked
+    u[mask.astype(bool)] = 0.
+    v[mask.astype(bool)] = 0.
+
+    # now mark the valid/invalid vectors
+    invalid = flags > 0  # mask.astype("bool")
+    valid = ~invalid
+
+    # visual conversion for the data on image
+    # to be consistent with the image coordinate system
+
+    # if on_img:
+    #     y = y.max() - y
+    #     v *= -1
+
+    ax.quiver(
+        x[valid],
+        y[valid],
+        u[valid],
+        v[valid],
+        color="b",
+        width=width,
+        **kw
+    )
+
+    if show_invalid and len(invalid) > 0:
+        ax.quiver(
+            x[invalid],
+            y[invalid],
+            u[invalid],
+            v[invalid],
+            color="r",
+            width=width,
+            **kw,
+        )
+
+    # if on_img is False:
+    #     ax.invert_yaxis()
+
     ax.set_aspect(1.)
     # fig.canvas.set_window_title('Vector field, '+str(np.count_nonzero(invalid))+' wrong vectors')
 
@@ -178,28 +311,28 @@ def display_vector_field(
 def imread(filename, flatten=0):
     """Read an image file into a numpy array
     using imageio imread
-    
+
     Parameters
     ----------
     filename :  string
         the absolute path of the image file
     flatten :   bool
         True if the image is RGB color or False (default) if greyscale
-        
+
     Returns
     -------
     frame : np.ndarray
         a numpy array with grey levels
-        
-        
+
+
     Examples
     --------
-    
+
     >>> image = openpiv.tools.imread( 'image.bmp' )
     >>> print image.shape 
         (1280, 1024)
-    
-    
+
+
     """
     im = _imread(filename)
     if np.ndim(im) > 2:
@@ -208,7 +341,7 @@ def imread(filename, flatten=0):
     return im
 
 
-def rgb2gray(rgb: np.ndarray)->np.ndarray:
+def rgb2gray(rgb: np.ndarray) -> np.ndarray:
     """converts rgb image to gray 
 
     Args:
@@ -223,21 +356,21 @@ def rgb2gray(rgb: np.ndarray)->np.ndarray:
 def imsave(filename, arr):
     """Write an image file from a numpy array
     using imageio imread
-    
+
     Parameters
     ----------
     filename :  string
         the absolute path of the image file that will be created
     arr : 2d np.ndarray
         a 2d numpy array with grey levels
-        
+
     Example
     --------
-    
+
     >>> image = openpiv.tools.imread( 'image.bmp' )
     >>> image2 = openpiv.tools.negative(image)
     >>> imsave( 'negative-image.tif', image2)
-    
+
     """
 
     if np.ndim(arr) > 2:
@@ -276,7 +409,7 @@ def mark_background(
     threshold: float,
     list_img: list,
     filename: str
-    )->np.ndarray:
+) -> np.ndarray:
     """marks background
 
     Args:
@@ -375,7 +508,8 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
                             list_bound[I, J] = 255
             else:
                 list_bound[I, J] = 255
-            f.write(str(I) + "\t" + str(J) + "\t" + str(list_bound[I, J]) + "\n")
+            f.write(str(I) + "\t" + str(J) + "\t" +
+                    str(list_bound[I, J]) + "\n")
     print("[DONE]")
     f.close()
     imsave(picname, list_bound)
@@ -383,16 +517,16 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
 
 
 def save(
-    filename: Union[pathlib.Path,str],
+    filename: Union[pathlib.Path, str],
     x: np.ndarray,
     y: np.ndarray,
     u: np.ndarray,
-    v: np.ndarray, 
+    v: np.ndarray,
     flags: Optional[np.ndarray] = None,
     mask: Optional[np.ndarray] = None,
-    fmt: str="%.4e",
-    delimiter: str="\t",
-    )-> None:
+    fmt: str = "%.4e",
+    delimiter: str = "\t",
+) -> None:
     """Save flow field to an ascii file.
 
     Parameters
@@ -474,12 +608,12 @@ def save(
 
 def display(message):
     """Display a message to standard output.
-    
+
     Parameters
     ----------
     message : string
         a message to be printed
-    
+
     """
     sys.stdout.write(message)
     sys.stdout.write("\n")
@@ -488,33 +622,33 @@ def display(message):
 
 class Multiprocesser:
     def __init__(self,
-    data_dir: pathlib.Path,
-    pattern_a: str,
-    pattern_b: Optional[str]=None,
-    )->None:
+                 data_dir: pathlib.Path,
+                 pattern_a: str,
+                 pattern_b: Optional[str] = None,
+                 ) -> None:
         """A class to handle and process large sets of images.
 
         This class is responsible of loading image datasets
         and processing them. It has parallelization facilities
         to speed up the computation on multicore machines.
-        
+
         It currently support only image pair obtained from 
         conventional double pulse piv acquisition. Support 
         for continuos time resolved piv acquistion is in the 
         future.
-        
-        
+
+
         Parameters
         ----------
         data_dir : str
             the path where image files are located 
-            
+
         pattern_a : str
             a shell glob pattern to match the first (A) frames.
-            
+
         pattern_b : str
             a shell glob pattern to match the second (B) frames. 
-            
+
         Options: 
                 pattern_a = 'image_*_a.bmp'
                 pattern_b = 'image_*_b.bmp'
@@ -531,12 +665,12 @@ class Multiprocesser:
                 pattern_a = '000*.tif'
                 pattern_b = '(1+2),(3+4)'
                 will create PIV of these pairs: 0001.tif+0002.tif, 0003.tif+0004.tif ...           
-          
+
 
         Examples
         --------
         >>> multi = openpiv.tools.Multiprocesser( '/home/user/images', 'image_*_a.bmp', 'image_*_b.bmp')
-    
+
         """
         # load lists of images
 
@@ -544,7 +678,7 @@ class Multiprocesser:
         # print(f'data_dir = {data_dir}')
         # print(f'pattern_a = {pattern_a}')
         # print(f' dir exists: {data_dir.exists()}')
-        
+
         self.files_a = natural_sort(list(data_dir.glob(pattern_a)))
 
         # print(f'List of files:')
@@ -569,7 +703,7 @@ class Multiprocesser:
         if not len(self.files_a) == len(self.files_b):
             print(self.files_a)
             print(self.files_b)
-            
+
             raise ValueError(
                 'Something failed loading the image file. There should be an equal number of "a" and "b" files.'
             )
@@ -581,17 +715,17 @@ class Multiprocesser:
 
     def run(self, func, n_cpus=1):
         """Start to process images.
-        
+
         Parameters
         ----------
-        
+
         func : python function which will be executed for each 
             image pair. See tutorial for more details.
-        
+
         n_cpus : int
             the number of processes to launch in parallel.
             For debugging purposes use n_cpus=1
-        
+
         """
 
         # create a list of tasks to be executed.
@@ -614,7 +748,7 @@ class Multiprocesser:
 
 def negative(image):
     """ Return the negative of an image
-    
+
     Parameter
     ----------
     image : 2d np.ndarray of grey levels
@@ -629,33 +763,33 @@ def negative(image):
 
 def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
     """ Displays a map of the interrogation points and windows
-    
-    
+
+
     Parameters
     ----------
     x : 2d np.ndarray
         a two dimensional array containing the x coordinates of the 
         interrogation window centers, in pixels.
-        
+
     y : 2d np.ndarray
         a two dimensional array containing the y coordinates of the 
         interrogation window centers, in pixels.
 
     window_size : the interrogation window size, in pixels
-    
+
     skip : the number of windows to skip on a row during display. 
            Recommended value is 0 or 1 for standard method, can be more for random method
            -1 to not show any window
 
     method : can be only <standard> (uniform sampling and constant window size)
                          <random> (pick randomly some windows)
-    
+
     Examples
     --------
-    
+
     >>> openpiv.tools.display_windows_sampling(x, y, window_size=32, skip=0, method='standard')
 
-    
+
     """
 
     fig = plt.figure()
@@ -666,7 +800,8 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
         nb_windows = len(x[0]) * len(y) / (skip + 1)
         # standard method --> display uniformly picked windows
         if method == "standard":
-            plt.scatter(x, y, color="g")  # plot interrogation locations (green dots)
+            # plot interrogation locations (green dots)
+            plt.scatter(x, y, color="g")
             fig.canvas.set_window_title("interrogation window map")
             # plot the windows as red squares
             for i in range(len(x[0])):
@@ -716,14 +851,15 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
                     )
                 )
         else:
-            raise ValueError("method not valid: choose between standard and random")
+            raise ValueError(
+                "method not valid: choose between standard and random")
     plt.draw()
     plt.show()
 
 
 def transform_coordinates(x, y, u, v):
     """ Converts coordinate systems from/to the image based / physical based 
-    
+
     Input/Output: x,y,u,v
 
         image based is 0,0 top left, x = columns to the right, y = rows downwards
@@ -731,9 +867,8 @@ def transform_coordinates(x, y, u, v):
 
         physical or right hand one is that leads to the positive vorticity with 
         the 0,0 origin at bottom left to be counterclockwise
-    
+
     """
     y = y[::-1, :]
     v *= -1
     return x, y, u, v
-        
