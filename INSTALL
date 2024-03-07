@@ -36,6 +36,13 @@ Use PyPI and pip
 
 Downloads the code from PyPI and runs the setup for you with installation and Cython (if preinstalled)
 
+
+Use Poetry
+================
+
+    poetry add openpiv
+
+
 Bleeding edge development version
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
