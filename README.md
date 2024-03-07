@@ -1,11 +1,7 @@
 # OpenPIV
 ![Build and upload to PyPI](https://github.com/OpenPIV/openpiv-python/workflows/Build%20and%20upload%20to%20PyPI/badge.svg)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
-
-
-
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
-[![Anaconda-Server Badge](https://anaconda.org/alexlib/openpiv/badges/version.svg)](https://anaconda.org/alexlib/openpiv)
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
