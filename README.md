@@ -37,9 +37,15 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 ## Or `conda` 
 
     conda install -c alexlib openpiv
+
+## Or [Poetry](https://python-poetry.org/)
+
+    poetry add openpiv
     
     
 ### To build from source
+
+<!-- TODO: Change this build method to use poetry -->
 
 Download the package from the Github: https://github.com/OpenPIV/openpiv-python/archive/master.zip
 or clone using git
@@ -87,7 +93,8 @@ These and many additional examples are in another repository: [OpenPIV-Python-Ex
 11. [David Bohringer](https://github.com/davidbhr)
 12. [Erich Zimmer](https://github.com/ErichZimmer)
 13. [Peter Vennemann](https://github.com/eguvep)
-14. [Lento Manickathan](https://github.com/lento234) 
+14. [Lento Manickathan](https://github.com/lento234)
+15. [Yuri Ishizawa](https://github.com/yuriishizawa)
 
 
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
