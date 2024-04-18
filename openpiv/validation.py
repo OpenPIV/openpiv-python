@@ -23,6 +23,7 @@ from typing import Tuple
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
+from openpiv.windef import PIVSettings
 
 
 
@@ -165,7 +166,13 @@ def sig2noise_val(
     return ind 
 
 
-def local_median_val(u, v, u_threshold, v_threshold, size=1):
+def local_median_val(
+        u: np.ndarray, 
+        v: np.ndarray, 
+        u_threshold: float, 
+        v_threshold: float, 
+        size: int=1
+        )->np.ndarray:
     """Eliminate spurious vectors with a local median threshold.
 
     This validation method tests for the spatial consistency of the data.
