@@ -208,16 +208,20 @@ def local_median_val(
     """
 
     # kernel footprint
-    f = np.ones((2*size+1, 2*size+1))
-    f[size,size] = 0
-
-    masked_u = np.where(~u.mask, u.data, np.nan)
-    masked_v = np.where(~v.mask, v.data, np.nan)
+    # f = np.ones((2*size+1, 2*size+1))
+    # f[size,size] = 0
+  
+    if np.ma.is_masked(u):
+        masked_u = np.where(~u.mask, u.data, np.nan)
+        masked_v = np.where(~v.mask, v.data, np.nan)
+    else:
+        masked_u = u
+        masked_v = v
 
     um = generic_filter(masked_u, np.nanmedian, mode='constant',
-                        cval=np.nan, footprint=f)
+                        cval=np.nan, size=(2*size+1, 2*size+1))
     vm = generic_filter(masked_v, np.nanmedian, mode='constant',
-                        cval=np.nan, footprint=f)
+                        cval=np.nan, size=(2*size+1, 2*size+1))
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
