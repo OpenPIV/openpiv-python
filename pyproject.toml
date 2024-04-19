@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPIV"
-version = "0.25.2"
+version = "0.25.3"
 description = "OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of a set of PIV image pairs. In addition, a Qt and Tk graphical user interfaces are in development, to ease the use for those users who don't have python skills."
 authors = ["Alex Liberzon"]
 license = "GPLv3"
@@ -31,11 +31,11 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.10"
 numpy = "^1.21.6"
 imageio = "^2.22.4"
 matplotlib = "^3"
-scikit-image = "^0.19.3"
+scikit-image=">=0.23"
 scipy = "^1.7.3"
 natsort = "^8.4.0"
 tqdm = "^4.66.1"

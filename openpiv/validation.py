@@ -23,6 +23,7 @@ from typing import Tuple
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
+from openpiv.windef import PIVSettings
 
 
 
@@ -165,7 +166,13 @@ def sig2noise_val(
     return ind 
 
 
-def local_median_val(u, v, u_threshold, v_threshold, size=1):
+def local_median_val(
+        u: np.ndarray, 
+        v: np.ndarray, 
+        u_threshold: float, 
+        v_threshold: float, 
+        size: int=1
+        )->np.ndarray:
     """Eliminate spurious vectors with a local median threshold.
 
     This validation method tests for the spatial consistency of the data.
@@ -201,16 +208,20 @@ def local_median_val(u, v, u_threshold, v_threshold, size=1):
     """
 
     # kernel footprint
-    f = np.ones((2*size+1, 2*size+1))
-    f[size,size] = 0
-
-    masked_u = np.where(~u.mask, u.data, np.nan)
-    masked_v = np.where(~v.mask, v.data, np.nan)
+    # f = np.ones((2*size+1, 2*size+1))
+    # f[size,size] = 0
+  
+    if np.ma.is_masked(u):
+        masked_u = np.where(~u.mask, u.data, np.nan)
+        masked_v = np.where(~v.mask, v.data, np.nan)
+    else:
+        masked_u = u
+        masked_v = v
 
     um = generic_filter(masked_u, np.nanmedian, mode='constant',
-                        cval=np.nan, footprint=f)
+                        cval=np.nan, size=(2*size+1, 2*size+1))
     vm = generic_filter(masked_v, np.nanmedian, mode='constant',
-                        cval=np.nan, footprint=f)
+                        cval=np.nan, size=(2*size+1, 2*size+1))
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
