@@ -6,8 +6,8 @@ notifications:
   email: false
 
 install:
-    - pip install -q numpy pytest
-    - pip install -e .
+    - pip install poetry
+    - poetry install --with=tests
 
 script:
-  - pytest openpiv
+  - poetry run pytest openpiv

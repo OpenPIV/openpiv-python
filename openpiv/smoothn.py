@@ -1,7 +1,7 @@
 from numpy import *
 from pylab import *
 import scipy.optimize.lbfgsb as lbfgsb
-import numpy.linalg
+import scipy
 from scipy.fftpack import dct, idct
 import numpy as np
 import numpy.ma as ma
@@ -803,7 +803,8 @@ def sparseTest(n=1000):
 # https://stackoverflow.com/questions/17115030/want-to-smooth-a-contour-from-a-masked-array
 
 def smooth(u, mask):
-    r = u.filled(0.)  # set all 'masked' points to 0. so they aren't used in the smoothing
+    m = ~mask
+    r = u*m  # set all 'masked' points to 0. so they aren't used in the smoothing
     a = 4*r[1:-1,1:-1] + r[2:,1:-1] + r[:-2,1:-1] + r[1:-1,2:] + r[1:-1,:-2]
     b = 4*m[1:-1,1:-1] + m[2:,1:-1] + m[:-2,1:-1] + m[1:-1,2:] + m[1:-1,:-2]  # a divisor that accounts for masked points
     b[b==0] = 1.  # for avoiding divide by 0 error (region is masked so value doesn't matter)

@@ -6,12 +6,15 @@ Created on Fri Oct  4 14:33:21 2019
 
 import pathlib
 import numpy as np
+from importlib_resources import files
 from openpiv import windef
 from openpiv.test import test_process
+from openpiv.tools import display_vector_field, display_vector_field_from_arrays, save
+from openpiv.tools import imread
 
 frame_a, frame_b = test_process.create_pair(image_size=256)
-shift_u, shift_v, threshold = test_process.shift_u, test_process.shift_v, \
-                              test_process.threshold
+shift_u, shift_v, threshold = test_process.SHIFT_U, test_process.SHIFT_V, \
+                              test_process.THRESHOLD
 
 # this test are created only to test the displacement evaluation of the
 # function the validation methods are not tested here ant therefore
@@ -45,8 +48,11 @@ def test_first_pass_circ():
         settings
     )
     print("\n", x, y, u, v, s2n)
-    assert np.mean(np.abs(u - shift_u)) < threshold
-    assert np.mean(np.abs(v - shift_v)) < threshold
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, shift_v, atol=threshold)
+    
+    save('tmp.txt',x,y,u,v)
+    display_vector_field('tmp.txt')
 
 
 def test_multi_pass_circ():
@@ -91,8 +97,8 @@ def test_multi_pass_circ():
     print(u) 
     print(v)
     print(s2n)
-    assert np.mean(np.abs(u - shift_u)) < threshold
-    assert np.mean(np.abs(v - shift_v)) < threshold
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, shift_v, atol=threshold)
     # the second condition is to check if the multipass is done.
     # It need's a little numerical inaccuracy.
 
@@ -116,8 +122,8 @@ def test_first_pass_lin():
         settings,
     )
     print("\n", x, y, u, v, s2n)
-    assert np.mean(np.abs(u - shift_u)) < threshold
-    assert np.mean(np.abs(v - shift_v)) < threshold
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, shift_v, atol=threshold)
 
 
 def test_save_plot():
@@ -185,11 +191,10 @@ def test_multi_pass_lin():
     )
 
     print("\n", x, y, u, v, s2n)
-    assert np.mean(np.abs(u - shift_u)) < threshold
-    assert np.mean(np.abs(v - shift_v)) < threshold
+    assert np.allclose(u, shift_u, atol=threshold)
+    assert np.allclose(v, shift_v, atol=threshold)
 
 
-    mask_coords = []
     u = np.ma.masked_array(u, mask=np.ma.nomask)
     v = np.ma.masked_array(v, mask=np.ma.nomask)
 
@@ -228,6 +233,10 @@ def test_simple_multipass():
         frame_b,
         settings,
     )
+    
+    save('tmp.txt', x, y, u, v)
+    display_vector_field('tmp.txt')
+        
     # print("simple multipass\n")
     # print(x,y,u,v,mask)
     # print(u[:4,:4])
@@ -267,7 +276,7 @@ def test_simple_rectangular_window():
     settings = windef.PIVSettings()
 
 
-    x, y, _,_,_ = windef.simple_multipass(
+    x, y, u, v, _ = windef.simple_multipass(
         frame_a,
         frame_b,
         settings,
@@ -299,15 +308,27 @@ def test_simple_rectangular_window():
     settings.overlap = ((16, 32), (8, 16))
     settings.num_iterations = 2
 
-    x, y, _, _, _ = windef.simple_multipass(
+    x, y, u, v, mask = windef.simple_multipass(
         frame_a,
         frame_b,
         settings,
     )
     assert np.diff(x[0,:2]) == 16
-    assert np.diff(y[:2,0]) == -8
+    assert np.diff(y[:2,0]) == -8    
+    
+
 
     settings.show_all_plots = False
     settings.show_plot = True
 
     windef.piv(settings)
+    
+    im1 = imread(files('openpiv.data').joinpath('test1/exp1_001_a.bmp'))
+    im2 = imread(files('openpiv.data').joinpath('test1/exp1_001_b.bmp'))
+    x, y, u, v, mask = windef.simple_multipass(
+        im1,
+        im2,
+        settings,
+    )
+    display_vector_field_from_arrays(x, y, u, v, 0*u, 0*v)
+    
