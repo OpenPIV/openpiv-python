@@ -6,7 +6,13 @@ Camera Calibration
 This submodule contains functions and routines to calibrate a camera
 system.
 
-
+DLT Model
+=============
+    generate_camera_params - Create DLT camera model parameters
+    calibrate_dlt - Minimize the camera model parameters
+    lsq_dlt - Calibrate and return DLT coefficients and fitting error
+    project_points - Project 3D points to image points
+    
 Pinhole Model
 =============
     generate_camera_params - Generate pinhole camera model parameters
@@ -14,9 +20,7 @@ Pinhole Model
     project_points - Project 3D points to image points
     project_to_z - Project image points to 3D points
     minimize_camera_params - Minimize the camera model parameters
-    line_dist - Using two lines, locate where those lines interesect
-    point_line_dist - Locate how far a point is to a line of sight
-    
+    line_intersect - Using two lines, locate where those lines interesect    
    
 Polynomial Model
 ================
@@ -50,5 +54,6 @@ Utils
     get_reprojection_error - Calculate the root mean square (RMS) error
     get_los_error - Calculate the RMS error of a line of sight (LOS) at a z plane
     get_image_mapping - Calculate the mappings to rectify a 2D image
+    plot_epipolar_line - Plot a 3D representation of epipolar lines
 
 """

@@ -3,11 +3,44 @@ from typing import Tuple
 
 
 __all__ = [
+    "homogenize",
     "get_reprojection_error",
     "get_los_error",
     "get_image_mapping"
 ]
     
+
+def homogenize(
+    points: np.ndarray
+):
+    """Homogenize points.
+    
+    Homogenize points for further processing and correspondance matching.
+    Points are homogenized as such:
+    [0, 1, 2, 3, ...]
+    [0, 1, 2, 3, ...]
+    [1, 1, 1, 1, ...] <-- Appended ones
+    
+    Parameters
+    ----------
+    points : np.ndarray
+        Points to which ones will be appened to the end of. The array
+        shape should be [M, N] where M in the number of dimensions and N is
+        the number of points.
+        
+    Returns
+    -------
+    points : np.ndarray
+        Homogenized points of shape (M+1, N].
+    
+    """
+    a1 = np.ones((1, points.shape[1]), dtype = points.dtype)
+    
+    return np.concatenate([
+        points, 
+        a1
+    ])
+
 
 def get_reprojection_error(
     cam_struct: dict,
