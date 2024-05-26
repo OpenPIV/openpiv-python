@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..dlt_model import calibrate_dlt
+from ..dlt_model import lsq_dlt
 
 
 __all__ = [
@@ -20,7 +20,7 @@ def _get_all_homography(
     all_H = []
     
     for i in range(len(all_image_points)):
-        H, err = calibrate_dlt(
+        H, err = lsq_dlt(
             all_object_points,
             all_image_points[i],
             enforce_coplanar=True
