@@ -1,14 +1,6 @@
 import numpy as np
 
 
-__all__ = [
-    "_undistort_points_brown",
-    "_distort_points_brown",
-    "_undistort_points_poly",
-    "_distort_points_poly"
-]
-
-
 def _undistort_points_brown(
     cam_struct: dict,
     xd: np.ndarray, 
@@ -16,8 +8,8 @@ def _undistort_points_brown(
 ):
     """Undistort normalized points.
     
-    Undistort normalized camera points using a radial and tangential distortion
-    model. 
+    Undistort normalized camera points using a radial and tangential
+    distortion model. 
     
     Parameters
     ----------
@@ -37,8 +29,8 @@ def _undistort_points_brown(
     
     Notes
     -----
-    Distortion model is based off of OpenCV. The direct link where the distortion 
-    model was accessed is provided below.
+    Distortion model is based off of OpenCV. The direct link where the
+    distortion model was accessed is provided below.
     https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
     
     """    
@@ -68,8 +60,8 @@ def _distort_points_brown(
 ):
     """Distort normalized points.
     
-    Distort normalized camera points using a radial and tangential distortion
-    model. 
+    Distort normalized camera points using a radial and tangential
+    distortion model. 
     
     Parameters
     ----------
@@ -89,8 +81,8 @@ def _distort_points_brown(
     
     Notes
     -----
-    Distortion model is based off of OpenCV. The direct link where the distortion 
-    model was accessed is provided below.
+    Distortion model is based off of OpenCV. The direct link where the
+    distortion model was accessed is provided below.
     https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
     
     """    
@@ -120,7 +112,7 @@ def _undistort_points_poly(
 ):
     """Undistort normalized points.
     
-    Undistort normalized camera points using a polynomial distortion model. 
+    Undistort normalized camera points using a polynomial distortion model.
     
     Parameters
     ----------
@@ -144,9 +136,10 @@ def _undistort_points_poly(
     https://github.com/ronshnapp/MyPTV/tree/master/myptv
     
     The polynomial is of the 2nd order type, with the coefficients arranged
-    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows any
-    distortion in the x and y axes to be compensated. However, the polynomial
-    model is not stable when extrapolating, so beware of artifcacts.
+    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows
+    any distortion in the x and y axes to be compensated. However, the 
+    polynomial model is not stable when extrapolating, so beware of
+    artifcacts.
     
     """    
     k1, k2, _, _ = cam_struct["distortion2"]
@@ -167,7 +160,7 @@ def _distort_points_poly(
 ):
     """Distort normalized points.
     
-    Distort normalized camera points using a polynomial distortion model. 
+    Distort normalized camera points using a polynomial distortion model.
     
     Parameters
     ----------
@@ -191,14 +184,15 @@ def _distort_points_poly(
     https://github.com/ronshnapp/MyPTV/tree/master/myptv
     
     The polynomial is of the 2nd order type, with the coefficients arranged
-    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows any
-    distortion in the x and y axes to be compensated. However, the polynomial
-    model is not stable when extrapolating, so beware of artifcacts.
+    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows
+    any distortion in the x and y axes to be compensated. However, the 
+    polynomial model is not stable when extrapolating, so beware of
+    artifcacts.
     
-    To compute the inverse of the distortion model, we simply minimize a new
-    inverse matrix by projecting world points into image points and correcting
-    for distortion. This approach is different from MyPTV as it does not use
-    a Taylor Series expansion on the error terms for inversion.
+    To compute the inverse of the distortion model, we simply minimize a
+    new inverse matrix by projecting world points into image points and
+    correcting for distortion. This approach is different from MyPTV as it
+    does not use a Taylor Series expansion on the error terms for inversion.
     
     """    
     _, _, k1, k2 = cam_struct["distortion2"]

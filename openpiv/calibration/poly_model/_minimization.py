@@ -1,6 +1,8 @@
 import numpy as np
 
 from ._check_params import _check_parameters
+from .._doc_utils import (docstring_decorator,
+                          doc_obj_coords, doc_img_coords, doc_cam_struct)
 
 
 __all__ = [
@@ -8,6 +10,7 @@ __all__ = [
 ]
 
 
+@docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
 def minimize_polynomial(
     cam_struct: dict,
     object_points: list,
@@ -20,31 +23,31 @@ def minimize_polynomial(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     object_points : np.ndarray
-        A 2D np.ndarray containing [x, y, z] object points.
+        {1}
     image_points : np.ndarray
-        A 2D np.ndarray containing [x, y] image points.
+        {2}
         
     Returns
     -------
     cam_struct : dict
-        A dictionary structure of optimized camera parameters.
+        {0}
         
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_polynomial.generate_camera_params(
+    >>> camera_parameters = poly_model.generate_camera_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+    >>> camera_parameters = poly_model.minimize_polynomial(
             camera_parameters,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]
@@ -52,7 +55,7 @@ def minimize_polynomial(
         
     >>> calib_utils.get_reprojection_error(
             camera_parameters, 
-            calib_polynomial.project_points,
+            poly_model.project_points,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]
         )

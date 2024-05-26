@@ -1,6 +1,8 @@
 import numpy as np
 
 from ._check_params import _check_parameters
+from .._doc_utils import (docstring_decorator,
+                          doc_obj_coords, doc_img_coords, doc_cam_struct)
 
 
 __all__ = [
@@ -9,6 +11,7 @@ __all__ = [
 ]
 
 
+@docstring_decorator(doc_cam_struct, doc_obj_coords)
 def project_points(
     cam_struct: dict,
     object_points: np.ndarray
@@ -20,9 +23,9 @@ def project_points(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     object_points : 2D np.ndarray
-        Real world coordinates. The ndarray is structured like [X, Y, Z].
+        {1}
         
     Returns
     -------
@@ -92,6 +95,7 @@ def project_points(
     return img_points.astype(dtype, copy=False)
 
 
+@docstring_decorator(doc_cam_struct, doc_img_coords)
 def project_to_z(
     cam_struct: dict,
     image_points: np.ndarray,
@@ -104,9 +108,9 @@ def project_to_z(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     image_points : 2D np.ndarray
-        Image coordinates. The ndarray is structured like [x, y].
+        {1}
     z : float
         A float specifying the Z (depth) plane to project to.
         

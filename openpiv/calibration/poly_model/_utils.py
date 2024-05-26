@@ -2,13 +2,17 @@ import numpy as np
 from typing import Tuple
 
 from ._check_params import _check_parameters
-
+from .._doc_utils import (docstring_decorator,
+                          doc_cam_struct)
 
 __all__ = [
-    "generate_camera_params"
+    "generate_camera_params",
+    "save_parameters",
+    "load_parameters"
 ]
 
 
+@docstring_decorator(doc_cam_struct)
 def generate_camera_params(
     cam_name: str,
     resolution: Tuple[int, int],
@@ -37,7 +41,7 @@ def generate_camera_params(
     Returns
     -------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
         
     Examples
     --------
@@ -62,4 +66,123 @@ def generate_camera_params(
     
     _check_parameters(cam_struct)
     
+    return cam_struct
+
+
+@docstring_decorator(doc_cam_struct)
+def save_parameters(
+    cam_struct: dict,
+    file_path: str,
+    file_name: str=None
+):
+    """Save pinhole camera parameters.
+    
+    Save the polynomial camera parameters to a text file.
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        {0}
+    file_path : str
+        File path where the camera parameters are saved.
+    file_name : str, optional
+        If specified, override the default file name.
+        
+    Returns
+    -------
+    None
+    
+    """
+    from os.path import join
+    
+    if file_name is None:
+        file_name = cam_struct["name"]
+    
+    full_path = join(file_path, file_name)
+    
+    with open(full_path, 'w') as f:
+        f.write(cam_struct["name"] + '\n')
+        
+        _r = ''
+        for i in range(2):
+            _r += str(cam_struct["resolution"][i]) + ' '
+            
+        f.write(_r + '\n')
+        
+        for i in range(19):
+            _d2 = ''
+            for j in range(2):
+                _d2 += str(cam_struct["poly_wi"][i, j]) + ' '
+                
+            f.write(_d2 + '\n')
+            
+        for i in range(19):
+            _d2 = ''
+            for j in range(3):
+                _d2 += str(cam_struct["poly_iw"][i, j]) + ' '
+                
+            f.write(_d2 + '\n')
+        
+        f.write(cam_struct["dtype"] + '\n')
+        
+    return None
+        
+
+@docstring_decorator(doc_cam_struct)
+def load_parameters(
+    file_path: str,
+    file_name: str
+):
+    """Load pinhole camera parameters.
+    
+    Load the polynomial camera parameters from a text file.
+    
+    Parameters
+    ----------
+    file_path : str
+        File path where the camera parameters are saved.
+    file_name : str
+        Name of the file that contains the camera parameters.
+        
+    Returns
+    -------
+    cam_struct : dict
+        {0}
+    
+    """
+    from os.path import join
+    
+    full_path = join(file_path, file_name)
+    
+    with open(full_path, 'r') as f:
+        
+        name = f.readline()[:-1]
+        
+        _r = f.readline()[:-2]
+        resolution = np.array([float(s) for s in _r.split()])
+            
+        poly_wi = []
+        for i in range(19):
+            _d2 = f.readline()[:-2]
+            poly_wi.append(np.array([float(s) for s in _d2.split()]))
+            
+        poly_wi = np.array(poly_wi, dtype = "float64")
+        
+        poly_iw = []
+        for i in range(19):
+            _d2 = f.readline()[:-2]
+            poly_iw.append(np.array([float(s) for s in _d2.split()]))
+            
+        poly_iw = np.array(poly_iw, dtype = "float64")
+        
+        dtype = f.readline()[:-1]
+
+    cam_struct = generate_camera_params(
+        name,
+        resolution,
+        poly_wi=poly_wi,
+        poly_iw=poly_iw,
+        dtype=dtype
+    )
+
     return cam_struct

@@ -1,11 +1,6 @@
 import numpy as np
 
 
-__all__ = [
-    "_check_parameters"
-]
-
-
 def _check_parameters(
     cam_struct: dict
 ):

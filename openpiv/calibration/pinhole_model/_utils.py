@@ -2,6 +2,8 @@ import numpy as np
 from typing import Tuple
 
 from ._check_params import _check_parameters
+from .._doc_utils import (docstring_decorator,
+                          doc_cam_struct)
 
 
 __all__ = [
@@ -12,6 +14,7 @@ __all__ = [
 ]
 
 
+@docstring_decorator(doc_cam_struct)
 def generate_camera_params(
     name: str,
     resolution: Tuple[int, int],
@@ -71,7 +74,7 @@ def generate_camera_params(
     Returns
     -------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     
     Examples
     --------
@@ -133,6 +136,7 @@ def generate_camera_params(
     return cam_struct
 
 
+@docstring_decorator(doc_cam_struct)
 def get_rotation_matrix(
     cam_struct: dict
 ):
@@ -160,7 +164,7 @@ def get_rotation_matrix(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     
     Rewturns
     --------
@@ -213,6 +217,7 @@ def get_rotation_matrix(
     return rotation_matrix
 
 
+@docstring_decorator(doc_cam_struct)
 def save_parameters(
     cam_struct: dict,
     file_path: str,
@@ -225,7 +230,7 @@ def save_parameters(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     file_path : str
         File path where the camera parameters are saved.
     file_name : str, optional
@@ -237,6 +242,8 @@ def save_parameters(
     
     """
     from os.path import join
+    
+    _check_parameters(cam_struct)
     
     if file_name is None:
         file_name = cam_struct["name"]
@@ -293,7 +300,10 @@ def save_parameters(
         
         f.write(cam_struct["dtype"] + '\n')
         
+    return None
         
+
+@docstring_decorator(doc_cam_struct)
 def load_parameters(
     file_path: str,
     file_name: str
@@ -312,7 +322,7 @@ def load_parameters(
     Returns
     -------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     
     """
     from os.path import join

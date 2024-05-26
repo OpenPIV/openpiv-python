@@ -1,13 +1,9 @@
 import numpy as np
 
-from ._dlt import calibrate_dlt
+from ..dlt_model import calibrate_dlt
 
 
 __all__ = [
-    "_get_all_homography",
-    "_get_Vij",
-    "_get_B",
-    "_get_intrinsics",
     "calibrate_intrinsics"
 ]
 
@@ -69,7 +65,7 @@ def _get_B(
     
     B0, B1, B2, B3, B4, B5 = b
 
-    # Rearrage B to form B = K_-T K_-1
+    # Rearrage B to form B = K^-T K^-1
     B = np.array([[B0, B1, B3],
                   [B1, B2, B4],
                   [B3, B4, B5]])
@@ -94,6 +90,28 @@ def calibrate_intrinsics(
     all_object_points: np.ndarray,
     all_image_points: np.ndarray
 ):
+    """Intrinsic calibration using Zhang's method.
+    
+    Using multiple views of planar targets, calculate the intrinsic
+    parameters that best fits all views using a closed-form solution.
+    
+    Parameters
+    ----------
+    all_object_points : np.ndarray
+        Lab coordinates with a structured like [[X, Y, Z]'] * number
+        of planes.
+        
+    all_image_points : np.ndarray
+        Image coordinates with a structured like [[x, y]'] * number
+        of planes.
+        
+    Returns
+    -------
+    intrinsics : np.ndarray
+        5 elements that contain camera intrinsic information and are in the
+        order as such: fx, fy, cx, cy, and gamma (skew).
+    
+    """
     all_h = _get_all_homography(
         all_object_points,
         all_image_points

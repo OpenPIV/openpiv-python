@@ -3,8 +3,9 @@ import numpy as np
 from ._check_params import _check_parameters
 from ._projection import project_points, _normalize_image_points
 from ._utils import get_rotation_matrix
-#from openpiv.calibration import utils
-from openpiv.calib_utils import get_reprojection_error, get_los_error
+from ..calib_utils import get_reprojection_error, get_los_error
+from .._doc_utils import (docstring_decorator,
+                          doc_obj_coords, doc_img_coords, doc_cam_struct)
 
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
 ]
 
 
+@docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
 def minimize_camera_params(
     cam_struct: dict,
     object_points: list,
@@ -23,18 +25,19 @@ def minimize_camera_params(
 ):
     """Minimize camera parameters.
     
-    Minimize camera parameters using BFGS optimization. To do this, the root mean
-    square error (RMS error) is calculated for each iteration. The set of parameters
-    with the lowest RMS error is returned (which is hopefully correct the minimum).
+    Minimize camera parameters using BFGS optimization. To do this, the
+    root mean square error (RMS error) is calculated for each iteration.
+    The set of parameters with the lowest RMS error is returned (which is
+    hopefully correct the minimum).
     
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     object_points : np.ndarray
-        A 2D np.ndarray containing [x, y, z] object points.
+        {1}
     image_points : np.ndarray
-        A 2D np.ndarray containing [x, y] image points.
+        {2}
     correct_focal : bool
         If true, minimize the focal point.
     correct_distortion : bool
@@ -47,17 +50,18 @@ def minimize_camera_params(
     Returns
     -------
     cam_struct : dict
-        A dictionary structure of optimized camera parameters.
+        {0}
     
     Notes
     -----
-    When minimizing the camera parameters, it is important that the parameters are
-    estimated first before distortion correction. This allows a better estimation
-    of the camera parameters and distortion coefficients. For instance, if one were
-    to calibrate the camera intrinsic and distortion coefficients before moving the
-    camera to the lab apparatus, it would be important to calibrate the camera
-    parameters before the distortion model to ensure a better convergence and thus,
-    lower root mean sqaure (RMS) errors. This can be done in the following procedure:
+    When minimizing the camera parameters, it is important that the
+    parameters are estimated first before distortion correction. This allows
+    a better estimation of the camera parameters and distortion coefficients.
+    For instance, if one were to calibrate the camera intrinsic and distortion
+    coefficients before moving the camera to the lab apparatus, it would be
+    important to calibrate the camera parameters before the distortion model
+    to ensure a better convergence and thus, lower root mean sqaure (RMS) errors.
+    This can be done in the following procedure:
     
     1. Place the camera directly in front of a planar calibration plate.
     
@@ -73,24 +77,24 @@ def minimize_camera_params(
     A brief example is shown below. More can be found in the example PIV lab
     experiments.
     
-    On a side note, for a decent calibration to occur, at least 20 points are needed. For
-    attaining a rough estimate for marker detection purposes, at least 9 points
-    are needed (of course, this is excuding distortion correction).
+    On a side note, for a decent calibration to occur, at least 20 points are
+    needed. For attaining a rough estimate for marker detection purposes, at
+    least 9 points are needed (of course, this is excuding distortion correction).
     
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_pinhole
+    >>> from openpiv.calibration import calib_utils, pinhole_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_pinhole.generate_camera_params(
+    >>> camera_parameters = pinhole_model.generate_camera_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-     >>> camera_parameters = calib_pinhole.minimize_camera_params(
+     >>> camera_parameters = pinhole_model.minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -99,7 +103,7 @@ def minimize_camera_params(
             iterations=5
         )
     
-    >>> camera_parameters = calib_pinhole.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_camera_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -110,7 +114,7 @@ def minimize_camera_params(
     
     >>> calib_utils.get_reprojection_error(
             camera_parameters, 
-            calib_pinhole.project_points,
+            pinhole_model.project_points,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]
         )
