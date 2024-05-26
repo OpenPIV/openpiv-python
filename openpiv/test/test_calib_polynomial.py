@@ -3,10 +3,10 @@ import pytest
 
 from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
-                           assert_)
+                           assert_array_equal, assert_)
 
-from openpiv import calib_polynomial
-from openpiv.calib_utils import get_reprojection_error, get_los_error
+from openpiv.calibration import poly_model as calib_polynomial
+from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def test_parameters_input():
@@ -227,4 +227,79 @@ def test_projection_03():
     
     assert_(RMSE_0 < 1e-2)
     assert_(RMSE_1 < 1e-2)
-    assert_(RMSE_2 < 1e-2)    
+    assert_(RMSE_2 < 1e-2)
+    
+    
+def test_save_parameters_1():
+    params = calib_polynomial.generate_camera_params(
+        "dummy",
+        resolution = [512, 512]
+    )
+        
+    calib_polynomial.save_parameters(
+        params,
+        "."
+    )
+
+
+def test_save_parameters_2():
+    params = calib_polynomial.generate_camera_params(
+        "dummy",
+        resolution = [512, 512]
+    )
+
+        
+    calib_polynomial.save_parameters(
+        params,
+        ".", "saved_params"
+    )
+
+    
+def test_load_parameters_1():
+    with pytest.raises(FileNotFoundError):
+        params_loaded = calib_polynomial.load_parameters(
+            ".",
+            "does not exist (hopefully)"
+        )
+    
+
+def test_load_parameters_2():
+    params_orig = calib_polynomial.generate_camera_params(
+        "dummy",
+        resolution = [512, 512]
+    )
+        
+    calib_polynomial.save_parameters(
+        params_orig,
+        ".",
+        "dummy"
+    )
+    
+    params_new = calib_polynomial.load_parameters(
+        ".",
+        "dummy"
+    )
+    assert_array_equal(
+        params_orig["name"], 
+        params_new["name"]
+    )
+    
+    assert_array_equal(
+        params_orig["resolution"], 
+        params_new["resolution"]
+    )
+    
+    assert_array_equal(
+        params_orig["poly_wi"], 
+        params_new["poly_wi"]
+    )
+    
+    assert_array_equal(
+        params_orig["poly_iw"], 
+        params_new["poly_iw"]
+    )
+    
+    assert_array_equal(
+        params_orig["dtype"], 
+        params_new["dtype"]
+    )

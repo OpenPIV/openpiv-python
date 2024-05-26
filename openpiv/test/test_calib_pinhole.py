@@ -3,15 +3,15 @@ import pytest
 
 from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
-                           assert_)
+                           assert_array_equal, assert_)
 
-from openpiv import calib_pinhole
-from openpiv.calib_utils import get_reprojection_error, get_los_error
+from openpiv.calibration import pinhole_model as calib_pinhole
+from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def get_test_camera_params():
     with open("test_calibration_points_pinhole.txt", 'r') as f:
-        name = f.readline()
+        name = f.readline()[:-1]
         
         line = f.readline()[:]
         resolution = [float(num) for num in line.split()]
@@ -142,6 +142,13 @@ def test_parameters_input():
             principal=[1]
         )
         
+        # not a support dtype (supported dtypes are float32 and float64)
+        calib_pinhole.generate_camera_params(
+            "name",
+            resolution=[0, 0],
+            dtype=int
+        )
+        
 
 def test_parameters_initialization():
     params = calib_pinhole.generate_camera_params(
@@ -159,6 +166,7 @@ def test_parameters_initialization():
     assert_("distortion2" in params)
     assert_("focal" in params)
     assert_("principal" in params)
+    assert_("dtype" in params)
     
     assert_(len(params["resolution"]) == 2)
     
@@ -190,6 +198,9 @@ def test_parameters_initialization():
     assert_(len(params["focal"]) == 2)
     
     assert_(len(params["principal"]) == 2)
+    
+    # float32 does not work well with the pinhole model, should it be deprecated?
+    assert_(params["dtype"] in ["float32", "float64"])
         
 
 def test_rotation_matrix_01():
@@ -218,10 +229,7 @@ def test_rotation_matrix_02():
     )
 
 
-@pytest.mark.parametrize("dist_coefs", (np.zeros(8), np.random.rand(8)))
-def test_projection_01(
-    dist_coefs: np.ndarray
-):
+def test_projection_01():
     params = calib_pinhole.generate_camera_params(
         "name",
         resolution = [1024, 1024]
@@ -374,7 +382,7 @@ def test_minimization_01(
         "minimized",
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
-        orientation = [-3, -0.01, 0.01], # initial guess
+        orientation = [0, np.pi, np.pi], # initial guess
         focal = [1000, 1000],
         distortion_model = model
     )
@@ -413,7 +421,7 @@ def test_minimization_02(
         "minimized",
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
-        orientation = [-3, -0.01, 0.01], # initial guess
+        orientation = [0, np.pi, np.pi], # initial guess
         focal = [1000, 1000],
         distortion_model = model
     )
@@ -455,4 +463,109 @@ def test_minimization_02(
         params_orig["principal"], 
         params_new["principal"],
         decimal = 1
+    )
+
+
+def test_save_parameters_1():
+    params = get_test_camera_params()
+        
+    calib_pinhole.save_parameters(
+        params,
+        "."
+    )
+
+
+@pytest.mark.parametrize("default", (True, False))
+def test_save_parameters_2(
+    default: bool
+):
+    
+    if default:
+        params = calib_pinhole.generate_camera_params(
+            "dummy",
+            resolution = [512, 512]
+        )
+    else:
+        params = get_test_camera_params()
+        
+    calib_pinhole.save_parameters(
+        params,
+        ".", "saved_params"
+    )
+
+    
+def test_load_parameters_1():
+    with pytest.raises(FileNotFoundError):
+        params_loaded = calib_pinhole.load_parameters(
+            ".",
+            "does not exist (hopefully)"
+        )
+    
+
+def test_load_parameters_2():
+    params_orig = get_test_camera_params()
+        
+    calib_pinhole.save_parameters(
+        params_orig,
+        ".",
+        "dummy"
+    )
+    
+    params_new = calib_pinhole.load_parameters(
+        ".",
+        "dummy"
+    )
+    assert_array_equal(
+        params_orig["name"], 
+        params_new["name"]
+    )
+    
+    assert_array_equal(
+        params_orig["resolution"], 
+        params_new["resolution"]
+    )
+    
+    assert_array_equal(
+        params_orig["translation"], 
+        params_new["translation"]
+    )
+    
+    assert_array_equal(
+        params_orig["orientation"], 
+        params_new["orientation"]
+    )
+    
+    assert_array_equal(
+        params_orig["rotation"], 
+        params_new["rotation"]
+    )
+    
+    assert_array_equal(
+        params_orig["distortion_model"], 
+        params_new["distortion_model"]
+    )
+    
+    assert_array_equal(
+        params_orig["distortion1"], 
+        params_new["distortion1"]
+    )
+    
+    assert_array_equal(
+        params_orig["distortion2"], 
+        params_new["distortion2"]
+    )
+    
+    assert_array_equal(
+        params_orig["focal"], 
+        params_new["focal"]
+    )
+    
+    assert_array_equal(
+        params_orig["principal"], 
+        params_new["principal"]
+    )
+    
+    assert_array_equal(
+        params_orig["dtype"], 
+        params_new["dtype"]
     )
