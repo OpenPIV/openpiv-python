@@ -5,8 +5,8 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from openpiv.calibration import pinhole_model as calib_pinhole
-from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
+from .calibration import pinhole_model as calib_pinhole
+from .calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def get_test_camera_params():
@@ -31,7 +31,7 @@ def get_test_camera_params():
         line = f.readline()[:]
         principal = [float(num) for num in line.split()]
     
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
         name = name,
         resolution = resolution,
         translation = translation,
@@ -50,56 +50,56 @@ def get_test_camera_params():
 def test_parameters_input():
     with pytest.raises(TypeError):
          # missing camera name
-        calib_pinhole.generate_camera_params()
+        calib_pinhole.get_cam_params()
         
         # missing resolution
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name"
         )
                                  
     with pytest.raises(ValueError):
         # name is not a string
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             0,
             resolution=[0, 0]
         )
         
         # not two element tuple
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0]
         )
         
         # not three element vector
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             translation=[0, 0]
         )
         
         # not three element vector
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             orientation=[0, 0]
         )
         
         # not 3x3 matrix
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             rotation=np.zeros([3,2])
         )
         
         # wrong distortion model
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             distortion_model="non-existent <random symbols here>",
         )
         
         # not 8 element vector for brown model 
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             distortion_model="brown",
@@ -107,7 +107,7 @@ def test_parameters_input():
         )
         
         # not 4 x 6 matrix for polynomial model 
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             distortion_model="polynomial",
@@ -115,35 +115,35 @@ def test_parameters_input():
         )
         
         # not 2 element list-like
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             focal="[2, 2]"
         )
         
         # not 2 element vector 
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             focal=[1]
         )
         
         # not 2 element list-like
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             principal="[2, 2]"
         )
         
         # not 2 element vector 
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             principal=[1]
         )
         
         # not a support dtype (supported dtypes are float32 and float64)
-        calib_pinhole.generate_camera_params(
+        calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0],
             dtype=int
@@ -151,7 +151,7 @@ def test_parameters_input():
         
 
 def test_parameters_initialization():
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
             "name",
             resolution=[0, 0]
         )
@@ -204,7 +204,7 @@ def test_parameters_initialization():
         
 
 def test_rotation_matrix_01():
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
         "name",
         resolution = [1024, 1024]
     )
@@ -216,7 +216,7 @@ def test_rotation_matrix_01():
     
     
 def test_rotation_matrix_02():
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
         "name",
         resolution = [1024, 1024],
         translation = [0, 0, 1],
@@ -230,7 +230,7 @@ def test_rotation_matrix_02():
 
 
 def test_projection_01():
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
         "name",
         resolution = [1024, 1024]
     )
@@ -378,7 +378,7 @@ def test_minimization_01(
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params = calib_pinhole.generate_camera_params(
+    params = calib_pinhole.get_cam_params(
         "minimized",
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
@@ -387,7 +387,7 @@ def test_minimization_01(
         distortion_model = model
     )
     
-    params = calib_pinhole.minimize_camera_params(
+    params = calib_pinhole.minimize_params(
         params,
         cal_obj_points,
         cal_img_points,
@@ -417,7 +417,7 @@ def test_minimization_02(
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params_new = calib_pinhole.generate_camera_params(
+    params_new = calib_pinhole.get_cam_params(
         "minimized",
         resolution = [512, 512],
         translation = [1, 1, 520], # initial guess
@@ -426,7 +426,7 @@ def test_minimization_02(
         distortion_model = model
     )
     
-    params_new = calib_pinhole.minimize_camera_params(
+    params_new = calib_pinhole.minimize_params(
         params_new,
         cal_obj_points,
         cal_img_points,
@@ -481,7 +481,7 @@ def test_save_parameters_2(
 ):
     
     if default:
-        params = calib_pinhole.generate_camera_params(
+        params = calib_pinhole.get_cam_params(
             "dummy",
             resolution = [512, 512]
         )

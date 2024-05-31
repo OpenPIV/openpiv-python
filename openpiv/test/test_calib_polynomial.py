@@ -5,56 +5,56 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from openpiv.calibration import poly_model as calib_polynomial
-from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
+from .calibration import poly_model as calib_polynomial
+from .calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def test_parameters_input():
     with pytest.raises(TypeError):
          # missing camera name
-        calib_polynomial.generate_camera_params()
+        calib_polynomial.get_cam_params()
         
         # missing resolution
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name"
         )
                                  
     with pytest.raises(ValueError):
         # name is not a string
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             0,
             resolution=[0, 0]
         )
         
         # not two element tuple
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name",
             resolution=[0]
         )
         
         # not 2D
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name",
             resolution=[0, 0],
             poly_wi = np.zeros(19)
         )
         
         # not 2D
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name",
             resolution=[0, 0],
             poly_iw = np.zeros(19)
         )
         
         # not correct shape
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name",
             resolution=[0, 0],
             poly_wi = np.zeros((10, 10))
         )
         
         # not correct shape
-        calib_polynomial.generate_camera_params(
+        calib_polynomial.get_cam_params(
             "name",
             resolution=[0, 0],
             poly_iw = np.zeros((10, 10))
@@ -62,7 +62,7 @@ def test_parameters_input():
         
 
 def test_parameters_initialization():
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
             "name",
             resolution=[0, 0]
         )
@@ -91,12 +91,12 @@ def test_minimization_01():
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "poly",
         resolution = [512, 512],
     )
     
-    params = calib_polynomial.minimize_polynomial(
+    params = calib_polynomial.minimize_params(
         params,
         cal_obj_points,
         cal_img_points
@@ -118,12 +118,12 @@ def test_projection_01():
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "poly",
         resolution = [512, 512],
     )
     
-    params = calib_polynomial.minimize_polynomial(
+    params = calib_polynomial.minimize_params(
         params,
         cal_obj_points,
         cal_img_points
@@ -160,12 +160,12 @@ def test_projection_02():
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "poly",
         resolution = [512, 512],
     )
     
-    params = calib_polynomial.minimize_polynomial(
+    params = calib_polynomial.minimize_params(
         params,
         cal_obj_points,
         cal_img_points
@@ -193,12 +193,12 @@ def test_projection_03():
     cal_obj_points = cal_data["obj_points"]
     cal_img_points = cal_data["img_points"]
     
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "poly",
         resolution = [512, 512],
     )
     
-    params = calib_polynomial.minimize_polynomial(
+    params = calib_polynomial.minimize_params(
         params,
         cal_obj_points,
         cal_img_points
@@ -231,7 +231,7 @@ def test_projection_03():
     
     
 def test_save_parameters_1():
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "dummy",
         resolution = [512, 512]
     )
@@ -243,7 +243,7 @@ def test_save_parameters_1():
 
 
 def test_save_parameters_2():
-    params = calib_polynomial.generate_camera_params(
+    params = calib_polynomial.get_cam_params(
         "dummy",
         resolution = [512, 512]
     )
@@ -264,7 +264,7 @@ def test_load_parameters_1():
     
 
 def test_load_parameters_2():
-    params_orig = calib_polynomial.generate_camera_params(
+    params_orig = calib_polynomial.get_cam_params(
         "dummy",
         resolution = [512, 512]
     )
