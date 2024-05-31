@@ -15,7 +15,7 @@ def homogenize(
 ):
     """Homogenize points.
     
-    Homogenize points for further processing and correspondance matching.
+    Homogenize points for further processing and correspondence matching.
     Points are homogenized as such:
     [0, 1, 2, 3, ...]
     [0, 1, 2, 3, ...]
@@ -24,7 +24,7 @@ def homogenize(
     Parameters
     ----------
     points : np.ndarray
-        Points to which ones will be appened to the end of. The array
+        Points to which ones will be appended to the end of. The array
         shape should be [M, N] where M in the number of dimensions and N is
         the number of points.
         
@@ -58,7 +58,7 @@ def get_reprojection_error(
     cam_struct : dict
         A dictionary structure of camera parameters.
     proj_func : function
-        Projection function with the following signiture:
+        Projection function with the following signature:
         res = func(cam_struct, object_points).
     object_points: 2D np.ndarray
         A numpy array containing [X, Y, Z] object points.
@@ -68,22 +68,22 @@ def get_reprojection_error(
     Returns
     -------
     RMSE : float
-        Root mean square (RMS) error of camera paramerters.
+        Root mean square (RMS) error of camera parameters.
         
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.calibration import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_polynomial.generate_camera_params(
+    >>> camera_parameters = poly_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
         
-    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+    >>> camera_parameters = poly_model.minimize_params(
             camera_parameters,
             np.array([obj_x, obj_y, obj_z]),
             np.array([img_x, img_y])
@@ -91,7 +91,7 @@ def get_reprojection_error(
     
     >>> calib_utils.get_reprojection_error(
             camera_parameters2, 
-            calib_polynomial.project_points,
+            poly_model.project_points,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]
         )
@@ -142,22 +142,22 @@ def get_los_error(
     Returns
     -------
     RMSE : float
-        Root mean square (RMS) error of camera paramerters.
+        Root mean square (RMS) error of camera parameters.
     
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.calibration import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_polynomial.generate_camera_params(
+    >>> camera_parameters = poly_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
         
-    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+    >>> camera_parameters = poly_model.minimize_params(
             camera_parameters,
             np.array([obj_x, obj_y, obj_z]),
             np.array([img_x, img_y])
@@ -165,8 +165,8 @@ def get_los_error(
     
     >>> calib_utils.get_los_error(
             camera_parameters2,
-            calib_polynomial.project_to_z,
-            calib_polynomial.project_points,
+            poly_model.project_to_z,
+            poly_model.project_points,
             z = 0
         )
         
@@ -232,10 +232,10 @@ def get_image_mapping(
     cam_struct : dict
         A dictionary structure of camera parameters.
     project_to_z_func : function
-        Projection function with the following signiture:
+        Projection function with the following signature:
         res = func(cam_struct, image_points, Z).
     project_points_func : function
-        Projection function with the following signiture:
+        Projection function with the following signature:
         res = func(cam_struct, object_points).
     
     Returns
@@ -255,12 +255,12 @@ def get_image_mapping(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_polynomial.generate_camera_params(
+    >>> camera_parameters = poly_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
         
-    >>> camera_parameters = calib_polynomial.minimize_polynomial(
+    >>> camera_parameters = poly_model.minimize_params(
             camera_parameters,
             np.array([obj_x, obj_y, obj_z]),
             np.array([img_x, img_y])
@@ -268,8 +268,8 @@ def get_image_mapping(
     
     >>> mappings, scale = calib_utils.get_image_mapping(
             camera_parameters,
-            calib_polynomial.project_to_z,
-            calib_polynomial.project_points
+            poly_model.project_to_z,
+            poly_model.project_points
         )
         
     >>> mappings

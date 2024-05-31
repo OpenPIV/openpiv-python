@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import minimize
 
 from ._check_params import _check_parameters
 from ._projection import project_points, _normalize_image_points
@@ -9,12 +10,12 @@ from .._doc_utils import (docstring_decorator,
 
 
 __all__ = [
-    "minimize_camera_params"
+    "minimize_params"
 ]
 
 
 @docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
-def minimize_camera_params(
+def minimize_params(
     cam_struct: dict,
     object_points: list,
     image_points: list,
@@ -41,11 +42,11 @@ def minimize_camera_params(
     correct_focal : bool
         If true, minimize the focal point.
     correct_distortion : bool
-        If true, mininmize the distortion model.
+        If true, minimize the distortion model.
     max_iter : int
         Maximum amount of iterations in Nelder-Mead minimization.
     iterations : int
-        Number of iterations iterations to perform.
+        Number of iterations to perform.
         
     Returns
     -------
@@ -60,7 +61,7 @@ def minimize_camera_params(
     For instance, if one were to calibrate the camera intrinsic and distortion
     coefficients before moving the camera to the lab apparatus, it would be
     important to calibrate the camera parameters before the distortion model
-    to ensure a better convergence and thus, lower root mean sqaure (RMS) errors.
+    to ensure a better convergence and thus, lower root mean square (RMS) errors.
     This can be done in the following procedure:
     
     1. Place the camera directly in front of a planar calibration plate.
@@ -79,7 +80,7 @@ def minimize_camera_params(
     
     On a side note, for a decent calibration to occur, at least 20 points are
     needed. For attaining a rough estimate for marker detection purposes, at
-    least 9 points are needed (of course, this is excuding distortion correction).
+    least 9 points are needed (of course, this is excluding distortion correction).
     
     Examples
     --------
@@ -89,12 +90,12 @@ def minimize_camera_params(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = pinhole_model.generate_camera_params(
+    >>> camera_parameters = pinhole_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-     >>> camera_parameters = pinhole_model.minimize_camera_params(
+     >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -103,7 +104,7 @@ def minimize_camera_params(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -121,8 +122,6 @@ def minimize_camera_params(
     
     """
     _check_parameters(cam_struct)
-    
-    from scipy.optimize import minimize
     
     dtype = cam_struct["dtype"]
     

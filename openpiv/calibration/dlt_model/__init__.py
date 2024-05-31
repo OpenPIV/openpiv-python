@@ -11,10 +11,10 @@ that of pinhole and polynomial calibration methods.
 
 Functions
 =========
-    generate_camera_params - Create a DLT camera data structure
-    calibrate_dlt - Calibrate DLT coefficients
-    lsq_dlt - Calibrate and return DLT coefficients and fitting error
-    project_points - Project lab coordinates to image coordinates
+    get_cam_params - Create DLT camera model parameters
+    calibrate_dlt - Calibrate and return DLT coefficients and fitting error
+    minimize_params - Minimize the camera model parameters
+    project_points - Project 3D points to image points
 
 Note
 ====

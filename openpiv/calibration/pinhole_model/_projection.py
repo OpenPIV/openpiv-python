@@ -93,12 +93,12 @@ def project_points(
     >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
     >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
-    >>> camera_parameters = pinhole_model.generate_camera_params(
+    >>> camera_parameters = pinhole_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -107,7 +107,7 @@ def project_points(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -201,12 +201,12 @@ def _get_inverse_vector(
     >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
     >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
-    >>> camera_parameters = pinhole_model.generate_camera_params(
+    >>> camera_parameters = pinhole_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -215,7 +215,7 @@ def _get_inverse_vector(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -306,12 +306,12 @@ def project_to_z(
     >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
     >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
     
-    >>> camera_parameters = pinhole_model.generate_camera_params(
+    >>> camera_parameters = pinhole_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
@@ -320,7 +320,7 @@ def project_to_z(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_camera_params(
+    >>> camera_parameters = pinhole_model.minimize_params(
             camera_parameters, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],

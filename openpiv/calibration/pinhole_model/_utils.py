@@ -1,4 +1,5 @@
 import numpy as np
+from os.path import join
 from typing import Tuple
 
 from ._check_params import _check_parameters
@@ -7,7 +8,7 @@ from .._doc_utils import (docstring_decorator,
 
 
 __all__ = [
-    "generate_camera_params",
+    "get_cam_params",
     "get_rotation_matrix",
     "save_parameters",
     "load_parameters"
@@ -15,7 +16,7 @@ __all__ = [
 
 
 @docstring_decorator(doc_cam_struct)
-def generate_camera_params(
+def get_cam_params(
     name: str,
     resolution: Tuple[int, int],
     translation: np.ndarray=[0, 0, 1],
@@ -49,7 +50,7 @@ def generate_camera_params(
         The type of distortion model to use.
         
         ``brown``
-        The Brown model follows the distortion model incorperated by OpenCV.
+        The Brown model follows the distortion model incorporated by OpenCV.
         It consists of a radial and tangential model to compensate for distortion.
         
         ``polynomial``
@@ -63,8 +64,8 @@ def generate_camera_params(
     distortion2 : 2D np.ndarray
        2nd order polynomial distortion compensation matrix for a camera.
     focal : tuple[float, float]
-        Focal distance/magnification of camera-lense system for x any y axis
-        espectively.
+        Focal distance/magnification of camera-lens system for x any y axis
+        respectively.
     principal : tuple[float, float]
         Principal point offset for x any y axis respectively.
     dtype : str
@@ -84,7 +85,7 @@ def generate_camera_params(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_pinhole.generate_camera_params(
+    >>> camera_parameters = calib_pinhole.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
@@ -241,8 +242,6 @@ def save_parameters(
     None
     
     """
-    from os.path import join
-    
     _check_parameters(cam_struct)
     
     if file_name is None:
@@ -325,8 +324,6 @@ def load_parameters(
         {0}
     
     """
-    from os.path import join
-    
     full_path = join(file_path, file_name)
     
     with open(full_path, 'r') as f:
@@ -362,7 +359,7 @@ def load_parameters(
         
         dtype = f.readline()[:-1]
 
-    cam_struct = generate_camera_params(
+    cam_struct = get_cam_params(
         name,
         resolution,
         translation=translation,

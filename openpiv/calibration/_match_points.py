@@ -2,7 +2,7 @@ import numpy as np
 from typing import Tuple
 from scipy.spatial import ConvexHull
 
-from .dlt_model import lsq_dlt
+from .dlt_model import calibrate_dlt
 from ._calib_utils import homogenize
 from ._target_grids import get_simple_grid
 
@@ -18,10 +18,10 @@ __all__ = [
 # @author: Theo
 # Created on Thu Mar 25 21:03:47 2021
 
-# @ErichZimemr - Changes (June 2, 2023):
+# @ErichZimmer - Changes (June 2, 2023):
 # Revised function
 
-# @ErichZimemr - Changes (Decemmber 2, 2023):
+# @ErichZimmer - Changes (Decemmber 2, 2023):
 # Revised function
 def show_calibration_image(
     image: np.ndarray, 
@@ -276,8 +276,8 @@ def find_nearest_points(
 ):
     """Locate the nearest image point.
     
-    Locate the the closest image point to the user selected image point.
-    This function is implemented by find the mininmum distance to the
+    Locate the closest image point to the user selected image point.
+    This function is implemented by find the minimum distance to the
     point of interest, so it will always return a point no matter how
     (un)realistic that point is.
     
@@ -338,7 +338,7 @@ def get_pairs_dlt(
     """Match object points to image points via homography.
     
     Match image points to lab points using the direct linear transformation
-    correspondance of four corner points. Using the DLT, the correspondances
+    correspondence of four corner points. Using the DLT, the correspondences
     of the remaining image points can be found and paired with lab points
     under the assumption that there is little distortion and the grid is
     planar.
@@ -353,7 +353,7 @@ def get_pairs_dlt(
         Lab coordinates with an array structed like [x, y]'. If no grid
         is supplied, a simple one is automatically created.
     corners : 2D np.ndarray, optional
-        Corners used for point correspondances. If not supplied, corners
+        Corners used for point correspondences. If not supplied, corners
         are automatically detected using a convex-hull algorithm.
     asymmetric : bool
         If true, use asymmetric point matching.
@@ -403,7 +403,11 @@ def get_pairs_dlt(
             is_square=grid[0] == grid[1]
         )
     
-    H, _ = lsq_dlt(real_corners, corners, enforce_coplanar=True)
+    H, _ = calibrate_dlt(
+        real_corners, 
+        corners, 
+        enforce_coplanar=True
+    )
     
     rectified = np.dot(
         H, 

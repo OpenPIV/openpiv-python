@@ -74,7 +74,7 @@ def preprocess_image(
     returns
     -------
     bool_image : 2D np.ndarray
-        The binariazed boolean calibration image of shape (n, m).
+        The binarized boolean calibration image of shape (n, m).
         
     """
     from openpiv.preprocess import high_pass, local_variance_normalization
@@ -189,7 +189,7 @@ def get_circular_template(
 ):
     """Create a circle template.
     
-    Create a circle template based on the temnplate radius and window size.
+    Create a circle template based on the template radius and window size.
     This template can be correlated with an image to find features such as
     marker detection on calibration plates.
     
@@ -248,7 +248,7 @@ def get_cross_template(
 ):
     """Create a cross template.
     
-    Create a cross template based on the temnplate radius and window size. The
+    Create a cross template based on the template radius and window size. The
     line width of the cross is found by int(template_radius / 6) + 1. This 
     template can be correlated with an image to find features such as marker 
     detection on calibration plates.
@@ -787,7 +787,7 @@ def detect_markers_template(
     is found by locating the maximum of that window, which correlates to the best
     match with the template. Next, false positives are removed by specifying the 
     minimum count a marker is detected and the minimum correlation coefficient of 
-    that marker's peak. Finally, a gaussian peak fit based on psuedo-inverse via
+    that marker's peak. Finally, a gaussian peak fit based on pseudo-inverse via
     singular value decomposition is performed.
     
     Parameters
@@ -806,7 +806,7 @@ def detect_markers_template(
         rule of thumb is to set the window size to slightly smaller than the
         mean marker spacing.
     overlap : int, optional
-        The amount of overlaping pixels for each window. If None, overlap is
+        The amount of overlapping pixels for each window. If None, overlap is
         automatically set to 75% of the window size. Step size can be
         calculated as window_size - overlap. The higher the overlap, the better
         markers are registered but at the expense of performance and memory. 
@@ -836,7 +836,7 @@ def detect_markers_template(
         find the ideal threshold to find the correct markers.
     return_corr : bool, optional
         Return the correlation of the image and template. This can be used to
-        determine the tempalte radius.
+        determine the template radius.
     
     Returns
     -------

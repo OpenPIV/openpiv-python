@@ -6,12 +6,12 @@ from .._doc_utils import (docstring_decorator,
 
 
 __all__ = [
-    "minimize_polynomial"
+    "minimize_params"
 ]
 
 
 @docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
-def minimize_polynomial(
+def minimize_params(
     cam_struct: dict,
     object_points: list,
     image_points: list,
@@ -37,17 +37,17 @@ def minimize_polynomial(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, poly_model
+    >>> from openpiv.calibration import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = poly_model.generate_camera_params(
+    >>> camera_parameters = poly_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = poly_model.minimize_polynomial(
+    >>> camera_parameters = poly_model.minimize_params(
             camera_parameters,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]

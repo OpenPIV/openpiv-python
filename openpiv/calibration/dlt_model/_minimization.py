@@ -8,13 +8,13 @@ from .._doc_utils import (docstring_decorator,
 
 
 __all__ = [
-    "lsq_dlt",
-    "calibrate_dlt"
+    "calibrate_dlt",
+    "minimize_params"
 ]
 
 
 @docstring_decorator(doc_obj_coords, doc_img_coords)
-def lsq_dlt(
+def calibrate_dlt(
     object_points: np.ndarray,
     image_points: np.ndarray,
     enforce_coplanar: bool=False
@@ -46,7 +46,7 @@ def lsq_dlt(
     Raises
     ------
     ValueError
-        If the object coordinates contain non-planar z-cordinates and
+        If the object coordinates contain non-planar z-coordinates and
         enforce_coplanar is enabled.
     ValueError
         If there are not enough points to calculate the DLT coefficients.
@@ -179,7 +179,7 @@ def lsq_dlt(
 
 
 #@docstring_decorator(doc_obj_coords, doc_img_coords)
-#def lsq_dlt_robust(
+#def calibrate_dlt_robust(
 #    object_points: np.ndarray,
 #    image_points: np.ndarray,
 #    enforce_coplanar: bool=False
@@ -211,7 +211,7 @@ def lsq_dlt(
 #    Raises
 #    ------
 #    ValueError
-#        If the object coordinates contain non-planar z-cordinates and
+#        If the object coordinates contain non-planar z-coordinates and
 #        enforce_coplanar is enabled.
 #    ValueError
 #        If there are not enough points to calculate the DLT coefficients.
@@ -343,7 +343,7 @@ def lsq_dlt(
 
 
 @docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
-def calibrate_dlt(
+def minimize_params(
     cam_struct: dict,
     object_points: np.ndarray,
     image_points: np.ndarray,
@@ -375,17 +375,17 @@ def calibrate_dlt(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, dlt_model
+    >>> from openpiv.calibration import calib_utils, dlt_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = dlt_model.generate_camera_params(
+    >>> camera_parameters = dlt_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
     
-    >>> camera_parameters = dlt_model.calibrate_dlt(
+    >>> camera_parameters = dlt_model.minimize_params(
             camera_parameters,
             [obj_x, obj_y, obj_z],
             [img_x, img_y]

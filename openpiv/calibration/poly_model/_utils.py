@@ -1,4 +1,5 @@
 import numpy as np
+from os.path import join
 from typing import Tuple
 
 from ._check_params import _check_parameters
@@ -6,14 +7,14 @@ from .._doc_utils import (docstring_decorator,
                           doc_cam_struct)
 
 __all__ = [
-    "generate_camera_params",
+    "get_cam_params",
     "save_parameters",
     "load_parameters"
 ]
 
 
 @docstring_decorator(doc_cam_struct)
-def generate_camera_params(
+def get_cam_params(
     cam_name: str,
     resolution: Tuple[int, int],
     poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
@@ -46,12 +47,12 @@ def generate_camera_params(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.calibration import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = calib_polynomial.generate_camera_params(
+    >>> camera_parameters = poly_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
@@ -93,8 +94,6 @@ def save_parameters(
     None
     
     """
-    from os.path import join
-    
     if file_name is None:
         file_name = cam_struct["name"]
     
@@ -150,8 +149,6 @@ def load_parameters(
         {0}
     
     """
-    from os.path import join
-    
     full_path = join(file_path, file_name)
     
     with open(full_path, 'r') as f:
@@ -177,7 +174,7 @@ def load_parameters(
         
         dtype = f.readline()[:-1]
 
-    cam_struct = generate_camera_params(
+    cam_struct = get_cam_params(
         name,
         resolution,
         poly_wi=poly_wi,

@@ -3,7 +3,7 @@ from typing import Tuple
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 
-from .._doc_utils import (docstring_decorator,
+from ._doc_utils import (docstring_decorator,
                           doc_cam_struct)
 
 __all__ = [

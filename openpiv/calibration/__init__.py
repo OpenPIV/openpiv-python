@@ -8,26 +8,30 @@ system.
 
 DLT Model
 =============
-    generate_camera_params - Create DLT camera model parameters
-    calibrate_dlt - Minimize the camera model parameters
-    lsq_dlt - Calibrate and return DLT coefficients and fitting error
+    get_cam_params - Create DLT camera model parameters
+    calibrate_dlt - Calibrate and return DLT coefficients and fitting error
+    minimize_params - Minimize the camera model parameters
     project_points - Project 3D points to image points
     
 Pinhole Model
 =============
-    generate_camera_params - Generate pinhole camera model parameters
-    get_rotation_matrix - Calculate the orthogonol rotation matrix
+    get_cam_params - Generate pinhole camera model parameters
+    get_rotation_matrix - Calculate the orthogonal rotation matrix
+    minimize_params - Minimize the camera model parameters
     project_points - Project 3D points to image points
     project_to_z - Project image points to 3D points
-    minimize_camera_params - Minimize the camera model parameters
-    line_intersect - Using two lines, locate where those lines interesect    
+    line_intersect - Using two lines, locate where those lines intersect
+    save_parameters - Save pinhole camera parameters to a text file
+    load_parameters - Load pinhole camera parameters from a text file
    
 Polynomial Model
 ================
-    generate_camera_params - Generate polynomial camera model parameters
+    get_cam_params - Generate polynomial camera model parameters
+    minimize_params - Minimize the camera model parameters
     project_points - Project 3D points to image points
     project_to_z - Project image points to 3D points
-    minimize_polynomial - Minimize the polynomial model parameters
+    save_parameters - Save polynomial camera parameters to a text file
+    load_parameters - Load polynomial camera parameters from a text file
 
 Marker Detection (Marker Grid)
 ==============================
@@ -44,7 +48,7 @@ Calibration Grid
 Match Calibration Points
 ========================
     find_corners - Locate 4 or 6 corners of a calibration grid
-    find_nearest_points - Find the clostest point to a cursor
+    find_nearest_points - Find the closest point to a cursor
     reorder_image_points - Reorder image points in ascending order
     show_calibration_image - Plot calibration image and markers
     get_pairs_proj - Match marker pairs using a rough projection estimate

@@ -4,19 +4,21 @@ Polynomial Camera Model
 =======================
 
 This module contains an implementation of a polynomial camera model. This
-model is implented using 3rd order polynomials in the x and y axis and a
+model is implemented using 3rd order polynomials in the x and y axis and a
 2nd order polynomial along the z-axis. This model can handle a multiplitude
 of different distortions and is usually preferred if processing algorithms
-later on do not heavily utilize trangulation. Additionally, it is important
+later on do not heavily utilize triangulation. Additionally, it is important
 that the calibration markers cover as much of the image(s) as possible to
 limit artifacts from extrapolation.
 
 Functions
 =========
-    generate_camera_params - Create a pinhole camera data structure
-    project_points - Project lab coordinates to image coordinates
-    project_to_z - Project image coordinates to lab coordinates
-    minimize_polynomial - Optimize polynomial camera parameters
+    get_cam_params - Generate polynomial camera model parameters
+    minimize_params - Minimize the camera model parameters
+    project_points - Project 3D points to image points
+    project_to_z - Project image points to 3D points
+    save_parameters - Save polynomial camera parameters to a text file
+    load_parameters - Load polynomial camera parameters from a text file
 
 Note
 ====

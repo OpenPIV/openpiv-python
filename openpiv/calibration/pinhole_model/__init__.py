@@ -48,7 +48,7 @@ T_x \\ T_y \\ T_z
 \end{vmatrix}
 $$
 
-where letters denoting R and T define the 3x3 rotation matix and the
+where letters denoting R and T define the 3x3 rotation matrix and the
 translation vector respectively, which are commonly associated with
 the extrinsic matrix. 
 
@@ -141,13 +141,13 @@ $$
 
 Functions
 =========
-    calibrate_intrinsics - Calculate the instrinsic parameters using Zang's method
-    generate_camera_params - Create a pinhole camera data structure
-    get_rotation_matrix - Calculate a 3x3 rotation matrix from Euler angles
-    project_points - Project lab coordinates to image coordinates
-    project_to_z - Project image coordinates to lab coordinates
-    minimize_camera_params - Optimize pinhole camera parameters
-    line_intersect - Calculate where two rays intersect
+    calibrate_intrinsics - Calculate the intrinsic parameters using Zang's algorithm
+    get_cam_params - Generate pinhole camera model parameters
+    get_rotation_matrix - Calculate the orthogonal rotation matrix
+    minimize_params - Minimize the camera model parameters
+    project_points - Project 3D points to image points
+    project_to_z - Project image points to 3D points
+    line_intersect - Using two lines, locate where those lines intersect
     save_parameters - Save pinhole camera parameters to a text file
     load_parameters - Load pinhole camera parameters from a text file
 
