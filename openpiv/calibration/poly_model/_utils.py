@@ -6,6 +6,7 @@ from ._check_params import _check_parameters
 from .._doc_utils import (docstring_decorator,
                           doc_cam_struct)
 
+
 __all__ = [
     "get_cam_params",
     "save_parameters",
@@ -76,7 +77,7 @@ def save_parameters(
     file_path: str,
     file_name: str=None
 ):
-    """Save pinhole camera parameters.
+    """Save polynomial camera parameters.
     
     Save the polynomial camera parameters to a text file.
     
@@ -132,7 +133,7 @@ def load_parameters(
     file_path: str,
     file_name: str
 ):
-    """Load pinhole camera parameters.
+    """Load polynomial camera parameters.
     
     Load the polynomial camera parameters from a text file.
     
@@ -162,17 +163,16 @@ def load_parameters(
         for i in range(19):
             _d2 = f.readline()[:-2]
             poly_wi.append(np.array([float(s) for s in _d2.split()]))
-            
-        poly_wi = np.array(poly_wi, dtype = "float64")
         
         poly_iw = []
         for i in range(19):
             _d2 = f.readline()[:-2]
             poly_iw.append(np.array([float(s) for s in _d2.split()]))
-            
-        poly_iw = np.array(poly_iw, dtype = "float64")
         
         dtype = f.readline()[:-1]
+        
+        poly_wi = np.array(poly_wi, dtype=dtype)
+        poly_iw = np.array(poly_iw, dtype=dtype)
 
     cam_struct = get_cam_params(
         name,

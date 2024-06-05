@@ -15,6 +15,10 @@ Functions
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     minimize_params - Minimize the camera model parameters
     project_points - Project 3D points to image points
+    project_to_z - Project image points to 3D points
+    line_intersect - Using two lines, locate where those lines intersect
+    save_parameters - Save DLT camera parameters to a text file
+    load_parameters - Load DLT camera parameters from a text file
 
 Note
 ====

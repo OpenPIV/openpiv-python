@@ -3,6 +3,7 @@ from scipy.optimize import curve_fit
 
 from ._check_params import _check_parameters
 from ._normalization import _standardize_points_2d, _standardize_points_3d
+from .._calib_utils import homogenize, get_rmse
 from .._doc_utils import (docstring_decorator,
                           doc_obj_coords, doc_img_coords, doc_cam_struct)
 
@@ -157,8 +158,8 @@ def calibrate_dlt(
         
     # compute RMSE error
     xy2 = np.dot(
-        H, 
-        np.concatenate((object_points, np.ones((1, object_points.shape[1]))))
+        H,
+        homogenize(object_points)
     )
     
     res = xy2 / xy2[2, :]
@@ -166,14 +167,7 @@ def calibrate_dlt(
     
     error = res - image_points
     
-    RMSE = np.sqrt(
-        np.mean(
-            np.sum(
-                np.square(error),
-                axis=0
-            )
-        )
-    )
+    RMSE = get_rmse(error)
     
     return H, RMSE
 
@@ -322,7 +316,7 @@ def calibrate_dlt(
 #    # compute RMSE error
 #    xy2 = np.dot(
 #        H, 
-#        np.concatenate((object_points, np.ones((1, object_points.shape[1]))))
+#        homogenize(object_points)
 #    )
 #    
 #    res = xy2 / xy2[2, :]
@@ -330,14 +324,7 @@ def calibrate_dlt(
 #    
 #    error = res - image_points
 #    
-#    RMSE = np.sqrt(
-#        np.mean(
-#            np.sum(
-#                np.square(error),
-#                axis=0
-#            )
-#        )
-#    )
+#    RMSE = get_rmse(error)
 #    
 #    return H, RMSE
 
@@ -351,7 +338,7 @@ def minimize_params(
 ):
     """Least squares wrapper for DLT calibration.
     
-    A wrapper around the function 'lsq_dlt' for use with camera structures.
+    A wrapper around the function 'calibrate_dlt' for use with camera structures.
     In the future, a robust DLT calibration would be implemented and its
     interface would be linked here too.
     
@@ -407,7 +394,7 @@ def minimize_params(
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
 
-    H, error = lsq_dlt(
+    H, error = calibrate_dlt(
         object_points,
         image_points,
         enforce_coplanar
@@ -430,12 +417,12 @@ def _refine_func2D(
     x = (h11 * X + h12 * Y + h13) / (h31 * X + h32 * Y + h33)
     y = (h21 * X + h22 * Y + h23) / (h31 * X + h32 * Y + h33)
 
-    result = np.zeros_like(data)
+    res = np.zeros_like(data)
     
-    result[0::2] = x
-    result[1::2] = y
+    res[0::2] = x
+    res[1::2] = y
 
-    return result
+    return res
 
 
 def _refine_jac2D(

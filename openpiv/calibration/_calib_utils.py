@@ -4,6 +4,7 @@ from typing import Tuple
 
 __all__ = [
     "homogenize",
+    "get_rmse",
     "get_reprojection_error",
     "get_los_error",
     "get_image_mapping"
@@ -34,12 +35,53 @@ def homogenize(
         Homogenized points of shape (M+1, N].
     
     """
-    a1 = np.ones((1, points.shape[1]), dtype = points.dtype)
+    a1 = np.ones(
+        (1, points.shape[1]),
+        dtype=points.dtype
+    )
     
     return np.concatenate([
         points, 
         a1
     ])
+
+
+def get_rmse(
+    error: np.ndarray
+):
+    """Get root mean square error (RMSE).
+    
+    Calculate the root mean square error for statistical purposes.
+    
+    Parameters
+    ----------
+    error : np.ndarray
+        The residuals between the predicted value and the actual value.
+    
+    Returns
+    -------
+    RMSE : float
+        The RMSE of the error
+    
+    """
+    
+    if len(error.shape) == 2:
+        square_error = np.sum(
+            np.square(error),
+            axis=0
+        )
+
+    elif len(error.shape) == 1:
+        square_error = np.square(error)
+        
+    else:
+        raise ValueError(
+            "Residuals (error) array must be of shape (n) or (2, n)"
+        )
+        
+    rmse = np.sqrt(np.mean(square_error))
+    
+    return rmse
 
 
 def get_reprojection_error(
@@ -104,14 +146,7 @@ def get_reprojection_error(
         
     error = res - image_points
     
-    RMSE = np.sqrt(
-        np.mean(
-            np.sum(
-                np.square(error),
-                axis=0
-            )
-        )
-    )
+    RMSE = get_rmse(error)
     
     return RMSE
 
@@ -171,7 +206,6 @@ def get_los_error(
         )
         
     """
-    
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
         np.arange(0, cam_struct["resolution"][1]),
@@ -205,14 +239,7 @@ def get_los_error(
     
     error = res - np.array([x, y])
     
-    RMSE = np.mean(
-        np.sqrt(
-            np.sum(
-                np.square(error),
-                axis=0
-            )
-        )
-    )
+    RMSE = get_rmse(error)
     
     return RMSE
 

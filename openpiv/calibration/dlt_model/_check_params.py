@@ -16,11 +16,6 @@ def _check_parameters(
             "Resolution must be a two element tuple"
         )
     
-    if cam_struct["ndim"] not in [2, 3]:
-        raise ValueError(
-            "DLT only supports 2D and 3D transformations"
-        )
-    
     if len(cam_struct["coefficients"].shape) != 2:
         raise ValueError(
             "DLT coefficients must be 2 dimensional"

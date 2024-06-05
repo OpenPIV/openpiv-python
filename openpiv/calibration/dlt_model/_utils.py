@@ -1,4 +1,5 @@
 import numpy as np
+from os.path import join
 from typing import Tuple
 
 from ._check_params import _check_parameters
@@ -7,12 +8,14 @@ from .._doc_utils import (docstring_decorator,
 
 
 __all__ = [
-    "generate_camera_params"
+    "get_cam_params",
+    "save_parameters",
+    "load_parameters"
 ]
 
 
 @docstring_decorator(doc_cam_struct)
-def generate_camera_params(
+def get_cam_params(
     cam_name: str,
     resolution: Tuple[int, int],
     coefficients: np.ndarray=np.identity(3),
@@ -47,7 +50,7 @@ def generate_camera_params(
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
     
-    >>> camera_parameters = dlt_model.generate_camera_params(
+    >>> camera_parameters = dlt_model.get_cam_params(
             name="cam1", 
             [img_size_x, img_size_y]
         )
@@ -61,4 +64,104 @@ def generate_camera_params(
     
     _check_parameters(cam_struct)
     
+    return cam_struct
+
+
+@docstring_decorator(doc_cam_struct)
+def save_parameters(
+    cam_struct: dict,
+    file_path: str,
+    file_name: str=None
+):
+    """Save DLT camera parameters.
+    
+    Save the DLT camera parameters to a text file.
+    
+    Parameters
+    ----------
+    cam_struct : dict
+        {0}
+    file_path : str
+        File path where the camera parameters are saved.
+    file_name : str, optional
+        If specified, override the default file name.
+        
+    Returns
+    -------
+    None
+    
+    """
+    if file_name is None:
+        file_name = cam_struct["name"]
+    
+    full_path = join(file_path, file_name)
+    
+    with open(full_path, 'w') as f:
+        f.write(cam_struct["name"] + '\n')
+        
+        _r = ''
+        for i in range(2):
+            _r += str(cam_struct["resolution"][i]) + ' '
+            
+        f.write(_r + '\n')
+        
+        for i in range(3):
+            _c = ''
+            for j in range(cam_struct["coefficients"].shape[1]):
+                _c += str(cam_struct["coefficients"][i, j]) + ' '
+                
+            f.write(_c + '\n')
+        
+        f.write(cam_struct["dtype"] + '\n')
+        
+    return None
+        
+
+@docstring_decorator(doc_cam_struct)
+def load_parameters(
+    file_path: str,
+    file_name: str
+):
+    """Load DLT camera parameters.
+    
+    Load the DLT camera parameters from a text file.
+    
+    Parameters
+    ----------
+    file_path : str
+        File path where the camera parameters are saved.
+    file_name : str
+        Name of the file that contains the camera parameters.
+        
+    Returns
+    -------
+    cam_struct : dict
+        {0}
+    
+    """
+    full_path = join(file_path, file_name)
+    
+    with open(full_path, 'r') as f:
+        
+        name = f.readline()[:-1]
+        
+        _r = f.readline()[:-2]
+        resolution = np.array([float(s) for s in _r.split()])
+            
+        coefficients = []
+        for i in range(3):
+            _c = f.readline()[:-2]
+            coefficients.append(np.array([float(s) for s in _c.split()]))
+                    
+        dtype = f.readline()[:-1]
+        
+        coefficients = np.array(coefficients, dtype = dtype)
+
+    cam_struct = get_cam_params(
+        name,
+        resolution,
+        coefficients=coefficients,
+        dtype=dtype
+    )
+
     return cam_struct

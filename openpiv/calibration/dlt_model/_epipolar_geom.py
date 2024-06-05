@@ -52,17 +52,14 @@ def line_intersect(
     img_points_1 = np.array(img_points_1, dtype1=dtype)
     img_points_2 = np.array(img_points_2, dtype2=dtype)
     
-    r1= _get_inverse_vector(
+    t1, r1 = _get_inverse_vector(
         cam_struct_1,
         img_points_1
     )
     
-    r2 = _get_inverse_vector(
+    t2, r2 = _get_inverse_vector(
         cam_struct_2,
         img_points_2
     )
-    
-    t1 = cam_struct_1["translation"]
-    t2 = cam_struct_2["translation"]
     
     return _line_intersect(t1, r1, t2, r2)

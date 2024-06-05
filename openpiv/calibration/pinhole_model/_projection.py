@@ -159,6 +159,7 @@ def project_points(
     return np.array([x, y], dtype=dtype)
 
 
+@docstring_decorator(doc_cam_struct, doc_img_coords)
 def _get_inverse_vector(
     cam_struct: dict,
     image_points: np.ndarray
@@ -173,9 +174,9 @@ def _get_inverse_vector(
     Parameters
     ----------
     cam_struct : dict
-        A dictionary structure of camera parameters.
+        {0}
     image_points : 2D np.ndarray
-        {}
+        {1}
         
     Returns
     -------
@@ -267,7 +268,7 @@ def _get_inverse_vector(
 def project_to_z(
     cam_struct: dict,
     image_points: np.ndarray,
-    z
+    z: np.ndarray
 ):
     """Project image points to world points.
     

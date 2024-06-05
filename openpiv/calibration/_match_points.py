@@ -414,7 +414,7 @@ def get_pairs_dlt(
         homogenize(grid)
     )
     
-    rectified = rectified / rectified[2, :]
+    rectified /= rectified[2, :]
     rectified = rectified[:2, :]
     
     tolerance1 = np.linalg.norm(corners[:, 0] - corners[:, 1]) / grid_shape[0]
