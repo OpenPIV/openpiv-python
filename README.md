@@ -32,7 +32,7 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
 ## Or `conda` 
 
-    conda install -c alexlib openpiv
+    conda install -c openpiv openpiv
 
 ## Or [Poetry](https://python-poetry.org/)
 
