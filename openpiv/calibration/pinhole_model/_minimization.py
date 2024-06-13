@@ -5,8 +5,7 @@ from ._check_params import _check_parameters
 from ._projection import project_points, _normalize_image_points
 from ._utils import get_rotation_matrix
 from ..calib_utils import get_reprojection_error, get_los_error
-from .._doc_utils import (docstring_decorator,
-                          doc_obj_coords, doc_img_coords, doc_cam_struct)
+from .. import _cal_doc_utils
 
 
 __all__ = [
@@ -14,7 +13,7 @@ __all__ = [
 ]
 
 
-@docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
+@_cal_doc_utils.docfiller
 def minimize_params(
     cam_struct: dict,
     object_points: list,
@@ -33,12 +32,9 @@ def minimize_params(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    object_points : np.ndarray
-        {1}
-    image_points : np.ndarray
-        {2}
+    %(cam_struct)s
+    %(object_points)s
+    %(image_points)s
     correct_focal : bool
         If true, minimize the focal point.
     correct_distortion : bool
@@ -50,8 +46,7 @@ def minimize_params(
         
     Returns
     -------
-    cam_struct : dict
-        {0}
+    %(cam_struct)s
     
     Notes
     -----

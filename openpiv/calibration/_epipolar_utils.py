@@ -3,15 +3,14 @@ from typing import Tuple
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
 
-from ._doc_utils import (docstring_decorator,
-                          doc_cam_struct)
+from . import _cal_doc_utils
 
 __all__ = [
     "plot_epipolar_line"
 ]
 
 
-@docstring_decorator(doc_cam_struct)
+@_cal_doc_utils.docfiller
 def plot_epipolar_line(
     cam_struct: dict,
     project_to_z: "function", 
@@ -29,13 +28,9 @@ def plot_epipolar_line(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    project_to_z_func : function
-        Projection function with the following signiture:
-        res = func(cam_struct, image_points, Z).
-    image_points: 2D np.ndarray
-        A numpy array containing [x, y] image points.
+    %(cam_struct)s
+    %(project_to_z_func)s
+    %(image_points)s
     zlims : tuple[int, int]
         The start and end values of the epipolar line.
     ax : matplotlib.axes.Axes, optional
@@ -54,7 +49,6 @@ def plot_epipolar_line(
     https://github.com/ronshnapp/MyPTV
     
     """
-
     Z1, Z2 = zlims
     
     X1, Y1, Z1 = project_to_z(

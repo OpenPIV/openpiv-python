@@ -7,7 +7,7 @@ This submodule contains functions and routines to calibrate a camera
 system.
 
 DLT Model
-=============
+=========
     get_cam_params - Create DLT camera model parameters
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     minimize_params - Minimize the camera model parameters
@@ -47,12 +47,14 @@ Marker Detection (Marker Grid)
 
 Calibration Grid
 ================
+    get_asymmetric_grid - Create an asymmetric rectangular calibration grid
     get_simple_grid - Create a simple rectangular calibration grid
     
 Match Calibration Points
 ========================
     find_corners - Locate 4 or 6 corners of a calibration grid
     find_nearest_points - Find the closest point to a cursor
+    get_pairs_dlt - Match marker pairs using 4 corners and the DLT algorithm
     get_pairs_proj - Match marker pairs using a rough projection estimate
     reorder_image_points - Reorder image points in ascending order
     show_calibration_image - Plot calibration image and markers

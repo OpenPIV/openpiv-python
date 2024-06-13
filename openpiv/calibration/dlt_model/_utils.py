@@ -3,8 +3,7 @@ from os.path import join
 from typing import Tuple
 
 from ._check_params import _check_parameters
-from .._doc_utils import (docstring_decorator,
-                          doc_cam_struct)
+from .. import _cal_doc_utils
 
 
 __all__ = [
@@ -14,7 +13,7 @@ __all__ = [
 ]
 
 
-@docstring_decorator(doc_cam_struct)
+@_cal_doc_utils.docfiller
 def get_cam_params(
     cam_name: str,
     resolution: Tuple[int, int],
@@ -39,8 +38,7 @@ def get_cam_params(
     
     Returns
     -------
-    cam_struct : dict
-        {0}
+    %(cam_struct)s
         
     Examples
     --------
@@ -67,7 +65,7 @@ def get_cam_params(
     return cam_struct
 
 
-@docstring_decorator(doc_cam_struct)
+@_cal_doc_utils.docfiller
 def save_parameters(
     cam_struct: dict,
     file_path: str,
@@ -79,8 +77,7 @@ def save_parameters(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
+    %(cam_struct)s
     file_path : str
         File path where the camera parameters are saved.
     file_name : str, optional
@@ -117,7 +114,7 @@ def save_parameters(
     return None
         
 
-@docstring_decorator(doc_cam_struct)
+@_cal_doc_utils.docfiller
 def load_parameters(
     file_path: str,
     file_name: str
@@ -135,8 +132,7 @@ def load_parameters(
         
     Returns
     -------
-    cam_struct : dict
-        {0}
+    %(cam_struct)s
     
     """
     full_path = join(file_path, file_name)

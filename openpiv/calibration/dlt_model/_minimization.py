@@ -4,8 +4,7 @@ from scipy.optimize import curve_fit
 from ._check_params import _check_parameters
 from ._normalization import _standardize_points_2d, _standardize_points_3d
 from .._calib_utils import homogenize, get_rmse
-from .._doc_utils import (docstring_decorator,
-                          doc_obj_coords, doc_img_coords, doc_cam_struct)
+from .. import _cal_doc_utils
 
 
 __all__ = [
@@ -14,7 +13,7 @@ __all__ = [
 ]
 
 
-@docstring_decorator(doc_obj_coords, doc_img_coords)
+@_cal_doc_utils.docfiller
 def calibrate_dlt(
     object_points: np.ndarray,
     image_points: np.ndarray,
@@ -29,10 +28,8 @@ def calibrate_dlt(
     
     Parameters
     ----------
-    object_points : 2D np.ndarray
-        {0}
-    image_points : 2D np.ndarray
-        {1}
+    %(object_points)s
+    %(image_points)s
     enforce_coplanar : bool
         If a Z plane is supplied in the object points, check whether or not the Z
         planes are co-planar.
@@ -172,7 +169,7 @@ def calibrate_dlt(
     return H, RMSE
 
 
-#@docstring_decorator(doc_obj_coords, doc_img_coords)
+#@_cal_doc_utils.docfiller
 #def calibrate_dlt_robust(
 #    object_points: np.ndarray,
 #    image_points: np.ndarray,
@@ -187,10 +184,8 @@ def calibrate_dlt(
 #    
 #    Parameters
 #    ----------
-#    object_points : 2D np.ndarray
-#        {0}
-#    image_points : 2D np.ndarray
-#        {1}
+#    %(object_points)s
+#    %(image_points)s
 #    enforce_coplanar : bool
 #        If a Z plane is supplied in the object points, check whether or not the Z
 #        planes are co-planar.
@@ -329,7 +324,7 @@ def calibrate_dlt(
 #    return H, RMSE
 
 
-@docstring_decorator(doc_cam_struct, doc_obj_coords, doc_img_coords)
+@_cal_doc_utils.docfiller
 def minimize_params(
     cam_struct: dict,
     object_points: np.ndarray,
@@ -344,20 +339,16 @@ def minimize_params(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    object_points : np.ndarray
-        {1}
-    image_points : np.ndarray
-        {2}
+    %(cam_struct)s
+    %(object_points)s
+    %(image_points)s
     enforce_coplanar : bool
         If a Z plane is supplied in the object points, check whether or not
         the Z planes are co-planar.
         
     Returns
     -------
-    cam_struct : dict
-        {0}
+    %(cam_struct)s
         
     Examples
     --------

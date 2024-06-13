@@ -1,15 +1,14 @@
 import numpy as np
+from ._check_params import _check_parameters
 from ._projection import _get_inverse_vector
 from .._epipolar_utils import _line_intersect
-from .._doc_utils import (docstring_decorator,
-                          doc_obj_coords, doc_img_coords, doc_cam_struct)
+
 
 __all__ = [
     "line_intersect"
 ]
 
 
-@docstring_decorator(doc_cam_struct, doc_img_coords)
 def line_intersect(
     cam_struct_1: dict,
     cam_struct_2: dict,
@@ -25,9 +24,9 @@ def line_intersect(
     Parameters
     ----------
     cam_struct_1, cam_struct_2 : dict
-        {0}
+        A dictionary structure of camera parameters.
     img_points_1, img_points_2 : np.ndarray
-        {1}
+        Image coordinates stored in a ndarray structured like [x, y]'.
         
     Returns
     -------
@@ -44,7 +43,7 @@ def line_intersect(
     dtype2 = cam_struct_2["dtype"]
     
     # all cameras should have the same dtype
-    id dtype1 != dtyp2:
+    if dtype1 != dtyp2:
         raise ValueError(
             "Dtypes between camera structures must match"
         )

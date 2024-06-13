@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple
+from . import _cal_doc_utils
 
 
 __all__ = [
@@ -84,9 +85,10 @@ def get_rmse(
     return rmse
 
 
+@_cal_doc_utils.docfiller
 def get_reprojection_error(
     cam_struct: dict,
-    proj_func: "function",
+    project_points_func: "function",
     object_points: np.ndarray,
     image_points: np.ndarray
 ):
@@ -97,15 +99,10 @@ def get_reprojection_error(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
-    proj_func : function
-        Projection function with the following signature:
-        res = func(cam_struct, object_points).
-    object_points: 2D np.ndarray
-        A numpy array containing [X, Y, Z] object points.
-    image_points: 2D np.ndarray
-        A numpy array containing [x, y] image points.
+    %(cam_struct)s
+    %(project_points_func)s
+    %(object_points)s
+    %(image_points)s
         
     Returns
     -------
@@ -139,7 +136,7 @@ def get_reprojection_error(
         )
     
     """ 
-    res = proj_func(
+    res = project_points_func(
         cam_struct,
         object_points
     )
@@ -151,6 +148,7 @@ def get_reprojection_error(
     return RMSE
 
 
+@_cal_doc_utils.docfiller
 def get_los_error(
     cam_struct,
     project_to_z_func: "function",
@@ -163,16 +161,10 @@ def get_los_error(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
-    project_to_z_func : function
-        Projection function with the following signiture:
-        res = func(cam_struct, image_points, Z).
-    project_points_func : function
-        Projection function with the following signiture:
-        res = func(cam_struct, object_points).
-    z : float
-        A float specifying the Z (depth) value to project to.
+    %(cam_struct)s
+    %(project_to_z_func)s
+    %(project_points_func)s
+    %(project_z)s
     
     Returns
     -------
@@ -245,6 +237,7 @@ def get_los_error(
 
 
 # This script was originally from Theo's polynomial calibration repository.
+@_cal_doc_utils.docfiller
 def get_image_mapping(
     cam_struct: dict,
     project_to_z_func: "function",
@@ -256,14 +249,9 @@ def get_image_mapping(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
-    project_to_z_func : function
-        Projection function with the following signature:
-        res = func(cam_struct, image_points, Z).
-    project_points_func : function
-        Projection function with the following signature:
-        res = func(cam_struct, object_points).
+    %(cam_struct)s
+    %(project_to_z_func)s
+    %(project_points_func)s
     
     Returns
     -------
@@ -277,7 +265,7 @@ def get_image_mapping(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv import calib_utils, calib_polynomial
+    >>> from openpiv.calibration import calib_utils, poly_model
     >>> from openpiv.data.test5 import cal_points
     
     >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()

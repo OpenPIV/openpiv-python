@@ -3,8 +3,7 @@ import numpy as np
 from ._check_params import _check_parameters
 from ._distortion import (_undistort_points_brown, _distort_points_brown,
                           _undistort_points_poly,  _distort_points_poly)
-from .._doc_utils import (docstring_decorator,
-                          doc_obj_coords, doc_img_coords, doc_cam_struct)
+from .. import _cal_doc_utils
 
 
 _all__ = [
@@ -56,7 +55,7 @@ def _normalize_image_points(
     return np.array([Wn_x, Wn_y], dtype=dtype)
 
 
-@docstring_decorator(doc_cam_struct, doc_obj_coords)
+@_cal_doc_utils.docfiller
 def project_points(
     cam_struct: dict,
     object_points: np.ndarray,
@@ -68,19 +67,15 @@ def project_points(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    object_points : 2D np.ndarray
-        {1}
+    %(cam_struct)s
+    %(object_points)s
     correct_distortion : bool
         If true, perform distortion correction.
         
     Returns
     -------
-    x : 1D np.ndarray
-        Projected image x-coordinates.
-    y : 1D np.ndarray
-        Projected image y-coordinates.
+    %(x_img_coord)s
+    %(y_img_coord)s
     
     Examples
     --------
@@ -159,7 +154,7 @@ def project_points(
     return np.array([x, y], dtype=dtype)
 
 
-@docstring_decorator(doc_cam_struct, doc_img_coords)
+@_cal_doc_utils.docfiller
 def _get_inverse_vector(
     cam_struct: dict,
     image_points: np.ndarray
@@ -173,10 +168,8 @@ def _get_inverse_vector(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    image_points : 2D np.ndarray
-        {1}
+    %(cam_struct)s
+    %(image_points)s
         
     Returns
     -------
@@ -264,7 +257,7 @@ def _get_inverse_vector(
     return np.array([dx, dy, dz], dtype=dtype)
 
 
-@docstring_decorator(doc_cam_struct, doc_img_coords)
+@_cal_doc_utils.docfiller
 def project_to_z(
     cam_struct: dict,
     image_points: np.ndarray,
@@ -280,21 +273,15 @@ def project_to_z(
     
     Parameters
     ----------
-    cam_struct : dict
-        {0}
-    image_points : 2D np.ndarray
-        {1}
-    z : float
-        A float specifying the Z (depth) plane to project to.
+    %(cam_struct)s
+    %(image_points)s
+    %(project_z)s
         
     Returns
     -------
-    X : 1D np.ndarray
-        Projected world x-coordinates.
-    Y : 1D np.ndarray
-        Projected world y-coordinates.
-    Z : 1D np.ndarray
-        Projected world z-coordinates.
+    %(x_lab_coord)s
+    %(y_lab_coord)s
+    %(z_lab_coord)s
     
     Examples
     --------
