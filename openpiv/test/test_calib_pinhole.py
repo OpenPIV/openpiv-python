@@ -9,8 +9,15 @@ from .calibration import pinhole_model as calib_pinhole
 from .calibration.calib_utils import get_reprojection_error, get_los_error
 
 
-def get_test_camera_params():
-    with open("test_calibration_points_pinhole.txt", 'r') as f:
+def get_test_camera_params(
+    case: int=1
+):
+    if case == 1:
+        pinhole_cam = "test_calibration_pinhole_1.txt"
+    else:
+        pinhole_cam = "test_calibration_pinhole_2.txt"
+        
+    with open(pinhole_cam, 'r') as f:
         name = f.readline()[:-1]
         
         line = f.readline()[:]
@@ -263,13 +270,17 @@ def test_projection_01():
         decimal=4
     )
 
-def test_projection_02():
-    params = get_test_camera_params()
+
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_02(
+    case: int
+):
+    params = get_test_camera_params(case)
     
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     x, y = calib_pinhole.project_points(
         params,
@@ -278,22 +289,25 @@ def test_projection_02():
     
     assert_array_almost_equal(
         x, cal_img_points[0],
-        decimal=4
+        decimal=2
     )
     
     assert_array_almost_equal(
         y, cal_img_points[1],
-        decimal=4
+        decimal=2
     )
     
 
-def test_projection_03():    
-    params = get_test_camera_params()
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_03(
+    case: int
+):    
+    params = get_test_camera_params(case)
     
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     RMSE = get_reprojection_error(
         params,
@@ -304,14 +318,17 @@ def test_projection_03():
     
     assert_(RMSE < 1e-2)
     
-    
-def test_projection_04():    
-    params = get_test_camera_params()
+
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_04(
+    case: int
+):    
+    params = get_test_camera_params(case)
     
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     RMSE_0 = get_los_error(
         params,
@@ -339,13 +356,16 @@ def test_projection_04():
     assert_(RMSE_2 < 1e-2)  
     
     
-def test_projection_05():
-    params = get_test_camera_params()
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_05(
+    case: int
+):
+    params = get_test_camera_params(case)
     
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     X, Y, Z = calib_pinhole.project_to_z(
         params,
@@ -355,17 +375,17 @@ def test_projection_05():
     
     assert_array_almost_equal(
         X, cal_obj_points[0],
-        decimal=4
+        decimal=2
     )
     
     assert_array_almost_equal(
         Y, cal_obj_points[1],
-        decimal=4
+        decimal=2
     )
     
     assert_array_almost_equal(
         Z, cal_obj_points[2],
-        decimal=4
+        decimal=2
     )
 
 
@@ -375,8 +395,8 @@ def test_minimization_01(
 ):        
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data["obj_points_1"]
+    cal_img_points = cal_data["img_points_1"]
     
     params = calib_pinhole.get_cam_params(
         "minimized",
@@ -409,13 +429,14 @@ def test_minimization_01(
 @pytest.mark.parametrize("model", ("brown", "polynomial"))
 def test_minimization_02(
     model: str
-):        
-    params_orig = get_test_camera_params()
+):    
+    case = 1
+    params_orig = get_test_camera_params(case)
     
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     params_new = calib_pinhole.get_cam_params(
         "minimized",

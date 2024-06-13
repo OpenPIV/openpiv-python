@@ -72,11 +72,14 @@ def test_parameters_initialization():
     assert_(params["dtype"] in ["float32", "float64"])
 
 
-def test_minimization_01():    
+@pytest.mark.parametrize("case", (1, 2))
+def test_minimization_01(
+    case: int
+):    
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     params = calib_dlt.get_cam_params(
         "poly",
@@ -99,11 +102,14 @@ def test_minimization_01():
     assert_(RMSE < 1e-2)
 
 
-def test_projection_01():
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_01(
+    case: int
+):
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     params = calib_dlt.get_cam_params(
         "poly",
@@ -140,12 +146,15 @@ def test_projection_01():
         decimal=2
     )
 
-    
-def test_projection_02():
+
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_02(
+    case: int
+):
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     params = calib_dlt.get_cam_params(
         "poly",
@@ -173,12 +182,15 @@ def test_projection_02():
         decimal=2
     )
     
-    
-def test_projection_03():    
+
+@pytest.mark.parametrize("case", (1, 2))
+def test_projection_03(
+    case: int
+):
     cal_data = np.load("./test_calibration_points.npz")
     
-    cal_obj_points = cal_data["obj_points"]
-    cal_img_points = cal_data["img_points"]
+    cal_obj_points = cal_data[f"obj_points_{case}"]
+    cal_img_points = cal_data[f"img_points_{case}"]
     
     params = calib_dlt.get_cam_params(
         "poly",
@@ -211,7 +223,7 @@ def test_projection_03():
         calib_dlt.project_points,
         z = 10
     )
-    
+        
     assert_(RMSE_0 < 1e-2)
     assert_(RMSE_1 < 1e-2)
     assert_(RMSE_2 < 1e-2)
