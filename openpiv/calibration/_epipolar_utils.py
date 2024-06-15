@@ -99,10 +99,10 @@ def _line_intersect(t1, r1, t2, r2):
         
     Returns
     -------
+    coords : np.ndarray
+        The world coordinate that is nearest to the two rays intersecting.
     dist : float
         The minimum dinstance between the two rays.
-    coord : np.ndarray
-        The world coordinate that is nearest to the two rays intersecting.
     
     Notes
     -----
@@ -127,8 +127,9 @@ def _line_intersect(t1, r1, t2, r2):
         a, b = 0.0, 0.0
     
     # now use a and b to calculate the minimum distance
-    l1, l2 = t1 + a*r1, t2 + b*r2 # lines
+    l1 = t1 + a*r1 # line 1
+    l2 = t2 + b*r2 # line 2
     dist = sum((l1 - l2)**2)**0.5 # minimum distance
-    coord = (l1 + l2)*0.5 # coordinate location
+    coords = (l1 + l2)*0.5 # coordinate location
     
-    return dist, coord
+    return coords, dist

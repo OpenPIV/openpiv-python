@@ -228,6 +228,75 @@ def test_projection_03(
     assert_(RMSE_1 < 1e-2)
     assert_(RMSE_2 < 1e-2)
     
+
+# TODO: Add more camera views
+def test_line_intersect_01():
+    case = (1, 2)
+    cal_data = np.load("./test_calibration_points.npz")
+    
+    cal_obj_points_1 = cal_data[f"obj_points_{case[0]}"]
+    cal_img_points_1 = cal_data[f"img_points_{case[1]}"]
+    
+    cal_obj_points_2 = cal_data[f"obj_points_{case[0]}"]
+    cal_img_points_2 = cal_data[f"img_points_{case[1]}"]
+    
+    cam_1 = calib_dlt.get_cam_params(
+        "poly",
+        resolution = [512, 512],
+    )
+    
+    cam_2 = calib_dlt.get_cam_params(
+        "poly",
+        resolution = [512, 512],
+    )
+    
+    cam_1 = calib_dlt.minimize_params(
+        cam_1,
+        cal_obj_points_1,
+        cal_img_points_1
+    )
+    
+    cam_2 = calib_dlt.minimize_params(
+        cam_2,
+        cal_obj_points_2,
+        cal_img_points_2
+    )
+    
+    test_object_points = np.array(
+        [
+            [0, 0, 0],
+            [1, 2, 3],
+            [3, 2, 1],
+            [15, 15, -15],
+            [15, 15, 0],
+            [15, 15, 15]
+        ],
+        dtype=cam_1["dtype"]
+    ).T
+    
+    test_image_points_1 = calib_dlt.project_points(
+        cam_1,
+        test_object_points
+    )
+    
+    test_image_points_2 = calib_dlt.project_points(
+        cam_2,
+        test_object_points
+    )
+    
+    recon_obj_points, _ = calib_dlt.line_intersect(
+        cam_1,
+        cam_2,
+        test_image_points_1,
+        test_image_points_2
+    )
+    
+    assert_array_almost_equal(
+        test_object_points,
+        recon_obj_points,
+        decimal=2
+    )
+    
     
 def test_save_parameters_1():
     params = calib_dlt.get_cam_params(

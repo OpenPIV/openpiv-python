@@ -30,10 +30,10 @@ def line_intersect(
         
     Returns
     -------
+    coords : np.ndarray
+        The world coordinate that is nearest to the two rays intersecting.
     dist : float
         The minimum dinstance between the two rays.
-    coord : np.ndarray
-        The world coordinate that is nearest to the two rays intersecting.
     
     """
     _check_parameters(cam_struct_1)
@@ -43,13 +43,13 @@ def line_intersect(
     dtype2 = cam_struct_2["dtype"]
     
     # all cameras should have the same dtype
-    if dtype1 != dtyp2:
+    if dtype1 != dtype2:
         raise ValueError(
             "Dtypes between camera structures must match"
         )
     
-    img_points_1 = np.array(img_points_1, dtype1=dtype)
-    img_points_2 = np.array(img_points_2, dtype2=dtype)
+    img_points_1 = np.array(img_points_1, dtype=dtype1)
+    img_points_2 = np.array(img_points_2, dtype=dtype2)
     
     t1, r1 = _get_inverse_vector(
         cam_struct_1,
@@ -61,4 +61,9 @@ def line_intersect(
         img_points_2
     )
     
-    return _line_intersect(t1, r1, t2, r2)
+    return _line_intersect(
+        t1[:, np.newaxis], 
+        r1, 
+        t2[:, np.newaxis], 
+        r2
+    )
