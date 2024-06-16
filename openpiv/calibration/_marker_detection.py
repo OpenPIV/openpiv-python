@@ -892,7 +892,7 @@ def detect_markers_template(
     
     # if overlap is None, set overlap to 75% of window size
     if overlap is None:
-        overlap = window_size - window_size * 0.25
+        overlap = window_size - window_size * 0.5
     
     # make sure window_size and overlap are integers
     window_size = int(window_size)
@@ -1012,7 +1012,7 @@ def detect_markers_blobs(
     # scale the image to [0, 1]
     image[image < 0] = 0. # cut negative pixel intensities
     image /= image.max() # normalize
-#    image *= 255. # scale
+    image = image > image.mean() # binarize
     
     # label possible markers
     labels, n_labels = label(image)
