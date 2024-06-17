@@ -140,7 +140,7 @@ def _reorder_corners(
     corners = corners[:, index]
     
     dist1 = np.linalg.norm(corners[:, 0] - corners[:, 1])
-    dist1 = np.linalg.norm(corners[:, 0] - corners[:, -1]) 
+    dist2 = np.linalg.norm(corners[:, 0] - corners[:, -1]) 
 
     if dist2 > dist1 and not is_square:
         num_corners = corners.shape[1]
@@ -400,7 +400,7 @@ def get_pairs_dlt(
         corners = _find_corners(
             image_points,
             asymmetric,
-            is_square=grid[0] == grid[1]
+            is_square=grid_shape[0] == grid_shape[1]
         )
     
     H, _ = calibrate_dlt(

@@ -631,9 +631,6 @@ def _detect_markers(
     pos_y = pos_y[~flags]
     count = count[~flags]
     
-    # find mass of markers
-    
-    
     return pos_x, pos_y, count, corr
 
 
@@ -765,11 +762,11 @@ def detect_markers_template(
     image: np.ndarray,
     template: np.ndarray,
     roi: list=None,
-    window_size: int=64,
+    window_size: int=32,
     overlap: int=None,
-    min_peak_height: float=0.5,
+    min_peak_height: float=0.25,
     merge_radius: int=10,
-    merge_iter: int=5,
+    merge_iter: int=3,
     min_count: float=2,
     refine_pos: bool=False,
     refine_radius: int=3,
@@ -807,7 +804,7 @@ def detect_markers_template(
         mean marker spacing.
     overlap : int, optional
         The amount of overlapping pixels for each window. If None, overlap is
-        automatically set to 75% of the window size. Step size can be
+        automatically set to 62.5% of the window size. Step size can be
         calculated as window_size - overlap. The higher the overlap, the better
         markers are registered but at the expense of performance and memory. 
     min_peak_height : float, optional
@@ -892,7 +889,7 @@ def detect_markers_template(
     
     # if overlap is None, set overlap to 75% of window size
     if overlap is None:
-        overlap = window_size - window_size * 0.5
+        overlap = window_size - window_size * 0.325
     
     # make sure window_size and overlap are integers
     window_size = int(window_size)
