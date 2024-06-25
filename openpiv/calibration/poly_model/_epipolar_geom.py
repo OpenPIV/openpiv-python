@@ -305,7 +305,7 @@ def multi_line_intersect(
     such that the residuals between the image points and the projected
     object points are minimized. This is performed by calculating an 
     analytical solution for the derivatives of the projection function and
-    find a least squares solution by iteratively updating each point until
+    finding a least squares solution by iteratively updating each point until
     a specified amount of iterations have been completed. The least squares
     solution is performed via SVD, making it robust to noise and artifacts.
     This is necessary since the intitial particle positions are approximated
@@ -319,7 +319,7 @@ def multi_line_intersect(
     img_points : list
         A list of image coordinates for each canera structure.
     iterations : int, optional
-        The number of iterations each object point recieves,
+        The number of iterations each object point recieves.
         
     Returns
     -------
