@@ -299,7 +299,7 @@ def multi_line_intersect(
     image_points: list,
     iterations: int=3
 ):
-    """Refine 3D positions with the gradient descent algorithm.
+    """Estimate 3D positions using a gradient descent algorithm.
     
     Using an approximated initial position, optimize the particle locations
     such that the residuals between the image points and the projected
