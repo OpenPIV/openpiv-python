@@ -1,5 +1,6 @@
 from scipy._lib import doccer 
 
+
 __all__ = ['docfiller']
 
 
@@ -39,11 +40,11 @@ _z_lab_coord = (
         Projected world z-coordinates.""")
 
 _x_img_coord = (
-"""X : 1D np.ndarray
+"""x : 1D np.ndarray
         Projected image x-coordinates.""")
 
 _y_img_coord = (
-"""Y : 1D np.ndarray
+"""y : 1D np.ndarray
         Projected image y-coordinates.""")
 
 _project_z = (
@@ -64,5 +65,5 @@ docdict = {
     "project_z": _project_z
 }
 
-# SciPy's nifty decorator that works better than my simple implementation
+# SciPy's nifty decorator (works better than my simple implementation)
 docfiller = doccer.filldoc(docdict)

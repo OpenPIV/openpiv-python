@@ -19,6 +19,7 @@ def get_cam_params(
     resolution: Tuple[int, int],
     poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
     poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T,
+    dlt: np.ndarray=np.eye(3, 4),
     dtype: str="float64"
     
 ):
@@ -36,6 +37,8 @@ def get_cam_params(
         19 coefficients for world to image polynomial calibration in [x, y]'.
     poly_iw : np.ndarray
         19 coefficients for image to world polynomial calibration in [X, Y, Z]'.
+    dlt : np.ndarray
+        12 coefficients for direct linear transformation.
     dtype : str
         The dtype used in the projections.
     
@@ -62,6 +65,7 @@ def get_cam_params(
     cam_struct["resolution"] = resolution
     cam_struct["poly_wi"] = poly_wi
     cam_struct["poly_iw"] = poly_iw
+    cam_struct["dlt"] = dlt
     cam_struct["dtype"] = dtype
     
     _check_parameters(cam_struct)
@@ -119,6 +123,13 @@ def save_parameters(
                 _d2 += str(cam_struct["poly_iw"][i, j]) + ' '
                 
             f.write(_d2 + '\n')
+            
+        for i in range(3):
+            _c = ''
+            for j in range(cam_struct["dlt"].shape[1]):
+                _c += str(cam_struct["dlt"][i, j]) + ' '
+                
+            f.write(_c + '\n')
         
         f.write(cam_struct["dtype"] + '\n')
         
@@ -165,16 +176,23 @@ def load_parameters(
             _d2 = f.readline()[:-2]
             poly_iw.append(np.array([float(s) for s in _d2.split()]))
         
+        dlt = []
+        for i in range(3):
+            _c = f.readline()[:-2]
+            dlt.append(np.array([float(s) for s in _c.split()]))
+        
         dtype = f.readline()[:-1]
         
         poly_wi = np.array(poly_wi, dtype=dtype)
         poly_iw = np.array(poly_iw, dtype=dtype)
+        dlt = np.array(dlt, dtype=dtype)
 
     cam_struct = get_cam_params(
         name,
         resolution,
         poly_wi=poly_wi,
         poly_iw=poly_iw,
+        dlt=dlt,
         dtype=dtype
     )
 

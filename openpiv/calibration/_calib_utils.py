@@ -77,7 +77,8 @@ def get_rmse(
         
     else:
         raise ValueError(
-            "Residuals (error) array must be of shape (n) or (2, n)"
+            "Residuals (error) array must be of shape (n) or (2, n), " + 
+            f"recieved shape {error.shape}"
         )
         
     rmse = np.sqrt(np.mean(square_error))

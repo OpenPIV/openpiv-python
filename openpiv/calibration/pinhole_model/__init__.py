@@ -148,6 +148,7 @@ Functions
     project_points - Project 3D points to image points
     project_to_z - Project image points to 3D points
     line_intersect - Using two lines, locate where those lines intersect
+    multi_line_intersect - Using multiple lines, approximate their intersection
     save_parameters - Save pinhole camera parameters to a text file
     load_parameters - Load pinhole camera parameters from a text file
 

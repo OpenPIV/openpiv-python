@@ -82,12 +82,10 @@ def project_points(
         dtype=dtype
     ).T
     
-    img_points = np.dot(
+    return np.dot(
         polynomial_wi,
         cam_struct["poly_wi"]
     ).T
-    
-    return img_points.astype(dtype, copy=False)
 
 
 @_cal_doc_utils.docfiller
@@ -157,7 +155,11 @@ def project_to_z(
     
     x = image_points[0]
     y = image_points[1]
-    Z = np.array(z, dtype=dtype)
+    
+    if isinstance(z, np.ndarray):
+        Z = np.array(z, dtype=dtype)
+    else:
+        Z = np.zeros_like(x) + z
     
     polynomial_iw = np.array(
         [
@@ -172,9 +174,7 @@ def project_to_z(
         dtype=dtype
     ).T
     
-    obj_points = np.dot(
+    return np.dot(
         polynomial_iw,
         cam_struct["poly_iw"]
     ).T
-    
-    return obj_points.astype(dtype, copy=False)

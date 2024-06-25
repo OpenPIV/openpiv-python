@@ -40,7 +40,7 @@ def _check_parameters(
         raise ValueError(
             "Image to world polynomial coefficients must be 2 dimensional."
         )
-        
+    
     if cam_struct["poly_iw"].shape[0] != 19:
         raise ValueError(
             "Image to world polynomial coefficients must be ordered in [x, y]'"
@@ -49,6 +49,16 @@ def _check_parameters(
     if cam_struct["poly_iw"].shape[1] != 3:
         raise ValueError(
             "There must be 19 coefficients in the image to world polynomial"
+        )
+    
+    if len(cam_struct["dlt"].shape) != 2:
+        raise ValueError(
+            "DLT coefficients must be 2 dimensional."
+        )
+        
+    if cam_struct["dlt"].shape != (3, 4):
+        raise ValueError(
+            "DLT coefficients must be of shape (3, 4)"
         )
         
     if cam_struct["dtype"] not in ["float32", "float64"]:

@@ -1,6 +1,7 @@
 import numpy as np
 
 from ._check_params import _check_parameters
+from ..dlt_model import calibrate_dlt
 from .. import _cal_doc_utils
 
 
@@ -123,14 +124,14 @@ def minimize_params(
         rcond=None
     )[0].astype(dtype, copy=False)
     
-    # psuedo-inverse based solution to system of equations
-#    coeff_wi = np.array(image_points, dtype="float64") @ np.linalg.pinv(polynomial_wi.T)
-#    coeff_wi = coeff_wi.T
-    
-#    coeff_iw = np.array(object_points, dtype="float64") @ np.linalg.pinv(polynomial_iw.T)
-#    coeff_iw = coeff_iw.T
+    # DLT estimator
+    dlt_matrix, _residual = calibrate_dlt(
+        object_points,
+        image_points
+    )
 
     cam_struct["poly_wi"] = coeff_wi
     cam_struct["poly_iw"] = coeff_iw
+    cam_struct["dlt"] = dlt_matrix
     
     return cam_struct
