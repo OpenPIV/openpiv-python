@@ -5,8 +5,8 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from .calibration import pinhole_model as calib_pinhole
-from .calibration.calib_utils import get_reprojection_error, get_los_error
+from openpiv.calibration import pinhole_model as calib_pinhole
+from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def get_test_camera_params(

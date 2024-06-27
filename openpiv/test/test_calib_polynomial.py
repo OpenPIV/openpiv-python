@@ -5,8 +5,8 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from .calibration import poly_model as calib_polynomial
-from .calibration.calib_utils import get_reprojection_error, get_los_error
+from openpiv.calibration import poly_model as calib_polynomial
+from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def test_parameters_input():
@@ -199,9 +199,9 @@ def test_projection_02(
     )
     
 # Test case 2 fails due to test points, why?
-#@pytest.mark.parametrize("case", (1, 2))
+@pytest.mark.parametrize("case", (1, 2))
 def test_projection_03(
-    case: int=1
+    case: int
 ):    
     cal_data = np.load("./test_calibration_points.npz")
     
