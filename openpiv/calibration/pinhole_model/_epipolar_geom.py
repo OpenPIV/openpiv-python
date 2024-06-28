@@ -86,7 +86,7 @@ def multi_line_intersect(
     
     Parameters
     ----------
-    cam_structs, : list
+    cam_structs : list
         A list of dictionary structure of camera parameters.
     img_points : list
         A list of image coordinates for each canera structure.

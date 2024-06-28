@@ -1,13 +1,31 @@
 import numpy as np
+from scipy.optimize import least_squares
 
 from ._check_params import _check_parameters
-from ..dlt_model import calibrate_dlt
+from ..poly_model import calibrate_dlt
 from .. import _cal_doc_utils
 
 
 __all__ = [
     "minimize_params"
 ]
+
+
+def _refine_poly(
+    poly_coeffs: np.ndarray,
+    polynomial: np.ndarray,
+    expected: np.ndarray
+):     
+    # use lambdas since it keeps the function definitions local
+    def refine_func(coeffs):
+        projected = np.dot(polynomial, coeffs)
+        return projected - expected
+
+    return least_squares(
+            refine_func, 
+            poly_coeffs,
+            method="trf" # more modern lm algorithm
+        ).x
 
 
 @_cal_doc_utils.docfiller
@@ -34,28 +52,40 @@ def minimize_params(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
-        )
-        
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import poly_model, calib_utils
+
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5),
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = poly_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = poly_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
+
     >>> calib_utils.get_reprojection_error(
-            camera_parameters, 
-            poly_model.project_points,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
-        )
+        cam_params, 
+        poly_model.project_points,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
+    0.16553632335727653
         
     """
     _check_parameters(cam_struct)
@@ -111,18 +141,36 @@ def minimize_params(
     
 
     # world to image (forward projection)
-    coeff_wi = np.linalg.lstsq(
-        polynomial_wi,
-        image_points.T, 
-        rcond=None
-    )[0].astype(dtype, copy=False)
+    coeff_wi = np.zeros([19, 2], dtype=dtype)
+    
+    for i in range(2):
+        coeff_wi[:, i] = np.linalg.lstsq(
+            polynomial_wi,
+            image_points[i], 
+            rcond=None
+        )[0]
+        
+        coeff_wi[:, i] = _refine_poly(
+            coeff_wi[:, i],
+            polynomial_wi,
+            image_points[i]
+        )
     
     # image to world (back projection)
-    coeff_iw = np.linalg.lstsq(
-        polynomial_iw,
-        object_points.T, 
-        rcond=None
-    )[0].astype(dtype, copy=False)
+    coeff_iw = np.zeros([19, 3], dtype=dtype)
+    
+    for i in range(3):
+        coeff_iw[:, i] = np.linalg.lstsq(
+            polynomial_iw,
+            object_points[i], 
+            rcond=None
+        )[0]
+        
+        coeff_iw[:, i] = _refine_poly(
+            coeff_iw[:, i],
+            polynomial_iw,
+            object_points[i]
+        )
     
     # DLT estimator
     dlt_matrix, _residual = calibrate_dlt(

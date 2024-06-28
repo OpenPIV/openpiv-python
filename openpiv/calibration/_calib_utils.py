@@ -113,28 +113,40 @@ def get_reprojection_error(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-        
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            np.array([obj_x, obj_y, obj_z]),
-            np.array([img_x, img_y])
-        )
-    
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import dlt_model, calib_utils
+
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5),
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = dlt_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = dlt_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
+
     >>> calib_utils.get_reprojection_error(
-            camera_parameters2, 
-            poly_model.project_points,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
-        )
+        cam_params, 
+        dlt_model.project_points,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
+    2.6181007833551034e-07
     
     """ 
     res = project_points_func(
@@ -175,29 +187,42 @@ def get_los_error(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-        
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            np.array([obj_x, obj_y, obj_z]),
-            np.array([img_x, img_y])
-        )
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import dlt_model, calib_utils
+
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5),
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = dlt_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = dlt_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
+
     
     >>> calib_utils.get_los_error(
-            camera_parameters2,
-            poly_model.project_to_z,
-            poly_model.project_points,
+            cam_params,
+            dlt_model.project_to_z,
+            dlt_model.project_points,
             z = 0
         )
-        
+    1.0097171287719555e-12
+    
     """
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
@@ -266,26 +291,37 @@ def get_image_mapping(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-        
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            np.array([obj_x, obj_y, obj_z]),
-            np.array([img_x, img_y])
-        )
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import dlt_model, calib_utils
+
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5),
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = dlt_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = dlt_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
     
     >>> mappings, scale = calib_utils.get_image_mapping(
-            camera_parameters,
-            poly_model.project_to_z,
-            poly_model.project_points
+            cam_params,
+            dlt_model.project_to_z,
+            dlt_model.project_points
         )
         
     >>> mappings

@@ -20,7 +20,6 @@ __all__ = [
 
 def preprocess_image(
     image: np.ndarray,
-    threshold: float,
     mask: np.ndarray=None,
     roi: list=None,
     invert: bool=False,
@@ -30,7 +29,8 @@ def preprocess_image(
     variance_sigma2: float=None,
     morph_size: int=None,
     morph_iter: int=2,
-    median_size: int=None
+    median_size: int=None,
+    binarize_thresh: float=None
 ):
     """Preprocess calibration image.
     
@@ -42,9 +42,6 @@ def preprocess_image(
     ----------
     image : 2D np.ndarray
         A two dimensional array of pixel intensities of the shape (n, m).
-    threshold : float
-        The threshold used for image binarization. It is a good idea to start with
-        a low threshold and slowly increase it in order to get an optimal threshold.
     mask : 2D np.ndarray, optional
         A 2D boolean np.ndarray where True elements are kept and False elements are
         set to zero.
@@ -70,11 +67,14 @@ def preprocess_image(
         operations.
     median_size : int, odd, optional
         If not None, perform a median filter.
+    binarize_thresh : float, optional
+        The threshold used for image binarization. It is a good idea to start with
+        a low threshold and slowly increase it in order to get an optimal threshold.
         
     returns
     -------
-    bool_image : 2D np.ndarray
-        The binarized boolean calibration image of shape (n, m).
+    image : 2D np.ndarray
+        The enhanced calibration image of shape (n, m).
         
     """
     from openpiv.preprocess import high_pass, local_variance_normalization
@@ -235,8 +235,6 @@ def get_circular_template(
     )
 
     disk[dist <= dot_radius] = val
-    
-    
 
     return disk
 
@@ -309,6 +307,30 @@ def get_new_template(
     template_radius: int,
     dtype: str="float64"
 ):
+    """Create a new template.
+    
+    Create a new template based on image data for further refinement of
+    marker detection. The template is the mean of all sub-windows in an
+    image at each selected position.
+    
+    Parameters
+    ----------
+    image : np.ndarray
+        The image which the template will be sampled from.
+    pos_x, pos_y : np.ndarray
+        The positions where the sampling occurs.
+    template_radius : int
+        The radius of the cross in the template.
+    dtype : str
+        The data type of thenew template
+        
+    Returns
+    -------
+    template : 2D np.ndarray
+        A 2D np.ndarray of dtype np.float64 containing a centralized cross
+        element.
+    
+    """
     numel = pos_x.shape[0]
         
     min_x = template_radius
@@ -409,7 +431,7 @@ def _merge_points(
     pos_y: np.ndarray,
     merge_radius: int=10,
     merge_iter: int=5,
-    min_count: int=5
+    min_count: int=1
 ):
     """Merge nearby points.
     
@@ -767,12 +789,10 @@ def detect_markers_template(
     min_peak_height: float=0.25,
     merge_radius: int=10,
     merge_iter: int=3,
-    min_count: float=2,
     refine_pos: bool=False,
     refine_radius: int=3,
     refine_iter: int=5,
     refine_cutoff: float=0.5,
-    return_count: bool=False,
     return_corr: bool=False,
     return_template: bool=False
 ):
@@ -828,9 +848,6 @@ def detect_markers_template(
         The amount of iterations to perform the gaussian subpixel estimation.
     refine_cutoff : float, optional
         The cutoff number to stop iterating. Should be between 0.25 to 0.5.
-    return_count : bool, optional
-        Return the number of times a marker gets counted. This can be used to
-        find the ideal threshold to find the correct markers.
     return_corr : bool, optional
         Return the correlation of the image and template. This can be used to
         determine the template radius.
@@ -850,23 +867,17 @@ def detect_markers_template(
     
     Examples
     --------
-    >>> import numpy as np
-    >>> from openpiv import calib_utils
-    >>> from openpiv.data.test5 import cal_image
-    
-    >>> cal_img = cal_image(preproc = True)
-    
+    Let cal_img be a calibration image.
+        
     >>> template = calib_utils.get_circular_template(radius = 7)
     
-    >>> marks_pos, counts = calib_utils.detect_markers_template(
+    >>> marks_pos = calib_utils.detect_markers_template(
             cal_img,
             template,
             window_size = 64,
             min_peak_height = 0.5,
             merge_radius = 10,
-            merge_iter=5,
-            min_count=5,
-            return_count=True
+            merge_iter=2
         )
         
     >>> marks_pos
@@ -895,9 +906,9 @@ def detect_markers_template(
     window_size = int(window_size)
     overlap = int(overlap)
     
-    # data type conversion to float64
-    image = image.astype("float64")
-    template = template.astype("float64")
+    # data type conversion to float32 (float64 works too, but is slower)
+    image = image.astype("float32")
+    template = template.astype("float32")
     
     # scale the image to [0, 1]
     image[image < 0] = 0. # cut negative pixel intensities
@@ -933,9 +944,6 @@ def detect_markers_template(
     return_list = [
         np.array([pos_x, pos_y], dtype="float64")
     ]
-    
-    if return_count == True:
-        return_list.append(counts)
     
     if return_corr == True:
         return_list.append(corr)
@@ -1047,7 +1055,7 @@ def detect_markers_blobs(
     pos[:, 0] = _pos[:, 1] + off_x
     pos[:, 1] = _pos[:, 0] + off_y
     
-    # sort so the results behave like detect_markers_template
+    # sort so the results behave somewhat like detect_markers_template
     order = np.lexsort(
         (pos[:, 1], pos[:, 0])
     )

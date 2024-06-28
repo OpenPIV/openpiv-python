@@ -48,15 +48,7 @@ def show_calibration_image(
     -------
     None
     
-    Examples
-    --------
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from openpiv import calib_utils
-    >>> from openpiv.data.test5 import cal_image
-    
-    >>> cal_img = cal_image(z=0)
+    Let cal_img be a calibration image.
     
     >>> marks_pos = calib_utils.detect_markers_template(
             cal_img,

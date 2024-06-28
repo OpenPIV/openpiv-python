@@ -44,13 +44,10 @@ def get_cam_params(
     --------
     >>> import numpy as np
     >>> from openpiv import calib_utils, dlt_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
+        
     >>> camera_parameters = dlt_model.get_cam_params(
             name="cam1", 
-            [img_size_x, img_size_y]
+            [1024, 1024]
         )
     
     """    

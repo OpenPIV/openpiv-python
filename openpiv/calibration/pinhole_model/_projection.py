@@ -80,21 +80,29 @@ def project_points(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, pinhole_model
-    >>> from openpiv.data.test5 import cal_points
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import pinhole_model
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
-    
-    >>> camera_parameters = pinhole_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5), # get first 5 columns of data
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = pinhole_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -102,22 +110,25 @@ def project_points(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+    >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
             correct_distortion = True,
             iterations=5
         )
-        
-    >>> ij = pinhole_model.project_points(
-            camera_parameters,
-            obj_points
-        )
-    >>> ij
-    
+
+    >>> pinhole_model.project_points(
+        cam_params,
+        obj_points
+    )
+    array([[-44.33764399, -33.67518588, -22.97467733],
+           [ 89.61102874, 211.88636408, 334.59805555]])
+
     >>> img_points
+    array([[-44.33764398, -33.67518587, -22.97467733],
+           [ 89.61102873, 211.8863641 , 334.5980555 ]])
     
     """ 
     _check_parameters(cam_struct)    
@@ -184,46 +195,6 @@ def _get_inverse_vector(
     -----
     The direction vector is not normalized.
     
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, pinhole_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
-    
-    >>> camera_parameters = pinhole_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y],
-            correct_focal = True,
-            correct_distortion = False,
-            iterations=5
-        )
-    
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y],
-            correct_focal = True,
-            correct_distortion = True,
-            iterations=5
-        )
-        
-    >>> ij = pinhole_model._get_direction_vector(
-            camera_parameters,
-            img_points
-        )
-    >>> ij
-    
     """    
     R = cam_struct["rotation"]
     dtype = cam_struct["dtype"]
@@ -286,21 +257,29 @@ def project_to_z(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, pinhole_model
-    >>> from openpiv.data.test5 import cal_points
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import pinhole_model
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
-    
-    >>> camera_parameters = pinhole_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5), # get first 5 columns of data
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = pinhole_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -308,8 +287,8 @@ def project_to_z(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+    >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -318,18 +297,27 @@ def project_to_z(
         )
         
     >>> ij = pinhole_model.project_points(
-            camera_parameters,
+            cam_params,
             obj_points
         )
+    
     >>> ij
+    array([[-44.33764399, -33.67518588, -22.97467733],
+           [ 89.61102874, 211.88636408, 334.59805555]])
     
     >>> pinhole_model.project_to_z(
-            camera_parameters,
+            cam_params,
             ij,
             z=obj_points[2]
         )
+    array([[-105., -105., -105.],
+           [ -15.,  -10.,   -5.],
+           [ -10.,  -10.,  -10.]])
     
     >>> obj_points
+    array([[-105., -105., -105.],
+           [ -15.,  -10.,   -5.],
+           [ -10.,  -10.,  -10.]])
         
     """
     _check_parameters(cam_struct) 

@@ -80,18 +80,26 @@ def minimize_params(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, pinhole_model
-    >>> from openpiv.data.test5 import cal_points
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import dlt_model
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
+    >> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5),
+        delimiter=','
+    )
     
-    >>> camera_parameters = pinhole_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
+    >>> cam_params = pinhole_model.get_cam_params(
+            name='cam1', 
+            [4512, 800]
         )
     
-     >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+     >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -99,20 +107,13 @@ def minimize_params(
             iterations=5
         )
     
-    >>> camera_parameters = pinhole_model.minimize_params(
-            camera_parameters, 
+    >>> cam_params = pinhole_model.minimize_params(
+            cam_params, 
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
             correct_distortion = True,
             iterations=5
-        )
-    
-    >>> calib_utils.get_reprojection_error(
-            camera_parameters, 
-            pinhole_model.project_points,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
         )
     
     """

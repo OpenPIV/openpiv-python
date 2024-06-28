@@ -32,31 +32,43 @@ def project_points(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import poly_model
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
-        )
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5), # get first 5 columns of data
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = poly_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = poly_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
         
     >>> poly_model.project_points(
-            camera_parameters,
+            cam_params,
             obj_points
         )
+    array([[-44.24281474, -33.56231972, -22.84229244],
+           [ 89.63444964, 211.90372246, 334.60601499]])
         
     >>> img_points
+    array([[-44.33764398, -33.67518587, -22.97467733],
+           [ 89.61102873, 211.8863641 , 334.5980555 ]])
     
     """ 
     _check_parameters(cam_struct)
@@ -113,38 +125,55 @@ def project_to_z(
     Examples
     --------
     >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
+    >>> from importlib_resources import files
+    >>> from openpiv.calibration import poly_model
     
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> obj_points = np.array([obj_x[0:2], obj_y[0:2], obj_z[0:2]], dtype="float64")
-    >>> img_points = np.array([img_x[0:2], img_y[0:2]], dtype="float64")
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    >>> camera_parameters = poly_model.minimize_params(
-            camera_parameters,
-            [obj_x, obj_y, obj_z],
-            [img_x, img_y]
-        )
+    >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
+
+    >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
+        path_to_calib,
+        unpack=True,
+        skiprows=1,
+        usecols=range(5), # get first 5 columns of data
+        delimiter=','
+    )
+
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+
+    >>> cam_params = poly_model.get_cam_params(
+        'cam1', 
+        [4512, 800]
+    )
+
+    >>> cam_params = poly_model.minimize_params(
+        cam_params,
+        [obj_x, obj_y, obj_z],
+        [img_x, img_y]
+    )
         
     >>> ij = poly_model.project_points(
-            camera_parameters,
+            cam_params,
             obj_points
         )
+    
     >>> ij
+    array([[-44.24281474, -33.56231972, -22.84229244],
+           [ 89.63444964, 211.90372246, 334.60601499]])
     
     >>> poly_model.project_to_z(
-            camera_parameters,
+            cam_params,
             ij,
             z=obj_points[2]
         )
+    array([[-105.0088358 , -105.00967895, -105.01057378],
+           [ -15.0022918 ,  -10.00166811,   -5.00092353],
+           [ -10.00000004,  -10.00000003,  -10.00000002]])
     
-    >>> obj_points  
+    >>> obj_points
+    array([[-105., -105., -105.],
+           [ -15.,  -10.,   -5.],
+           [ -10.,  -10.,  -10.]]) 
         
     """ 
     _check_parameters(cam_struct)
