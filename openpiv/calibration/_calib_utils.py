@@ -88,8 +88,7 @@ def get_rmse(
 
 @_cal_doc_utils.docfiller
 def get_reprojection_error(
-    cam_struct: dict,
-    project_points_func: "function",
+    cam: "camera",
     object_points: np.ndarray,
     image_points: np.ndarray
 ):
@@ -100,7 +99,8 @@ def get_reprojection_error(
     
     Parameters
     ----------
-    %(cam_struct)s
+    cam : camera
+        An instance of a camera object.
     %(project_points_func)s
     %(object_points)s
     %(image_points)s
@@ -129,28 +129,25 @@ def get_reprojection_error(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
 
     >>> calib_utils.get_reprojection_error(
-        cam_params, 
-        dlt_model.project_points,
+        cam, 
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
     2.6181007833551034e-07
     
     """ 
-    res = project_points_func(
-        cam_struct,
+    res = cam.project_points(
         object_points
     )
         
@@ -163,10 +160,8 @@ def get_reprojection_error(
 
 @_cal_doc_utils.docfiller
 def get_los_error(
-    cam_struct,
-    project_to_z_func: "function",
-    project_points_func: "function",
-    z
+    cam: "camera",
+    z: float
 ):
     """Calculate camera LOS error.
     
@@ -174,7 +169,7 @@ def get_los_error(
     
     Parameters
     ----------
-    %(cam_struct)s
+    %(cam)s
     %(project_to_z_func)s
     %(project_points_func)s
     %(project_z)s
@@ -203,22 +198,18 @@ def get_los_error(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
-
     
     >>> calib_utils.get_los_error(
-            cam_params,
-            dlt_model.project_to_z,
-            dlt_model.project_points,
+            cam,
             z = 0
         )
     1.0097171287719555e-12
@@ -226,8 +217,8 @@ def get_los_error(
     """
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
-        np.arange(0, cam_struct["resolution"][1]),
-        np.arange(0, cam_struct["resolution"][0]),
+        np.arange(0, cam.resolution[1]),
+        np.arange(0, cam.resolution[0]),
         indexing="ij"
     )
     
@@ -244,14 +235,14 @@ def get_los_error(
     
     # project image coordinates to world points
     X, Y, Z = project_to_z_func(
-        cam_struct,
+        cam,
         [x, y],
         Z
     )
     
     # project world points back to image coordinates
     res = project_points_func(
-        cam_struct,
+        cam,
         [X, Y, Z]
     )
     
@@ -265,7 +256,7 @@ def get_los_error(
 # This script was originally from Theo's polynomial calibration repository.
 @_cal_doc_utils.docfiller
 def get_image_mapping(
-    cam_struct: dict,
+    cam: dict,
     project_to_z_func: "function",
     project_points_func: "function"
 ):
@@ -275,7 +266,7 @@ def get_image_mapping(
     
     Parameters
     ----------
-    %(cam_struct)s
+    %(cam)s
     %(project_to_z_func)s
     %(project_points_func)s
     
@@ -330,14 +321,14 @@ def get_image_mapping(
     
     """
     field_shape = (
-        cam_struct["resolution"][1],
-        cam_struct["resolution"][0]
+        cam.resolution[1],
+        cam.resolution[0]
     )
     
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
-        np.arange(0, cam_struct["resolution"][1]),
-        np.arange(0, cam_struct["resolution"][0]),
+        np.arange(0, cam.resolution[1]),
+        np.arange(0, cam.resolution[0]),
         indexing="ij"
     )
     
@@ -353,8 +344,7 @@ def get_image_mapping(
     Z = np.zeros_like(x)
     
     # project image coordinates to world points
-    world_x, world_y, _ = project_to_z_func(
-        cam_struct,
+    world_x, world_y, _ = cam.project_to_z(
         [x, y],
         Z
     )
@@ -384,13 +374,13 @@ def get_image_mapping(
         np.linspace(
             min_X + Scale,
             max_X, 
-            num=cam_struct["resolution"][0], 
+            num=cam.resolution[0], 
             endpoint=True
         ),
         np.linspace(
             min_Y + Scale,
             max_Y, 
-            num=cam_struct["resolution"][1], 
+            num=cam.resolution[1], 
             endpoint=True
         )
     )
@@ -399,8 +389,7 @@ def get_image_mapping(
     Y = np.squeeze(Y.reshape(-1, 1))
     
     # project world points to image coordinates
-    mapped_grid = project_points_func(
-        cam_struct,
+    mapped_grid = cam.project_points(
         [X, Y, Z]
     )
     
