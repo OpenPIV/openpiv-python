@@ -5,8 +5,8 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from .calibration import dlt_model
-from .calibration.calib_utils import get_reprojection_error, get_los_error
+from openpiv.calibration import dlt_model
+from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def test_parameters_input():
