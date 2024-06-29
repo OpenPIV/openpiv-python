@@ -298,21 +298,18 @@ def get_image_mapping(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
     
     >>> mappings, scale = calib_utils.get_image_mapping(
-            cam_params,
-            dlt_model.project_to_z,
-            dlt_model.project_points
+            cam,
         )
         
     >>> mappings
