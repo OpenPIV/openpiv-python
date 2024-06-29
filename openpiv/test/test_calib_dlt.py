@@ -5,71 +5,71 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from openpiv.calibration import dlt_model as calib_dlt
-from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
+from .calibration import dlt_model
+from .calibration.calib_utils import get_reprojection_error, get_los_error
 
 
 def test_parameters_input():
     with pytest.raises(TypeError):
          # missing camera name
-        calib_dlt.get_cam_params()
+        dlt_model.camera()
         
         # missing resolution
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             "name"
         )
                                  
     with pytest.raises(ValueError):
         # name is not a string
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             0,
             resolution=[0, 0]
         )
         
         # not two element tuple
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             "name",
             resolution=[0]
         )
         
         # not 2D or 3D
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             "name",
             resolution=[0, 0],
             ndim = 4
         )
         
         # coefficients not correct dimension
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             "name",
             resolution=[0, 0],
-            coefficients = np.zeros((10, 10, 2))
+            coeffs = np.zeros((10, 10, 2))
         )
         
         # coefficients not correct shape
-        calib_dlt.get_cam_params(
+        dlt_model.camera(
             "name",
             resolution=[0, 0],
-            coefficients = np.zeros((10, 10))
+            coeffs = np.zeros((10, 10))
         )
         
 
 def test_parameters_initialization():
-    params = calib_dlt.get_cam_params(
+    cam = dlt_model.camera(
             "name",
             resolution=[0, 0]
         )
     
-    assert_("name" in params)
-    assert_("resolution" in params)
-    assert_("coefficients" in params)
-    assert_("dtype" in params)
+    assert_(hasattr(cam, "name"))
+    assert_(hasattr(cam, "resolution"))
+    assert_(hasattr(cam, "coeffs"))
+    assert_(hasattr(cam, "dtype"))
     
-    assert_(len(params["resolution"]) == 2)
+    assert_(len(cam.resolution) == 2)
     
-    assert_(params["coefficients"].shape in [(3, 3), (3, 4)])
+    assert_(cam.coeffs.shape in [(3, 3), (3, 4)])
     
-    assert_(params["dtype"] in ["float32", "float64"])
+    assert_(cam.dtype in ["float32", "float64"])
 
 
 @pytest.mark.parametrize("case", (1, 2))
@@ -81,20 +81,18 @@ def test_minimization_01(
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
     
-    params = calib_dlt.get_cam_params(
-        "poly",
+    cam = dlt_model.camera(
+        "dummy",
         resolution = [512, 512],
     )
     
-    params = calib_dlt.minimize_params(
-        params,
+    cam.minimize_params(
         cal_obj_points,
         cal_img_points
     )
     
     RMSE = get_reprojection_error(
-        params,
-        calib_dlt.project_points,
+        cam,
         cal_obj_points,
         cal_img_points
     )
@@ -111,13 +109,12 @@ def test_projection_01(
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
     
-    params = calib_dlt.get_cam_params(
-        "poly",
+    cam = dlt_model.camera(
+        "dummy",
         resolution = [512, 512],
     )
     
-    params = calib_dlt.minimize_params(
-        params,
+    cam.minimize_params(
         cal_obj_points,
         cal_img_points
     )
@@ -129,13 +126,11 @@ def test_projection_01(
     
     obj_points = obj_points.astype("float64", copy=False)
     
-    img_points = calib_dlt.project_points(
-        params,
+    img_points = cam.project_points(
         obj_points
     )
     
-    recon_obj_points = calib_dlt.project_to_z(
-        params,
+    recon_obj_points = cam.project_to_z(
         img_points,
         obj_points[2]
     )
@@ -156,19 +151,17 @@ def test_projection_02(
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
     
-    params = calib_dlt.get_cam_params(
-        "poly",
+    cam = dlt_model.camera(
+        "dummy",
         resolution = [512, 512],
     )
     
-    params = calib_dlt.minimize_params(
-        params,
+    cam.minimize_params(
         cal_obj_points,
         cal_img_points
     )
     
-    x, y = calib_dlt.project_points(
-        params,
+    x, y = cam.project_points(
         cal_obj_points
     )
     
@@ -192,35 +185,28 @@ def test_projection_03(
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
     
-    params = calib_dlt.get_cam_params(
-        "poly",
+    cam = dlt_model.camera(
+        "dummy",
         resolution = [512, 512],
     )
     
-    params = calib_dlt.minimize_params(
-        params,
+    cam.minimize_params(
         cal_obj_points,
         cal_img_points
     )
     
     RMSE_0 = get_los_error(
-        params,
-        calib_dlt.project_to_z,
-        calib_dlt.project_points,
+        cam,
         z = -10
     )
     
     RMSE_1 = get_los_error(
-        params,
-        calib_dlt.project_to_z,
-        calib_dlt.project_points,
+        cam,
         z = 0
     )
     
     RMSE_2 = get_los_error(
-        params,
-        calib_dlt.project_to_z,
-        calib_dlt.project_points,
+        cam,
         z = 10
     )
         
@@ -240,24 +226,22 @@ def test_line_intersect_01():
     cal_obj_points_2 = cal_data[f"obj_points_{case[1]}"]
     cal_img_points_2 = cal_data[f"img_points_{case[1]}"]
     
-    cam_1 = calib_dlt.get_cam_params(
-        "poly",
+    cam_1 = dlt_model.camera(
+        "dummy",
         resolution = [512, 512]
     )
     
-    cam_2 = calib_dlt.get_cam_params(
-        "poly",
+    cam_2 = dlt_model.camera(
+        "dummy",
         resolution = [512, 512]
     )
     
-    cam_1 = calib_dlt.minimize_params(
-        cam_1,
+    cam_1.minimize_params(
         cal_obj_points_1,
         cal_img_points_1
     )
     
-    cam_2 = calib_dlt.minimize_params(
-        cam_2,
+    cam_2.minimize_params(
         cal_obj_points_2,
         cal_img_points_2
     )
@@ -271,20 +255,18 @@ def test_line_intersect_01():
             [15, 15, 0],
             [15, 15, 15]
         ],
-        dtype=cam_1["dtype"]
+        dtype=cam_1.dtype
     ).T
     
-    test_image_points_1 = calib_dlt.project_points(
-        cam_1,
+    test_image_points_1 = cam_1.project_points(
         test_object_points
     )
     
-    test_image_points_2 = calib_dlt.project_points(
-        cam_2,
+    test_image_points_2 = cam_2.project_points(
         test_object_points
     )
     
-    recon_obj_points, _ = calib_dlt.line_intersect(
+    recon_obj_points, _ = dlt_model.line_intersect(
         cam_1,
         cam_2,
         test_image_points_1,
@@ -309,24 +291,22 @@ def test_line_intersect_02():
     cal_obj_points_2 = cal_data[f"obj_points_{case[1]}"]
     cal_img_points_2 = cal_data[f"img_points_{case[1]}"]
     
-    cam_1 = calib_dlt.get_cam_params(
-        "poly",
+    cam_1 = dlt_model.camera(
+        "dummy",
         resolution = [512, 512]
     )
     
-    cam_2 = calib_dlt.get_cam_params(
-        "poly",
+    cam_2 = dlt_model.camera(
+        "dummy",
         resolution = [512, 512]
     )
     
-    cam_1 = calib_dlt.minimize_params(
-        cam_1,
+    cam_1.minimize_params(
         cal_obj_points_1,
         cal_img_points_1
     )
     
-    cam_2 = calib_dlt.minimize_params(
-        cam_2,
+    cam_2.minimize_params(
         cal_obj_points_2,
         cal_img_points_2
     )
@@ -340,20 +320,18 @@ def test_line_intersect_02():
             [15, 15, 0],
             [15, 15, 15]
         ],
-        dtype=cam_1["dtype"]
+        dtype=cam_1.dtype
     ).T
     
-    test_image_points_1 = calib_dlt.project_points(
-        cam_1,
+    test_image_points_1 = cam_1.project_points(
         test_object_points
     )
     
-    test_image_points_2 = calib_dlt.project_points(
-        cam_2,
+    test_image_points_2 = cam_2.project_points(
         test_object_points
     )
     
-    recon_obj_points = calib_dlt.multi_line_intersect(
+    recon_obj_points = dlt_model.multi_line_intersect(
         [cam_1, cam_2],
         [test_image_points_1, test_image_points_2]
     )
@@ -366,70 +344,78 @@ def test_line_intersect_02():
    
     
 def test_save_parameters_1():
-    params = calib_dlt.get_cam_params(
+    cam = dlt_model.camera(
         "dummy",
         resolution = [512, 512]
     )
         
-    calib_dlt.save_parameters(
-        params,
+    cam.save_parameters(
         "."
     )
 
 
 def test_save_parameters_2():
-    params = calib_dlt.get_cam_params(
+    cam = dlt_model.camera(
         "dummy",
         resolution = [512, 512]
     )
 
         
-    calib_dlt.save_parameters(
-        params,
+    cam.save_parameters(
         ".", "saved_params"
     )
 
     
 def test_load_parameters_1():
+    cam = dlt_model.camera(
+        "dummy",
+        resolution = [512, 512]
+    )
+    
     with pytest.raises(FileNotFoundError):
-        params_loaded = calib_dlt.load_parameters(
+        cam.load_parameters(
             ".",
             "does not exist (hopefully)"
         )
     
 
 def test_load_parameters_2():
-    params_orig = calib_dlt.get_cam_params(
+    cam_orig = dlt_model.camera(
+        "dummy",
+        resolution = [512, 512]
+    )
+    
+    cam_new = dlt_model.camera(
         "dummy",
         resolution = [512, 512]
     )
         
-    calib_dlt.save_parameters(
-        params_orig,
+    cam_orig.save_parameters(
         ".",
         "dummy"
     )
     
-    params_new = calib_dlt.load_parameters(
+    cam_new.load_parameters(
         ".",
         "dummy"
     )
+    
     assert_array_equal(
-        params_orig["name"], 
-        params_new["name"]
+        cam_orig.name, 
+        cam_new.name
     )
     
     assert_array_equal(
-        params_orig["resolution"], 
-        params_new["resolution"]
+        cam_orig.resolution, 
+        cam_new.resolution
     )
     
     assert_array_equal(
-        params_orig["coefficients"], 
-        params_new["coefficients"]
+        cam_orig.coeffs, 
+        cam_new.coeffs
     )
     
     assert_array_equal(
-        params_orig["dtype"], 
-        params_new["dtype"]
+        cam_orig.dtype, 
+        cam_new.dtype
     )
