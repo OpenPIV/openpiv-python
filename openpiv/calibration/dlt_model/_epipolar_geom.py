@@ -1,6 +1,5 @@
 import numpy as np
-from ._check_params import _check_parameters
-from ._projection import _get_inverse_vector
+
 from .._epipolar_utils import _line_intersect, _multi_line_intersect
 
 
@@ -11,8 +10,8 @@ __all__ = [
 
 
 def line_intersect(
-    cam_struct_1: dict,
-    cam_struct_2: dict,
+    cam_1: class,
+    cam_2: class,
     img_points_1: np.ndarray,
     img_points_2: np.ndarray
 ):
@@ -24,8 +23,8 @@ def line_intersect(
     
     Parameters
     ----------
-    cam_struct_1, cam_struct_2 : dict
-        A dictionary structure of camera parameters.
+    cam_1, cam_2 : class
+        An instance of a DLT camera.
     img_points_1, img_points_2 : np.ndarray
         Image coordinates stored in a ndarray structured like [x, y]'.
         
@@ -37,11 +36,11 @@ def line_intersect(
         The minimum dinstance between the two rays.
     
     """
-    _check_parameters(cam_struct_1)
-    _check_parameters(cam_struct_2)
+    cam_1._check_parameters()
+    cam_2._check_parameters()
     
-    dtype1 = cam_struct_1["dtype"]
-    dtype2 = cam_struct_2["dtype"]
+    dtype1 = cam_1.dtype
+    dtype2 = cam_2.dtype
     
     # all cameras should have the same dtype
     if dtype1 != dtype2:
@@ -52,13 +51,11 @@ def line_intersect(
     img_points_1 = np.array(img_points_1, dtype=dtype1)
     img_points_2 = np.array(img_points_2, dtype=dtype2)
     
-    t1, r1 = _get_inverse_vector(
-        cam_struct_1,
+    t1, r1 = cam_1._get_inverse_vector(
         img_points_1
     )
     
-    t2, r2 = _get_inverse_vector(
-        cam_struct_2,
+    t2, r2 = cam_2._get_inverse_vector(
         img_points_2
     )
     
@@ -71,7 +68,7 @@ def line_intersect(
 
 
 def multi_line_intersect(
-    cam_structs: list,
+    cameras: list,
     img_points: list,
 ):
     """Calculate where multiple rays intersect.
@@ -82,8 +79,8 @@ def multi_line_intersect(
     
     Parameters
     ----------
-    cam_structs : list
-        A list of dictionary structure of camera parameters.
+    cameras : list
+        A list of instances of DLT cameras.
     img_points : list
         A list of image coordinates for each canera structure.
         
@@ -93,7 +90,7 @@ def multi_line_intersect(
         The world coordinate that is nearest to the intersection of all rays.
     
     """
-    n_cams = len(cam_structs)
+    n_cams = len(cameras)
     n_imgs = len(img_points)
     
     # make sure each camera has a set of images
@@ -105,12 +102,12 @@ def multi_line_intersect(
     
     # check each camera structure
     for cam in range(n_cams):
-        _check_parameters(cam_structs[cam])
+        cameras[cam]._check_parameters()
         
     # all cameras should have the same dtype
-    dtype1 = cam_structs[0]["dtype"]
+    dtype1 = cameras[0].dtype
     for cam in range(1, n_cams):
-        dtype2 = cam_structs[cam]["dtype"]
+        dtype2 = cameras[cam].dtype
         
         if dtype1 != dtype2:
             raise ValueError(
@@ -121,8 +118,7 @@ def multi_line_intersect(
     for cam in range(n_cams):
         points = np.array(img_points[cam], dtype=dtype1)
     
-        t, r = _get_inverse_vector(
-            cam_structs[cam],
+        t, r = cameras[cam]._get_inverse_vector(
             points
         )
         

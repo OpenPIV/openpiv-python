@@ -11,15 +11,10 @@ that of pinhole and polynomial calibration methods.
 
 Functions
 =========
-    get_cam_params - Create DLT camera model parameters
+    camera - Create an instance of a DLT camera model
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
-    minimize_params - Minimize the camera model parameters
-    project_points - Project 3D points to image points
-    project_to_z - Project image points to 3D points
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-    save_parameters - Save DLT camera parameters to a text file
-    load_parameters - Load DLT camera parameters from a text file
 
 Note
 ====
@@ -29,9 +24,8 @@ could cause conflicts between other camera models due to similar naming
 conventions that are normally protected behind namespaces.
 
 """
+from ._camera import *
 from ._epipolar_geom import *
-from ._minimization import *
-from ._projection import *
 from ._utils import *
 
 

@@ -1,26 +1,20 @@
 import numpy as np
 
-from ._check_params import _check_parameters
 from .._calib_utils import homogenize
 from .. import _cal_doc_utils
 
 
-__all__ = [
-    "project_points",
-    "project_to_z"
-]
-
-
 @_cal_doc_utils.docfiller
-def project_points(
-    cam_struct: dict,
+def _project_points(
+    self,
     object_points: np.ndarray
 ):
     """Project lab coordinates to image points.
         
     Parameters
     ----------
-    %(cam_struct)s
+    camera : class
+        An instance of a DLT camera.
     %(object_points)s
         
     Returns
@@ -47,19 +41,17 @@ def project_points(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
 
-    >>> dlt_model.project_points(
-        cam_params,
+    >>> cam.project_points(
         obj_points
     )
     array([[-44.33764399, -33.67518588, -22.97467733],
@@ -70,13 +62,12 @@ def project_points(
            [ 89.61102873, 211.8863641 , 334.5980555 ]])
     
     """ 
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
+    H = self.coeffs
     
     object_points = np.array(object_points, dtype=dtype)
-        
-    H = cam_struct["coefficients"]
     
     ndim = H.shape[1] - 1
     
@@ -99,7 +90,7 @@ def project_points(
 
 @_cal_doc_utils.docfiller
 def _get_inverse_vector(
-    cam_struct: dict,
+    self,
     image_points: np.ndarray
 ):
     """Get pixel to direction vector.
@@ -111,7 +102,6 @@ def _get_inverse_vector(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(image_points)s
         
     Returns
@@ -126,8 +116,8 @@ def _get_inverse_vector(
     The direction vector is not normalized.
     
     """    
-    dtype = cam_struct["dtype"]
-    p = cam_struct["coefficients"]
+    dtype = self.dtype
+    p = self.coeffs
     
     if p.shape != (3, 4):
         raise ValueError(
@@ -149,8 +139,8 @@ def _get_inverse_vector(
 
 
 @_cal_doc_utils.docfiller
-def project_to_z(
-    cam_struct: dict,
+def _project_to_z(
+    self,
     image_points: np.ndarray,
     z: np.ndarray
 ):
@@ -164,7 +154,6 @@ def project_to_z(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(image_points)s
     %(project_z)s
         
@@ -193,19 +182,17 @@ def project_to_z(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
         
-    >>> ij = dlt_model.project_points(
-            cam_params,
+    >>> ij = cam.project_points(
             obj_points
         )
     
@@ -213,8 +200,7 @@ def project_to_z(
     array([[-44.33764399, -33.67518588, -22.97467733],
            [ 89.61102874, 211.88636408, 334.59805555]])
     
-    >>> dlt_model.project_to_z(
-            cam_params,
+    >>> cam.project_to_z(
             ij,
             z=obj_points[2]
         )
@@ -228,12 +214,13 @@ def project_to_z(
            [ -10.,  -10.,  -10.]])
     
     """
-    dtype = cam_struct["dtype"]
+    self._check_parameters()
+    
+    dtype = self.dtype
         
     image_points = np.array(image_points, dtype=dtype)
     
-    t, r = _get_inverse_vector(
-        cam_struct,
+    t, r = self._get_inverse_vector(
         image_points
     )
     

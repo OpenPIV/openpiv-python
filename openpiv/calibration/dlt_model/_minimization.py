@@ -1,15 +1,13 @@
 import numpy as np
 from scipy.optimize import curve_fit
 
-from ._check_params import _check_parameters
 from ._normalization import _standardize_points_2d, _standardize_points_3d
 from .._calib_utils import homogenize, get_rmse
 from .. import _cal_doc_utils
 
 
 __all__ = [
-    "calibrate_dlt",
-    "minimize_params"
+    "calibrate_dlt"
 ]
 
 
@@ -90,7 +88,7 @@ def calibrate_dlt(
         x_raw, y_raw = image_points
         
         # normalize for better dlt results
-        [X, Y], lab_norm_mat = _standardize_points_2d(X_raw, Y_raw)
+        [X, Y], obj_norm_mat = _standardize_points_2d(X_raw, Y_raw)
         [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
             
         # mount constraints
@@ -114,7 +112,7 @@ def calibrate_dlt(
         x_raw, y_raw = image_points
 
         # normalize for better dlt results
-        [X, Y, Z], lab_norm_mat = _standardize_points_3d(X_raw, Y_raw, Z_raw)
+        [X, Y, Z], obj_norm_mat = _standardize_points_3d(X_raw, Y_raw, Z_raw)
         [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
 
         # mount constraints
@@ -150,7 +148,7 @@ def calibrate_dlt(
             np.linalg.inv(img_norm_mat),
             H
         ),
-        lab_norm_mat
+        obj_norm_mat
     )
         
     # compute RMSE error
@@ -246,7 +244,7 @@ def calibrate_dlt(
 #        x_raw, y_raw = image_points
 #        
 #        # normalize for better dlt results
-#        [X, Y], lab_norm_mat = _standardize_points_2d(X_raw, Y_raw)
+#        [X, Y], obj_norm_mat = _standardize_points_2d(X_raw, Y_raw)
 #        [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
 #            
 #        # mount constraints
@@ -305,7 +303,7 @@ def calibrate_dlt(
 #            np.linalg.inv(img_norm_mat),
 #            H
 #        ),
-#        lab_norm_mat
+#        obj_norm_mat
 #    )
 #    
 #    # compute RMSE error
@@ -325,8 +323,8 @@ def calibrate_dlt(
 
 
 @_cal_doc_utils.docfiller
-def minimize_params(
-    cam_struct: dict,
+def _minimize_params(
+    self,
     object_points: np.ndarray,
     image_points: np.ndarray,
     enforce_coplanar: bool=False
@@ -339,16 +337,11 @@ def minimize_params(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(object_points)s
     %(image_points)s
     enforce_coplanar : bool
         If a Z plane is supplied in the object points, check whether or not
         the Z planes are co-planar.
-        
-    Returns
-    -------
-    %(cam_struct)s
         
     Examples
     --------
@@ -369,20 +362,18 @@ def minimize_params(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = dlt_model.get_cam_params(
+    >>> cam = dlt_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = dlt_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
 
     >>> calib_utils.get_reprojection_error(
-        cam_params, 
-        dlt_model.project_points,
+        cam,
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
@@ -390,9 +381,9 @@ def minimize_params(
     
     """
     
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
@@ -403,9 +394,7 @@ def minimize_params(
         enforce_coplanar
     )
     
-    cam_struct["coefficients"] = H
-    
-    return cam_struct
+    self.coeffs = H
 
 
 def _refine_func2D(

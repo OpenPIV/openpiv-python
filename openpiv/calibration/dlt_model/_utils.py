@@ -2,69 +2,11 @@ import numpy as np
 from os.path import join
 from typing import Tuple
 
-from ._check_params import _check_parameters
 from .. import _cal_doc_utils
 
 
-__all__ = [
-    "get_cam_params",
-    "save_parameters",
-    "load_parameters"
-]
-
-
-@_cal_doc_utils.docfiller
-def get_cam_params(
-    cam_name: str,
-    resolution: Tuple[int, int],
-    coefficients: np.ndarray=np.identity(3),
-    dtype: str="float64"
-    
-):
-    """Create a camera parameter structure.
-    
-    Create a camera parameter structure for DLT calibration.
-    
-    Parameters
-    ----------
-    cam_name : str
-        Name of camera.
-    resolution : tuple[int, int]
-        Resolution of camera in x and y axes respectively.
-    coefficients : np.ndarray
-        The coefficients for a DLT matrix.
-    dtype : str
-        The dtype used in the projections.
-    
-    Returns
-    -------
-    %(cam_struct)s
-        
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from openpiv import calib_utils, dlt_model
-        
-    >>> camera_parameters = dlt_model.get_cam_params(
-            name="cam1", 
-            [1024, 1024]
-        )
-    
-    """    
-    cam_struct = {}
-    cam_struct["name"] = cam_name
-    cam_struct["resolution"] = resolution
-    cam_struct["coefficients"] = coefficients
-    cam_struct["dtype"] = dtype
-    
-    _check_parameters(cam_struct)
-    
-    return cam_struct
-
-
-@_cal_doc_utils.docfiller
-def save_parameters(
-    cam_struct: dict,
+def _save_parameters(
+    self,
     file_path: str,
     file_name: str=None
 ):
@@ -74,7 +16,6 @@ def save_parameters(
     
     Parameters
     ----------
-    %(cam_struct)s
     file_path : str
         File path where the camera parameters are saved.
     file_name : str, optional
@@ -86,33 +27,32 @@ def save_parameters(
     
     """
     if file_name is None:
-        file_name = cam_struct["name"]
+        file_name = self.name
     
     full_path = join(file_path, file_name)
     
     with open(full_path, 'w') as f:
-        f.write(cam_struct["name"] + '\n')
+        f.write(self.name + '\n')
         
         _r = ''
         for i in range(2):
-            _r += str(cam_struct["resolution"][i]) + ' '
+            _r += str(self.resolution[i]) + ' '
             
         f.write(_r + '\n')
         
         for i in range(3):
             _c = ''
-            for j in range(cam_struct["coefficients"].shape[1]):
-                _c += str(cam_struct["coefficients"][i, j]) + ' '
+            for j in range(self.coeffs.shape[1]):
+                _c += str(self.coeffs[i, j]) + ' '
                 
             f.write(_c + '\n')
         
-        f.write(cam_struct["dtype"] + '\n')
-        
-    return None
-        
+        f.write(self.dtype + '\n')
+                
 
 @_cal_doc_utils.docfiller
-def load_parameters(
+def _load_parameters(
+    self,
     file_path: str,
     file_name: str
 ):
@@ -129,7 +69,7 @@ def load_parameters(
         
     Returns
     -------
-    %(cam_struct)s
+    None
     
     """
     full_path = join(file_path, file_name)
@@ -149,12 +89,8 @@ def load_parameters(
         dtype = f.readline()[:-1]
         
         coefficients = np.array(coefficients, dtype = dtype)
-
-    cam_struct = get_cam_params(
-        name,
-        resolution,
-        coefficients=coefficients,
-        dtype=dtype
-    )
-
-    return cam_struct
+        
+    self.name = name
+    self.resolution = resolution
+    self.coeffs = coefficients
+    self.dtype = dtype
