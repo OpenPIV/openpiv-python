@@ -2,7 +2,8 @@ import numpy as np
 from scipy.optimize import least_squares
 
 from ._check_params import _check_parameters
-from ..poly_model import calibrate_dlt
+# from ..poly_model import calibrate_dlt
+from openpiv.calibration import dlt_model as calib_dlt
 from .. import _cal_doc_utils
 
 
