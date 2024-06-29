@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple
 
 from ._check_params import _check_parameters
 from ._minimization import _minimize_params
@@ -56,3 +57,6 @@ class camera(object):
         camera.project_to_z = _project_to_z
         camera.save_parameters = _save_parameters
         camera.load_parameters = _load_parameters
+        
+        # check camera params at init
+        self._check_parameters()
