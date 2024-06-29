@@ -101,7 +101,6 @@ def get_reprojection_error(
     ----------
     cam : camera
         An instance of a camera object.
-    %(project_points_func)s
     %(object_points)s
     %(image_points)s
         
@@ -169,9 +168,8 @@ def get_los_error(
     
     Parameters
     ----------
-    %(cam)s
-    %(project_to_z_func)s
-    %(project_points_func)s
+    cam : camera
+        An instance of a camera object.
     %(project_z)s
     
     Returns
@@ -234,15 +232,13 @@ def get_los_error(
     Z = np.zeros_like(x) + z
     
     # project image coordinates to world points
-    X, Y, Z = project_to_z_func(
-        cam,
+    X, Y, Z = cam.project_to_z(
         [x, y],
         Z
     )
     
     # project world points back to image coordinates
-    res = project_points_func(
-        cam,
+    res = cam.project_points(
         [X, Y, Z]
     )
     
@@ -266,7 +262,8 @@ def get_image_mapping(
     
     Parameters
     ----------
-    %(cam)s
+    cam : camera
+        An instance of a camera object.
     %(project_to_z_func)s
     %(project_points_func)s
     
