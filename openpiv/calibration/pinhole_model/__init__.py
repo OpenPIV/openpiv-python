@@ -16,19 +16,15 @@ coordinates are calculated as explained in readme pinhole camera model file.
 Functions
 =========
     calibrate_intrinsics - Calculate the intrinsic parameters using Zang's algorithm
-    get_cam_params - Generate pinhole camera model parameters
-    get_rotation_matrix - Calculate the orthogonal rotation matrix
-    minimize_params - Minimize the camera model parameters
-    project_points - Project 3D points to image points
-    project_to_z - Project image points to 3D points
+    camera - Create an instance of a Pinhole camera model
+    calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-    save_parameters - Save pinhole camera parameters to a text file
-    load_parameters - Load pinhole camera parameters from a text file
 
 """
 from ._camera import *
 from ._epipolar_geom import *
+from ._zang import *
 
 
 __all__ = [s for s in dir() if not s.startswith("_")]
