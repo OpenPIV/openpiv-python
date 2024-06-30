@@ -1,15 +1,8 @@
 import numpy as np
 from scipy.optimize import least_squares
 
-from ._check_params import _check_parameters
-# from ..poly_model import calibrate_dlt
-from openpiv.calibration import dlt_model as calib_dlt
+from ..dlt_model import calibrate_dlt
 from .. import _cal_doc_utils
-
-
-__all__ = [
-    "minimize_params"
-]
 
 
 def _refine_poly(
@@ -30,8 +23,8 @@ def _refine_poly(
 
 
 @_cal_doc_utils.docfiller
-def minimize_params(
-    cam_struct: dict,
+def _minimize_params(
+    self,
     object_points: list,
     image_points: list,
 ):
@@ -41,14 +34,8 @@ def minimize_params(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(object_points)s
     %(image_points)s
-
-        
-    Returns
-    -------
-    %(cam_struct)s
         
     Examples
     --------
@@ -69,29 +56,27 @@ def minimize_params(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = poly_model.get_cam_params(
+    >>> cam = poly_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = poly_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
 
     >>> calib_utils.get_reprojection_error(
-        cam_params, 
-        poly_model.project_points,
+        cam, 
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
     0.16553632335727653
         
     """
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
@@ -179,8 +164,6 @@ def minimize_params(
         image_points
     )
 
-    cam_struct["poly_wi"] = coeff_wi
-    cam_struct["poly_iw"] = coeff_iw
-    cam_struct["dlt"] = dlt_matrix
-    
-    return cam_struct
+    self.poly_wi = coeff_wi
+    self.poly_iw = coeff_iw
+    self.dlt = dlt_matrix

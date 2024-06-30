@@ -1,9 +1,8 @@
 import numpy as np
+from typing import Tuple
 
-from ..dlt_model import (get_cam_params as dlt_params, 
+from ..dlt_model import (camera as dlt_camera, 
                          line_intersect as dlt_line_intersect)
-from ._projection import project_points
-from ._check_params import _check_parameters
 
 
 __all__ = [
@@ -12,11 +11,11 @@ __all__ = [
 
 
 def _dFdx(
-    cam_struct: dict,
+    cam: "poly_model.camera",
     object_points: np.ndarray
 ) -> np.ndarray:
-    dtype = cam_struct["dtype"]
-    a = cam_struct["poly_wi"]
+    dtype = cam.dtype
+    a = cam.poly_wi
     
     object_points = np.array(object_points, dtype=dtype)
     
@@ -55,11 +54,11 @@ def _dFdx(
 
 
 def _dFdy(
-    cam_struct: dict,
+    cam: "poly_model.camera",
     object_points: np.ndarray
 ) -> np.ndarray:
-    dtype = cam_struct["dtype"]
-    a = cam_struct["poly_wi"]
+    dtype = cam.dtype
+    a = cam.poly_wi
     
     object_points = np.array(object_points, dtype=dtype)
     
@@ -98,11 +97,11 @@ def _dFdy(
 
 
 def _dFdz(
-    cam_struct: dict,
+    cam: "poly_model.camera",
     object_points: np.ndarray
 ) -> np.ndarray:
-    dtype = cam_struct["dtype"]
-    a = cam_struct["poly_wi"]
+    dtype = cam.dtype
+    a = cam.poly_wi
     
     object_points = np.array(object_points, dtype=dtype)
     
@@ -141,10 +140,10 @@ def _dFdz(
 
 
 def _refine_jac3D(
-    cam_struct: list,
+    cams: list,
     object_points: np.ndarray
 ) -> np.ndarray:
-    dtype = cam_struct[0]["dtype"]
+    dtype = cams[0].dtype
     
     object_points = np.array(object_points, dtype=dtype)
     
@@ -153,14 +152,14 @@ def _refine_jac3D(
         object_points = object_points[:, np.newaxis]
             
     n_points = object_points.shape[1]
-    n_cams = len(cam_struct)
+    n_cams = len(cams)
     
     jac = np.zeros([n_points, n_cams*2, 3], dtype=dtype)
         
     for i in range(n_cams):
-        xdx, ydx = _dFdx(cam_struct[i], object_points)
-        xdy, ydy = _dFdy(cam_struct[i], object_points)
-        xdz, ydz = _dFdz(cam_struct[i], object_points)
+        xdx, ydx = _dFdx(cams[i], object_points)
+        xdy, ydy = _dFdy(cams[i], object_points)
+        xdz, ydz = _dFdz(cams[i], object_points)
         
         jac[:, i*2, :] = np.array([xdx, xdy, xdz], dtype=dtype).T
         jac[:, (i*2)+1, :] = np.array([ydx, ydy, ydz], dtype=dtype).T
@@ -169,13 +168,13 @@ def _refine_jac3D(
 
 
 def _refine_func3D(
-    cam_struct: list,
+    cams: list,
     object_points: np.ndarray,
     image_points: list
 ) -> np.ndarray:
-    dtype = cam_struct[0]["dtype"]
+    dtype = cams[0].dtype
     
-    n_cams = len(cam_struct)
+    n_cams = len(cams)
     
     # make sure each camera has a pair of image points
     assert(n_cams == len(image_points))
@@ -193,8 +192,7 @@ def _refine_func3D(
     residuals = np.zeros([n_points, n_cams, 2], dtype=dtype)
     
     for i in range(n_cams):
-        res = project_points(
-            cam_struct[i],
+        res = cams[i].project_points(
             object_points
         ) - image_points[i]
         
@@ -215,13 +213,13 @@ def _minimize_gradient(
 
 
 def _refine_pos3D(
-    cam_structs:list,
+    cams: list,
     object_points: np.ndarray,
     image_points: list,
     iterations: int=3
 ):
-    dtype = cam_structs[0]["dtype"]
-    n_cams = len(cam_structs)
+    dtype = cams[0].dtype
+    n_cams = len(cams)
     
     # if a 1D array is given, extend it
     if len(object_points.shape) == 1:
@@ -239,12 +237,12 @@ def _refine_pos3D(
     # TODO: I bet this loop is hellish slow for a large number of particles
     for i in range(iterations):
         jac = _refine_jac3D(
-            cam_structs,
+            cams,
             new_object_points
         )
         
         residuals = _refine_func3D(
-            cam_structs,
+            cams,
             new_object_points,
             image_points,
         )
@@ -266,22 +264,22 @@ def _refine_pos3D(
     
 
 def _estimate_pos(
-    cam_structs: list,
+    cams: list,
     image_points: list
 ):
     # only need two cameras for analytical solution
-    cam1 = dlt_params(
+    cam1 = dlt_camera(
         "dummy",
-        resolution   = cam_structs[0]["resolution"],
-        coefficients = cam_structs[0]["dlt"],
-        dtype        = cam_structs[0]["dtype"]
+        resolution = cams[0].resolution,
+        coeffs      = cams[0].dlt,
+        dtype      = cams[0].dtype
     )
     
-    cam2 = dlt_params(
+    cam2 = dlt_camera(
         "dummy",
-        resolution   = cam_structs[1]["resolution"],
-        coefficients = cam_structs[1]["dlt"],
-        dtype        = cam_structs[1]["dtype"]
+        resolution = cams[1].resolution,
+        coeffs     = cams[1].dlt,
+        dtype      = cams[1].dtype
     )
     
     # TODO: Should we use DLT's multi_line_intersect?
@@ -290,13 +288,14 @@ def _estimate_pos(
         cam2,
         image_points[0],
         image_points[1]
-    )
+    )[0]
 
 
 # Now the good part starts :)
 def multi_line_intersect(
-    cam_structs: list,
+    cameras: list,
     image_points: list,
+    init_pos: Tuple[float, float, float]=None,
     iterations: int=3
 ):
     """Estimate 3D positions using a gradient descent algorithm.
@@ -314,10 +313,16 @@ def multi_line_intersect(
     
     Parameters
     ----------
-    cam_structs, : list
-        A list of dictionary structure of camera parameters.
+    cameras : list
+        A list of instances of polynomial cameras.
     img_points : list
         A list of image coordinates for each canera structure.
+    init_pos : list, optional
+        An initial position for all particles given by a tuple of three
+        floats. The ordering of the tuple is (X, Y, Z) in world coordinates
+        and should be the center of the volume (e.g., (0, 0, 0)). If not
+        given, the particle positions are approximated using a DLT-based 
+        algorithm.
     iterations : int, optional
         The number of iterations each object point recieves.
         
@@ -334,7 +339,7 @@ def multi_line_intersect(
             (2021). https://doi.org/10.1007/s42979-021-00879-z
     
     """
-    n_cams = len(cam_structs)
+    n_cams = len(cameras)
     n_imgs = len(image_points)
     
     # make sure each camera has a set of images
@@ -346,12 +351,12 @@ def multi_line_intersect(
     
     # check each camera structure
     for cam in range(n_cams):
-        _check_parameters(cam_structs[cam])
+        cameras[cam]._check_parameters()
         
     # all cameras should have the same dtype
-    dtype1 = cam_structs[0]["dtype"]
+    dtype1 = cameras[0].dtype
     for cam in range(1, n_cams):
-        dtype2 = cam_structs[cam]["dtype"]
+        dtype2 = cameras[cam].dtype
         
         if dtype1 != dtype2:
             raise ValueError(
@@ -363,14 +368,27 @@ def multi_line_intersect(
     if len(image_points[0].shape) == 1:
         for i in range(len(image_points)):
             image_points[i] = image_points[i][:, np.newaxis]
-            
-    object_points = _estimate_pos(
-        cam_structs,
-        image_points
-    )
+    
+    if init_pos is not None:
+        n_particles = image_points[0].shape[1]
+        
+        object_points = np.zeros(
+            [3, n_particles],
+            dtype=dtype1
+        )
+        
+        object_points[0, :] = init_pos[0]
+        object_points[1, :] = init_pos[1]
+        object_points[2, :] = init_pos[2]
+        
+    else:
+        object_points = _estimate_pos(
+            cameras,
+            image_points
+        )
     
     object_points = _refine_pos3D(
-        cam_structs,
+        cameras,
         object_points,
         image_points,
         iterations=iterations

@@ -2,80 +2,9 @@ import numpy as np
 from os.path import join
 from typing import Tuple
 
-from ._check_params import _check_parameters
-from .. import _cal_doc_utils
 
-
-__all__ = [
-    "get_cam_params",
-    "save_parameters",
-    "load_parameters"
-]
-
-
-@_cal_doc_utils.docfiller
-def get_cam_params(
-    cam_name: str,
-    resolution: Tuple[int, int],
-    poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
-    poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T,
-    dlt: np.ndarray=np.eye(3, 4),
-    dtype: str="float64"
-    
-):
-    """Create a camera parameter structure.
-    
-    Create a camera parameter structure for polynomial calibration.
-    
-    Parameters
-    ----------
-    cam_name : str
-        Name of camera.
-    resolution : tuple[int, int]
-        Resolution of camera in x and y axes respectively.
-    poly_wi : np.ndarray
-        19 coefficients for world to image polynomial calibration in [x, y]'.
-    poly_iw : np.ndarray
-        19 coefficients for image to world polynomial calibration in [X, Y, Z]'.
-    dlt : np.ndarray
-        12 coefficients for direct linear transformation.
-    dtype : str
-        The dtype used in the projections.
-    
-    Returns
-    -------
-    %(cam_struct)s
-        
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from openpiv.calibration import calib_utils, poly_model
-    >>> from openpiv.data.test5 import cal_points
-    
-    >>> obj_x, obj_y, obj_z, img_x, img_y, img_size_x, img_size_y = cal_points()
-    
-    >>> camera_parameters = poly_model.get_cam_params(
-            name="cam1", 
-            [img_size_x, img_size_y]
-        )
-    
-    """    
-    cam_struct = {}
-    cam_struct["name"] = cam_name
-    cam_struct["resolution"] = resolution
-    cam_struct["poly_wi"] = poly_wi
-    cam_struct["poly_iw"] = poly_iw
-    cam_struct["dlt"] = dlt
-    cam_struct["dtype"] = dtype
-    
-    _check_parameters(cam_struct)
-    
-    return cam_struct
-
-
-@_cal_doc_utils.docfiller
-def save_parameters(
-    cam_struct: dict,
+def _save_parameters(
+    self,
     file_path: str,
     file_name: str=None
 ):
@@ -85,7 +14,6 @@ def save_parameters(
     
     Parameters
     ----------
-    %(cam_struct)s
     file_path : str
         File path where the camera parameters are saved.
     file_name : str, optional
@@ -97,47 +25,45 @@ def save_parameters(
     
     """
     if file_name is None:
-        file_name = cam_struct["name"]
+        file_name = self.name
     
     full_path = join(file_path, file_name)
     
     with open(full_path, 'w') as f:
-        f.write(cam_struct["name"] + '\n')
+        f.write(self.name + '\n')
         
         _r = ''
         for i in range(2):
-            _r += str(cam_struct["resolution"][i]) + ' '
+            _r += str(self.resolution[i]) + ' '
             
         f.write(_r + '\n')
         
         for i in range(19):
             _d2 = ''
             for j in range(2):
-                _d2 += str(cam_struct["poly_wi"][i, j]) + ' '
+                _d2 += str(self.poly_wi[i, j]) + ' '
                 
             f.write(_d2 + '\n')
             
         for i in range(19):
             _d2 = ''
             for j in range(3):
-                _d2 += str(cam_struct["poly_iw"][i, j]) + ' '
+                _d2 += str(self.poly_iw[i, j]) + ' '
                 
             f.write(_d2 + '\n')
             
         for i in range(3):
             _c = ''
-            for j in range(cam_struct["dlt"].shape[1]):
-                _c += str(cam_struct["dlt"][i, j]) + ' '
+            for j in range(self.dlt.shape[1]):
+                _c += str(self.dlt[i, j]) + ' '
                 
             f.write(_c + '\n')
         
-        f.write(cam_struct["dtype"] + '\n')
-        
-    return None
+        f.write(self.dtype + '\n')
         
 
-@_cal_doc_utils.docfiller
-def load_parameters(
+def _load_parameters(
+    self,
     file_path: str,
     file_name: str
 ):
@@ -151,10 +77,6 @@ def load_parameters(
         File path where the camera parameters are saved.
     file_name : str
         Name of the file that contains the camera parameters.
-        
-    Returns
-    -------
-    %(cam_struct)s
     
     """
     full_path = join(file_path, file_name)
@@ -187,13 +109,9 @@ def load_parameters(
         poly_iw = np.array(poly_iw, dtype=dtype)
         dlt = np.array(dlt, dtype=dtype)
 
-    cam_struct = get_cam_params(
-        name,
-        resolution,
-        poly_wi=poly_wi,
-        poly_iw=poly_iw,
-        dlt=dlt,
-        dtype=dtype
-    )
-
-    return cam_struct
+    self.name = name
+    self.resolution = resolution
+    self.poly_wi = poly_wi
+    self.poly_iw = poly_iw
+    self.dlt = dlt
+    self.dtype = dtype

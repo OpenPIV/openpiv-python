@@ -1,18 +1,11 @@
 import numpy as np
 
-from ._check_params import _check_parameters
 from .. import _cal_doc_utils
 
 
-__all__ = [
-    "project_points",
-    "project_to_z"
-]
-
-
 @_cal_doc_utils.docfiller
-def project_points(
-    cam_struct: dict,
+def _project_points(
+    self,
     object_points: np.ndarray
 ):
     """Project object points to image points.
@@ -21,7 +14,6 @@ def project_points(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(object_points)s
         
     Returns
@@ -48,19 +40,17 @@ def project_points(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = poly_model.get_cam_params(
+    >>> cam = poly_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = poly_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
         
-    >>> poly_model.project_points(
-            cam_params,
+    >>> cam.project_points(
             obj_points
         )
     array([[-44.24281474, -33.56231972, -22.84229244],
@@ -71,9 +61,9 @@ def project_points(
            [ 89.61102873, 211.8863641 , 334.5980555 ]])
     
     """ 
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
     object_points = np.array(object_points, dtype=dtype)
     
@@ -96,13 +86,13 @@ def project_points(
     
     return np.dot(
         polynomial_wi,
-        cam_struct["poly_wi"]
+        self.poly_wi
     ).T
 
 
 @_cal_doc_utils.docfiller
-def project_to_z(
-    cam_struct: dict,
+def _project_to_z(
+    self,
     image_points: np.ndarray,
     z: float
 ):
@@ -112,7 +102,6 @@ def project_to_z(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(image_points)s
     %(project_z)s
         
@@ -141,19 +130,17 @@ def project_to_z(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = poly_model.get_cam_params(
+    >>> cam = poly_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = poly_model.minimize_params(
-        cam_params,
+    >>> cam.minimize_params(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
         
-    >>> ij = poly_model.project_points(
-            cam_params,
+    >>> ij = cam.project_points(
             obj_points
         )
     
@@ -161,8 +148,7 @@ def project_to_z(
     array([[-44.24281474, -33.56231972, -22.84229244],
            [ 89.63444964, 211.90372246, 334.60601499]])
     
-    >>> poly_model.project_to_z(
-            cam_params,
+    >>> cam.project_to_z(
             ij,
             z=obj_points[2]
         )
@@ -176,9 +162,9 @@ def project_to_z(
            [ -10.,  -10.,  -10.]]) 
         
     """ 
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
     image_points = np.array(image_points, dtype=dtype)
     
@@ -187,8 +173,13 @@ def project_to_z(
     
     if isinstance(z, np.ndarray):
         Z = np.array(z, dtype=dtype)
-    else:
+    elif isinstance(z, (float, int)):
         Z = np.zeros_like(x) + z
+    else:
+        raise ValueError(
+            "Unsupported value entered for `z`. `z` must be either a scalar " +
+            "or numpy ndarray"
+        )
     
     polynomial_iw = np.array(
         [
@@ -205,5 +196,5 @@ def project_to_z(
     
     return np.dot(
         polynomial_iw,
-        cam_struct["poly_iw"]
+        self.poly_iw
     ).T
