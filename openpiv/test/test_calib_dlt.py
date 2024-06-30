@@ -72,7 +72,7 @@ def test_parameters_initialization():
     assert_(cam.dtype in ["float32", "float64"])
 
 
-@pytest.mark.parametrize("case", (1, 2))
+@pytest.mark.parametrize("case", (1, 2, 3))
 def test_minimization_01(
     case: int
 ):    
@@ -100,7 +100,7 @@ def test_minimization_01(
     assert_(RMSE < 1e-2)
 
 
-@pytest.mark.parametrize("case", (1, 2))
+@pytest.mark.parametrize("case", (1, 2, 3))
 def test_projection_01(
     case: int
 ):
@@ -142,7 +142,7 @@ def test_projection_01(
     )
 
 
-@pytest.mark.parametrize("case", (1, 2))
+@pytest.mark.parametrize("case", (1, 2, 3))
 def test_projection_02(
     case: int
 ):
@@ -176,7 +176,7 @@ def test_projection_02(
     )
     
 
-@pytest.mark.parametrize("case", (1, 2))
+@pytest.mark.parametrize("case", (1, 2, 3))
 def test_projection_03(
     case: int
 ):
@@ -215,9 +215,10 @@ def test_projection_03(
     assert_(RMSE_2 < 1e-2)
     
 
-# TODO: Add more camera views
-def test_line_intersect_01():
-    case = (1, 2)
+@pytest.mark.parametrize("case", ((1, 2), (1, 3), (2, 3)))
+def test_line_intersect_01(
+    case: tuple
+):
     cal_data = np.load("./test_calibration_points.npz")
     
     cal_obj_points_1 = cal_data[f"obj_points_{case[0]}"]
@@ -280,37 +281,33 @@ def test_line_intersect_01():
     )
     
 
-# TODO: Add more camera views
-def test_line_intersect_02():
-    case = (1, 2)
+@pytest.mark.parametrize("case", ((1, 2), (1, 3), (2, 3), (1, 2, 3)))
+def test_line_intersect_02(
+    case: tuple
+):
     cal_data = np.load("./test_calibration_points.npz")
+    n_cams = len(case)
     
-    cal_obj_points_1 = cal_data[f"obj_points_{case[0]}"]
-    cal_img_points_1 = cal_data[f"img_points_{case[0]}"]
+    cal_obj_points = []
+    cal_img_points = []
+    for cam in case:
+        cal_obj_points.append(cal_data[f"obj_points_{cam}"])
+        cal_img_points.append(cal_data[f"img_points_{cam}"])
     
-    cal_obj_points_2 = cal_data[f"obj_points_{case[1]}"]
-    cal_img_points_2 = cal_data[f"img_points_{case[1]}"]
-    
-    cam_1 = dlt_model.camera(
-        "dummy",
-        resolution = [512, 512]
-    )
-    
-    cam_2 = dlt_model.camera(
-        "dummy",
-        resolution = [512, 512]
-    )
-    
-    cam_1.minimize_params(
-        cal_obj_points_1,
-        cal_img_points_1
-    )
-    
-    cam_2.minimize_params(
-        cal_obj_points_2,
-        cal_img_points_2
-    )
-    
+    cams = []
+    for cam in range(n_cams):
+        cam_1 = dlt_model.camera(
+            "dummy",
+            resolution = [512, 512]
+        )
+
+        cam_1.minimize_params(
+            cal_obj_points[cam],
+            cal_img_points[cam]
+        )
+        
+        cams.append(cam_1)
+
     test_object_points = np.array(
         [
             [0, 0, 0],
@@ -323,17 +320,17 @@ def test_line_intersect_02():
         dtype=cam_1.dtype
     ).T
     
-    test_image_points_1 = cam_1.project_points(
-        test_object_points
-    )
-    
-    test_image_points_2 = cam_2.project_points(
-        test_object_points
-    )
-    
+    test_image_points = []
+    for cam in range(n_cams):
+        test_image_points.append(
+            cams[cam].project_points(
+                test_object_points
+            )
+        )
+
     recon_obj_points = dlt_model.multi_line_intersect(
-        [cam_1, cam_2],
-        [test_image_points_1, test_image_points_2]
+        cams,
+        test_image_points
     )
     
     assert_array_almost_equal(
@@ -359,7 +356,6 @@ def test_save_parameters_2():
         "dummy",
         resolution = [512, 512]
     )
-
         
     cam.save_parameters(
         ".", "saved_params"
