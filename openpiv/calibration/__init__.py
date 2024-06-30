@@ -8,37 +8,23 @@ system.
 
 DLT Model
 =========
-    get_cam_params - Create DLT camera model parameters
+    camera - Create an instance of a DLT camera model
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
-    minimize_params - Minimize the camera model parameters
-    project_points - Project 3D points to image points
-    project_to_z - Project image points to 3D points
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-    save_parameters - Save DLT camera parameters to a text file
-    load_parameters - Load DLT camera parameters from a text file
     
 Pinhole Model
 =============
-    get_cam_params - Generate pinhole camera model parameters
-    get_rotation_matrix - Calculate the orthogonal rotation matrix
-    minimize_params - Minimize the camera model parameters
-    project_points - Project 3D points to image points
-    project_to_z - Project image points to 3D points
+    calibrate_intrinsics - Calculate the intrinsic parameters using Zang's algorithm
+    camera - Create an instance of a Pinhole camera model
+    calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-    save_parameters - Save pinhole camera parameters to a text file
-    load_parameters - Load pinhole camera parameters from a text file
    
 Polynomial Model
 ================
-    get_cam_params - Generate polynomial camera model parameters
-    minimize_params - Minimize the camera model parameters
-    project_points - Project 3D points to image points
-    project_to_z - Project image points to 3D points
+    camera - Create an instance of a Soloff camera model
     multi_line_intersect - Using multiple lines, approximate their intersection
-    save_parameters - Save polynomial camera parameters to a text file
-    load_parameters - Load polynomial camera parameters from a text file
 
 Marker Detection (Marker Grid)
 ==============================
