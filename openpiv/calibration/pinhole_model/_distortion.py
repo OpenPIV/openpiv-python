@@ -2,7 +2,7 @@ import numpy as np
 
 
 def _undistort_points_brown(
-    cam_struct: dict,
+    self,
     xd: np.ndarray, 
     yd: np.ndarray
 ):
@@ -13,8 +13,6 @@ def _undistort_points_brown(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
     xd : 1D np.ndarray
         Distorted x-coordinates.
     yd : 1D np.ndarray
@@ -34,8 +32,8 @@ def _undistort_points_brown(
     https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
     
     """    
-    k = cam_struct["distortion1"]
-    dtype = cam_struct["dtype"]
+    k = self.distortion1
+    dtype = self.dtype
     
     r2 = xd*xd + yd*yd
     r4 = r2 * r2
@@ -54,7 +52,7 @@ def _undistort_points_brown(
 
 
 def _distort_points_brown(
-    cam_struct: dict,
+    self,
     x: np.ndarray, 
     y: np.ndarray
 ):
@@ -65,8 +63,6 @@ def _distort_points_brown(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
     x : 1D np.ndarray
         Undistorted x-coordinates.
     y : 1D np.ndarray
@@ -86,8 +82,8 @@ def _distort_points_brown(
     https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html
     
     """    
-    k = cam_struct["distortion1"]
-    dtype = cam_struct["dtype"]
+    k = self.distortion1
+    dtype = self.dtype
     
     r2 = x*x + y*y
     r4 = r2 * r2
@@ -106,7 +102,7 @@ def _distort_points_brown(
 
 
 def _undistort_points_poly(
-    cam_struct: dict,
+    self,
     xd: np.ndarray, 
     yd: np.ndarray
 ):
@@ -116,8 +112,6 @@ def _undistort_points_poly(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
     xd : 1D np.ndarray
         Distorted x-coordinates.
     yd : 1D np.ndarray
@@ -142,8 +136,8 @@ def _undistort_points_poly(
     artifcacts.
     
     """    
-    k1, k2, _, _ = cam_struct["distortion2"]
-    dtype = cam_struct["dtype"]
+    k1, k2, _, _ = self.distortion2
+    dtype = self.dtype
     
     poly = np.array([np.ones_like(xd), xd, yd, xd**2, yd**2, xd * yd], dtype=dtype)
     
@@ -154,7 +148,7 @@ def _undistort_points_poly(
 
 
 def _distort_points_poly(
-    cam_struct: dict,
+    self,
     x: np.ndarray, 
     y: np.ndarray
 ):
@@ -164,8 +158,6 @@ def _distort_points_poly(
     
     Parameters
     ----------
-    cam_struct : dict
-        A dictionary structure of camera parameters.
     x : 1D np.ndarray
         Undistorted x-coordinates.
     y : 1D np.ndarray
@@ -195,8 +187,8 @@ def _distort_points_poly(
     does not use a Taylor Series expansion on the error terms for inversion.
     
     """    
-    _, _, k1, k2 = cam_struct["distortion2"]
-    dtype = cam_struct["dtype"]
+    _, _, k1, k2 = self.distortion2
+    dtype = self.dtype
     
     poly = np.array([np.ones_like(x), x, y, x**2, y**2, x * y], dtype=dtype)
     

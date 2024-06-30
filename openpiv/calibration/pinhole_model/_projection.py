@@ -1,8 +1,5 @@
 import numpy as np
 
-from ._check_params import _check_parameters
-from ._distortion import (_undistort_points_brown, _distort_points_brown,
-                          _undistort_points_poly,  _distort_points_poly)
 from .. import _cal_doc_utils
 
 
@@ -13,12 +10,12 @@ _all__ = [
 
 
 def _normalize_world_points(
-    cam_struct: dict,
+    self,
     object_points: np.ndarray
 ):
-    R = cam_struct["rotation"]
-    T = cam_struct["translation"]
-    dtype = cam_struct["dtype"]
+    R = self.rotation
+    T = self.translation
+    dtype = self.dtype
 
     # transformation to camera coordinates
     Wc = np.dot(
@@ -39,12 +36,12 @@ def _normalize_world_points(
 
 
 def _normalize_image_points(
-    cam_struct: dict,
+    self,
     image_points: np.ndarray
 ):
-    fx, fy = cam_struct["focal"]
-    cx, cy = cam_struct["principal"]
-    dtype = cam_struct["dtype"]
+    fx, fy = self.focal
+    cx, cy = self.principal
+    dtype = self.dtype
     
     x, y = image_points
     
@@ -56,8 +53,8 @@ def _normalize_image_points(
 
 
 @_cal_doc_utils.docfiller
-def project_points(
-    cam_struct: dict,
+def _project_points(
+    self,
     object_points: np.ndarray,
     correct_distortion: bool = True
 ):
@@ -67,7 +64,6 @@ def project_points(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(object_points)s
     correct_distortion : bool
         If true, perform distortion correction.
@@ -96,13 +92,12 @@ def project_points(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = pinhole_model.get_cam_params(
+    >>> cam = pinhole_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+    >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -110,8 +105,7 @@ def project_points(
             iterations=5
         )
     
-    >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+    >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -119,8 +113,7 @@ def project_points(
             iterations=5
         )
 
-    >>> pinhole_model.project_points(
-        cam_params,
+    >>> cam.project_points(
         obj_points
     )
     array([[-44.33764399, -33.67518588, -22.97467733],
@@ -131,29 +124,26 @@ def project_points(
            [ 89.61102873, 211.8863641 , 334.5980555 ]])
     
     """ 
-    _check_parameters(cam_struct)    
+    self._check_parameters()    
     
-    fx, fy = cam_struct["focal"]
-    cx, cy = cam_struct["principal"]
-    dtype = cam_struct["dtype"]
+    fx, fy = self.focal
+    cx, cy = self.principal
+    dtype = self.dtype
     
     object_points = np.array(object_points, dtype=dtype)
     
-    Wn_x, Wn_y = _normalize_world_points(
-        cam_struct,
+    Wn_x, Wn_y = self._normalize_world_points(
         object_points
     )
     
     if correct_distortion == True:
-        if cam_struct["distortion_model"].lower() == "brown":
-            Wn_x, Wn_y = _undistort_points_brown(
-                cam_struct,
+        if self.distortion_model.lower() == "brown":
+            Wn_x, Wn_y = self._undistort_points_brown(
                 Wn_x,
                 Wn_y
             )
         else:
-            Wn_x, Wn_y = _undistort_points_poly(
-                cam_struct,
+            Wn_x, Wn_y = self._undistort_points_poly(
                 Wn_x,
                 Wn_y
             )
@@ -167,7 +157,7 @@ def project_points(
 
 @_cal_doc_utils.docfiller
 def _get_inverse_vector(
-    cam_struct: dict,
+    self,
     image_points: np.ndarray
 ):
     """Get pixel to direction vector.
@@ -179,7 +169,6 @@ def _get_inverse_vector(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(image_points)s
         
     Returns
@@ -196,25 +185,22 @@ def _get_inverse_vector(
     The direction vector is not normalized.
     
     """    
-    R = cam_struct["rotation"]
-    dtype = cam_struct["dtype"]
+    R = self.rotation
+    dtype = self.dtype
     
     image_points = np.array(image_points, dtype=dtype)
     
-    Wn_x, Wn_y = _normalize_image_points(
-        cam_struct,
+    Wn_x, Wn_y = self._normalize_image_points(
         image_points
     )
     
-    if cam_struct["distortion_model"].lower() == "brown":
-        Wn_x, Wn_y = _distort_points_brown(
-            cam_struct,
+    if self.distortion_model.lower() == "brown":
+        Wn_x, Wn_y = self._distort_points_brown(
             Wn_x,
             Wn_y
         )
     else:
-        Wn_x, Wn_y = _distort_points_poly(
-            cam_struct,
+        Wn_x, Wn_y = self._distort_points_poly(
             Wn_x,
             Wn_y
         )
@@ -229,8 +215,8 @@ def _get_inverse_vector(
 
 
 @_cal_doc_utils.docfiller
-def project_to_z(
-    cam_struct: dict,
+def _project_to_z(
+    self,
     image_points: np.ndarray,
     z: np.ndarray
 ):
@@ -244,7 +230,6 @@ def project_to_z(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(image_points)s
     %(project_z)s
         
@@ -273,13 +258,12 @@ def project_to_z(
     >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
-    >>> cam_params = pinhole_model.get_cam_params(
+    >>> cam = pinhole_model.camera(
         'cam1', 
         [4512, 800]
     )
 
-    >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+    >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -287,8 +271,7 @@ def project_to_z(
             iterations=5
         )
     
-    >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+    >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -296,8 +279,7 @@ def project_to_z(
             iterations=5
         )
         
-    >>> ij = pinhole_model.project_points(
-            cam_params,
+    >>> ij = cam.project_points(
             obj_points
         )
     
@@ -305,8 +287,7 @@ def project_to_z(
     array([[-44.33764399, -33.67518588, -22.97467733],
            [ 89.61102874, 211.88636408, 334.59805555]])
     
-    >>> pinhole_model.project_to_z(
-            cam_params,
+    >>> cam.project_to_z(
             ij,
             z=obj_points[2]
         )
@@ -320,16 +301,15 @@ def project_to_z(
            [ -10.,  -10.,  -10.]])
         
     """
-    _check_parameters(cam_struct) 
+    self._check_parameters() 
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
-    dx, dy, dz = _get_inverse_vector(
-        cam_struct,
+    dx, dy, dz = self._get_inverse_vector(
         image_points
     )
     
-    tx, ty, tz = cam_struct["translation"]
+    tx, ty, tz = self.translation
     
     a = (z - tz) / dz
     

@@ -1,21 +1,13 @@
 import numpy as np
 from scipy.optimize import minimize
 
-from ._check_params import _check_parameters
-from ._projection import project_points, _normalize_image_points
-from ._utils import get_rotation_matrix
 from ..calib_utils import get_reprojection_error, get_los_error
 from .. import _cal_doc_utils
 
 
-__all__ = [
-    "minimize_params"
-]
-
-
 @_cal_doc_utils.docfiller
-def minimize_params(
-    cam_struct: dict,
+def _minimize_params(
+    self,
     object_points: list,
     image_points: list,
     correct_focal: bool = False,
@@ -32,7 +24,6 @@ def minimize_params(
     
     Parameters
     ----------
-    %(cam_struct)s
     %(object_points)s
     %(image_points)s
     correct_focal : bool
@@ -46,7 +37,7 @@ def minimize_params(
         
     Returns
     -------
-    %(cam_struct)s
+    None
     
     Notes
     -----
@@ -81,7 +72,7 @@ def minimize_params(
     --------
     >>> import numpy as np
     >>> from importlib_resources import files
-    >>> from openpiv.calibration import dlt_model
+    >>> from openpiv.calibration import pinhole_model
     
     >> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
 
@@ -93,13 +84,12 @@ def minimize_params(
         delimiter=','
     )
     
-    >>> cam_params = pinhole_model.get_cam_params(
+    >>> cam = pinhole_model.camera(
             name='cam1', 
             [4512, 800]
         )
     
-     >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+     >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -107,8 +97,7 @@ def minimize_params(
             iterations=5
         )
     
-    >>> cam_params = pinhole_model.minimize_params(
-            cam_params, 
+    >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -117,9 +106,9 @@ def minimize_params(
         )
     
     """
-    _check_parameters(cam_struct)
+    self._check_parameters()
     
-    dtype = cam_struct["dtype"]
+    dtype = self.dtype
     
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
@@ -137,27 +126,24 @@ def minimize_params(
     # For each iteration, calculate the RMS error of this function. The input is a numpy
     # array to meet the requirements of scipy's minimization functions.
     def func_to_minimize(x):
-        cam_struct["translation"] = x[0:3]
-        cam_struct["orientation"] = x[3:6]
-        cam_struct["principal"] = x[6:8]
+        self.translation = x[0:3]
+        self.orientation = x[3:6]
+        self.principal = x[6:8]
         
         if correct_focal == True:
-            cam_struct["focal"] = x[8:10]
+            self.focal = x[8:10]
         
-        cam_struct["rotation"] = get_rotation_matrix(
-            cam_struct
-        )
+        self._get_rotation_matrix()
         
         if correct_distortion == True:
-            if cam_struct["distortion_model"].lower() == "brown":
-                cam_struct["distortion1"] = x[10:18]
+            if self.distortion_model.lower() == "brown":
+                self.distortion1 = x[10:18]
             else:
-                cam_struct["distortion2"][0, :] = x[18:24]
-                cam_struct["distortion2"][1, :] = x[24:30]
+                self.distortion2[0, :] = x[18:24]
+                self.distortion2[1, :] = x[24:30]
                 
         RMS_error = get_reprojection_error(
-            cam_struct,
-            project_points,
+            self,
             object_points,
             image_points
         )
@@ -166,12 +152,12 @@ def minimize_params(
     
     # Create a numpy array since we cannot pass a dictionary to scipy's minimize function.
     params_to_minimize = [
-        cam_struct["translation"],
-        cam_struct["orientation"],
-        cam_struct["principal"],
-        cam_struct["focal"],
-        cam_struct["distortion1"],
-        cam_struct["distortion2"].ravel()
+        self.translation,
+        self.orientation,
+        self.principal,
+        self.focal,
+        self.distortion1,
+        self.distortion2.ravel()
     ]
     
     params_to_minimize = np.hstack(
@@ -190,7 +176,7 @@ def minimize_params(
         )
     
     if correct_distortion == True:
-        if cam_struct["distortion_model"].lower() == "polynomial": 
+        if self.distortion_model.lower() == "polynomial": 
             # Since I couldn't get an inverse model to work using the linearization
             # of the error terms via Taylor Series expansion, so I decided to explicitly
             # compute it like in the polynomial camera model.
@@ -200,13 +186,11 @@ def minimize_params(
                 correct_distortion=False
             )
             
-            x1, y1 = _normalize_image_points(
-                cam_struct,
+            x1, y1 = self._normalize_image_points(
                 image_points
             )
             
-            x2, y2 = _normalize_image_points(
-                cam_struct,
+            x2, y2 = self._normalize_image_points(
                 obj_img_points
             )
             
@@ -227,9 +211,7 @@ def minimize_params(
                 rcond=None
             )[0].T
             
-#            cam_struct["distortion2"][0, :] = coeff1[0, :]
-#            cam_struct["distortion2"][1, :] = coeff1[1, :]
-            cam_struct["distortion2"][2, :] = coeff2[0, :]
-            cam_struct["distortion2"][3, :] = coeff2[1, :]
-    
-    return cam_struct
+#            self.distortion2[0, :] = coeff1[0, :]
+#            self.distortion2[1, :] = coeff1[1, :]
+            self.distortion2[2, :] = coeff2[0, :]
+            self.distortion2[3, :] = coeff2[1, :]

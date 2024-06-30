@@ -27,11 +27,9 @@ Functions
     load_parameters - Load pinhole camera parameters from a text file
 
 """
+from ._camera import *
 from ._epipolar_geom import *
-from ._minimization import *
-from ._projection import *
 from ._utils import *
-#from ._zang import *
 
 
 __all__ = [s for s in dir() if not s.startswith("_")]
