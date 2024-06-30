@@ -11,11 +11,13 @@ __all__ = ["camera"]
 
 
 class camera(object):
-    """An instance of a DLT camera model.
+    """An instance of a polynomial camera model.
     
-    Create an instance of a DLT camera. The DLT camera model is based on
-    the direct linear transformation where image points and object points
-    are mapped through a 3x3 or 3x4 matrix.
+    Create an instance of a polynomial camera. The polynomial camera model
+    is based on the Soloff camera model where a polymial mapping function
+    is created with third order polynomials in the x- and y-axis and a second
+    order polynomial along the z-axis. The polynomial camera models also has
+    a DLT-based estimator for 3D point triangulation for faster convergence.
     
     Attributes
     ----------
