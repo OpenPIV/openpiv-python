@@ -72,7 +72,7 @@ def _minimize_params(
     --------
     >>> import numpy as np
     >>> from importlib_resources import files
-    >>> from openpiv.calibration import pinhole_model
+    >>> from openpiv.calibration import pinhole_model, calib_utils
     
     >> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
 
@@ -85,9 +85,13 @@ def _minimize_params(
     )
     
     >>> cam = pinhole_model.camera(
-            name='cam1', 
-            [4512, 800]
-        )
+        'cam1', 
+        [4512, 800],
+        translation = [-340, 125, 554],
+        orientation = [0.27, 0.62, 0.02],
+        focal = [15310, 15310],
+        principal=[-3780, 238]
+    )
     
      >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
@@ -104,7 +108,15 @@ def _minimize_params(
             correct_distortion = True,
             iterations=5
         )
+        
+    >> calib_utils.get_reprojection_error(
+        cam,
+        [obj_x, obj_y, obj_z],
+        [img_x0, img_y0]
+    )
     
+    >> 0.041367701972229325
+
     """
     self._check_parameters()
     
@@ -180,8 +192,7 @@ def _minimize_params(
             # Since I couldn't get an inverse model to work using the linearization
             # of the error terms via Taylor Series expansion, so I decided to explicitly
             # compute it like in the polynomial camera model.
-            obj_img_points = project_points(
-                cam_struct,
+            obj_img_points = self.project_points(
                 object_points,
                 correct_distortion=False
             )

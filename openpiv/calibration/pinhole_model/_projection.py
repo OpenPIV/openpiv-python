@@ -94,10 +94,14 @@ def _project_points(
 
     >>> cam = pinhole_model.camera(
         'cam1', 
-        [4512, 800]
+        [4512, 800],
+        translation = [-340, 125, 554],
+        orientation = [0.27, 0.62, 0.02],
+        focal = [15310, 15310],
+        principal=[-3780, 238]
     )
-
-    >>> cam.minimize_params(
+    
+     >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -116,8 +120,8 @@ def _project_points(
     >>> cam.project_points(
         obj_points
     )
-    array([[-44.33764399, -33.67518588, -22.97467733],
-           [ 89.61102874, 211.88636408, 334.59805555]])
+    array([[-44.18942498, -33.54150164, -22.85390086],
+           [ 89.60689939, 211.87910151, 334.5884999 ]])
 
     >>> img_points
     array([[-44.33764398, -33.67518587, -22.97467733],
@@ -260,10 +264,14 @@ def _project_to_z(
 
     >>> cam = pinhole_model.camera(
         'cam1', 
-        [4512, 800]
+        [4512, 800],
+        translation = [-340, 125, 554],
+        orientation = [0.27, 0.62, 0.02],
+        focal = [15310, 15310],
+        principal=[-3780, 238]
     )
-
-    >>> cam.minimize_params(
+    
+     >>> cam.minimize_params(
             [obj_x, obj_y, obj_z],
             [img_x, img_y],
             correct_focal = True,
@@ -284,16 +292,16 @@ def _project_to_z(
         )
     
     >>> ij
-    array([[-44.33764399, -33.67518588, -22.97467733],
-           [ 89.61102874, 211.88636408, 334.59805555]])
+    array([[-44.18942498, -33.54150164, -22.85390086],
+           [ 89.60689939, 211.87910151, 334.5884999 ]])
     
     >>> cam.project_to_z(
             ij,
             z=obj_points[2]
         )
-    array([[-105., -105., -105.],
-           [ -15.,  -10.,   -5.],
-           [ -10.,  -10.,  -10.]])
+    array([[-104.99762952, -104.99828339, -104.99883109],
+           [ -14.99969016,   -9.99966432,   -4.99960968],
+           [ -10.        ,  -10.        ,  -10.        ]])
     
     >>> obj_points
     array([[-105., -105., -105.],
