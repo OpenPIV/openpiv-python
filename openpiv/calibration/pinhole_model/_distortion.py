@@ -126,7 +126,7 @@ def _undistort_points_poly(
     
     Notes
     -----
-    Distortion model is inspired by MyPTV. The link is provided below.
+    Distortion model based wholly on by MyPTV. The link is provided below.
     https://github.com/ronshnapp/MyPTV/tree/master/myptv
     
     The polynomial is of the 2nd order type, with the coefficients arranged
@@ -135,22 +135,51 @@ def _undistort_points_poly(
     polynomial model is not stable when extrapolating, so beware of
     artifcacts.
     
+    References
+    ----------
+    .. [1] Shnapp, R. (2022). MyPTV: A Python Package for 3D Particle
+        Tracking. J. Open Source Softw., 7, 4398.
+        
     """    
-    k1, k2, _, _ = self.distortion2
     dtype = self.dtype
+    coeffs = self.distortion2
     
-    poly = np.array([np.ones_like(xd), xd, yd, xd**2, yd**2, xd * yd], dtype=dtype)
+    poly = np.array([xd, yd, xd**2, yd**2, xd * yd])
+
+    e_ = np.dot(coeffs, poly)
+
+    # Calculate derivatives of the polynomials
+    e_0 = e_[0]
+    a, b, c, d, ee = coeffs[0,:]
+    e_xd_0 = a + 2*c*xd + ee*yd
+    e_yd_0 = b + 2*d*yd + ee*xd
+
+    e_1 = e_[1]
+    a, b, c, d, ee = coeffs[1,:]
+    e_xd_1 = a + 2*c*xd + ee*yd
+    e_yd_1 = b + 2*d*yd + ee*xd
     
-    x = np.dot(k1, poly)
-    y = np.dot(k2, poly)
+    # Calculate the inverse of the polynomials using derivatives
+    A11 = 1.0 + e_xd_0
+    A12 = e_yd_0
+    A21 = e_xd_1
+    A22 = 1.0 + e_yd_1
+
+    rhs1 = xd*(1.0 + e_xd_0) + yd*e_yd_0 - e_0
+    rhs2 = yd*(1.0 + e_yd_1) + xd*e_xd_1 - e_1
+
+    Ainv = np.array([[A22, -A12],[-A21, A11]]) / (A11*A22 - A12*A21)
     
-    return np.array([x, y], dtype=dtype)
+    xn = Ainv[0, 0] * rhs1 + Ainv[0, 1] * rhs2
+    yn = Ainv[1, 0] * rhs1 + Ainv[1, 1] * rhs2
+
+    return np.array([xn, yn], dtype=dtype)
 
 
 def _distort_points_poly(
     self,
-    x: np.ndarray, 
-    y: np.ndarray
+    xn: np.ndarray, 
+    yn: np.ndarray
 ):
     """Distort normalized points.
     
@@ -158,9 +187,9 @@ def _distort_points_poly(
     
     Parameters
     ----------
-    x : 1D np.ndarray
+    xn : 1D np.ndarray
         Undistorted x-coordinates.
-    y : 1D np.ndarray
+    yn : 1D np.ndarray
         Undistorted y-coordinates.
         
     Returns
@@ -176,23 +205,29 @@ def _distort_points_poly(
     https://github.com/ronshnapp/MyPTV/tree/master/myptv
     
     The polynomial is of the 2nd order type, with the coefficients arranged
-    like such: coeff = [1, x, y, x**2, y**2, x*y]. This effectively allows
+    like such: coeff = [x, y, x**2, y**2, x*y]. This effectively allows
     any distortion in the x and y axes to be compensated. However, the 
     polynomial model is not stable when extrapolating, so beware of
     artifcacts.
     
-    To compute the inverse of the distortion model, we simply minimize a
-    new inverse matrix by projecting world points into image points and
-    correcting for distortion. This approach is different from MyPTV as it
-    does not use a Taylor Series expansion on the error terms for inversion.
+    To compute the inverse of the distortion model, we use compute the error
+    term and add it to the normalized camera coordinated. This method does
+    not require further iterations for refiunement.
+    
+    References
+    ----------
+    .. [1] Shnapp, R. (2022). MyPTV: A Python Package for 3D Particle
+        Tracking. J. Open Source Softw., 7, 4398.
     
     """    
-    _, _, k1, k2 = self.distortion2
     dtype = self.dtype
+    coeffs = self.distortion2
     
-    poly = np.array([np.ones_like(x), x, y, x**2, y**2, x * y], dtype=dtype)
+    poly = np.array([xn, yn, xn**2, yn**2, xn * yn])
     
-    xd = np.dot(k1, poly)
-    yd = np.dot(k2, poly)
+    e_x, e_y = np.dot(coeffs, poly)
+    
+    xd = xn + e_x
+    yd = yn + e_y
     
     return np.array([xd, yd], dtype=dtype)

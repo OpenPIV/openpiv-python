@@ -131,9 +131,9 @@ def _save_parameters(
         
         f.write(_d1 + '\n')
         
-        for i in range(4):
+        for i in range(2):
             _d2 = ''
-            for j in range(6):
+            for j in range(5):
                 _d2 += str(self.distortion2[i, j]) + ' '
                 
             f.write(_d2 + '\n')
@@ -196,7 +196,7 @@ def _load_parameters(
         distortion1 = np.array([float(s) for s in _d1.split()])
         
         distortion2 = []
-        for i in range(4):
+        for i in range(2):
             _d2 = f.readline()[:-2]
             distortion2.append(np.array([float(s) for s in _d2.split()]))
             
@@ -221,4 +221,8 @@ def _load_parameters(
     self.principal = principal
     self.dtype = dtype
     
+    # make sure all parameters are valid
+    self._check_parameters()
+    
+    # get the rotation matrix as needed
     self._get_rotation_matrix()

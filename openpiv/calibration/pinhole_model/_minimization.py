@@ -150,8 +150,8 @@ def _minimize_params(
             if self.distortion_model.lower() == "brown":
                 self.distortion1 = x[10:18]
             else:
-                self.distortion2[0, :] = x[18:24]
-                self.distortion2[1, :] = x[24:30]
+                self.distortion2[0, :] = x[18:23]
+                self.distortion2[1, :] = x[23:-1]
                 
         RMS_error = get_reprojection_error(
             self,
@@ -185,43 +185,3 @@ def _minimize_params(
             options={"maxiter": max_iter},
             jac = "2-point"
         )
-    
-    if correct_distortion == True:
-        if self.distortion_model.lower() == "polynomial": 
-            # Since I couldn't get an inverse model to work using the linearization
-            # of the error terms via Taylor Series expansion, so I decided to explicitly
-            # compute it like in the polynomial camera model.
-            obj_img_points = self.project_points(
-                object_points,
-                correct_distortion=False
-            )
-            
-            x1, y1 = self._normalize_image_points(
-                image_points
-            )
-            
-            x2, y2 = self._normalize_image_points(
-                obj_img_points
-            )
-            
-            # create polynomials
-            poly1 = np.array([np.ones_like(x1), x1, y1, x1**2, y1**2, x1*y1])
-#            poly2 = np.array([np.ones_like(x2), x2, y2, x2**2, y2**2, x2*y2])
-            
-            # minimize the polynomials
-#            coeff1 = np.linalg.lstsq(
-#                poly2.T,
-#                np.array([x1, y1], dtype="float64").T, 
-#               rcond=None
-#            )[0].T
-            
-            coeff2 = np.linalg.lstsq(
-                poly1.T,
-                np.array([x2, y2], dtype=dtype).T, 
-                rcond=None
-            )[0].T
-            
-#            self.distortion2[0, :] = coeff1[0, :]
-#            self.distortion2[1, :] = coeff1[1, :]
-            self.distortion2[2, :] = coeff2[0, :]
-            self.distortion2[3, :] = coeff2[1, :]

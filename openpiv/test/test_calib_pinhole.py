@@ -101,7 +101,7 @@ def test_parameters_input():
             distortion1=np.zeros(7)
         )
         
-        # not 4 x 6 matrix for polynomial model 
+        # not 2 x 5 matrix for polynomial model 
         pinhole_model.camera(
             "name",
             resolution=[0, 0],
@@ -187,7 +187,7 @@ def test_parameters_initialization():
     
     assert_equal(
         cam.distortion2.shape,
-        [4, 6]
+        [2, 5]
     )
     
     assert_(len(cam.focal) == 2)

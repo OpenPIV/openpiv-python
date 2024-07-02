@@ -26,7 +26,8 @@ def _check_parameters(self):
     
     if self.distortion_model.lower() not in ["brown", "polynomial"]:
         raise ValueError(
-            "Distortion model must be either 'brown' or 'polynomial', not '{}'.".format(self.distortion_model)
+            "Distortion model must be either 'brown' or 'polynomial', not " +
+            f"'{self.distortion_model}'."
         )
         
     if self.distortion1.shape != (8,):
@@ -40,9 +41,9 @@ def _check_parameters(self):
             "Polynomial distortion coefficients must be a numpy ndarray"
         )
         
-    if self.distortion2.shape != (4, 6):
+    if self.distortion2.shape != (2, 5):
         raise ValueError(
-            "Polynomial distortion coefficients must be a 4x6 numpy ndarray"
+            "Polynomial distortion coefficients must be a 2x5 numpy ndarray"
         )
     
     if not isinstance(self.focal, (tuple, list, np.ndarray)):

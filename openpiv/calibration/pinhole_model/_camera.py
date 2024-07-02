@@ -38,11 +38,14 @@ class camera(object):
         
         ``brown``
         The Brown model follows the distortion model incorporated by OpenCV.
-        It consists of a radial and tangential model to compensate for distortion.
+        It consists of a radial and tangential model to compensate for
+        distortion.
         
         ``polynomial``
         The polynomial model is used for general distortion compensation. It
-        consists of a 2nd order polynomial in the x and y axes.
+        consists of a 2nd order polynomial in the x and y axes. This
+        distortion model relies on the theory put forth by MyPTV and copies
+        the model in whole.
         
         Both models do not attempt to correct distortions along the z-plane.
         
@@ -66,6 +69,15 @@ class camera(object):
     project_to_z
     save_parameters
     load_parameters
+    
+    References
+    ----------
+    .. [1] Shnapp, R. (2022). MyPTV: A Python Package for 3D Particle
+        Tracking. J. Open Source Softw., 7, 4398.
+        
+    .. [2] Čuljak, I., Abram, D., Pribanić, T., Džapo, H., & Cifrek, M.
+        (2012). A brief introduction to OpenCV. 2012 Proceedings of the
+        35th International Convention MIPRO, 1725-1730.
         
     """
     def __init__(
@@ -76,7 +88,7 @@ class camera(object):
         orientation: np.ndarray=np.zeros(3, dtype="float64"),
         distortion_model: str="polynomial",
         distortion1: np.ndarray=np.zeros(8, dtype="float64"),
-        distortion2: np.ndarray=None,
+        distortion2: np.ndarray=np.zeros([2, 5], dtype="float64"),
         focal: Tuple[float, float]=[1.0, 1.0],
         principal: Tuple[float, float]=None,
         dtype: str="float64"
@@ -84,17 +96,7 @@ class camera(object):
         translation = np.array(translation, dtype=dtype)
         orientation = np.array(orientation, dtype=dtype)
         distortion1 = np.array(distortion1, dtype=dtype)
-
-        if distortion2 is None:
-            distortion2 = np.array(
-                [
-                    [0, 1, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0],
-                    [0, 1, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0]
-                ],
-                dtype=dtype
-            )
+        distortion2 = np.array(distortion2, dtype=dtype)
     
         self.name = name
         self.resolution = resolution
@@ -131,9 +133,9 @@ class camera(object):
         # check parameters
         self._check_parameters()
         
-        # get roation matrix
-        self._get_rotation_matrix()
-        
-        # fix principal point if necessary
+        # fix principal point if necessary (placed here due to error checking)
         if principal is None:
             self.principal = [self.resolution[0] / 2, self.resolution[1] / 2]
+            
+        # get roation matrix
+        self._get_rotation_matrix()
