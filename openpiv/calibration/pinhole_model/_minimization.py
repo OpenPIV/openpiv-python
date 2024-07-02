@@ -151,7 +151,7 @@ def _minimize_params(
                 self.distortion1 = x[10:18]
             else:
                 self.distortion2[0, :] = x[18:23]
-                self.distortion2[1, :] = x[23:-1]
+                self.distortion2[1, :] = x[23:28]
                 
         RMS_error = get_reprojection_error(
             self,
