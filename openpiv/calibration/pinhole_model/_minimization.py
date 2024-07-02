@@ -88,9 +88,8 @@ def _minimize_params(
         'cam1', 
         [4512, 800],
         translation = [-340, 125, 554],
-        orientation = [0.27, 0.62, 0.02],
+        orientation = [0., 0, np.pi],
         focal = [15310, 15310],
-        principal=[-3780, 238]
     )
     
      >>> cam.minimize_params(
