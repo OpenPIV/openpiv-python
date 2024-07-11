@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pytest
 
@@ -8,6 +9,7 @@ from numpy.testing import (assert_equal, assert_allclose,
 from openpiv.calibration import poly_model
 from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
 
+file = os.path.join(os.path.dirname(__file__),"test_calibration_points.npz")
 
 def test_parameters_input():
     with pytest.raises(TypeError):
@@ -93,7 +95,7 @@ def test_parameters_initialization():
 def test_minimization_01(
     case: int
 ):    
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -121,7 +123,7 @@ def test_minimization_01(
 def test_projection_01(
     case: int
 ):
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -163,7 +165,7 @@ def test_projection_01(
 def test_projection_02(
     case: int
 ):
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -197,7 +199,7 @@ def test_projection_02(
 def test_projection_03(
     case: int
 ):    
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -236,7 +238,7 @@ def test_projection_03(
 def test_line_intersect_01(
     case: tuple
 ):
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     n_cams = len(case)
     
     cal_obj_points = []
