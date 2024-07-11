@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pytest
 
@@ -7,12 +8,14 @@ from numpy.testing import (assert_equal, assert_allclose,
 
 from openpiv.calibration import pinhole_model
 from openpiv.calibration.calib_utils import get_reprojection_error, get_los_error
+file = os.path.join(os.path.dirname(__file__),"test_calibration_points.npz")
 
 
 def get_test_camera_params(
     case: int=1
 ):
-    pinhole_cam = f"test_calibration_pinhole_{case}.txt"
+    pinhole_cam = os.path.join(os.path.dirname(__file__), f"test_calibration_pinhole_{case}.txt")
+    
         
     with open(pinhole_cam, 'r') as f:
         name = f.readline()[:-1]
@@ -263,7 +266,7 @@ def test_projection_02(
 ):
     cam = get_test_camera_params(case)
     
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -289,7 +292,7 @@ def test_projection_03(
 ):    
     cam = get_test_camera_params(case)
     
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -309,7 +312,7 @@ def test_projection_04(
 ):    
     cam = get_test_camera_params(case)
     
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -340,7 +343,7 @@ def test_projection_05(
 ):
     cam = get_test_camera_params(case)
     
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -370,7 +373,7 @@ def test_projection_05(
 def test_minimization_01(
     model: str
 ):        
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data["obj_points_1"]
     cal_img_points = cal_data["img_points_1"]
@@ -408,7 +411,7 @@ def test_minimization_02(
     case = 1
     cam_orig = get_test_camera_params(case)
     
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points = cal_data[f"obj_points_{case}"]
     cal_img_points = cal_data[f"img_points_{case}"]
@@ -466,7 +469,7 @@ def test_minimization_02(
 def test_line_intersect_01(
     case: tuple
 ):
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     
     cal_obj_points_1 = cal_data[f"obj_points_{case[0]}"]
     cal_img_points_1 = cal_data[f"img_points_{case[1]}"]
@@ -516,7 +519,7 @@ def test_line_intersect_01(
 def test_line_intersect_02(
     case: tuple
 ):
-    cal_data = np.load("./test_calibration_points.npz")
+    cal_data = np.load(file)
     n_cams = len(case)
     
     cal_obj_points = []
