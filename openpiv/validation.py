@@ -228,6 +228,56 @@ def local_median_val(
     return ind
 
 
+def local_norm_median_val(
+        u: np.ndarray, 
+        v: np.ndarray, 
+        u_threshold: float, 
+        v_threshold: float, 
+        size: int=1
+        )->np.ndarray:
+    """This function is adapted from OpenPIV's implementation of 
+    validation.local_median_val(). validation.local_median_val() is, 
+    basically, Westerweel's original median filter (with some changes). 
+    This function builts upon validation.local_median_val() and implements
+    improved Westerweel's median filter (normalized filter) as described 
+    in 2007 edition of the German PIV book (paragraph 6.1.5) and in Westerweel's
+    article J. Westerweel, F. Scarano, "Universal outlier detection for PIV data",
+    Experiments in fluids, 39(6), p.1096-1100, 2005.
+    For the list of parameters, see the referenced article, equation 2 on p.1097.
+
+    This validation method tests for the spatial consistency of the data.
+    Vectors are classified as outliers and replaced with Nan (Not a Number) if
+    the absolute difference with the local median is greater than a user
+    specified threshold. The median is computed for both velocity components.
+
+    The image masked areas (obstacles, reflections) are marked as masked array:
+       u = np.ma.masked(u, flag = image_mask)
+    and it should not be replaced by the local median, but remain masked. 
+
+
+    Parameters
+    ----------
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component.
+
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component.
+
+    u_threshold : float
+        the threshold value for component u
+
+    v_threshold : float
+        the threshold value for component v
+
+    Returns
+    -------
+
+    flag : boolean 2d np.ndarray
+        a boolean array. True elements corresponds to outliers.
+
+    """
+
+
 def typical_validation(
     u: np.ndarray,
     v: np.ndarray,
