@@ -232,8 +232,7 @@ def local_norm_median_val(
         u: np.ndarray, 
         v: np.ndarray, 
         ε: float,
-        u_threshold: float, 
-        v_threshold: float, 
+        threshold: float,
         size: int=1
         )->np.ndarray:
     """This function is adapted from OpenPIV's implementation of 
@@ -245,6 +244,8 @@ def local_norm_median_val(
     article J. Westerweel, F. Scarano, "Universal outlier detection for PIV data",
     Experiments in fluids, 39(6), p.1096-1100, 2005.
     For the list of parameters, see the referenced article, equation 2 on p.1097.
+    The current function implements equation 2 from the referenced article in a
+    manner shown in the MATLAB script at the end of the article, on p.1100.
 
     This validation method tests for the spatial consistency of the data.
     Vectors are classified as outliers and replaced with Nan (Not a Number) if
@@ -267,11 +268,8 @@ def local_norm_median_val(
     ε : float
         minimum normalization level (see the referenced article, eqn.2)
 
-    u_threshold : float
-        the threshold value for component u
-
-    v_threshold : float
-        the threshold value for component v
+    threshold : float
+        the threshold to determine whether the vector is valid or not
 
     size: int
         the representative size of the kernel of the median filter, the 
@@ -286,6 +284,65 @@ def local_norm_median_val(
         a boolean array; true elements corresponds to outliers
 
     """
+    if np.ma.is_masked(u):
+        masked_u = np.where(~u.mask, u.data, np.nan)
+        masked_v = np.where(~v.mask, v.data, np.nan)
+    else:
+        masked_u = u
+        masked_v = v
+
+    um = generic_filter(masked_u, 
+                        np.nanmedian, 
+                        mode='constant',
+                        cval=np.nan, 
+                        size=(2*size+1, 2*size+1)
+    )
+    vm = generic_filter(masked_v, 
+                        np.nanmedian, 
+                        mode='constant',
+                        cval=np.nan, 
+                        size=(2*size+1, 2*size+1)
+    )
+
+    def rfunc(x):
+        """
+        Implementation of r from the cited article (see the description of
+        the function above). x is the array within the filtering kernel. 
+        I.e., every element of x is a velocity vector ui or vi.
+        This function must return a scalar: https://stackoverflow.com/a/14060024/10073233
+        """
+        # copied from here: https://stackoverflow.com/a/60166608/10073233
+        np.put(x, x.size//2, np.nan) # put NaN in the middle to avoid using
+                                     # the middle in the calculations
+        xm = np.nanmedian(x) # Um for the current filtering window
+        rm = np.nanmedian(np.abs(np.subtract(x,xm))) # median of |ui-um| or |vi-vm|
+        return rm
+
+    rm_u = generic_filter(masked_u, 
+                          rfunc, 
+                          mode='constant',
+                          cval=np.nan, 
+                          size=(2*size+1, 2*size+1)
+    )
+    rm_v = generic_filter(masked_v, 
+                          rfunc, 
+                          mode='constant',
+                          cval=np.nan, 
+                          size=(2*size+1, 2*size+1)
+    )
+
+    r0ast_u = np.divide(np.abs(np.subtract(masked_u,um)), np.add(rm_u,ε)) # r0ast stands for r_0^* - 
+                                                                          # see formula 2 in the 
+                                                                          # referenced article 
+                                                                          # (see description of the function)
+    r0ast_v = np.divide(np.abs(np.subtract(masked_v,vm)), np.add(rm_v,ε)) # r0ast stands for r_0^* - 
+                                                                          # see formula 2 in the 
+                                                                          # referenced article 
+                                                                          # (see description of the function)
+
+    ind = (np.sqrt(np.add(np.square(r0ast_u),np.square(r0ast_v)))) > threshold
+
+    return ind
 
 
 def typical_validation(
