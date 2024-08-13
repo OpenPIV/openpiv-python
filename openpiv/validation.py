@@ -202,7 +202,7 @@ def local_median_val(
     Returns
     -------
 
-    flag : boolean 2d np.ndarray
+    ind : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -231,6 +231,7 @@ def local_median_val(
 def local_norm_median_val(
         u: np.ndarray, 
         v: np.ndarray, 
+        ε: float,
         u_threshold: float, 
         v_threshold: float, 
         size: int=1
@@ -238,7 +239,7 @@ def local_norm_median_val(
     """This function is adapted from OpenPIV's implementation of 
     validation.local_median_val(). validation.local_median_val() is, 
     basically, Westerweel's original median filter (with some changes). 
-    This function builts upon validation.local_median_val() and implements
+    The current function builts upon validation.local_median_val() and implements
     improved Westerweel's median filter (normalized filter) as described 
     in 2007 edition of the German PIV book (paragraph 6.1.5) and in Westerweel's
     article J. Westerweel, F. Scarano, "Universal outlier detection for PIV data",
@@ -258,10 +259,13 @@ def local_norm_median_val(
     Parameters
     ----------
     u : 2d np.ndarray
-        a two dimensional array containing the u velocity component.
+        a two dimensional array containing the u velocity component
 
     v : 2d np.ndarray
-        a two dimensional array containing the v velocity component.
+        a two dimensional array containing the v velocity component
+
+    ε : float
+        minimum normalization level (see the referenced article, eqn.2)
 
     u_threshold : float
         the threshold value for component u
@@ -269,11 +273,17 @@ def local_norm_median_val(
     v_threshold : float
         the threshold value for component v
 
+    size: int
+        the representative size of the kernel of the median filter, the 
+        actual size of the kernel is (2*size+1, 2*size+1) - i.e., it's the
+        number of interrogation windows away from the interrogation 
+        window of interest
+
     Returns
     -------
 
-    flag : boolean 2d np.ndarray
-        a boolean array. True elements corresponds to outliers.
+    ind : boolean 2d np.ndarray
+        a boolean array; true elements corresponds to outliers
 
     """
 
