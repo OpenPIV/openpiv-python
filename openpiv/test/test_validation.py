@@ -76,6 +76,62 @@ def test_local_median_validation(u_threshold=3, N=3):
     assert flag[N, N]
 
 
+def test_local_norm_median_validation():
+    """ test normalized local median
+
+    Args:
+        threshold (int, optional): _description_.
+        N (int, optional): _description_.
+    """
+
+    # The idea is the following. Let's create an array of the size of one filtering kernel.
+    # Calculate normalized median filter by hand and using local_norm_median_val(). See if
+    # the results are comparable. As outlined in the description of local_norm_median_val(),
+    # follow the paper J. Westerweel, F. Scarano, "Universal outlier detection for PIV data",
+    # Experiments in fluids, 39(6), p.1096-1100, 2005, equation 2, to perform calculations
+    # by hand.
+
+    # Case study:
+    u = np.asarray([[1,2,3],[4,5,6],[7,8,9]])
+    v = np.asarray([[2,3,4],[5,6,7],[8,9,10]])
+    ε = 0.1
+    thresh = 2
+
+    # Calculations by hand (according to equation 2 in the referenced article).
+    u0 = 5
+    v0 = 6
+    # Median formula for even number of observations (the center is excluded)
+    # that are placed in the ascending order (just like the given u and v arrays):
+    # Median = [(n/2)th term + ((n/2) + 1)th term]/2 (https://www.cuemath.com/data/median/).
+    um = 5 # = (4 + 6) / 2
+    vm = 6 # = (5 + 7) / 2 
+    # Arrays of residuals given by the formula rui = |ui-um| and rvi = |vi-vm|
+    rui = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
+    rvi = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
+    # Median residuals values (center excluded) must be calculated for ascending arrays:
+    ruiascend = [1, 1, 2, 2, 3, 3, 4, 4]
+    rviascend = [1, 1, 2, 2, 3, 3, 4, 4]
+    rum = 2.5 # = (2 + 3) / 2
+    rvm = 2.5 # = (2 + 3) / 2
+    # Now implement equation 2 from the referenced article:
+    r0ast_u = np.abs(u0 - um) / (rum + ε)
+    r0ast_v = np.abs(v0 - vm) / (rvm + ε)
+    # The method of comparison to the threshold is given at the very end of the referenced 
+    # article in the MATLAB code:
+    byHand = (r0ast_u**2 + r0ast_v**2)**0.5 > thresh
+    # Here, we calculated byHand for the velocity vector (u0,v0) coordinates of which are 
+    # located at u[1,1] and v[1,1].
+
+    # Calculations using local_norm_median_val() function.
+    byFunc = validation.local_norm_median_val(u, v, ε, thresh)
+    # Here by func returns a boolean matrix containing either True or False for each velocity
+    # vector (ui,vi).
+
+    # Compare the two results:
+    assert byHand == byFunc[1,1]
+
+
+
 def test_global_val():
     """ tests global validation
     """

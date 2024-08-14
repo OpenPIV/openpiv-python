@@ -312,10 +312,13 @@ def local_norm_median_val(
         This function must return a scalar: https://stackoverflow.com/a/14060024/10073233
         """
         # copied from here: https://stackoverflow.com/a/60166608/10073233
-        np.put(x, x.size//2, np.nan) # put NaN in the middle to avoid using
+        y = x.copy() # need this step, because np.put() below changes the array in place,
+                     # and we can end up with a situation when the entire filtering kernel
+                     # is comprised of NaNs resulting in NumPy RuntimeWarning: All-NaN slice encountered
+        np.put(y, y.size//2, np.nan) # put NaN in the middle to avoid using
                                      # the middle in the calculations
-        xm = np.nanmedian(x) # Um for the current filtering window
-        rm = np.nanmedian(np.abs(np.subtract(x,xm))) # median of |ui-um| or |vi-vm|
+        ym = np.nanmedian(y) # Um for the current filtering window
+        rm = np.nanmedian(np.abs(np.subtract(y,ym))) # median of |ui-um| or |vi-vm|
         return rm
 
     rm_u = generic_filter(masked_u, 
