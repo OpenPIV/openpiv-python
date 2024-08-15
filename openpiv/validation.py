@@ -408,13 +408,22 @@ def typical_validation(
     #     plt.quiver(u,v,color='k')
     
 
-    flag_m = local_median_val(
-        u,
-        v,
-        u_threshold=settings.median_threshold,
-        v_threshold=settings.median_threshold,
-        size=settings.median_size,
-    )
+    if settings.median_normalized:
+        flag_m = local_norm_median_val(
+            u, 
+            v, 
+            ε=0.2, # use the recomended value at this point, later add user's input for this
+            threshold=settings.median_threshold,
+            size=settings.median_size
+        )
+    else:
+        flag_m = local_median_val(
+            u,
+            v,
+            u_threshold=settings.median_threshold,
+            v_threshold=settings.median_threshold,
+            size=settings.median_size,
+        )
     
     # u[flag_m] = np.ma.masked
     # v[flag_m] = np.ma.masked
