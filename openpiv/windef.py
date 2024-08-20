@@ -129,11 +129,12 @@ class PIVSettings:
     min_max_v_disp: Tuple=(-30, 30)
     # The second filter is based on the global STD threshold
     std_threshold: int=10  # threshold of the std validation
-    # The third filter is the median test (not normalized at the moment)
+    # The third filter is the median test: pick between normalized and regular
+    median_normalized: bool=False # False = do regular median, True = do normalized median
     median_threshold: int=3  # threshold of the median validation
+    median_size: int=1  # defines the size of the local median
     # On the last iteration, an additional validation can be done based on
     # the S/N.
-    median_size: int=1  # defines the size of the local median
 
 
 

@@ -4,7 +4,8 @@ images prior to PIV processing."""
 import numpy as np
 from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes,\
      map_coordinates
-from skimage import img_as_float, exposure, img_as_ubyte
+from skimage.util import img_as_float, img_as_ubyte
+from skimage import exposure
 from skimage import filters
 from skimage.measure import find_contours, approximate_polygon, points_in_poly
 from skimage.transform import rescale
@@ -73,7 +74,7 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     """
     imcopy = np.copy(image)
     # stretch the histogram
-    image = exposure.rescale_intensity(img_as_float(image), in_range=(0, 1))
+    image = exposure.rescale_intensity(img_as_float(image), in_range='image')
     # blur the image, low-pass
     blurback = img_as_ubyte(gaussian_filter(image, filter_size))
     if method == "edges":
@@ -132,6 +133,7 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
 
 def prepare_mask_from_polygon(x, y, mask_coords):
     """ Converts mask coordinates of the image mask
+
     to the grid of 1/0 on the x,y grid
     Inputs:
         x,y : grid of x,y points
@@ -148,8 +150,8 @@ def prepare_mask_on_grid(
     x: np.ndarray,
     y: np.ndarray,
     image_mask: np.ndarray,
-)->np.array:
-    """_summary_
+)->np.ndarray:
+    """Converts mask to the grid 
 
     Args:
         x (np.ndarray): x coordinates of vectors in pixels
@@ -371,7 +373,7 @@ def contrast_stretch(img, lower_limit = 2, upper_limit = 98):
                 
     lower = np.percentile(img, lower_limit)
     upper = np.percentile(img, upper_limit)
-    img = exposure.rescale_intensity(img, in_range = (lower, upper))
+    img = exposure.rescale_intensity(img, in_range=(lower, upper)) #type:ignore
     return img
 
 def threshold_binarize(img, threshold, max_val = 255):
@@ -472,65 +474,59 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
             background += img
     return (background / len(img_list))
 
+# Obsolete, to be removed in the future
+# def offset_image(img, offset_x, offset_y, pad='constant'):
+#     """
+#     Offset an image by padding.
+    
+#     Parameters
+#     ----------
+#     img: image
+#         a two dimensional array of float32 or float64, 
+#         but can be uint16, uint8 or similar type
+        
+#     offset_x: int
+#         offset an image by integer values. Positive values shifts 
+#         the image to the right and negative values shift to the left
+        
+#     offset_y: int
+#         offset an image by integer values. Positive values shifts 
+#         the image to the top and negative values shift to the bottom
+        
+#     pad: str
+#         pad the shift with zeros or a reflection of the shift
+        
+#     Returns
+#     -------
+#     img: image
+#         a transformed two dimensional array of the input image
+    
+#     """
+#     if pad not in [
+#         'zero', 'reflect'
+#     ]:
+#         raise ValueError(f'pad method not supported: {pad}')
+#     end_y, end_x = img.shape
+#     start_x = 0; start_y = 0
+#     if offset_x > 0:
+#         offset_x1 = offset_x
+#         offset_x2 = 0
+#     else:
+#         offset_x1 = 0
+#         offset_x2 = offset_x * -1
+#         start_x = offset_x2
+#         end_x += offset_x2
+#     if offset_y > 0:
+#         offset_y1 = offset_y
+#         offset_y2 = 0
+#     else:
+#         offset_y1 = 0
+#         offset_y2 = offset_y * -1
+#         start_y = offset_y2
+#         end_y += offset_y2   
 
-def offset_image(img, offset_x, offset_y, pad = 'zero'):
-    """
-    Offset an image by padding.
-    
-    Parameters
-    ----------
-    img: image
-        a two dimensional array of float32 or float64, 
-        but can be uint16, uint8 or similar type
-        
-    offset_x: int
-        offset an image by integer values. Positive values shifts 
-        the image to the right and negative values shift to the left
-        
-    offset_y: int
-        offset an image by integer values. Positive values shifts 
-        the image to the top and negative values shift to the bottom
-        
-    pad: str
-        pad the shift with zeros or a reflection of the shift
-        
-    Returns
-    -------
-    img: image
-        a transformed two dimensional array of the input image
-    
-    """
-    if pad not in [
-        'zero', 'reflect'
-    ]:
-        raise ValueError(f'pad method not supported: {pad}')
-    end_y, end_x = img.shape
-    start_x = 0; start_y = 0
-    if offset_x > 0:
-        offset_x1 = offset_x
-        offset_x2 = 0
-    else:
-        offset_x1 = 0
-        offset_x2 = offset_x * -1
-        start_x = offset_x2
-        end_x += offset_x2
-    if offset_y > 0:
-        offset_y1 = offset_y
-        offset_y2 = 0
-    else:
-        offset_y1 = 0
-        offset_y2 = offset_y * -1
-        start_y = offset_y2
-        end_y += offset_y2   
-    if pad == 'zero':
-        pad = 'constant'
-    img = np.pad(
-        img,
-        ((offset_y1, offset_y2),
-        (offset_x1, offset_x2)),
-        mode = pad
-    )
-    return img[start_y:end_y, start_x:end_x]
+#     img = np.pad(img, (offset_y1, offset_y2),(offset_x1, offset_x2)), mode=pad)
+#     return img[start_y:end_y, start_x:end_x]
 
 
 def stretch_image(img,

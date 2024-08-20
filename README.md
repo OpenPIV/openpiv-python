@@ -1,5 +1,5 @@
 # OpenPIV
-![Build and upload to PyPI](https://github.com/OpenPIV/openpiv-python/workflows/Build%20and%20upload%20to%20PyPI/badge.svg)
+[![Python package](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml/badge.svg)](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
 ![Anaconda](https://anaconda.org/openpiv/openpiv/badges/version.svg)

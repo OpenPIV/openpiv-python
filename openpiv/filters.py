@@ -44,8 +44,13 @@ def _gaussian_kernel(half_width: int=1)-> np.ndarray:
 
     """
     # size = int(half_width)
-    x, y = np.mgrid[-half_width:half_width + 1, -half_width:half_width + 1]
-    g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
+
+    if half_width == 0:
+        return 1
+    else: 
+        x, y = np.mgrid[-half_width:half_width + 1, -half_width:half_width + 1]
+        g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
+    
     return g / g.sum()
 
 

@@ -157,7 +157,7 @@ def smoothn(
   """
     is_masked = False
 
-    if type(y) == ma.core.MaskedArray:  # masked array
+    if type(y) == ma.MaskedArray:  # masked array
         is_masked = True
         mask = y.mask
         y = np.array(y)
@@ -213,7 +213,7 @@ def smoothn(
     nof = IsFinite.sum()  # number of finite elements
     W = W * IsFinite
     if any(W < 0):
-        error("smoothn:NegativeWeights", "Weights must all be >=0")
+        raise ValueError("smoothn:NegativeWeights", "Weights must all be >=0")
     else:
         # W = W/np.max(W)
         pass
@@ -320,11 +320,11 @@ def smoothn(
     # ---
     if isauto:
         try:
-            xpost = array([(0.9 * log10(sMinBnd) + log10(sMaxBnd) * 0.1)])
+            xpost = np.array([(0.9 * np.log10(sMinBnd) + np.log10(sMaxBnd) * 0.1)])
         except:
-            array([100.0])
+            np.array([100.0])
     else:
-        xpost = array([log10(s)])
+        xpost = array([np.log10(s)])
     while RobustIterativeProcess:
         # --- "amount" of weights (see the function GCVscore)
         aow = sum(Wtot) / noe
@@ -422,7 +422,7 @@ def smoothn(
     ## Warning messages
     # ---
     if isauto:
-        if abs(log10(s) - log10(sMinBnd)) < errp:
+        if abs(np.log10(s) - np.log10(sMinBnd)) < errp:
             warning(
                 "MATLAB:smoothn:SLowerBound",
                 [
@@ -431,7 +431,7 @@ def smoothn(
                     + "has been reached. Put s as an input variable if required."
                 ],
             )
-        elif abs(log10(s) - log10(sMaxBnd)) < errp:
+        elif abs(np.log10(s) - np.log10(sMaxBnd)) < errp:
             warning(
                 "MATLAB:smoothn:SUpperBound",
                 [

@@ -202,7 +202,7 @@ def local_median_val(
     Returns
     -------
 
-    flag : boolean 2d np.ndarray
+    ind : boolean 2d np.ndarray
         a boolean array. True elements corresponds to outliers.
 
     """
@@ -224,6 +224,126 @@ def local_median_val(
                         cval=np.nan, size=(2*size+1, 2*size+1))
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
+
+    return ind
+
+
+def local_norm_median_val(
+        u: np.ndarray, 
+        v: np.ndarray, 
+        ε: float,
+        threshold: float,
+        size: int=1
+        )->np.ndarray:
+    """This function is adapted from OpenPIV's implementation of 
+    validation.local_median_val(). validation.local_median_val() is, 
+    basically, Westerweel's original median filter (with some changes). 
+    The current function builts upon validation.local_median_val() and implements
+    improved Westerweel's median filter (normalized filter) as described 
+    in 2007 edition of the German PIV book (paragraph 6.1.5) and in Westerweel's
+    article J. Westerweel, F. Scarano, "Universal outlier detection for PIV data",
+    Experiments in fluids, 39(6), p.1096-1100, 2005.
+    For the list of parameters, see the referenced article, equation 2 on p.1097.
+    The current function implements equation 2 from the referenced article in a
+    manner shown in the MATLAB script at the end of the article, on p.1100.
+
+    This validation method tests for the spatial consistency of the data.
+    Vectors are classified as outliers and replaced with Nan (Not a Number) if
+    the absolute difference with the local median is greater than a user
+    specified threshold. The median is computed for both velocity components.
+
+    The image masked areas (obstacles, reflections) are marked as masked array:
+       u = np.ma.masked(u, flag = image_mask)
+    and it should not be replaced by the local median, but remain masked. 
+
+
+    Parameters
+    ----------
+    u : 2d np.ndarray
+        a two dimensional array containing the u velocity component
+
+    v : 2d np.ndarray
+        a two dimensional array containing the v velocity component
+
+    ε : float
+        minimum normalization level (see the referenced article, eqn.2)
+
+    threshold : float
+        the threshold to determine whether the vector is valid or not
+
+    size: int
+        the representative size of the kernel of the median filter, the 
+        actual size of the kernel is (2*size+1, 2*size+1) - i.e., it's the
+        number of interrogation windows away from the interrogation 
+        window of interest
+
+    Returns
+    -------
+
+    ind : boolean 2d np.ndarray
+        a boolean array; true elements corresponds to outliers
+
+    """
+    if np.ma.is_masked(u):
+        masked_u = np.where(~u.mask, u.data, np.nan)
+        masked_v = np.where(~v.mask, v.data, np.nan)
+    else:
+        masked_u = u
+        masked_v = v
+
+    um = generic_filter(masked_u, 
+                        np.nanmedian, 
+                        mode='constant',
+                        cval=np.nan, 
+                        size=(2*size+1, 2*size+1)
+    )
+    vm = generic_filter(masked_v, 
+                        np.nanmedian, 
+                        mode='constant',
+                        cval=np.nan, 
+                        size=(2*size+1, 2*size+1)
+    )
+
+    def rfunc(x):
+        """
+        Implementation of r from the cited article (see the description of
+        the function above). x is the array within the filtering kernel. 
+        I.e., every element of x is a velocity vector ui or vi.
+        This function must return a scalar: https://stackoverflow.com/a/14060024/10073233
+        """
+        # copied from here: https://stackoverflow.com/a/60166608/10073233
+        y = x.copy() # need this step, because np.put() below changes the array in place,
+                     # and we can end up with a situation when the entire filtering kernel
+                     # is comprised of NaNs resulting in NumPy RuntimeWarning: All-NaN slice encountered
+        np.put(y, y.size//2, np.nan) # put NaN in the middle to avoid using
+                                     # the middle in the calculations
+        ym = np.nanmedian(y) # Um for the current filtering window
+        rm = np.nanmedian(np.abs(np.subtract(y,ym))) # median of |ui-um| or |vi-vm|
+        return rm
+
+    rm_u = generic_filter(masked_u, 
+                          rfunc, 
+                          mode='constant',
+                          cval=np.nan, 
+                          size=(2*size+1, 2*size+1)
+    )
+    rm_v = generic_filter(masked_v, 
+                          rfunc, 
+                          mode='constant',
+                          cval=np.nan, 
+                          size=(2*size+1, 2*size+1)
+    )
+
+    r0ast_u = np.divide(np.abs(np.subtract(masked_u,um)), np.add(rm_u,ε)) # r0ast stands for r_0^* - 
+                                                                          # see formula 2 in the 
+                                                                          # referenced article 
+                                                                          # (see description of the function)
+    r0ast_v = np.divide(np.abs(np.subtract(masked_v,vm)), np.add(rm_v,ε)) # r0ast stands for r_0^* - 
+                                                                          # see formula 2 in the 
+                                                                          # referenced article 
+                                                                          # (see description of the function)
+
+    ind = (np.sqrt(np.add(np.square(r0ast_u),np.square(r0ast_v)))) > threshold
 
     return ind
 
@@ -288,13 +408,22 @@ def typical_validation(
     #     plt.quiver(u,v,color='k')
     
 
-    flag_m = local_median_val(
-        u,
-        v,
-        u_threshold=settings.median_threshold,
-        v_threshold=settings.median_threshold,
-        size=settings.median_size,
-    )
+    if settings.median_normalized:
+        flag_m = local_norm_median_val(
+            u, 
+            v, 
+            ε=0.2, # use the recomended value at this point, later add user's input for this
+            threshold=settings.median_threshold,
+            size=settings.median_size
+        )
+    else:
+        flag_m = local_median_val(
+            u,
+            v,
+            u_threshold=settings.median_threshold,
+            v_threshold=settings.median_threshold,
+            size=settings.median_size,
+        )
     
     # u[flag_m] = np.ma.masked
     # v[flag_m] = np.ma.masked
