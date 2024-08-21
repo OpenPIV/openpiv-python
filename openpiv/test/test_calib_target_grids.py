@@ -25,7 +25,7 @@ def test_simple_grid_01():
     
     # check horizontal and vertical spacing
     assert_((grid[0, 1] - grid[0, 0]) == spacing)
-    assert_((grid[1, 1] - grid[1, 9]) == spacing)
+    assert_((grid[1, 1] - grid[1, grid_shape[1]]) == spacing)
     
     # make sure z-plane is correct
     assert_(np.all(grid[2, :] == z_plane))
@@ -61,7 +61,7 @@ def test_asymmetric_grid_01():
     
     # check horizontal and vertical spacing
     assert_((grid[0, 1] - grid[0, 0]) == (spacing * 2))
-    assert_((grid[1, 1] - grid[1, 9]) == (spacing * 2))
+    assert_((grid[1, 1] - grid[1, grid_shape[1]]) == (spacing * 2))
     
     # make sure z-plane is correct
     assert_(np.all(grid[2, :] == z_plane))
