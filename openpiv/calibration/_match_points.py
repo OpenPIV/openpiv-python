@@ -301,11 +301,12 @@ def find_nearest_points(
         
     index = np.argmin(dist, axis = 0)
     
+    set_to_nan = np.zeros_like(index).astype("bool")
+    
     if threshold is not None:
         min_dist = np.min(dist, axis=0)
         
         if flag_nans == True:
-            set_to_nan = np.zeros_like(index).astype("bool")
             set_to_nan[min_dist > threshold] = True
             
         else:
@@ -324,8 +325,8 @@ def get_pairs_dlt(
     grid_shape: list,
     grid: np.ndarray=None,
     corners: np.ndarray=None,
-    asymmetric: bool=False
-    
+    asymmetric: bool=False,
+    sanity_check: bool=True
 ):  
     """Match object points to image points via homography.
     
@@ -349,6 +350,8 @@ def get_pairs_dlt(
         are automatically detected using a convex-hull algorithm.
     asymmetric : bool
         If true, use asymmetric point matching.
+    sanity_check : bool
+        If true, check the matched image and object points for duplicates.
     
     Returns
     -------
@@ -421,7 +424,7 @@ def get_pairs_dlt(
         flag_nans=True
     )
     
-    # check for duplicates (only happens with distortion)
+    # check for duplicates (only happens with distortion or extraneous markers)
     mask = ~np.isnan(reordered_points[0, :])
     
     good_points = np.unique(
@@ -429,11 +432,12 @@ def get_pairs_dlt(
         axis=1
     )
     
-    if good_points.shape[1] != reordered_points[:, mask].shape[1]:
-        raise Exception(
-            "Failed to sort image points due to multiple points sharing " +
-            "the same location (this is most likely caused by distortion)"
-        )
+    if sanity_check == True:
+        if good_points.shape[1] != reordered_points[:, mask].shape[1]:
+            raise Exception(
+                "Failed to sort image points due to multiple points sharing " +
+                "the same location (this is likely caused by distortion)"
+            )
             
     return reordered_points[:, mask], grid[:, mask]
 
