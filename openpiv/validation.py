@@ -23,7 +23,7 @@ from typing import Tuple
 import numpy as np
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
-from openpiv.windef import PIVSettings
+from openpiv.settings import PIVSettings
 
 
 
