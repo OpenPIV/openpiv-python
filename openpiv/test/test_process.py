@@ -12,7 +12,7 @@ from openpiv import tools
 
 
 
-THRESHOLD = 0.25
+THRESHOLD = 0.3
 
 # define "PIV" shift, i.e. creating u,v values that we want to get
 # -5.5 pixels to the left and 3.2 pixels upwards
@@ -25,11 +25,11 @@ THRESHOLD = 0.25
 
 
 # <------
-SHIFT_U = -3.5  # shift to the left, should be placed in columns, axis=1
+SHIFT_U = -3.4  # shift to the left, should be placed in columns, axis=1
 # ^
 # |
 # |
-SHIFT_V = 2.5   # shift upwards, should be placed in rows, axis=0 
+SHIFT_V = 2.6   # shift upwards, should be placed in rows, axis=0 
 
 
 def create_pair(image_size=32, u=SHIFT_U, v=SHIFT_V):

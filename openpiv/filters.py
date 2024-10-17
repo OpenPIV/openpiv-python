@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.signal import convolve
 from openpiv.lib import replace_nans
+import warnings
 
 __licence_ = """
 Copyright (C) 2011  www.openpiv.net
@@ -191,6 +192,9 @@ def replace_outliers(
         v, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
     )
+
+    if np.isnan(uf).any() or np.isnan(vf).any():
+        warnings.warn("There are still NaNs in the velocity fields after replacement.")
 
  
     uf = np.ma.masked_array(uf, mask=grid_mask)
