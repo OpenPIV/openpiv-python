@@ -77,7 +77,34 @@ def test_replace_outliers():
     invalid_mask = np.isnan(v)
     grid_mask = np.zeros_like(v, dtype=bool)
     u = v.copy()
-    uf, _ = filters.replace_outliers(u,v, invalid_mask)
+    uf, _ = filters.replace_outliers(u,v, flags=invalid_mask)
+
+    # print(uf)
 
     assert np.ma.allclose(v_copy,uf)
+    assert isinstance(uf, np.ma.MaskedArray)
+
+
+def test_failed_replace_outliers():
+    """ test of not replacing outliers """
+    v = np.ma.array(np.ones((5, 5)), mask=np.ma.nomask)
+    v[3:, 3:] = np.ma.masked
+
+    v_copy = np.ma.copy(v)  # without NaNs
+
+    # Introduce more NaNs than replace_outliers can fix
+    v[1, 1] = np.nan
+    v[0, 0] = np.nan
+    v[2, 2] = np.nan
+    v[4, 4] = np.nan
+
+    invalid_mask = np.isnan(v)
+    grid_mask = np.zeros_like(v, dtype=bool)
+    u = v.copy()
+    uf, _ = filters.replace_outliers(u, v, flags=invalid_mask)
+
+    # print(uf)
+
+    # Since there are more NaNs than replace_outliers can fix, uf should not be equal to v_copy
+    assert not np.ma.allclose(v_copy, uf)
     assert isinstance(uf, np.ma.MaskedArray)
