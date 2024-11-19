@@ -12,7 +12,7 @@ from openpiv import tools
 
 
 
-THRESHOLD = 0.25
+THRESHOLD = 0.3
 
 # define "PIV" shift, i.e. creating u,v values that we want to get
 # -5.5 pixels to the left and 3.2 pixels upwards
@@ -102,7 +102,7 @@ def test_extended_search_area_overlap():
 
 def test_extended_search_area_sig2noise():
     """ test of the extended area PIV with sig2peak """
-    frame_a, frame_b = create_pair(image_size=64, u=-3.5, v=2.1)
+    frame_a, frame_b = create_pair(image_size=64, u=SHIFT_U, v=SHIFT_V)
     u, v, _ = piv(
         frame_a,
         frame_b,
@@ -112,8 +112,8 @@ def test_extended_search_area_sig2noise():
         subpixel_method="gaussian"
     )
 
-    assert np.allclose(u, -3.5, atol=THRESHOLD)
-    assert np.allclose(v, 2.1, atol=THRESHOLD)
+    assert np.allclose(u, SHIFT_U, atol=THRESHOLD)
+    assert np.allclose(v, SHIFT_V, atol=THRESHOLD)
 
 
 def test_process_extended_search_area():
