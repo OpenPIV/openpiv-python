@@ -156,3 +156,26 @@ def test_fft_correlate():
     assert np.allclose(u, SHIFT_U, atol=THRESHOLD)
     assert np.allclose(v, SHIFT_V, atol=THRESHOLD)
 
+
+def test_new_overlap_setting():
+    """ test of the new overlap setting changed on 19/11/2024"""
+    frame_a, frame_b = create_pair(image_size=72)
+    u, v, _ = piv(frame_a, frame_b,
+                  window_size=16,
+                  search_area_size=32,
+                  overlap=22)
+
+    assert u.shape == (5, 5) and v.shape == (5, 5)
+
+    u, v, _ = piv(frame_a, frame_b,
+                  window_size=16,
+                  search_area_size=32,
+                  overlap=21)
+    assert u.shape == (4, 4) and v.shape == (4, 4)
+
+    u, v, _ = piv(frame_a, frame_b,
+                  window_size=16,
+                  search_area_size=32,
+                  overlap=19)
+    assert u.shape == (4, 4) and v.shape == (4, 4)
+
