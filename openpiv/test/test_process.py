@@ -90,6 +90,7 @@ def test_extended_search_area():
 
 def test_extended_search_area_overlap():
     """ test of the extended area PIV with different overlap """
+    np.random.seed(42)  # Set a fixed random seed for reproducibility
     frame_a, frame_b = create_pair(image_size=72)
     u, v, _ = piv(frame_a, frame_b,
                   window_size=16, 
