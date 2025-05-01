@@ -1,0 +1,8 @@
+- name: Run tests with coverage
+  run: |
+    pytest --cov=openpiv --cov-report=xml
+    
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v3
+  with:
+    file: ./coverage.xml

@@ -869,6 +869,11 @@ def transform_coordinates(x, y, u, v):
         the 0,0 origin at bottom left to be counterclockwise
 
     """
-    y = y[::-1, :]
+    # Handle both 1D and 2D arrays
+    if y.ndim == 1:
+        y = y[::-1]
+    else:
+        y = y[::-1, :]
+    
     v *= -1
     return x, y, u, v
