@@ -7,8 +7,11 @@ import numpy as np
 import pathlib
 from importlib_resources import files
 import matplotlib.pyplot as plt
+import tempfile
+import shutil
+import os
 
-from openpiv import windef
+from openpiv import windef, validation, filters, smoothn
 from openpiv.settings import PIVSettings
 from openpiv.test import test_process
 from openpiv.tools import imread
@@ -81,6 +84,45 @@ def test_prepare_images_with_invert():
     if orig_a.dtype == np.uint8:
         assert np.allclose(frame_a, 255 - orig_a)
         assert np.allclose(frame_b, 255 - orig_b)
+
+
+def test_prepare_images_with_invert_and_show_plots():
+    """Test prepare_images with image inversion and show_all_plots=True."""
+    # Create a settings object with invert=True and show_all_plots=True
+    settings = PIVSettings()
+    settings.invert = True
+    settings.show_all_plots = True
+
+    # Get test images
+    file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+    file_b = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
+
+    # Load original images for comparison
+    orig_a = imread(file_a)
+    orig_b = imread(file_b)
+
+    # Temporarily redirect plt functions to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    original_figure = plt.figure
+    plt.figure = lambda *args, **kwargs: type('MockFigure', (), {'add_subplot': lambda *a, **k: type('MockAxes', (), {'set_title': lambda *a, **k: None, 'imshow': lambda *a, **k: None})()})()
+
+    original_subplots = plt.subplots
+    plt.subplots = lambda *args, **kwargs: (None, type('MockAxes', (), {'set_title': lambda *a, **k: None, 'imshow': lambda *a, **k: None})())
+
+    try:
+        # Call prepare_images with invert=True and show_all_plots=True
+        frame_a, frame_b, _ = windef.prepare_images(file_a, file_b, settings)
+
+        # Check that images were inverted correctly
+        assert not np.array_equal(frame_a, orig_a)
+        assert not np.array_equal(frame_b, orig_b)
+    finally:
+        # Restore plt functions
+        plt.show = original_show
+        plt.figure = original_figure
+        plt.subplots = original_subplots
 
 
 def test_prepare_images_with_static_mask():
@@ -350,6 +392,416 @@ def test_deformation_methods():
     settings.deformation_method = "invalid"
     with pytest.raises(Exception, match="Deformation method is not valid"):
         windef.multipass_img_deform(frame_a, frame_b, 1, x, y, u_masked, v_masked, settings)
+
+
+def test_prepare_images_with_show_plots():
+    """Test prepare_images with show_all_plots=True."""
+    # Create a settings object with show_all_plots=True
+    settings = PIVSettings()
+    settings.show_all_plots = True
+
+    # Get test images
+    file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+    file_b = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
+
+    # Temporarily redirect plt.show to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    try:
+        # Call prepare_images with show_all_plots=True
+        frame_a, frame_b, image_mask = windef.prepare_images(file_a, file_b, settings)
+
+        # Check that images were loaded correctly
+        assert frame_a.shape == frame_b.shape
+        assert frame_a.ndim == 2
+    finally:
+        # Restore plt.show
+        plt.show = original_show
+
+
+def test_prepare_images_with_dynamic_mask_and_show_plots():
+    """Test prepare_images with dynamic masking and show_all_plots=True."""
+    # Create a settings object with dynamic masking and show_all_plots=True
+    settings = PIVSettings()
+    settings.dynamic_masking_method = 'intensity'
+    settings.dynamic_masking_threshold = 0.5
+    settings.dynamic_masking_filter_size = 3
+    settings.show_all_plots = True
+
+    # Get test images
+    file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+    file_b = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
+
+    # Temporarily redirect plt.show to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    try:
+        # Call prepare_images with dynamic masking and show_all_plots=True
+        frame_a, frame_b, image_mask = windef.prepare_images(file_a, file_b, settings)
+
+        # Check that dynamic masking was applied
+        assert image_mask is not None
+        assert image_mask.dtype == bool
+    finally:
+        # Restore plt.show
+        plt.show = original_show
+
+
+def test_deform_windows_with_debugging():
+    """Test deform_windows with debugging=True."""
+    # Create a simple test frame with a pattern
+    frame = np.zeros((100, 100))
+    frame[40:60, 40:60] = 1.0  # Create a square in the middle
+
+    # Create a simple grid
+    x, y = np.meshgrid(np.arange(10, 90, 10), np.arange(10, 90, 10))
+
+    # Create simple displacement fields
+    u = np.ones_like(x) * 5  # Constant displacement of 5 pixels in x
+    v = np.ones_like(y) * 0  # No displacement in y
+
+    # Temporarily redirect plt.show to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    try:
+        # Test deform_windows with debugging=True
+        frame_def = windef.deform_windows(frame, x, y, u, v, debugging=True)
+
+        # Check that the deformation happened
+        assert not np.array_equal(frame, frame_def)
+    finally:
+        # Restore plt.show
+        plt.show = original_show
+
+
+def test_multipass_img_deform_with_static_mask():
+    """Test multipass_img_deform with static mask."""
+    # Create a settings object
+    settings = PIVSettings()
+    settings.windowsizes = (64, 32)
+    settings.overlap = (32, 16)
+    settings.deformation_method = "symmetric"
+
+    # Create a static mask
+    mask = np.zeros((256, 256), dtype=bool)
+    mask[100:150, 100:150] = True  # Mask a square region
+    settings.static_mask = mask
+
+    # First get results from first_pass
+    x, y, u, v, _ = windef.first_pass(frame_a, frame_b, settings)
+
+    # Create masked arrays
+    u_masked = np.ma.masked_array(u, mask=np.ma.nomask)
+    v_masked = np.ma.masked_array(v, mask=np.ma.nomask)
+
+    # Run multipass_img_deform
+    _, _, u_new, v_new, grid_mask, _ = windef.multipass_img_deform(
+        frame_a, frame_b, 1, x, y, u_masked, v_masked, settings
+    )
+
+    # Check that the grid_mask was created from the static mask
+    assert grid_mask is not None
+    assert grid_mask.dtype == bool
+
+    # Check that the results are valid
+    assert isinstance(u_new, np.ma.MaskedArray)
+    assert isinstance(v_new, np.ma.MaskedArray)
+
+
+def test_multipass_img_deform_with_dynamic_mask():
+    """Test multipass_img_deform with dynamic mask."""
+    # Create a settings object
+    settings = PIVSettings()
+    settings.windowsizes = (64, 32)
+    settings.overlap = (32, 16)
+    settings.deformation_method = "symmetric"
+    settings.dynamic_masking_method = 'intensity'
+    settings.dynamic_masking_threshold = 0.5
+    settings.dynamic_masking_filter_size = 3
+
+    # First get results from first_pass
+    x, y, u, v, _ = windef.first_pass(frame_a, frame_b, settings)
+
+    # Create masked arrays with a mask
+    mask = np.zeros_like(u, dtype=bool)
+    mask[0, 0] = True  # Mask one point
+    u_masked = np.ma.masked_array(u, mask=mask)
+    v_masked = np.ma.masked_array(v, mask=mask)
+
+    # Run multipass_img_deform
+    _, _, u_new, v_new, grid_mask, _ = windef.multipass_img_deform(
+        frame_a, frame_b, 1, x, y, u_masked, v_masked, settings
+    )
+
+    # Check that the results are valid
+    assert isinstance(u_new, np.ma.MaskedArray)
+    assert isinstance(v_new, np.ma.MaskedArray)
+
+    # Check that the grid_mask was created
+    assert grid_mask is not None
+
+
+def test_multipass_img_deform_with_show_plots():
+    """Test multipass_img_deform with show_all_plots=True."""
+    # Create a settings object with show_all_plots=True
+    settings = PIVSettings()
+    settings.windowsizes = (64, 32)
+    settings.overlap = (32, 16)
+    settings.deformation_method = "symmetric"
+    settings.show_all_plots = True
+
+    # First get results from first_pass
+    x, y, u, v, _ = windef.first_pass(frame_a, frame_b, settings)
+
+    # Create masked arrays
+    u_masked = np.ma.masked_array(u, mask=np.ma.nomask)
+    v_masked = np.ma.masked_array(v, mask=np.ma.nomask)
+
+    # Temporarily redirect plt.show to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    try:
+        # Run multipass_img_deform with show_all_plots=True
+        _, _, u_new, v_new, _, _ = windef.multipass_img_deform(
+            frame_a, frame_b, 1, x, y, u_masked, v_masked, settings
+        )
+
+        # Check that the results are valid
+        assert isinstance(u_new, np.ma.MaskedArray)
+        assert isinstance(v_new, np.ma.MaskedArray)
+    finally:
+        # Restore plt.show
+        plt.show = original_show
+
+
+def test_piv_with_validation_and_smoothn():
+    """Test piv function with validation and smoothn."""
+    # Create a temporary directory for test results
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a settings object with validation and smoothn
+        settings = PIVSettings()
+
+        # Set paths for test data and results
+        settings.filepath_images = pathlib.Path(files('openpiv.data').joinpath('test1'))
+        settings.save_path = pathlib.Path(temp_dir)
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # Enable validation and smoothn
+        settings.validation_first_pass = True
+        settings.smoothn = True
+        settings.smoothn_p = 1.0
+        settings.replace_vectors = True
+        settings.filter_method = 'localmean'
+        settings.max_filter_iteration = 10
+        settings.filter_kernel_size = 2
+
+        # Disable plotting to avoid displaying plots during tests
+        settings.show_plot = False
+        settings.save_plot = False
+
+        # Run piv
+        windef.piv(settings)
+
+        # Check that results were saved
+        save_path_string = f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+        save_path = settings.save_path / save_path_string
+
+        # Check that the results directory was created
+        assert save_path.exists()
+
+        # Check that the results file was created
+        result_file = save_path / 'field_A0000.txt'
+        assert result_file.exists()
+
+
+def test_piv_with_validation_all_passes():
+    """Test piv function with validation for all passes."""
+    # Create a temporary directory for test results
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a settings object with validation for all passes
+        settings = PIVSettings()
+
+        # Set paths for test data and results
+        settings.filepath_images = pathlib.Path(files('openpiv.data').joinpath('test1'))
+        settings.save_path = pathlib.Path(temp_dir)
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # Enable validation for all passes
+        settings.validation_first_pass = False  # This will trigger validation for all passes
+        settings.validation_method = 'mean_velocity'
+        settings.threshold = 2.0
+        settings.replace_vectors = True
+        settings.filter_method = 'localmean'
+        settings.max_filter_iteration = 10
+        settings.filter_kernel_size = 2
+
+        # Disable plotting to avoid displaying plots during tests
+        settings.show_plot = False
+        settings.save_plot = False
+
+        # Run piv
+        windef.piv(settings)
+
+        # Check that results were saved
+        save_path_string = f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+        save_path = settings.save_path / save_path_string
+
+        # Check that the results directory was created
+        assert save_path.exists()
+
+        # Check that the results file was created
+        result_file = save_path / 'field_A0000.txt'
+        assert result_file.exists()
+
+
+def test_piv_with_show_plots():
+    """Test piv function with show_plot=True and show_all_plots=True."""
+    # Create a temporary directory for test results
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a settings object with show_plot=True and show_all_plots=True
+        settings = PIVSettings()
+
+        # Set paths for test data and results
+        settings.filepath_images = pathlib.Path(files('openpiv.data').joinpath('test1'))
+        settings.save_path = pathlib.Path(temp_dir)
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # Enable plotting
+        settings.show_plot = True
+        settings.show_all_plots = True
+        settings.save_plot = True
+
+        # Temporarily redirect plt.show to avoid displaying plots during tests
+        original_show = plt.show
+        plt.show = lambda: None
+
+        try:
+            # Run piv
+            windef.piv(settings)
+
+            # Check that results were saved
+            save_path_string = f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+            save_path = settings.save_path / save_path_string
+
+            # Check that the results directory was created
+            assert save_path.exists()
+
+            # Check that the results file was created
+            result_file = save_path / 'field_A0000.txt'
+            assert result_file.exists()
+
+            # Check that the plot was saved
+            plot_file = save_path / 'field_A0000.png'
+            assert plot_file.exists()
+        finally:
+            # Restore plt.show
+            plt.show = original_show
+
+
+def test_piv_with_static_mask():
+    """Test piv function with static mask."""
+    # Create a temporary directory for test results
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a settings object with static mask
+        settings = PIVSettings()
+
+        # Set paths for test data and results
+        settings.filepath_images = pathlib.Path(files('openpiv.data').joinpath('test1'))
+        settings.save_path = pathlib.Path(temp_dir)
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # Create a static mask
+        file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
+        img = imread(file_a)
+        mask = np.zeros_like(img, dtype=bool)
+        mask[100:150, 100:150] = True  # Mask a square region
+        settings.static_mask = mask
+
+        # Disable plotting to avoid displaying plots during tests
+        settings.show_plot = False
+        settings.save_plot = False
+
+        # Run piv
+        windef.piv(settings)
+
+        # Check that results were saved
+        save_path_string = f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+        save_path = settings.save_path / save_path_string
+
+        # Check that the results directory was created
+        assert save_path.exists()
+
+        # Check that the results file was created
+        result_file = save_path / 'field_A0000.txt'
+        assert result_file.exists()
+
+
+def test_piv_with_multiple_iterations():
+    """Test piv function with multiple iterations."""
+    # Create a temporary directory for test results
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create a settings object with multiple iterations
+        settings = PIVSettings()
+
+        # Set paths for test data and results
+        settings.filepath_images = pathlib.Path(files('openpiv.data').joinpath('test1'))
+        settings.save_path = pathlib.Path(temp_dir)
+        settings.frame_pattern_a = 'exp1_001_a.bmp'
+        settings.frame_pattern_b = 'exp1_001_b.bmp'
+
+        # Set multiple iterations
+        settings.windowsizes = (64, 32, 16)
+        settings.overlap = (32, 16, 8)
+        settings.num_iterations = 3
+
+        # Disable plotting to avoid displaying plots during tests
+        settings.show_plot = False
+        settings.save_plot = False
+
+        # Run piv
+        windef.piv(settings)
+
+        # Check that results were saved
+        save_path_string = f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
+        save_path = settings.save_path / save_path_string
+
+        # Check that the results directory was created
+        assert save_path.exists()
+
+        # Check that the results file was created
+        result_file = save_path / 'field_A0000.txt'
+        assert result_file.exists()
+
+
+def test_multipass_img_deform_with_non_masked_array():
+    """Test multipass_img_deform with non-masked array to trigger error."""
+    # Create a settings object
+    settings = PIVSettings()
+    settings.windowsizes = (64, 32)
+    settings.overlap = (32, 16)
+    settings.deformation_method = "symmetric"
+
+    # First get results from first_pass
+    x, y, u, v, _ = windef.first_pass(frame_a, frame_b, settings)
+
+    # Create non-masked arrays
+    u_non_masked = u.copy()  # Regular numpy array, not masked
+    v_non_masked = v.copy()  # Regular numpy array, not masked
+
+    # Run multipass_img_deform with non-masked arrays
+    # This should raise a ValueError
+    with pytest.raises(ValueError, match="Expected masked array"):
+        windef.multipass_img_deform(
+            frame_a, frame_b, 1, x, y, u_non_masked, v_non_masked, settings
+        )
 
 
 if __name__ == "__main__":
