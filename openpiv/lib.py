@@ -2,7 +2,6 @@ import numpy as np
 
 
 def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
-
     """Replace NaN elements in an array using an iterative image inpainting
         algorithm.
 
@@ -18,26 +17,15 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
          threshold.
 
       Methods:
-
-      localmean - A square kernel where all elements have the same value,
-                  weights are equal to n/( (2*kernel_size+1)**2 -1 ),
-                  where n is the number of non-NaN elements.
-      disk - A circular kernel where all elements have the same value,
-             kernel is calculated by::
-                 if ((S-i)**2 + (S-j)**2)**0.5 <= S:
-                     kernel[i,j] = 1.0
-                 else:
-                     kernel[i,j] = 0.0
-             where S is the kernel radius.
-      distance - A circular inverse distance kernel where elements are
-                 weighted proportional to their distance away from the
-                 center of the kernel, elements farther away have less
-                 weight. Elements outside the specified radius are set
-                 to 0.0 as in 'disk', the remaining of the weights are
-                 calculated as::
-                     maxDist = ((S)**2 + (S)**2)**0.5
-                     kernel[i,j] = -1*(((S-i)**2 + (S-j)**2)**0.5 - maxDist)
-                 where S is the kernel radius.
+        localmean - A square kernel where all elements have the same weight.
+        disk - A circular kernel where all elements have the same weight.
+        distance - A circular kernel where the weight of each element depends
+                 on its distance from the center of the kernel. The weights
+                 are given by a function of the form:
+                   w_i = 1 - (d_i / d_max)^2
+                 where d_i is the distance from the center, and d_max is the
+                 distance of the element farthest from the center.
+                 This method requires SciPy.
 
       Parameters
       ----------
@@ -68,6 +56,9 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
           a copy of the input array, where NaN elements have been replaced.
 
       """
+    # Check if there are any NaNs to replace
+    if not np.any(np.isnan(array)):
+        return array.copy()
 
     kernel_size = int(kernel_size)
     filled = array.copy()

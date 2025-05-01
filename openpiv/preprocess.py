@@ -186,10 +186,11 @@ def normalize_array(array, axis = None):
     if axis is None:
         return((array - np.nanmin(array)) / (np.nanmax(array) - np.nanmin(array)))
     else:
-        return((array - np.nanmin(array, axis = axis)) / 
-               (np.nanmax(array, axis = axis) - np.nanmin(array, axis = axis)))
+        min_val = np.nanmin(array, axis=axis, keepdims=True)
+        max_val = np.nanmax(array, axis=axis, keepdims=True)
+        return((array - min_val) / (max_val - min_val))
 
-    
+
 def standardize_array(array, axis = None):
     """
     Standardize an array.
@@ -210,9 +211,10 @@ def standardize_array(array, axis = None):
     """
     array = array.astype(np.float32)
     if axis is None:
-        return((array - np.nanmean(array) / np.nanstd(array)))  
+        return((array - np.nanmean(array)) / np.nanstd(array))  
     else:
-        return((array - np.nanmean(array, axis = axis) / np.nanstd(array, axis = axis)))
+        return((array - np.nanmean(array, axis = axis, keepdims=True)) / 
+               np.nanstd(array, axis = axis, keepdims=True))
     
     
 def instensity_cap(img, std_mult = 2):

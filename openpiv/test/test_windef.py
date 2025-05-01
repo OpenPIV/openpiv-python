@@ -4,6 +4,7 @@ Created on Fri Oct  4 14:33:21 2019
 @author: Theo
 """
 
+import pytest
 import pathlib
 import numpy as np
 import warnings
@@ -274,12 +275,14 @@ def test_simple_multipass():
 #     # It need's a little numerical inaccuracy.
 
 
+@pytest.mark.show_plots
 def test_simple_rectangular_window():
     """ Test simple multipass """
     print('test simple pass with rectangular windows')
 
     settings = windef.PIVSettings()
-
+    settings.show_plot = False  # Disable plotting
+    settings.show_all_plots = False  # Disable all plots
 
     x, y, u, v, _ = windef.simple_multipass(
         frame_a,
