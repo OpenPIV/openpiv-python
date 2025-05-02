@@ -1,10 +1,7 @@
-from numpy import *
-from pylab import *
-import scipy.optimize.lbfgsb as lbfgsb
-import scipy
-from scipy.fftpack import dct, idct
 import numpy as np
 import numpy.ma as ma
+from scipy.fftpack import dct, idct
+from scipy.optimize import fmin_l_bfgs_b
 
 
 def smoothn(
@@ -23,138 +20,83 @@ def smoothn(
     TolZ=1e-3,
     weightstr="bisquare",
 ):
+    """Robust spline smoothing for 1-D to N-D data.
+
+    This function provides a fast, automated and robust discretized smoothing
+    spline for data of any dimension. It can handle missing values and supports
+    robust smoothing that minimizes the influence of outlying data.
+
+    Parameters
+    ----------
+    y : array_like
+        The data to be smoothed. Can be any N-D noisy array (time series,
+        images, 3D data, etc.). Non-finite data (NaN or Inf) are treated
+        as missing values.
+    nS0 : int, optional
+        Number of samples used when automatically determining the smoothing
+        parameter. Default is 10.
+    axis : int or tuple of ints, optional
+        Axis or axes along which the smoothing is performed. If None (default),
+        smoothing is performed along all axes.
+    smoothOrder : float, optional
+        Order of the smoothing. Default is 2.0 (equivalent to cubic spline).
+    sd : array_like, optional
+        Standard deviation of the data. If provided, it is used to compute
+        weights as 1/sd^2.
+    verbose : bool, optional
+        If True, display progress information. Default is False.
+    s0 : float, optional
+        Initial value for the smoothing parameter. If None (default), it is
+        automatically determined.
+    z0 : array_like, optional
+        Initial guess for the smoothed data. If None (default), the original
+        data is used.
+    isrobust : bool, optional
+        If True, perform robust smoothing that minimizes the influence of
+        outlying data. Default is False.
+    W : array_like, optional
+        Weighting array of positive values, must have the same size as y.
+        A zero weight corresponds to a missing value.
+    s : float, optional
+        Smoothing parameter. If None (default), it is automatically determined
+        using the generalized cross-validation (GCV) method. Larger values
+        produce smoother results.
+    MaxIter : int, optional
+        Maximum number of iterations allowed. Default is 100.
+    TolZ : float, optional
+        Termination tolerance on Z. Must be between 0 and 1. Default is 1e-3.
+    weightstr : str, optional
+        Type of weight function for robust smoothing. Options are 'bisquare'
+        (default), 'cauchy', or 'talworth'.
+
+    Returns
+    -------
+    z : ndarray
+        The smoothed array.
+    s : float
+        The smoothing parameter used.
+    exitflag : int
+        Describes the exit condition:
+        1 - Convergence was reached
+        0 - Maximum number of iterations was reached
+        -1 - DCT/IDCT functions not available
+    Wtot : ndarray
+        The final weighting array used for the smoothing.
+
+    Notes
+    -----
+    The function uses the discrete cosine transform (DCT) to efficiently
+    compute the smoothing. The smoothing parameter s is determined automatically
+    using the generalized cross-validation (GCV) method if not provided.
+
+    For robust smoothing, an iteratively re-weighted process is used to
+    minimize the influence of outliers.
+
+    Reference
+    ---------
+    Garcia D, Robust smoothing of gridded data in one and higher dimensions
+    with missing values. Computational Statistics & Data Analysis, 2010.
     """
-   function [z,s,exitflag,Wtot] = smoothn(varargin)
-   SMOOTHN Robust spline smoothing for 1-D to N-D data.
-   SMOOTHN provides a fast, automatized and robust discretized smoothing
-   spline for data of any dimension.
-   Z = SMOOTHN(Y) automatically smoothes the uniformly-sampled array Y. Y
-   can be any N-D noisy array (time series, images, 3D data,...). Non
-   finite data (NaN or Inf) are treated as missing values.
-   Z = SMOOTHN(Y,S) smoothes the array Y using the smoothing parameter S.
-   S must be a real positive scalar. The larger S is, the smoother the
-   output will be. If the smoothing parameter S is omitted (see previous
-   option) or empty (i.e. S = []), it is automatically determined using
-   the generalized cross-validation (GCV) method.
-   Z = SMOOTHN(Y,W) or Z = SMOOTHN(Y,W,S) specifies a weighting array W of
-   real positive values, that must have the same size as Y. Note that a
-   nil weight corresponds to a missing value.
-   Robust smoothing
-   ----------------
-   Z = SMOOTHN(...,'robust') carries out a robust smoothing that minimizes
-   the influence of outlying data.
-   [Z,S] = SMOOTHN(...) also returns the calculated value for S so that
-   you can fine-tune the smoothing subsequently if needed.
-   An iteration process is used in the presence of weighted and/or missing
-   values. Z = SMOOTHN(...,OPTION_NAME,OPTION_VALUE) smoothes with the
-   termination parameters specified by OPTION_NAME and OPTION_VALUE. They
-   can contain the following criteria:
-       -----------------
-       TolZ:       Termination tolerance on Z (default = 1e-3)
-                   TolZ must be in ]0,1[
-       MaxIter:    Maximum number of iterations allowed (default = 100)
-       Initial:    Initial value for the iterative process (default =
-                   original data)
-       -----------------
-   Syntax: [Z,...] = SMOOTHN(...,'MaxIter',500,'TolZ',1e-4,'Initial',Z0);
-   [Z,S,EXITFLAG] = SMOOTHN(...) returns a boolean value EXITFLAG that
-   describes the exit condition of SMOOTHN:
-       1       SMOOTHN converged.
-       0       Maximum number of iterations was reached.
-   Class Support
-   -------------
-   Input array can be numeric or logical. The returned array is of class
-   double.
-   Notes
-   -----
-   The N-D (inverse) discrete cosine transform functions <a
-   href="matlab:web('http://www.biomecardio.com/matlab/dctn.html')"
-   >DCTN</a> and <a
-   href="matlab:web('http://www.biomecardio.com/matlab/idctn.html')"
-   >IDCTN</a> are required.
-   To be made
-   ----------
-   Estimate the confidence bands (see Wahba 1983, Nychka 1988).
-   Reference
-   ---------
-   Garcia D, Robust smoothing of gridded data in one and higher dimensions
-   with missing values. Computational Statistics & Data Analysis, 2010.
-   <a
-   href="matlab:web('http://www.biomecardio.com/pageshtm/publi/csda10.pdf')">PDF download</a>
-   Examples:
-   --------
-   # 1-D example
-   x = linspace(0,100,2**8);
-   y = cos(x/10)+(x/50)**2 + randn(size(x))/10;
-   y[[70, 75, 80]] = [5.5, 5, 6];
-   z = smoothn(y); # Regular smoothing
-   zr = smoothn(y,'robust'); # Robust smoothing
-   subplot(121), plot(x,y,'r.',x,z,'k','LineWidth',2)
-   axis square, title('Regular smoothing')
-   subplot(122), plot(x,y,'r.',x,zr,'k','LineWidth',2)
-   axis square, title('Robust smoothing')
-   # 2-D example
-   xp = 0:.02:1;
-   [x,y] = meshgrid(xp);
-   f = exp(x+y) + sin((x-2*y)*3);
-   fn = f + randn(size(f))*0.5;
-   fs = smoothn(fn);
-   subplot(121), surf(xp,xp,fn), zlim([0 8]), axis square
-   subplot(122), surf(xp,xp,fs), zlim([0 8]), axis square
-   # 2-D example with missing data
-   n = 256;
-   y0 = peaks(n);
-   y = y0 + rand(size(y0))*2;
-   I = randperm(n^2);
-   y(I(1:n^2*0.5)) = NaN; # lose 1/2 of data
-   y(40:90,140:190) = NaN; # create a hole
-   z = smoothn(y); # smooth data
-   subplot(2,2,1:2), imagesc(y), axis equal off
-   title('Noisy corrupt data')
-   subplot(223), imagesc(z), axis equal off
-   title('Recovered data ...')
-   subplot(224), imagesc(y0), axis equal off
-   title('... compared with original data')
-   # 3-D example
-   [x,y,z] = meshgrid(-2:.2:2);
-   xslice = [-0.8,1]; yslice = 2; zslice = [-2,0];
-   vn = x.*exp(-x.^2-y.^2-z.^2) + randn(size(x))*0.06;
-   subplot(121), slice(x,y,z,vn,xslice,yslice,zslice,'cubic')
-   title('Noisy data')
-   v = smoothn(vn);
-   subplot(122), slice(x,y,z,v,xslice,yslice,zslice,'cubic')
-   title('Smoothed data')
-   # Cardioid
-   t = linspace(0,2*pi,1000);
-   x = 2*cos(t).*(1-cos(t)) + randn(size(t))*0.1;
-   y = 2*sin(t).*(1-cos(t)) + randn(size(t))*0.1;
-   z = smoothn(complex(x,y));
-   plot(x,y,'r.',real(z),imag(z),'k','linewidth',2)
-   axis equal tight
-   # Cellular vortical flow
-   [x,y] = meshgrid(linspace(0,1,24));
-   Vx = cos(2*pi*x+pi/2).*cos(2*pi*y);
-   Vy = sin(2*pi*x+pi/2).*sin(2*pi*y);
-   Vx = Vx + sqrt(0.05)*randn(24,24); # adding Gaussian noise
-   Vy = Vy + sqrt(0.05)*randn(24,24); # adding Gaussian noise
-   I = randperm(numel(Vx));
-   Vx(I(1:30)) = (rand(30,1)-0.5)*5; # adding outliers
-   Vy(I(1:30)) = (rand(30,1)-0.5)*5; # adding outliers
-   Vx(I(31:60)) = NaN; # missing values
-   Vy(I(31:60)) = NaN; # missing values
-   Vs = smoothn(complex(Vx,Vy),'robust'); # automatic smoothing
-   subplot(121), quiver(x,y,Vx,Vy,2.5), axis square
-   title('Noisy velocity field')
-   subplot(122), quiver(x,y,real(Vs),imag(Vs)), axis square
-   title('Smoothed velocity field')
-   See also SMOOTH, SMOOTH3, DCTN, IDCTN.
-   -- Damien Garcia -- 2009/03, revised 2010/11
-   Visit my <a
-   href="matlab:web('http://www.biomecardio.com/matlab/smoothn.html')">website</a> for more details about SMOOTHN
-  # Check input arguments
-  error(nargchk(1,12,nargin));
-  z0=None,W=None,s=None,MaxIter=100,TolZ=1e-3
-  """
     is_masked = False
 
     if type(y) == ma.MaskedArray:  # masked array
@@ -212,14 +154,14 @@ def smoothn(
     IsFinite = np.array(np.isfinite(y)).astype(bool)
     nof = IsFinite.sum()  # number of finite elements
     W = W * IsFinite
-    if any(W < 0):
+    if np.any(W < 0):
         raise ValueError("smoothn:NegativeWeights", "Weights must all be >=0")
     else:
         # W = W/np.max(W)
         pass
     # ---
     # Weighted or missing data?
-    isweighted = any(W != 1)
+    isweighted = np.any(W != 1)
     # ---
     # Robust smoothing?
     # isrobust
@@ -227,10 +169,9 @@ def smoothn(
     # Automatic smoothing?
     isauto = not s
     # ---
-    # DCTN and IDCTN are required
-    try:
-        from scipy.fftpack.realtransforms import dct, idct
-    except:
+    # DCT and IDCT are required
+    # We already imported them at the top of the file
+    if 'dct' not in globals() or 'idct' not in globals():
         z = y
         exitflag = -1
         Wtot = 0
@@ -377,7 +318,7 @@ def smoothn(
                     # print '==============='
                 else:
                     xpost = [s0]
-                xpost, f, d = lbfgsb.fmin_l_bfgs_b(
+                xpost, f, d = fmin_l_bfgs_b(
                     gcv,
                     xpost,
                     fprime=None,
@@ -464,7 +405,7 @@ def gcv(p, Lambda, aow, DCTy, IsFinite, Wtot, y, nof, noe, smoothOrder):
     s = 10 ** p
     Gamma = 1.0 / (1 + (s * abs(Lambda)) ** smoothOrder)
     # --- RSS = Residual sum-of-squares
-    if aow > 0.9:  # aow = 1 means that all of the data are equally weighted
+    if np.all(aow > 0.9):  # aow = 1 means that all of the data are equally weighted
         # very much faster: does not require any inverse DCT
         RSS = np.linalg.norm(DCTy * (Gamma - 1.0)) ** 2
     else:
@@ -472,7 +413,7 @@ def gcv(p, Lambda, aow, DCTy, IsFinite, Wtot, y, nof, noe, smoothOrder):
         yhat = dctND(Gamma * DCTy, f=idct)
         RSS = np.linalg.norm(np.sqrt(Wtot[IsFinite]) * (y[IsFinite] - yhat[IsFinite])) ** 2
     # ---
-    TrH = sum(Gamma)
+    TrH = np.sum(Gamma)
     GCVscore = RSS / float(nof) / (1.0 - TrH / float(noe)) ** 2
     return GCVscore
 
@@ -506,7 +447,7 @@ def RobustWeights(r, I, h, wstr):
 # function z = InitialGuess(y,I)
 def InitialGuess(y, I):
     # -- nearest neighbor interpolation (in case of missing values)
-    if any(~I):
+    if np.any(~I):
         try:
             from scipy.ndimage.morphology import distance_transform_edt
 
