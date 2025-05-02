@@ -76,9 +76,9 @@ def smoothn(
    ----------
    Estimate the confidence bands (see Wahba 1983, Nychka 1988).
    Reference
-   --------- 
+   ---------
    Garcia D, Robust smoothing of gridded data in one and higher dimensions
-   with missing values. Computational Statistics & Data Analysis, 2010. 
+   with missing values. Computational Statistics & Data Analysis, 2010.
    <a
    href="matlab:web('http://www.biomecardio.com/pageshtm/publi/csda10.pdf')">PDF download</a>
    Examples:
@@ -150,7 +150,7 @@ def smoothn(
    See also SMOOTH, SMOOTH3, DCTN, IDCTN.
    -- Damien Garcia -- 2009/03, revised 2010/11
    Visit my <a
-   href="matlab:web('http://www.biomecardio.com/matlab/smoothn.html')">website</a> for more details about SMOOTHN 
+   href="matlab:web('http://www.biomecardio.com/matlab/smoothn.html')">website</a> for more details about SMOOTHN
   # Check input arguments
   error(nargchk(1,12,nargin));
   z0=None,W=None,s=None,MaxIter=100,TolZ=1e-3
@@ -171,15 +171,15 @@ def smoothn(
             sd = None
         y[mask] = np.nan
 
-    if sd != None:
+    if sd is not None:
         sd_ = np.array(sd)
-        mask = sd > 0.0
+        mask = sd_ > 0.0
         W = np.zeros_like(sd_)
         W[mask] = 1.0 / sd_[mask] ** 2
         sd = None
 
-    if W != None:
-        W = W / W.max()
+    if W is not None:
+        W = W / np.max(W)
 
     sizy = y.shape
 
@@ -197,8 +197,8 @@ def smoothn(
     # Smoothness parameter and weights
     # if s != None:
     #  s = []
-    if W == None:
-        W = ones(sizy)
+    if W is None:
+        W = np.ones(sizy)
 
     # if z0 == None:
     #  z0 = y.copy()
@@ -209,7 +209,7 @@ def smoothn(
     # ---
     # Weights. Zero weights are assigned to not finite values (Inf or NaN),
     # (Inf/NaN values = missing data).
-    IsFinite = np.array(isfinite(y)).astype(bool)
+    IsFinite = np.array(np.isfinite(y)).astype(bool)
     nof = IsFinite.sum()  # number of finite elements
     W = W * IsFinite
     if any(W < 0):
@@ -242,15 +242,15 @@ def smoothn(
     # penalized least squares process.
     axis = tuple(np.array(axis).flatten())
     d = y.ndim
-    Lambda = zeros(sizy)
+    Lambda = np.zeros(sizy)
     for i in axis:
         # create a 1 x d array (so e.g. [1,1] for a 2D case
-        siz0 = ones((1, y.ndim), dtype=int)[0]
+        siz0 = np.ones((1, y.ndim), dtype=int)[0]
         siz0[i] = sizy[i]
         # cos(pi*(reshape(1:sizy(i),siz0)-1)/sizy(i)))
         # (arange(1,sizy[i]+1).reshape(siz0) - 1.)/sizy[i]
         Lambda = Lambda + (
-            cos(pi * (arange(1, sizy[i] + 1) - 1.0) / sizy[i]).reshape(siz0)
+            np.cos(np.pi * (np.arange(1, sizy[i] + 1) - 1.0) / sizy[i]).reshape(siz0)
         )
         # else:
         #  Lambda = Lambda + siz0
@@ -264,7 +264,7 @@ def smoothn(
     # and lower bounds for h are given to avoid under- or over-smoothing. See
     # equation relating h to the smoothness parameter (Equation #12 in the
     # referenced CSDA paper).
-    N = sum(array(sizy) != 1)
+    N = sum(np.array(sizy) != 1)
     # tensor rank of the y-array
     hMin = 1e-6
     hMax = 0.99
@@ -274,11 +274,11 @@ def smoothn(
     # (a**2 -1)/16
     try:
         sMinBnd = np.sqrt(
-            (((1 + sqrt(1 + 8 * hMax ** (2.0 / N))) / 4.0 / hMax ** (2.0 / N)) ** 2 - 1)
+            (((1 + np.sqrt(1 + 8 * hMax ** (2.0 / N))) / 4.0 / hMax ** (2.0 / N)) ** 2 - 1)
             / 16.0
         )
         sMaxBnd = np.sqrt(
-            (((1 + sqrt(1 + 8 * hMin ** (2.0 / N))) / 4.0 / hMin ** (2.0 / N)) ** 2 - 1)
+            (((1 + np.sqrt(1 + 8 * hMin ** (2.0 / N))) / 4.0 / hMin ** (2.0 / N)) ** 2 - 1)
             / 16.0
         )
     except:
@@ -300,7 +300,7 @@ def smoothn(
             z = y  # InitialGuess(y,IsFinite);
             z[~IsFinite] = 0.0
     else:
-        z = zeros(sizy)
+        z = np.zeros(sizy)
     # ---
     z0 = z
     y[~IsFinite] = 0
@@ -324,7 +324,7 @@ def smoothn(
         except:
             np.array([100.0])
     else:
-        xpost = array([np.log10(s)])
+        xpost = np.array([np.log10(s)])
     while RobustIterativeProcess:
         # --- "amount" of weights (see the function GCVscore)
         aow = sum(Wtot) / noe
@@ -335,7 +335,7 @@ def smoothn(
                 print("tol", tol, "nit", nit)
             nit = nit + 1
             DCTy = dctND(Wtot * (y - z) + z, f=dct)
-            if isauto and not remainder(log2(nit), 1):
+            if isauto and not np.remainder(np.log2(nit), 1):
                 # ---
                 # The generalized cross-validation (GCV) method is used.
                 # We seek the smoothing parameter s that minimizes the GCV
@@ -354,8 +354,8 @@ def smoothn(
                 # only need to do it once though. nS0 is teh number of samples used
                 if not s0:
                     ss = np.arange(nS0) * (1.0 / (nS0 - 1.0)) * (
-                        log10(sMaxBnd) - log10(sMinBnd)
-                    ) + log10(sMinBnd)
+                        np.log10(sMaxBnd) - np.log10(sMinBnd)
+                    ) + np.log10(sMinBnd)
                     g = np.zeros_like(ss)
                     for i, p in enumerate(ss):
                         g[i] = gcv(
@@ -383,7 +383,7 @@ def smoothn(
                     fprime=None,
                     factr=10.0,
                     approx_grad=True,
-                    bounds=[(log10(sMinBnd), log10(sMaxBnd))],
+                    bounds=[(np.log10(sMinBnd), np.log10(sMaxBnd))],
                     args=(Lambda, aow, DCTy, IsFinite, Wtot, y, nof, noe, smoothOrder),
                 )
             s = 10 ** xpost[0]
@@ -394,7 +394,7 @@ def smoothn(
 
             z = RF * dctND(Gamma * DCTy, f=idct) + (1 - RF) * z
             # if no weighted/missing data => tol=0 (no iteration)
-            tol = isweighted * norm(z0 - z) / norm(z)
+            tol = isweighted * np.linalg.norm(z0 - z) / np.linalg.norm(z)
 
             z0 = z
             # re-initialization
@@ -402,8 +402,8 @@ def smoothn(
 
         if isrobust:  # -- Robust Smoothing: iteratively re-weighted process
             # --- average leverage
-            h = sqrt(1 + 16.0 * s)
-            h = sqrt(1 + h) / sqrt(2) / h
+            h = np.sqrt(1 + 16.0 * s)
+            h = np.sqrt(1 + h) / np.sqrt(2) / h
             h = h ** N
             # --- take robust weights into account
             Wtot = W * RobustWeights(y - z, IsFinite, h, weightstr)
@@ -466,11 +466,11 @@ def gcv(p, Lambda, aow, DCTy, IsFinite, Wtot, y, nof, noe, smoothOrder):
     # --- RSS = Residual sum-of-squares
     if aow > 0.9:  # aow = 1 means that all of the data are equally weighted
         # very much faster: does not require any inverse DCT
-        RSS = norm(DCTy * (Gamma - 1.0)) ** 2
+        RSS = np.linalg.norm(DCTy * (Gamma - 1.0)) ** 2
     else:
         # take account of the weights to calculate RSS:
         yhat = dctND(Gamma * DCTy, f=idct)
-        RSS = norm(sqrt(Wtot[IsFinite]) * (y[IsFinite] - yhat[IsFinite])) ** 2
+        RSS = np.linalg.norm(np.sqrt(Wtot[IsFinite]) * (y[IsFinite] - yhat[IsFinite])) ** 2
     # ---
     TrH = sum(Gamma)
     GCVscore = RSS / float(nof) / (1.0 - TrH / float(noe)) ** 2
@@ -481,9 +481,9 @@ def gcv(p, Lambda, aow, DCTy, IsFinite, Wtot, y, nof, noe, smoothOrder):
 # function W = RobustWeights(r,I,h,wstr)
 def RobustWeights(r, I, h, wstr):
     # weights for robust smoothing.
-    MAD = median(abs(r[I] - median(r[I])))
+    MAD = np.median(abs(r[I] - np.median(r[I])))
     # median absolute deviation
-    u = abs(r / (1.4826 * MAD) / sqrt(1 - h))
+    u = abs(r / (1.4826 * MAD) / np.sqrt(1 - h))
     # studentized residuals
     if wstr == "cauchy":
         c = 2.385
@@ -498,7 +498,7 @@ def RobustWeights(r, I, h, wstr):
         W = (1 - (u / c) ** 2) ** 2.0 * ((u / c) < 1)
         # bisquare weights
 
-    W[isnan(W)] = 0
+    W[np.isnan(W)] = 0
     return W
 
 
@@ -812,14 +812,14 @@ def smooth(u, mask):
 
 def smooth_masked_array(u):
     """ Use smooth() on the masked array """
-    
+
     if not isinstance(u, np.ma.MaskedArray):
         raise ValueError("Expected masked array")
 
     m = u.mask
 
     # run the data through the smoothing filter a few times
-    for i in range(10):   
+    for i in range(10):
         smooth(u, m)
 
     return np.ma.array(u, mask=m)  # put together the mask and the data
