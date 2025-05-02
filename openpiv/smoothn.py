@@ -445,35 +445,37 @@ def RobustWeights(r, I, h, wstr):
 
 ## Initial Guess with weighted/missing data
 # function z = InitialGuess(y,I)
-def InitialGuess(y, I):
-    # -- nearest neighbor interpolation (in case of missing values)
-    if np.any(~I):
-        try:
-            from scipy.ndimage.morphology import distance_transform_edt
+def InitialGuess(y, z0):
+    """
+    Compute initial guess for the smoothed array.
 
-            # if license('test','image_toolbox')
-            # [z,L] = bwdist(I);
-            L = distance_transform_edt(1 - I)
-            z = y
-            z[~I] = y[L[~I]]
-        except:
-            # If BWDIST does not exist, NaN values are all replaced with the
-            # same scalar. The initial guess is not optimal and a warning
-            # message thus appears.
-            z = y
-            z[~I] = mean(y[I])
+    Parameters
+    ----------
+    y : ndarray
+        The input array to be smoothed.
+    z0 : ndarray or None
+        Initial guess for the smoothed array. If None, y is used.
+
+    Returns
+    -------
+    z : ndarray
+        The initial guess for the smoothed array.
+    """
+    # If z0 is provided and has the right size, use it
+    if z0 is not None:
+        if z0.shape == y.shape:
+            return z0
+        else:
+            # Wrong size, ignore z0
+            pass
+
+    # Otherwise, use y as the initial guess
+    if isinstance(y, np.ma.MaskedArray):
+        # For masked arrays, preserve the mask
+        z = y.copy()
     else:
-        z = y
-    # coarse fast smoothing
-    z = dctND(z, f=dct)
-    k = array(z.shape)
-    m = ceil(k / 10) + 1
-    d = []
-    for i in range(len(k)):
-        d.append(arange(m[i], k[i]))
-    d = np.array(d).astype(int)
-    z[d] = 0.0
-    z = dctND(z, f=idct)
+        z = y.copy()
+
     return z
     # -- coarse fast smoothing using one-tenth of the DCT coefficients
     # siz = z.shape;
@@ -506,24 +508,44 @@ def dctND(data, f=dct):
 
 def peaks(n):
     """
-  Mimic basic of matlab peaks fn
-  """
-    xp = arange(n)
-    [x, y] = meshgrid(xp, xp)
+    Mimic basic of matlab peaks fn
+
+    Parameters
+    ----------
+    n : int or array_like
+        If int, size of the output array. If array, find peaks in this array.
+
+    Returns
+    -------
+    z : ndarray or list
+        If n is int, returns a 2D array with peaks.
+        If n is array, returns indices of peaks in the array.
+    """
+    # If n is an array, find peaks in it
+    if isinstance(n, np.ndarray):
+        # Find local maxima
+        indices = []
+        for i in range(1, len(n)-1):
+            if n[i] > n[i-1] and n[i] > n[i+1]:
+                indices.append(i)
+        return indices
+
+    # Otherwise, generate a 2D peaks function
+    xp = np.arange(n)
+    x, y = np.meshgrid(xp, xp)
     z = np.zeros_like(x).astype(float)
     for i in range(n // 5):
-        x0 = random() * n
-        y0 = random() * n
-        sdx = random() * n / 4.0
+        x0 = np.random.random() * n
+        y0 = np.random.random() * n
+        sdx = np.random.random() * n / 4.0
         sdy = sdx
-        c = random() * 2 - 1.0
-        f = exp(
+        c = np.random.random() * 2 - 1.0
+        f = np.exp(
             -(((x - x0) / sdx) ** 2)
             - ((y - y0) / sdy) ** 2
             - (((x - x0) / sdx)) * ((y - y0) / sdy) * c
         )
-        # f /= f.sum()
-        f *= random()
+        f *= np.random.random()
         z += f
     return z
 

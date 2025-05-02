@@ -10,7 +10,9 @@ from openpiv.smoothn import (
     gcv,
     RobustWeights,
     warning,
-    dctND
+    dctND,
+    InitialGuess,
+    peaks
 )
 
 def test_smoothn_basic():
@@ -442,3 +444,168 @@ def test_warning_function():
     output = captured_output.getvalue()
     assert "Warning type" in output
     assert "Warning message" in output
+
+def test_smoothn_with_negative_weights():
+    """Test smoothn with negative weights (should raise a warning)"""
+    # Create a noisy 1D signal
+    x = np.linspace(0, 10, 100)
+    y_true = np.sin(x)
+    noise = np.random.normal(0, 0.1, x.size)
+    y_noisy = y_true + noise
+
+    # Create weights with some negative values
+    W = np.ones_like(y_noisy)
+    W[40:60] = -1.0  # Negative weights in the middle
+
+    # The function should raise a ValueError with negative weights
+    try:
+        y_smooth, _, _, Wtot = smoothn(y_noisy, W=W)
+        # If we get here, the test should fail
+        assert False, "smoothn should raise ValueError with negative weights"
+    except ValueError as e:
+        # Check that the error message is correct
+        assert "Weights must all be >=0" in str(e)
+
+    # Now try with zero weights instead
+    W[40:60] = 0.0
+    y_smooth, _, _, Wtot = smoothn(y_noisy, W=W)
+
+    # Check that zero weights were preserved
+    assert np.all(Wtot[40:60] == 0)
+
+    # Check that the smoothed signal is still reasonable
+    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+
+def test_initial_guess_function():
+    """Test the InitialGuess function"""
+    # Create a simple test case
+    y = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+
+    # Test with default z0=None
+    z = InitialGuess(y, None)
+    assert np.array_equal(z, y)
+
+    # Test with provided z0
+    z0 = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
+    z = InitialGuess(y, z0)
+    assert np.array_equal(z, z0)
+
+    # Test with z0 of wrong size
+    z0_wrong_size = np.array([0.5, 1.5, 2.5])
+    z = InitialGuess(y, z0_wrong_size)
+    assert np.array_equal(z, y)
+
+    # Test with masked array
+    mask = np.zeros_like(y, dtype=bool)
+    mask[2] = True
+    y_masked = ma.array(y, mask=mask)
+    z = InitialGuess(y_masked, None)
+    assert isinstance(z, ma.MaskedArray)
+    assert np.array_equal(z.mask, mask)
+
+def test_peaks_function():
+    """Test the peaks function"""
+    # Create a signal with peaks
+    x = np.linspace(0, 10, 100)
+    y = np.sin(x) + 0.5 * np.sin(2*x)
+
+    # Find peaks
+    idx = peaks(y)
+
+    # Check that peaks were found
+    assert len(idx) > 0
+
+    # Check that the identified points are actually peaks
+    for i in idx:
+        if i > 0 and i < len(y) - 1:
+            assert y[i] > y[i-1] and y[i] > y[i+1]
+
+def test_smoothn_3d():
+    """Test smoothn with 3D data"""
+    # Create a noisy 3D signal
+    x, y, z = np.meshgrid(
+        np.linspace(0, 1, 10),
+        np.linspace(0, 1, 10),
+        np.linspace(0, 1, 10)
+    )
+    data_true = np.sin(2*np.pi*x) * np.cos(2*np.pi*y) * np.sin(2*np.pi*z)
+    noise = np.random.normal(0, 0.1, data_true.shape)
+    data_noisy = data_true + noise
+
+    # Apply smoothn
+    data_smooth, s, exitflag, _ = smoothn(data_noisy)
+
+    # Check that the smoothed signal is closer to the true signal than the noisy one
+    assert np.mean((data_smooth - data_true)**2) < np.mean((data_noisy - data_true)**2)
+
+    # Check that s is positive (smoothing parameter)
+    assert s > 0
+
+    # Check that exitflag is 1 (convergence)
+    assert exitflag == 1
+
+def test_smoothn_with_verbose():
+    """Test smoothn with verbose output"""
+    # Create a noisy 1D signal
+    x = np.linspace(0, 10, 100)
+    y_true = np.sin(x)
+    noise = np.random.normal(0, 0.1, x.size)
+    y_noisy = y_true + noise
+
+    # Capture stdout to check for verbose output
+    import io
+    import sys
+    captured_output = io.StringIO()
+    sys.stdout = captured_output
+
+    # Apply smoothn with verbose=True
+    y_smooth, _, _, _ = smoothn(y_noisy, verbose=True)
+
+    # Restore stdout
+    sys.stdout = sys.__stdout__
+
+    # Check that verbose output was produced
+    output = captured_output.getvalue()
+    assert "tol" in output.lower() or "nit" in output.lower()
+
+    # Check that the smoothed signal is reasonable
+    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+
+def test_smoothn_with_max_iter():
+    """Test smoothn with maximum iterations"""
+    # Create a noisy 1D signal
+    x = np.linspace(0, 10, 100)
+    y_true = np.sin(x)
+    noise = np.random.normal(0, 0.1, x.size)
+    y_noisy = y_true + noise
+
+    # Apply smoothn with very low MaxIter
+    y_smooth, _, exitflag, _ = smoothn(y_noisy, isrobust=True, MaxIter=1)
+
+    # Check that exitflag is 0 (max iterations reached)
+    assert exitflag == 0
+
+    # Check that the smoothed signal is still reasonable
+    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+
+def test_smoothn_with_tolerance():
+    """Test smoothn with different tolerance values"""
+    # Create a noisy 1D signal
+    x = np.linspace(0, 10, 100)
+    y_true = np.sin(x)
+    noise = np.random.normal(0, 0.1, x.size)
+    y_noisy = y_true + noise
+
+    # Apply smoothn with high tolerance (should converge quickly)
+    y_smooth_high_tol, _, exitflag1, _ = smoothn(y_noisy, isrobust=True, TolZ=0.5)
+
+    # Apply smoothn with low tolerance (should take more iterations)
+    y_smooth_low_tol, _, exitflag2, _ = smoothn(y_noisy, isrobust=True, TolZ=1e-6)
+
+    # Both should converge
+    assert exitflag1 == 1
+    assert exitflag2 == 1
+
+    # Check that both smoothed signals are reasonable
+    assert np.mean((y_smooth_high_tol - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth_low_tol - y_true)**2) < np.mean((y_noisy - y_true)**2)
