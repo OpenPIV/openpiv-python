@@ -42,9 +42,20 @@ def natural_sort(file_list: List[pathlib.Path]) -> List[pathlib.Path]:
 
 
 def sorted_unique(array: np.ndarray) -> np.ndarray:
-    """Creates sorted unique array """
-    uniq, index = np.unique(array, return_index=True)
-    return uniq[index.argsort()]
+    """Creates sorted unique array
+
+    Parameters
+    ----------
+    array : np.ndarray
+        Input array
+
+    Returns
+    -------
+    np.ndarray
+        Array with unique values sorted in ascending order
+    """
+    # Just use np.unique which returns sorted unique values by default
+    return np.unique(array)
 
 
 def display_vector_field_from_arrays(
@@ -63,7 +74,7 @@ def display_vector_field_from_arrays(
     show_invalid: Optional[bool] = True,
     **kw
 ):
-    """ Displays quiver plot of the data in five arrays: x,y,u,v and flags 
+    """ Displays quiver plot of the data in five arrays: x,y,u,v and flags
 
 
     Parameters
@@ -72,14 +83,14 @@ def display_vector_field_from_arrays(
         the absolute path of the text file
 
     on_img : Bool, optional
-        if True, display the vector field on top of the image provided by 
+        if True, display the vector field on top of the image provided by
         image_name
 
     image_name : string, optional
         path to the image to plot the vector field onto when on_img is True
 
     window_size : int, optional
-        when on_img is True, provide the interrogation window size to fit the 
+        when on_img is True, provide the interrogation window size to fit the
         background image to the vector field
 
     scaling_factor : float, optional
@@ -102,13 +113,13 @@ def display_vector_field_from_arrays(
     Examples
     --------
     --- only vector field
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, 
-                                           width=0.0025) 
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100,
+                                           width=0.0025)
 
     --- vector field on top of image
-    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True, 
-                                          image_name=Path('exp1_001_a.bmp'), 
-                                          window_size=32, scaling_factor=70, 
+    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True,
+                                          image_name=Path('exp1_001_a.bmp'),
+                                          window_size=32, scaling_factor=70,
                                           scale=100, width=0.0025)
 
     """
@@ -193,7 +204,7 @@ def display_vector_field(
     show_invalid: Optional[bool] = True,
     **kw
 ):
-    """ Displays quiver plot of the data stored in the file 
+    """ Displays quiver plot of the data stored in the file
 
 
     Parameters
@@ -202,14 +213,14 @@ def display_vector_field(
         the absolute path of the text file
 
     on_img : Bool, optional
-        if True, display the vector field on top of the image provided by 
+        if True, display the vector field on top of the image provided by
         image_name
 
     image_name : string, optional
         path to the image to plot the vector field onto when on_img is True
 
     window_size : int, optional
-        when on_img is True, provide the interrogation window size to fit the 
+        when on_img is True, provide the interrogation window size to fit the
         background image to the vector field
 
     scaling_factor : float, optional
@@ -232,13 +243,13 @@ def display_vector_field(
     Examples
     --------
     --- only vector field
-    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100, 
-                                           width=0.0025) 
+    >>> openpiv.tools.display_vector_field('./exp1_0000.txt',scale=100,
+                                           width=0.0025)
 
     --- vector field on top of image
-    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True, 
-                                          image_name=Path('exp1_001_a.bmp'), 
-                                          window_size=32, scaling_factor=70, 
+    >>> openpiv.tools.display_vector_field(Path('./exp1_0000.txt'), on_img=True,
+                                          image_name=Path('exp1_001_a.bmp'),
+                                          window_size=32, scaling_factor=70,
                                           scale=100, width=0.0025)
 
     """
@@ -329,7 +340,7 @@ def imread(filename, flatten=0):
     --------
 
     >>> image = openpiv.tools.imread( 'image.bmp' )
-    >>> print image.shape 
+    >>> print image.shape
         (1280, 1024)
 
 
@@ -342,7 +353,7 @@ def imread(filename, flatten=0):
 
 
 def rgb2gray(rgb: np.ndarray) -> np.ndarray:
-    """converts rgb image to gray 
+    """converts rgb image to gray
 
     Args:
         rgb (_type_): numpy.ndarray, image size, three channels
@@ -632,24 +643,24 @@ class Multiprocesser:
         and processing them. It has parallelization facilities
         to speed up the computation on multicore machines.
 
-        It currently support only image pair obtained from 
-        conventional double pulse piv acquisition. Support 
-        for continuos time resolved piv acquistion is in the 
+        It currently support only image pair obtained from
+        conventional double pulse piv acquisition. Support
+        for continuos time resolved piv acquistion is in the
         future.
 
 
         Parameters
         ----------
         data_dir : str
-            the path where image files are located 
+            the path where image files are located
 
         pattern_a : str
             a shell glob pattern to match the first (A) frames.
 
         pattern_b : str
-            a shell glob pattern to match the second (B) frames. 
+            a shell glob pattern to match the second (B) frames.
 
-        Options: 
+        Options:
                 pattern_a = 'image_*_a.bmp'
                 pattern_b = 'image_*_b.bmp'
 
@@ -664,7 +675,7 @@ class Multiprocesser:
             or
                 pattern_a = '000*.tif'
                 pattern_b = '(1+2),(3+4)'
-                will create PIV of these pairs: 0001.tif+0002.tif, 0003.tif+0004.tif ...           
+                will create PIV of these pairs: 0001.tif+0002.tif, 0003.tif+0004.tif ...
 
 
         Examples
@@ -719,7 +730,7 @@ class Multiprocesser:
         Parameters
         ----------
 
-        func : python function which will be executed for each 
+        func : python function which will be executed for each
             image pair. See tutorial for more details.
 
         n_cpus : int
@@ -768,16 +779,16 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
     Parameters
     ----------
     x : 2d np.ndarray
-        a two dimensional array containing the x coordinates of the 
+        a two dimensional array containing the x coordinates of the
         interrogation window centers, in pixels.
 
     y : 2d np.ndarray
-        a two dimensional array containing the y coordinates of the 
+        a two dimensional array containing the y coordinates of the
         interrogation window centers, in pixels.
 
     window_size : the interrogation window size, in pixels
 
-    skip : the number of windows to skip on a row during display. 
+    skip : the number of windows to skip on a row during display.
            Recommended value is 0 or 1 for standard method, can be more for random method
            -1 to not show any window
 
@@ -858,14 +869,14 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
 
 
 def transform_coordinates(x, y, u, v):
-    """ Converts coordinate systems from/to the image based / physical based 
+    """ Converts coordinate systems from/to the image based / physical based
 
     Input/Output: x,y,u,v
 
         image based is 0,0 top left, x = columns to the right, y = rows downwards
-        and so u,v 
+        and so u,v
 
-        physical or right hand one is that leads to the positive vorticity with 
+        physical or right hand one is that leads to the positive vorticity with
         the 0,0 origin at bottom left to be counterclockwise
 
     """
@@ -874,6 +885,6 @@ def transform_coordinates(x, y, u, v):
         y = y[::-1]
     else:
         y = y[::-1, :]
-    
+
     v *= -1
     return x, y, u, v
