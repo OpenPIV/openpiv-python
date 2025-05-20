@@ -1022,8 +1022,8 @@ def extended_search_area_piv(
         search_area_size = (search_area_size, search_area_size)
 
     # verify that things are logically possible: 
-    if overlap[0] >= window_size[0] or overlap[1] >= window_size[1]:
-        raise ValueError("Overlap has to be smaller than the window_size")
+    if overlap[0] >= search_area_size[0] or overlap[1] >= search_area_size[1]:
+        raise ValueError("Overlap has to be smaller than the search_area_size")
 
     if search_area_size[0] < window_size[0] or search_area_size[1] < window_size[1]:
         raise ValueError("Search size cannot be smaller than the window_size")

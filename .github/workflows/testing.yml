@@ -4,21 +4,20 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11","3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
         poetry-version: [1.5.0]
 
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5.3.0
+      uses: actions/setup-python@v5.6.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install poetry
-      uses: abatilo/actions-poetry@v3.0.0
+      uses: abatilo/actions-poetry@v4.0.0
       with:
           poetry-version: ${{ matrix.poetry-version }}
     - name: Install the project dependencies

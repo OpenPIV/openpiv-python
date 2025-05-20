@@ -114,7 +114,7 @@ def mask_coordinates(image_mask, tolerance=1.5, min_length=10, plot=False):
         # if masks of image A and B are slightly different:
         image_mask = np.logical_and(image_mask_a, image_mask_b)
         mask_coords = mask_coordinates(image_mask)
-    
+
     """
 
     mask_coords = []
@@ -141,7 +141,7 @@ def prepare_mask_from_polygon(x, y, mask_coords):
 
     Outputs:
         grid of points of the mask, of the shape of x
-    
+
     """
     xymask = points_in_poly(np.c_[y.flatten(), x.flatten()], mask_coords)
     return xymask.reshape(x.shape)
@@ -151,7 +151,7 @@ def prepare_mask_on_grid(
     y: np.ndarray,
     image_mask: np.ndarray,
 )->np.ndarray:
-    """Converts mask to the grid 
+    """Converts mask to the grid
 
     Args:
         x (np.ndarray): x coordinates of vectors in pixels
@@ -167,73 +167,89 @@ def prepare_mask_on_grid(
 def normalize_array(array, axis = None):
     """
     Min/max normalization to [0,1].
-    
+
     Parameters
     ----------
     array: np.ndarray
         array to normalize
-        
+
     axis: int, tuple
         axis to find values for normalization
-        
+
     Returns
     -------
     array: np.ndarray
         normalized array
-    
+
     """
     array = array.astype(np.float32)
     if axis is None:
-        return((array - np.nanmin(array)) / (np.nanmax(array) - np.nanmin(array)))
+        min_val = np.nanmin(array)
+        max_val = np.nanmax(array)
+        denominator = max_val - min_val
+        # Handle the case where all values are the same (max = min)
+        if denominator == 0 or np.isnan(denominator):
+            return np.zeros_like(array)
+        return (array - min_val) / denominator
     else:
-        return((array - np.nanmin(array, axis = axis)) / 
-               (np.nanmax(array, axis = axis) - np.nanmin(array, axis = axis)))
+        min_val = np.nanmin(array, axis=axis, keepdims=True)
+        max_val = np.nanmax(array, axis=axis, keepdims=True)
+        denominator = max_val - min_val
+        # Handle the case where all values are the same (max = min)
+        # Use np.divide with 'where' to avoid division by zero
+        return np.divide(
+            array - min_val,
+            denominator,
+            out=np.zeros_like(array),
+            where=(denominator != 0)
+        )
 
-    
+
 def standardize_array(array, axis = None):
     """
     Standardize an array.
-    
+
     Parameters
     ----------
     array: np.ndarray
         array to normalize
-        
+
     axis: int, tuple
         axis to find values for standardization
-        
+
     Returns
     -------
     array: np.ndarray
         normalized array
-    
+
     """
     array = array.astype(np.float32)
     if axis is None:
-        return((array - np.nanmean(array) / np.nanstd(array)))  
+        return((array - np.nanmean(array)) / np.nanstd(array))
     else:
-        return((array - np.nanmean(array, axis = axis) / np.nanstd(array, axis = axis)))
-    
-    
+        return((array - np.nanmean(array, axis = axis, keepdims=True)) /
+               np.nanstd(array, axis = axis, keepdims=True))
+
+
 def instensity_cap(img, std_mult = 2):
     """
     Simple intensity capping.
-    
+
     Parameters
     ----------
     img: image
         a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     std_mult: int
         how strong the intensity capping is. Lower values
         yields a lower threshold
-        
+
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
-    
+
     """
     upper_limit = np.mean(img) + std_mult * img.std()
     img[img > upper_limit] = upper_limit
@@ -243,27 +259,27 @@ def instensity_cap(img, std_mult = 2):
 def intensity_clip(img, min_val = 0, max_val = None, flag = 'clip'):
     """
     Simple intensity clipping
-    
+
     Parameters
     ----------
     img: image
         a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     min_val: int or float
         min allowed pixel intensity
-        
+
     max_val: int or float
         min allowed pixel intensity
-        
+
     flag: str
         one of two methods to set invalid pixels intensities
-        
+
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
-    
+
     """
     if flag not in ['clip', 'cap']:
         raise ValueError(f'Flag not supported {flag}')
@@ -280,21 +296,21 @@ def intensity_clip(img, min_val = 0, max_val = None, flag = 'clip'):
 def high_pass(img, sigma = 5, clip = False):
     """
     Simple high pass filter
-    
+
     Parameters
     ----------
     img: image
-        a two dimensional array of float32 or float64, 
+        a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     sigma: float
         sigma value of the gaussian filter
-        
+
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
-    
+
     """
     low_pass = gaussian_filter(img, sigma = sigma)
     img -= low_pass
@@ -307,27 +323,27 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
     """
     Local variance normalization by two gaussian filters.
     This method is used by common commercial softwares
-    
+
     Parameters
     ----------
     img: image
-        a two dimensional array of float32 or float64, 
+        a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     sigma_1: float
         sigma value of the first gaussian low pass filter
-        
+
     sigma_2: float
         sigma value of the second gaussian low pass filter
-        
+
     clip: bool
         set negative pixels to zero
-        
+
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
-    
+
     """
     _high_pass = img - gaussian_filter(img, sigma_1)
     img_blur = gaussian_filter(_high_pass * _high_pass, sigma = sigma_2)
@@ -336,9 +352,9 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
         _high_pass, den,
         out = np.zeros_like(img),
         where = (den != 0.0)
-    )    
+    )
     if clip:
-        img[img < 0] = 0 
+        img[img < 0] = 0
     img = (img - img.min()) / (img.max() - img.min())
     return img
 
@@ -347,30 +363,30 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
 def contrast_stretch(img, lower_limit = 2, upper_limit = 98):
     """
     Simple percentile-based contrast stretching
-    
+
     Parameters
     ----------
     img: image
-        a two dimensional array of float32 or float64, 
+        a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     lower_limit: int
         lower percentile limit
-        
+
     upper_limit: int
         upper percentile limit
-        
+
     Returns
     -------
     img: image
-        a filtered two dimensional array of the input image  
-    
+        a filtered two dimensional array of the input image
+
     """
     if lower_limit < 0:
         lower_limit = 0
     if upper_limit > 100:
         upper_limit = 100
-                
+
     lower = np.percentile(img, lower_limit)
     upper = np.percentile(img, upper_limit)
     img = exposure.rescale_intensity(img, in_range=(lower, upper)) #type:ignore
@@ -379,25 +395,25 @@ def contrast_stretch(img, lower_limit = 2, upper_limit = 98):
 def threshold_binarize(img, threshold, max_val = 255):
     """
     Simple binarizing threshold
-    
+
     Parameters
     ----------
     img: image
-        a two dimensional array of float32 or float64, 
+        a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     threshold: int or float
         boundary where pixels set lower than the threshold are set to zero
         and values higher than the threshold are set to the maximum user selected value
-        
+
     max_val: int or float
         maximum pixel value of the image
-        
+
     Returns
     -------
     img: image
         a filtered two dimensional array of the input image
-    
+
     """
     img[img < threshold] = 0
     img[img > threshold] = max_val
@@ -406,29 +422,29 @@ def threshold_binarize(img, threshold, max_val = 255):
 
 def gen_min_background(img_list, resize = 255):
     """
-    Generate a background by averaging the minimum intensity 
+    Generate a background by averaging the minimum intensity
     of all images in an image list.
     Apply by subtracting generated background image.
-    
+
     Parameters
     ----------
     img_list: list
         list of image directories
-        
+
     resize: int or float
         disabled by default, normalize array and set value to user
         selected max pixel intensity
-        
+
     Returns
     -------
     img: image
         a mean of all images
-    
+
     """
     background = imread(img_list[0])
     if resize is not None:
         background = normalize_array(background) * resize
-    for img in img_list: 
+    for img in img_list:
         if img == img_list: # the original image is already included, so skip it in the for loop
             pass
         else:
@@ -443,24 +459,24 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
     """
     Generate a background by averaging a low pass of all images in an image list.
     Apply by subtracting generated background image.
-    
+
     Parameters
     ----------
     img_list: list
         list of image directories
-        
+
     sigma: float
         sigma of the gaussian filter
-        
+
     resize: int or float
         disabled by default, normalize array and set value to user
         selected max pixel intensity
-        
+
     Returns
     -------
     img: image
         a mean of all low-passed images
-    
+
     """
     for img_file in img_list:
         if resize is not None:
@@ -478,29 +494,29 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
 # def offset_image(img, offset_x, offset_y, pad='constant'):
 #     """
 #     Offset an image by padding.
-    
+
 #     Parameters
 #     ----------
 #     img: image
-#         a two dimensional array of float32 or float64, 
+#         a two dimensional array of float32 or float64,
 #         but can be uint16, uint8 or similar type
-        
+
 #     offset_x: int
-#         offset an image by integer values. Positive values shifts 
+#         offset an image by integer values. Positive values shifts
 #         the image to the right and negative values shift to the left
-        
+
 #     offset_y: int
-#         offset an image by integer values. Positive values shifts 
+#         offset an image by integer values. Positive values shifts
 #         the image to the top and negative values shift to the bottom
-        
+
 #     pad: str
 #         pad the shift with zeros or a reflection of the shift
-        
+
 #     Returns
 #     -------
 #     img: image
 #         a transformed two dimensional array of the input image
-    
+
 #     """
 #     if pad not in [
 #         'zero', 'reflect'
@@ -523,7 +539,7 @@ def gen_lowpass_background(img_list, sigma = 3, resize = None):
 #         offset_y1 = 0
 #         offset_y2 = offset_y * -1
 #         start_y = offset_y2
-#         end_y += offset_y2   
+#         end_y += offset_y2
 
 #     img = np.pad(img, (offset_y1, offset_y2),(offset_x1, offset_x2)), mode=pad)
 #     return img[start_y:end_y, start_x:end_x]
@@ -535,24 +551,24 @@ def stretch_image(img,
                  ):
     """
     Stretch an image by interplation.
-    
+
     Parameters
     ----------
     img: image
-        a two dimensional array of float32 or float64, 
+        a two dimensional array of float32 or float64,
         but can be uint16, uint8 or similar type
-        
+
     x_axis: float
         stretch the x-axis of an image where 0 == no stretching
-        
+
     y_axis: float
         stretch the y-axis of an image where 0 == no stretching
-        
+
     Returns
     -------
     img: image
-        a transformed two dimensional array of the input image  
-    
+        a transformed two dimensional array of the input image
+
     """
     y_axis += 1 # set so zero = no stretch
     x_axis += 1

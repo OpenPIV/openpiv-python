@@ -2,10 +2,12 @@
 from typing import Tuple
 import numpy as np
 from importlib_resources import files
+import matplotlib.pyplot as plt
 
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.tools import imread
 from openpiv import validation
+from openpiv.settings import PIVSettings
 
 
 file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
@@ -41,16 +43,61 @@ def test_validation_peak2peak():
 
 def test_sig2noise_val():
     """ tests sig2noise validation """
-    u = np.ones((5, 5))
-    v = np.ones((5, 5))
     s2n_threshold = 1.05
     s2n = np.ones((5, 5))*s2n_threshold
     s2n[2, 2] -= 0.1
 
-    mask = s2n < s2n_threshold
+    mask = validation.sig2noise_val(s2n, threshold=s2n_threshold)
 
     assert not mask[0, 0]  # should be False
     assert mask[2, 2]
+
+
+def test_sig2noise_val_3d():
+    """ tests sig2noise validation with 3D data """
+    s2n_threshold = 1.05
+    s2n = np.ones((3, 5, 5))*s2n_threshold
+    s2n[1, 2, 2] -= 0.1
+    s2n[2, 3, 3] -= 0.2
+
+    mask = validation.sig2noise_val(s2n, threshold=s2n_threshold)
+
+    # Check shape
+    assert mask.shape == (3, 5, 5)
+
+    # Check values
+    assert not mask[0, 0, 0]  # should be False
+    assert mask[1, 2, 2]      # should be True
+    assert mask[2, 3, 3]      # should be True
+
+
+def test_sig2noise_val_edge_cases():
+    """ tests sig2noise validation with edge cases """
+    # Test with all values below threshold
+    s2n_threshold = 2.0
+    s2n = np.ones((3, 3))*1.0  # All below threshold
+
+    mask = validation.sig2noise_val(s2n, threshold=s2n_threshold)
+
+    assert np.all(mask)  # All should be flagged
+
+    # Test with all values above threshold
+    s2n = np.ones((3, 3))*3.0  # All above threshold
+
+    mask = validation.sig2noise_val(s2n, threshold=s2n_threshold)
+
+    assert not np.any(mask)  # None should be flagged
+
+    # Test with NaN values
+    s2n = np.ones((3, 3))*3.0
+    s2n[1, 1] = np.nan
+
+    mask = validation.sig2noise_val(s2n, threshold=s2n_threshold)
+
+    assert not mask[0, 0]  # Regular value should not be flagged
+    # The current implementation treats NaN as False in the comparison
+    # This is the default behavior of NumPy's comparison operators with NaN
+    assert not mask[1, 1]  # NaN < threshold is False in NumPy
 
 
 def test_local_median_validation(u_threshold=3, N=3):
@@ -104,7 +151,7 @@ def test_local_norm_median_validation():
     # that are placed in the ascending order (just like the given u and v arrays):
     # Median = [(n/2)th term + ((n/2) + 1)th term]/2 (https://www.cuemath.com/data/median/).
     um = 5 # = (4 + 6) / 2
-    vm = 6 # = (5 + 7) / 2 
+    vm = 6 # = (5 + 7) / 2
     # Arrays of residuals given by the formula rui = |ui-um| and rvi = |vi-vm|
     rui = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
     rvi = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
@@ -116,10 +163,10 @@ def test_local_norm_median_validation():
     # Now implement equation 2 from the referenced article:
     r0ast_u = np.abs(u0 - um) / (rum + ε)
     r0ast_v = np.abs(v0 - vm) / (rvm + ε)
-    # The method of comparison to the threshold is given at the very end of the referenced 
+    # The method of comparison to the threshold is given at the very end of the referenced
     # article in the MATLAB code:
     byHand = (r0ast_u**2 + r0ast_v**2)**0.5 > thresh
-    # Here, we calculated byHand for the velocity vector (u0,v0) coordinates of which are 
+    # Here, we calculated byHand for the velocity vector (u0,v0) coordinates of which are
     # located at u[1,1] and v[1,1].
 
     # Calculations using local_norm_median_val() function.
@@ -209,3 +256,140 @@ def test_uniform_shift_std(N: int = 2):
 
     assert v.data[N, N] == 1.0
     assert v.mask[N+1, N+1]
+
+
+def test_typical_validation_basic():
+    """Test the typical_validation function with basic settings."""
+    # Create test data
+    u = np.random.rand(10, 10)
+    v = np.random.rand(10, 10)
+    s2n = np.ones((10, 10)) * 2.0
+
+    # Create outliers
+    u[5, 5] = 100.0  # Global outlier
+    v[7, 7] = -100.0  # Global outlier
+    u[2, 2] = 10.0   # Local outlier
+    s2n[3, 3] = 0.5  # Signal-to-noise outlier
+
+    # Create settings
+    settings = PIVSettings()
+    settings.min_max_u_disp = (-5, 5)
+    settings.min_max_v_disp = (-5, 5)
+    settings.std_threshold = 3
+    settings.median_threshold = 2
+    settings.median_size = 1
+    settings.sig2noise_validate = True
+    settings.sig2noise_threshold = 1.0
+    settings.show_all_plots = False
+
+    # Run validation
+    mask = validation.typical_validation(u, v, s2n, settings)
+
+    # Check that outliers are detected
+    assert mask[5, 5]  # Global outlier
+    assert mask[7, 7]  # Global outlier
+    assert mask[2, 2]  # Local outlier
+    assert mask[3, 3]  # Signal-to-noise outlier
+
+    # Check that normal values are not flagged
+    assert not mask[0, 0]
+
+
+def test_typical_validation_normalized_median():
+    """Test the typical_validation function with normalized median."""
+    # Create test data
+    u = np.random.rand(10, 10)
+    v = np.random.rand(10, 10)
+    s2n = np.ones((10, 10)) * 2.0
+
+    # Create outliers
+    u[5, 5] = 100.0  # Global outlier
+
+    # Create settings
+    settings = PIVSettings()
+    settings.min_max_u_disp = (-5, 5)
+    settings.min_max_v_disp = (-5, 5)
+    settings.std_threshold = 3
+    settings.median_threshold = 2
+    settings.median_size = 1
+    settings.median_normalized = True
+    settings.sig2noise_validate = False
+    settings.show_all_plots = False
+
+    # Run validation
+    mask = validation.typical_validation(u, v, s2n, settings)
+
+    # Check that outliers are detected
+    assert mask[5, 5]  # Global outlier
+
+    # Check that normal values are not flagged
+    assert not mask[0, 0]
+
+
+def test_typical_validation_no_s2n():
+    """Test the typical_validation function without s2n validation."""
+    # Create test data
+    u = np.random.rand(10, 10)
+    v = np.random.rand(10, 10)
+    s2n = np.ones((10, 10)) * 2.0
+
+    # Create outliers
+    u[5, 5] = 100.0  # Global outlier
+    s2n[3, 3] = 0.5  # Signal-to-noise outlier that should be ignored
+
+    # Create settings
+    settings = PIVSettings()
+    settings.min_max_u_disp = (-5, 5)
+    settings.min_max_v_disp = (-5, 5)
+    settings.std_threshold = 3
+    settings.median_threshold = 2
+    settings.median_size = 1
+    settings.sig2noise_validate = False
+    settings.show_all_plots = False
+
+    # Run validation
+    mask = validation.typical_validation(u, v, s2n, settings)
+
+    # Check that outliers are detected
+    assert mask[5, 5]  # Global outlier
+
+    # Check that s2n outlier is not flagged
+    assert not mask[3, 3]  # Signal-to-noise outlier should be ignored
+
+
+def test_typical_validation_with_plots():
+    """Test the typical_validation function with plots enabled."""
+    # Create test data
+    u = np.random.rand(10, 10)
+    v = np.random.rand(10, 10)
+    s2n = np.ones((10, 10)) * 2.0
+
+    # Create outliers
+    u[5, 5] = 100.0  # Global outlier
+    s2n[3, 3] = 0.5  # Signal-to-noise outlier
+
+    # Create settings
+    settings = PIVSettings()
+    settings.min_max_u_disp = (-5, 5)
+    settings.min_max_v_disp = (-5, 5)
+    settings.std_threshold = 3
+    settings.median_threshold = 2
+    settings.median_size = 1
+    settings.sig2noise_validate = True
+    settings.sig2noise_threshold = 1.0
+    settings.show_all_plots = True
+
+    # Temporarily disable plt.show to avoid displaying plots during tests
+    original_show = plt.show
+    plt.show = lambda: None
+
+    try:
+        # Run validation
+        mask = validation.typical_validation(u, v, s2n, settings)
+
+        # Check that outliers are detected
+        assert mask[5, 5]  # Global outlier
+        assert mask[3, 3]  # Signal-to-noise outlier
+    finally:
+        # Restore plt.show
+        plt.show = original_show
