@@ -873,7 +873,7 @@ def fft_correlate_windows(window_a, window_b,
     # works for rectangular windows as well
     x = [[1 , 0 , 0 , 0] , [0 , -1 , 0 , 0] , [0 , 0 , 3 , 0] ,
         [0 , 0 , 0 , 1], [0 , 0 , 0 , 1]]
-    x = np.array(x,dtype=np.float)
+    x = np.array(x,dtype=np.float64)
     y = [[4 , 5] , [3 , 4]]
     y = np.array(y)
     print ("conv:" ,  signal.convolve2d(x , y , 'full'))
