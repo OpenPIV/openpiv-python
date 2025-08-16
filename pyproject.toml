@@ -32,7 +32,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10"
-numpy = "^1.21.6"
+numpy = ">=1.21.6"
 imageio = "^2.22.4"
 matplotlib = "^3"
 scikit-image=">=0.23"
