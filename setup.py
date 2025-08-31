@@ -19,7 +19,7 @@ setup(
         'setuptools',
     ],
     install_requires=[
-        'numpy',
+        'numpy>=1.21.6',
         'imageio>=2.22.4',
         'matplotlib>=3',
         'scikit-image',
