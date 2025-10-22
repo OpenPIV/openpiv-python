@@ -33,6 +33,9 @@ from scipy.ndimage import maximum_filter
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
 
+# Import synimage module for synthetic image generation
+from . import synimage
+
 
 def _read_image_stack(list_img: list) -> np.ndarray:
     """Load a list of images into a single integer stack."""
