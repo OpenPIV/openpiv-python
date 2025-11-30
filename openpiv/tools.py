@@ -32,6 +32,9 @@ from natsort import natsorted
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
 
+# Import synimage module for synthetic image generation
+from . import synimage
+
 
 def natural_sort(file_list: List[pathlib.Path]) -> List[pathlib.Path]:
     """ Creates naturally sorted list """
