@@ -365,18 +365,19 @@ def find_all_second_peaks(corr, width = 2):
     ind = indexes[:, 0]
     x = indexes[:, 1]
     y = indexes[:, 2]
-    iini = x - width
-    ifin = x + width + 1
-    jini = y - width
-    jfin = y + width + 1
-    iini[iini < 0] = 0 # border checking
-    ifin[ifin > corr.shape[1]] = corr.shape[1]
-    jini[jini < 0] = 0
-    jfin[jfin > corr.shape[2]] = corr.shape[2]
-    # create a masked view of the corr
-    tmp = corr.view(np.ma.MaskedArray)
+    iini = np.maximum(x - width, 0)
+    ifin = np.minimum(x + width + 1, corr.shape[1])
+    jini = np.maximum(y - width, 0)
+    jfin = np.minimum(y + width + 1, corr.shape[2])
+    
+    # Create a masked view of the corr - vectorized masking
+    tmp = corr.copy()  # Need copy to avoid modifying input
+    # Create mask for each window efficiently
     for i in ind:
-        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.ma.masked
+        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.nan
+    
+    # Convert to masked array where nans are masked
+    tmp = np.ma.masked_invalid(tmp)
     indexes, peaks = find_all_first_peaks(tmp)
     return indexes, peaks
 

@@ -226,9 +226,10 @@ def local_median_val(
     # f = np.ones((2*size+1, 2*size+1))
     # f[size,size] = 0
 
+    # Convert to regular array with nans for masked values - avoid extra copies
     if np.ma.is_masked(u):
-        masked_u = np.where(~u.mask, u.data, np.nan)
-        masked_v = np.where(~v.mask, v.data, np.nan)
+        masked_u = np.where(u.mask, np.nan, u.data)
+        masked_v = np.where(v.mask, np.nan, v.data)
     else:
         masked_u = u
         masked_v = v
@@ -300,8 +301,8 @@ def local_norm_median_val(
 
     """
     if np.ma.is_masked(u):
-        masked_u = np.where(~u.mask, u.data, np.nan)
-        masked_v = np.where(~v.mask, v.data, np.nan)
+        masked_u = np.where(u.mask, np.nan, u.data)
+        masked_v = np.where(v.mask, np.nan, v.data)
     else:
         masked_u = u
         masked_v = v
