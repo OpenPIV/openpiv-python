@@ -335,9 +335,11 @@ def find_all_first_peaks(corr):
     ind = corr.reshape(corr.shape[0], -1).argmax(-1)
     peaks = np.array(np.unravel_index(ind, corr.shape[-2:]))
     peaks = np.vstack((peaks[0], peaks[1])).T
-    index_list = [(i, v[0], v[1]) for i, v in enumerate(peaks)]
+    # Vectorized index list creation instead of list comprehension
+    n = peaks.shape[0]
+    index_list = np.column_stack((np.arange(n), peaks))
     peaks_max = np.nanmax(corr, axis = (-2, -1))
-    return np.array(index_list), np.array(peaks_max)
+    return index_list, peaks_max
 
 
 def find_all_second_peaks(corr, width = 2):
@@ -766,7 +768,12 @@ def normalize_intensity(window):
         intensity normalized to -1 +1 and clipped if some pixels are
         extra low/high
     """
-    window = window.astype(np.float32)
+    # Convert to float32 only if needed, otherwise work in-place
+    if window.dtype != np.float32:
+        window = window.astype(np.float32)
+    else:
+        window = window.copy()  # Still need a copy to avoid modifying input
+    
     window -= window.mean(axis=(-2, -1),
                           keepdims=True, dtype=np.float32)
     tmp = window.std(axis=(-2, -1), keepdims=True)

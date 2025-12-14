@@ -110,10 +110,13 @@ def global_std(
     # def reject_outliers(data, m=2):
     #     return data[abs(data - np.mean(data)) < m * np.std(data)]
 
-    # create nan filled arrays where masks
-    # if u,v, are non-masked, ma.copy() adds false masks
-    tmpu = np.ma.copy(u).filled(np.nan)
-    tmpv = np.ma.copy(v).filled(np.nan)
+    # Avoid unnecessary copy operations - work with masked arrays directly
+    if np.ma.is_masked(u):
+        tmpu = np.where(u.mask, np.nan, u.data)
+        tmpv = np.where(v.mask, np.nan, v.data)
+    else:
+        tmpu = u
+        tmpv = v
 
     ind = np.logical_or(np.abs(tmpu - np.nanmean(tmpu)) > std_threshold * np.nanstd(tmpu),
                         np.abs(tmpv - np.nanmean(tmpv)) > std_threshold * np.nanstd(tmpv))

@@ -174,11 +174,12 @@ def replace_outliers(
     # regardless the grid_mask (which is a user-provided masked region)
 
     
-    if not isinstance(u, np.ma.MaskedArray):
+    # Only create masked array if needed
+    if isinstance(u, np.ma.MaskedArray):
+        grid_mask = u.mask.copy()
+    else:
         u = np.ma.masked_array(u, mask=np.ma.nomask)
-        
-    # store grid_mask for reinforcement
-    grid_mask = u.mask.copy()
+        grid_mask = np.ma.nomask
 
     u[flags] = np.nan
     v[flags] = np.nan
