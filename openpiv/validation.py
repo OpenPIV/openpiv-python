@@ -110,10 +110,13 @@ def global_std(
     # def reject_outliers(data, m=2):
     #     return data[abs(data - np.mean(data)) < m * np.std(data)]
 
-    # create nan filled arrays where masks
-    # if u,v, are non-masked, ma.copy() adds false masks
-    tmpu = np.ma.copy(u).filled(np.nan)
-    tmpv = np.ma.copy(v).filled(np.nan)
+    # Avoid unnecessary copy operations - work with masked arrays directly
+    if np.ma.is_masked(u):
+        tmpu = np.where(u.mask, np.nan, u.data)
+        tmpv = np.where(v.mask, np.nan, v.data)
+    else:
+        tmpu = u
+        tmpv = v
 
     ind = np.logical_or(np.abs(tmpu - np.nanmean(tmpu)) > std_threshold * np.nanstd(tmpu),
                         np.abs(tmpv - np.nanmean(tmpv)) > std_threshold * np.nanstd(tmpv))
@@ -223,9 +226,10 @@ def local_median_val(
     # f = np.ones((2*size+1, 2*size+1))
     # f[size,size] = 0
 
+    # Convert to regular array with nans for masked values - avoid extra copies
     if np.ma.is_masked(u):
-        masked_u = np.where(~u.mask, u.data, np.nan)
-        masked_v = np.where(~v.mask, v.data, np.nan)
+        masked_u = np.where(u.mask, np.nan, u.data)
+        masked_v = np.where(v.mask, np.nan, v.data)
     else:
         masked_u = u
         masked_v = v
@@ -297,8 +301,8 @@ def local_norm_median_val(
 
     """
     if np.ma.is_masked(u):
-        masked_u = np.where(~u.mask, u.data, np.nan)
-        masked_v = np.where(~v.mask, v.data, np.nan)
+        masked_u = np.where(u.mask, np.nan, u.data)
+        masked_v = np.where(v.mask, np.nan, v.data)
     else:
         masked_u = u
         masked_v = v

@@ -335,9 +335,11 @@ def find_all_first_peaks(corr):
     ind = corr.reshape(corr.shape[0], -1).argmax(-1)
     peaks = np.array(np.unravel_index(ind, corr.shape[-2:]))
     peaks = np.vstack((peaks[0], peaks[1])).T
-    index_list = [(i, v[0], v[1]) for i, v in enumerate(peaks)]
+    # Vectorized index list creation instead of list comprehension
+    n = peaks.shape[0]
+    index_list = np.column_stack((np.arange(n), peaks))
     peaks_max = np.nanmax(corr, axis = (-2, -1))
-    return np.array(index_list), np.array(peaks_max)
+    return index_list, peaks_max
 
 
 def find_all_second_peaks(corr, width = 2):
@@ -363,18 +365,19 @@ def find_all_second_peaks(corr, width = 2):
     ind = indexes[:, 0]
     x = indexes[:, 1]
     y = indexes[:, 2]
-    iini = x - width
-    ifin = x + width + 1
-    jini = y - width
-    jfin = y + width + 1
-    iini[iini < 0] = 0 # border checking
-    ifin[ifin > corr.shape[1]] = corr.shape[1]
-    jini[jini < 0] = 0
-    jfin[jfin > corr.shape[2]] = corr.shape[2]
-    # create a masked view of the corr
-    tmp = corr.view(np.ma.MaskedArray)
+    iini = np.maximum(x - width, 0)
+    ifin = np.minimum(x + width + 1, corr.shape[1])
+    jini = np.maximum(y - width, 0)
+    jfin = np.minimum(y + width + 1, corr.shape[2])
+    
+    # Create a masked view of the corr - vectorized masking
+    tmp = corr.copy()  # Need copy to avoid modifying input
+    # Create mask for each window efficiently
     for i in ind:
-        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.ma.masked
+        tmp[i, iini[i]:ifin[i], jini[i]:jfin[i]] = np.nan
+    
+    # Convert to masked array where nans are masked
+    tmp = np.ma.masked_invalid(tmp)
     indexes, peaks = find_all_first_peaks(tmp)
     return indexes, peaks
 
@@ -766,7 +769,12 @@ def normalize_intensity(window):
         intensity normalized to -1 +1 and clipped if some pixels are
         extra low/high
     """
-    window = window.astype(np.float32)
+    # Convert to float32 only if needed, otherwise work in-place
+    if window.dtype != np.float32:
+        window = window.astype(np.float32)
+    else:
+        window = window.copy()  # Still need a copy to avoid modifying input
+    
     window -= window.mean(axis=(-2, -1),
                           keepdims=True, dtype=np.float32)
     tmp = window.std(axis=(-2, -1), keepdims=True)
