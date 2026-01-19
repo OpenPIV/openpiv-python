@@ -1,6 +1,6 @@
 # OpenPIV
 [![Python package](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml/badge.svg)](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18304582.svg)](10.5281/zenodo.18304582)
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
 ![Anaconda](https://anaconda.org/openpiv/openpiv/badges/version.svg)
 
