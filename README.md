@@ -2,7 +2,6 @@
 [![Python package](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml/badge.svg)](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
 ![PyPI](https://img.shields.io/pypi/v/openpiv)
-![Anaconda](https://anaconda.org/openpiv/openpiv/badges/version.svg)
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
@@ -25,18 +24,36 @@ Click the link - thanks to BinderHub, Jupyter and Conda you can now get it in yo
 
 ## Installing
 
+### Recommended: Using uv (fastest)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver written in Rust:
+
+    pip install uv
+    uv pip install openpiv
+
+### Using pip (standard)
+
 Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
     pip install openpiv
 
-
-## Or `conda` 
-
-    conda install -c openpiv openpiv
-
-## Or [Poetry](https://python-poetry.org/)
+### Or [Poetry](https://python-poetry.org/)
 
     poetry add openpiv
+
+### Note on Conda/Anaconda
+
+⚠️ **Conda packages are no longer actively maintained.** The conda-forge package may be outdated.
+
+If you previously installed OpenPIV via conda, you can migrate to pip or uv:
+
+    # Remove the conda package
+    conda remove openpiv
+    
+    # Install with pip or uv
+    pip install openpiv
+    # or
+    uv pip install openpiv
     
     
 ### To build from source
