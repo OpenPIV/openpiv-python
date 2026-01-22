@@ -10,12 +10,10 @@ classifiers = [
     "Development Status :: 4 - Beta",
 
     # Sublist of all supported Python versions.
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 
     # Sublist of all supported platforms and environments.
     "Operating System :: MacOS :: MacOS X",
@@ -32,14 +30,14 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.10"
-numpy = ">=1.21.6"
-imageio = "^2.22.4"
-matplotlib = "^3"
-scikit-image=">=0.23"
-scipy = "^1.7.3"
-natsort = "^8.4.0"
-tqdm = "^4.66.1"
-importlib_resources = "5.12.0"
+numpy = ">=2.0.0"
+imageio = ">=2.35.0"
+matplotlib = ">=3.8.0"
+scikit-image = ">=0.23.0"
+scipy = ">=1.11.0"
+natsort = ">=8.4.0"
+tqdm = ">=4.66.0"
+importlib_resources = ">=5.12.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4.3"
