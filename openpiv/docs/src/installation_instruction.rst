@@ -19,23 +19,42 @@ The dependencies are:
 * `Python <http://python.org/>`_
 * `Scipy <http://numpy.scipy.org/>`_
 * `Numpy <http://www.scipy.org/>`_
-* `scikit-image <http://scikit-image.org/>`_
-
-On all platforms, the following Python distribution is recommended:
-
-* Anaconda <https://store.continuum.io/cshop/anaconda/>   
+* `scikit-image <http://scikit-image.org/>`_   
 
 
 Installation
 ============
 
-Use `conda` :: 
+Recommended: Use `uv` (fastest)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    conda install -c alexlib openpiv
+`uv <https://github.com/astral-sh/uv>`_ is a fast Python package installer and resolver written in Rust.
+It provides faster and more reliable package installation compared to traditional tools.
 
-Or use `pip` :: 
+To install OpenPIV with uv::
+
+    pip install uv
+    uv pip install openpiv
+
+Or use `pip` (standard)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
 
     pip install openpiv
+
+.. warning::
+    **Conda packages are no longer actively maintained.** The conda-forge package may be outdated.
+    
+    If you previously installed OpenPIV via conda, you can migrate to pip or uv::
+    
+        # Remove the conda package
+        conda remove openpiv
+        
+        # Install with pip or uv
+        pip install openpiv
+        # or
+        uv pip install openpiv
     
 Get OpenPIV source code!
 ========================
