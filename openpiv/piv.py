@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from openpiv import pyprocess, tools, validation, filters
-from importlib_resources import files
+from importlib.resources import files
 
 import matplotlib.animation as animation
 

@@ -205,9 +205,25 @@ def test_imsave_tiff_format():
         os.unlink(tmp.name)
 
 
-@pytest.mark.skip(reason="Requires creating a 16-bit TIFF file")
 def test_convert_16bits_tif():
     """Test convert_16bits_tif function"""
-    # This test would require creating a 16-bit TIFF file
-    # For now, we'll skip it and implement it later
-    pass
+    img = np.zeros((10, 10), dtype=np.uint16)
+    img[2:8, 2:8] = np.iinfo(np.uint16).max
+
+    with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as source:
+        Image.fromarray(img).save(source.name, format='TIFF')
+
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as destination:
+        output_name = destination.name
+
+    try:
+        convert_16bits_tif(source.name, output_name)
+
+        read_img = imread(output_name)
+
+        assert read_img.shape == (10, 10)
+        assert np.all(read_img[2:8, 2:8] == 255)
+        assert np.all(read_img[0:2, 0:2] == 0)
+    finally:
+        os.unlink(source.name)
+        os.unlink(output_name)

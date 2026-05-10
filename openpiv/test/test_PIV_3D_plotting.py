@@ -3,6 +3,10 @@
 import os
 import numpy as np
 import pytest
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.testing.compare import compare_images
@@ -15,9 +19,7 @@ from openpiv.PIV_3D_plotting import (
     quiver_3D
 )
 
-# Skip all tests that require displaying plots if running in a headless environment
-# or if there are compatibility issues with the current matplotlib version
-SKIP_PLOT_TESTS = True
+SKIP_PLOT_TESTS = False
 
 # Create a temporary directory for test images
 @pytest.fixture
@@ -91,7 +93,6 @@ def test_explode():
     assert np.all(result_4d[::2, ::2, ::2, :] == 1)
     assert np.all(result_4d[1::2, ::2, ::2, :] == 0)
 
-@pytest.mark.skipif(SKIP_PLOT_TESTS, reason="Skipping plot tests due to compatibility issues")
 def test_scatter_3D():
     """Test scatter_3D function with color control"""
     # Create a simple 3D array
@@ -119,7 +120,6 @@ def test_scatter_3D():
     # Clean up
     plt.close(fig)
 
-@pytest.mark.skipif(SKIP_PLOT_TESTS, reason="Skipping plot tests due to compatibility issues")
 def test_scatter_3D_size_control():
     """Test scatter_3D function with size control"""
     # Create a simple 3D array
@@ -144,7 +144,6 @@ def test_scatter_3D_size_control():
     # Clean up
     plt.close(fig)
 
-@pytest.mark.skipif(SKIP_PLOT_TESTS, reason="Skipping plot tests due to compatibility issues")
 def test_quiver_3D():
     """Test quiver_3D function"""
     # Create simple vector field
@@ -174,7 +173,6 @@ def test_quiver_3D():
     # Clean up
     plt.close(fig)
 
-@pytest.mark.skipif(SKIP_PLOT_TESTS, reason="Skipping plot tests due to compatibility issues")
 def test_quiver_3D_with_coordinates():
     """Test quiver_3D function with custom coordinates"""
     # Create simple vector field
@@ -207,7 +205,6 @@ def test_quiver_3D_with_coordinates():
     # Clean up
     plt.close(fig)
 
-@pytest.mark.skipif(SKIP_PLOT_TESTS, reason="Skipping plot tests due to compatibility issues")
 def test_quiver_3D_with_filter():
     """Test quiver_3D function with filtering"""
     # Create vector field with multiple vectors
@@ -222,9 +219,18 @@ def test_quiver_3D_with_filter():
     # Clean up
     plt.close(fig)
 
-# Skip test_plot_3D_alpha for now as it's more complex and requires more setup
-@pytest.mark.skip(reason="Complex test requiring more setup")
 def test_plot_3D_alpha():
     """Test plot_3D_alpha function"""
-    # This would require more complex setup and validation
-    pass
+    data = np.zeros((3, 3, 3), dtype=float)
+    data[1, 1, 1] = 1.0
+
+    fig = plot_3D_alpha(data)
+
+    assert isinstance(fig, plt.Figure)
+    ax = fig.axes[0]
+    assert isinstance(ax, Axes3D)
+    assert ax.get_xlabel() == "x"
+    assert ax.get_ylabel() == "y"
+    assert ax.get_zlabel() == "z"
+
+    plt.close(fig)

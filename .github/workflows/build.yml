@@ -1,7 +1,9 @@
 name: Build and upload to PyPI
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v[0-9]*.[0-9]*.[0-9]*"
+      - "[0-9]*.[0-9]*.[0-9]*"
 
 jobs:
   build-and-publish:

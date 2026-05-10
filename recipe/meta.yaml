@@ -27,7 +27,6 @@ requirements:
     - scipy
     - natsort
     - tqdm
-    - importlib_resources
     - arm_pyart
 
 test:

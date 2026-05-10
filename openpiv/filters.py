@@ -174,22 +174,21 @@ def replace_outliers(
     # regardless the grid_mask (which is a user-provided masked region)
 
     
-    # Only create masked array if needed
-    if isinstance(u, np.ma.MaskedArray):
-        grid_mask = u.mask.copy()
-    else:
-        u = np.ma.masked_array(u, mask=np.ma.nomask)
-        grid_mask = np.ma.nomask
+    has_mask = isinstance(u, np.ma.MaskedArray)
+    grid_mask = np.ma.getmaskarray(u).copy() if has_mask else np.ma.nomask
 
-    u[flags] = np.nan
-    v[flags] = np.nan
+    u_data = np.array(np.ma.getdata(u), copy=True)
+    v_data = np.array(np.ma.getdata(v), copy=True)
+
+    u_data[flags] = np.nan
+    v_data[flags] = np.nan
     
     uf = replace_nans(
-        u, method=method, max_iter=max_iter, tol=tol,
+        u_data, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
     )
     vf = replace_nans(
-        v, method=method, max_iter=max_iter, tol=tol,
+        v_data, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
     )
 
@@ -198,9 +197,10 @@ def replace_outliers(
     vf = np.ma.masked_array(vf, mask=grid_mask)
 
     if isinstance(w, np.ndarray):
-        w[flags] = np.nan
+        w_data = np.array(np.ma.getdata(w), copy=True)
+        w_data[flags] = np.nan
         wf = replace_nans(
-            w, method=method, max_iter=max_iter, tol=tol,
+            w_data, method=method, max_iter=max_iter, tol=tol,
             kernel_size=kernel_size
         )
         wf = np.ma.masked_array(wf, mask=grid_mask)

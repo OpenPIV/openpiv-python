@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name="OpenPIV",
-    version='0.25.3',
+    version='0.25.4',
     packages=find_packages(),
     include_package_data=True,
     long_description=long_description,
@@ -25,8 +25,7 @@ setup(
         'scikit-image>=0.23.0',
         'scipy>=1.11.0',
         'natsort>=8.4.0',
-        'tqdm>=4.66.0',
-        'importlib_resources>=5.12.0'
+        'tqdm>=4.66.0'
     ],
     extras_require={"tests": ["pytest"]},
     classifiers=[
@@ -41,6 +40,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
 
         # Sublist of all supported platforms and environments.
         'Operating System :: MacOS :: MacOS X',

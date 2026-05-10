@@ -1,5 +1,5 @@
 """ Tutorial of using window deformation multi-pass """
-from importlib_resources import files
+from importlib.resources import files
 from openpiv import tools, pyprocess, validation, filters
 
 

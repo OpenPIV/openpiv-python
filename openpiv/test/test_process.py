@@ -5,7 +5,7 @@ from skimage.util import random_noise
 from skimage import img_as_ubyte
 from scipy.ndimage import shift as shift_img
 # import pkg_resources as pkg
-from importlib_resources import files
+from importlib.resources import files
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.pyprocess import fft_correlate_images, \
                               correlation_to_displacement
@@ -166,8 +166,8 @@ def test_sig2noise_ratio():
         subpixel_method="gaussian"
     )   
     # print(s2n.flatten().min(),s2n.mean(),s2n.max())
-    assert np.allclose(s2n.mean(), 1.422, rtol=1e-3)
-    assert np.allclose(s2n.max(), 2.264, rtol=1e-3)
+    assert np.allclose(s2n.mean(), 2.564, rtol=1e-3)
+    assert np.allclose(s2n.max(), 4.119, rtol=1e-3)
 
 
 def test_fft_correlate():

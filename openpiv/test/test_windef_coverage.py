@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import tempfile
 import pathlib
 import types
-from importlib_resources import files
+from importlib.resources import files
 
 from openpiv import windef
 from openpiv.settings import PIVSettings

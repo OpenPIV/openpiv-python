@@ -1,7 +1,7 @@
 
 import pathlib
 from dataclasses import dataclass
-from importlib_resources import files
+from importlib.resources import files
 from typing import Optional, Tuple, Union
 import numpy as np
 

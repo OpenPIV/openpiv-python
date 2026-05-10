@@ -205,7 +205,6 @@ def test_display_vector_field_from_arrays(show_invalid):
 
 
 @pytest.mark.parametrize("method", ["standard", "random"])
-@pytest.mark.skip(reason="Requires interactive matplotlib backend")
 def test_display_windows_sampling(method):
     """Test display_windows_sampling function"""
     # Create test data

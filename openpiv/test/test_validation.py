@@ -1,7 +1,7 @@
 """ Testing validation functions """
 from typing import Tuple
 import numpy as np
-from importlib_resources import files
+from importlib.resources import files
 import matplotlib.pyplot as plt
 
 from openpiv.pyprocess import extended_search_area_piv as piv

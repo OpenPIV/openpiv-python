@@ -722,7 +722,7 @@ def fft_correlate_images(
         # longer exposure for frame B
         # image_a = match_histograms(image_a, image_b)
 
-        # remove mean background, normalize to 0..1 range
+        # remove mean, divide by standard deviation
         image_a = normalize_intensity(image_a)
         image_b = normalize_intensity(image_b)
 
@@ -747,15 +747,18 @@ def fft_correlate_images(
         print(f"correlation method {correlation_method } is not implemented")
 
     if normalized_correlation:
-        corr = corr/(s2[0]*s2[1])  # for extended search area
-        corr = np.clip(corr, 0, 1)
+        corr = corr/(corr.shape[-2]*corr.shape[-1])  # for extended search area
+        
     return corr
 
 
 def normalize_intensity(window):
     """Normalize interrogation window or strided image of many windows,
-       by removing the mean intensity value per window and clipping the
-       negative values to zero
+       by removing the mean intensity value per window and dividing by 
+       the standard deviation. Note: for small signals the standdeviation
+       might not be full converged. Also numpy docs recommend float64 for
+       better accuracy: 
+       https://numpy.org/doc/stable/reference/generated/numpy.std.html
 
     Parameters
     ----------
@@ -765,22 +768,20 @@ def normalize_intensity(window):
     Returns
     -------
     window :  2d np.ndarray
-        the interrogation window array, with mean value equal to zero and
-        intensity normalized to -1 +1 and clipped if some pixels are
-        extra low/high
+        the interrogation window array, with zero mean and variance 1
     """
-    # Convert to float32 only if needed, otherwise work in-place
-    if window.dtype != np.float32:
-        window = window.astype(np.float32)
+    # Convert to float64 only if needed, otherwise work in-place
+    if window.dtype != np.float64:
+        window = window.astype(np.float64)
     else:
         window = window.copy()  # Still need a copy to avoid modifying input
     
     window -= window.mean(axis=(-2, -1),
-                          keepdims=True, dtype=np.float32)
+                          keepdims=True, dtype=np.float64)
     tmp = window.std(axis=(-2, -1), keepdims=True)
     window = np.divide(window, tmp, out=np.zeros_like(window),
                        where=(tmp != 0))
-    return np.clip(window, 0, window.max())
+    return window
 
 
 def correlate_windows(window_a, window_b, correlation_method="fft",
@@ -825,9 +826,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft",
     It leads to inconsistency of the output
     """
 
-    # first we remove the mean to normalize contrast and intensity
-    # the background level which is take as a mean of the image
-    # is subtracted
+    # remove mean, divide by standard deviation
     # import pdb; pdb.set_trace()
     window_a = normalize_intensity(window_a)
     window_b = normalize_intensity(window_b)
@@ -849,7 +848,7 @@ def correlate_windows(window_a, window_b, correlation_method="fft",
     else:
         print(f"correlation method {correlation_method } is not implemented")
 
-    return corr
+    return corr/(corr.shape[-2]*corr.shape[-1])
 
 
 def fft_correlate_windows(window_a, window_b,

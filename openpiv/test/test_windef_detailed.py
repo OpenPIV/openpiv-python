@@ -5,7 +5,7 @@ Detailed tests for the windef.py module with focus on edge cases and small units
 import pytest
 import numpy as np
 import pathlib
-from importlib_resources import files
+from importlib.resources import files
 import matplotlib.pyplot as plt
 import tempfile
 import shutil

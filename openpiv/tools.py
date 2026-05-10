@@ -28,9 +28,53 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as pt
 from natsort import natsorted
+from scipy.ndimage import maximum_filter
 
 # from builtins import range
 from imageio.v3 import imread as _imread, imwrite as _imsave
+
+
+def _read_image_stack(list_img: list) -> np.ndarray:
+    """Load a list of images into a single integer stack."""
+    if not list_img:
+        raise ValueError("list_img must contain at least one image")
+
+    frames = [np.asarray(imread(image_name)) for image_name in list_img]
+    return np.stack(frames).astype(np.int32, copy=False)
+
+
+def _set_figure_window_title(fig: Any, title: str) -> None:
+    """Set the window title when the active backend supports it."""
+    manager = getattr(fig.canvas, "manager", None)
+    if manager is not None and hasattr(manager, "set_window_title"):
+        manager.set_window_title(title)
+
+
+def _prepare_image_for_save(arr: np.ndarray, preserve_tiff_depth: bool = False) -> np.ndarray:
+    """Normalize image arrays into a format imageio/Pillow can write reliably."""
+    image = np.asarray(arr)
+
+    if np.ndim(image) > 2:
+        image = rgb2gray(image)
+
+    image = image.astype(np.float32, copy=False)
+
+    if np.amin(image) < 0:
+        image = image - np.amin(image)
+
+    max_value = float(np.amax(image)) if image.size else 0.0
+
+    if preserve_tiff_depth and max_value > 255:
+        if max_value > np.iinfo(np.uint16).max:
+            image = image / max_value * np.iinfo(np.uint16).max
+        return np.clip(image, 0, np.iinfo(np.uint16).max).astype(np.uint16)
+
+    if np.issubdtype(image.dtype, np.floating) and 0 < max_value <= 1.0:
+        image = image * 255.0
+    elif max_value > 255:
+        image = image / max_value * 255.0
+
+    return np.clip(image, 0, 255).astype(np.uint8)
 
 
 def natural_sort(file_list: List[pathlib.Path]) -> List[pathlib.Path]:
@@ -384,20 +428,13 @@ def imsave(filename, arr):
 
     """
 
-    if np.ndim(arr) > 2:
-        arr = rgb2gray(arr)
+    preserve_tiff_depth = str(filename).lower().endswith((".tif", ".tiff"))
+    prepared = _prepare_image_for_save(arr, preserve_tiff_depth=preserve_tiff_depth)
 
-    if np.amin(arr) < 0:
-        arr -= arr.min()
-
-    if np.amax(arr) > 255:
-        arr /= arr.max()
-        arr *= 255
-
-    if filename.endswith("tif"):
-        _imsave(filename, arr, format="TIFF")
+    if preserve_tiff_depth:
+        _imsave(filename, prepared, format="TIFF")
     else:
-        _imsave(filename, arr)
+        _imsave(filename, prepared)
 
 
 def convert_16bits_tif(filename, save_name):
@@ -407,13 +444,18 @@ def convert_16bits_tif(filename, save_name):
         filename (_type_): filename of a 16 bit TIFF
         save_name (_type_): new image filename
     """
-    img = imread(filename)
-    img2 = np.zeros([img.shape[0], img.shape[1]], dtype=np.int32)
-    for I in range(img.shape[0]):
-        for J in range(img.shape[1]):
-            img2[I, J] = img[I, J, 0]
+    img = np.asarray(_imread(filename))
 
-    imsave(save_name, img2)
+    if img.ndim == 3:
+        img = img[..., 0]
+
+    if img.dtype != np.uint8:
+        max_value = float(np.max(img)) if img.size else 0.0
+        if max_value > 0:
+            img = img.astype(np.float32) / max_value * 255.0
+        img = img.astype(np.uint8)
+
+    imsave(save_name, img)
 
 
 def mark_background(
@@ -431,40 +473,17 @@ def mark_background(
     Returns:
         _type_: _description_
     """
-    list_frame = []
-    for I in range(len(list_img)):
-        list_frame.append(imread(list_img[I]))
-    mark = np.zeros(list_frame[0].shape, dtype=np.int32)
-    background = np.zeros(list_frame[0].shape, dtype=np.int32)
-    for I in range(mark.shape[0]):
-        print((" row ", I, " / ", mark.shape[0]))
-        for J in range(mark.shape[1]):
-            sum1 = 0
-            for K in range(len(list_frame)):
-                sum1 = sum1 + list_frame[K][I, J]
-            if sum1 < threshold * len(list_img):
-                mark[I, J] = 0
-            else:
-                mark[I, J] = 1
-            background[I, J] = mark[I, J] * 255
+    frames = _read_image_stack(list_img)
+    threshold_sum = float(threshold) * frames.shape[0]
+    background = np.where(frames.sum(axis=0) >= threshold_sum, 255, 0).astype(np.uint8)
     imsave(filename, background)
     print("done with background")
     return background
 
 
 def mark_background2(list_img, filename):
-    list_frame = []
-    for I in range(len(list_img)):
-        list_frame.append(imread(list_img[I]))
-    background = np.zeros(list_frame[0].shape, dtype=np.int32)
-    for I in range(background.shape[0]):
-        print((" row ", I, " / ", background.shape[0]))
-        for J in range(background.shape[1]):
-            min_1 = 255
-            for K in range(len(list_frame)):
-                if min_1 > list_frame[K][I, J]:
-                    min_1 = list_frame[K][I, J]
-            background[I, J] = min_1
+    frames = _read_image_stack(list_img)
+    background = frames.min(axis=0).astype(np.uint8)
     imsave(filename, background)
     print("done with background")
     return background
@@ -478,51 +497,36 @@ def edges(list_img, filename):
 
 def find_reflexions(list_img, filename):
     background = mark_background2(list_img, filename)
-    reflexion = np.zeros(background.shape, dtype=np.int32)
-    for I in range(background.shape[0]):
-        print((" row ", I, " / ", background.shape[0]))
-        for J in range(background.shape[1]):
-            if background[I, J] > 253:
-                reflexion[I, J] = 255
+    reflexion = np.where(background > 253, 255, 0).astype(np.uint8)
     imsave(filename, reflexion)
     print("done with reflexions")
     return reflexion
 
 
 def find_boundaries(threshold, list_img1, list_img2, filename, picname):
-    f = open(filename, "w")
     print("mark1..")
-    mark1 = mark_background(threshold, list_img1, "mark1.bmp")
+    mark1 = np.where(_read_image_stack(list_img1).sum(axis=0) >= float(threshold) * len(list_img1), 255, 0).astype(np.uint8)
     print("[DONE]")
     print((mark1.shape))
     print("mark2..")
-    mark2 = mark_background(threshold, list_img2, "mark2.bmp")
+    mark2 = np.where(_read_image_stack(list_img2).sum(axis=0) >= float(threshold) * len(list_img2), 255, 0).astype(np.uint8)
     print("[DONE]")
     print("computing boundary")
     print((mark2.shape))
-    list_bound = np.zeros(mark1.shape, dtype=np.int32)
-    for I in range(list_bound.shape[0]):
-        print(("bound row ", I, " / ", mark1.shape[0]))
-        for J in range(list_bound.shape[1]):
-            list_bound[I, J] = 0
-            if mark1[I, J] == 0:
-                list_bound[I, J] = 125
-            if (
-                I > 1
-                and J > 1
-                and I < list_bound.shape[0] - 2
-                and J < list_bound.shape[1] - 2
-            ):
-                for K in range(5):
-                    for L in range(5):
-                        if mark1[I - 2 + K, J - 2 + L] != mark2[I - 2 + K, J - 2 + L]:
-                            list_bound[I, J] = 255
-            else:
-                list_bound[I, J] = 255
-            f.write(str(I) + "\t" + str(J) + "\t" +
-                    str(list_bound[I, J]) + "\n")
+
+    difference = mark1 != mark2
+    neighborhood_difference = maximum_filter(difference.astype(np.uint8), size=5) > 0
+    list_bound = np.where(mark1 == 0, 125, 0).astype(np.uint8)
+    list_bound[neighborhood_difference] = 255
+    list_bound[[0, -1], :] = 255
+    list_bound[:, [0, -1]] = 255
+
+    with open(filename, "w", encoding="utf-8") as file_handle:
+        for i in range(list_bound.shape[0]):
+            for j in range(list_bound.shape[1]):
+                file_handle.write(f"{i}\t{j}\t{int(list_bound[i, j])}\n")
+
     print("[DONE]")
-    f.close()
     imsave(picname, list_bound)
     return list_bound
 
@@ -805,15 +809,15 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
 
     fig = plt.figure()
     if skip < 0 or skip + 1 > len(x[0]) * len(y):
-        fig.canvas.set_window_title("interrogation points map")
+        _set_figure_window_title(fig, "interrogation points map")
         plt.scatter(x, y, color="g")  # plot interrogation locations
     else:
-        nb_windows = len(x[0]) * len(y) / (skip + 1)
+        nb_windows = len(x[0]) * len(y) // (skip + 1)
         # standard method --> display uniformly picked windows
         if method == "standard":
             # plot interrogation locations (green dots)
             plt.scatter(x, y, color="g")
-            fig.canvas.set_window_title("interrogation window map")
+            _set_figure_window_title(fig, "interrogation window map")
             # plot the windows as red squares
             for i in range(len(x[0])):
                 for j in range(len(y)):
@@ -846,7 +850,8 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
         # random method --> display randomly picked windows
         elif method == "random":
             plt.scatter(x, y, color="g")  # plot interrogation locations
-            fig.canvas.set_window_title(
+            _set_figure_window_title(
+                fig,
                 "interrogation window map, showing randomly "
                 + str(nb_windows)
                 + " windows"

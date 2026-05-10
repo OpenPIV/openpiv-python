@@ -1,5 +1,5 @@
 import pathlib
-from importlib_resources import files
+from importlib.resources import files
 import numpy as np
 import matplotlib.pyplot as plt
 from openpiv import tools, scaling, pyprocess, validation, filters,preprocess

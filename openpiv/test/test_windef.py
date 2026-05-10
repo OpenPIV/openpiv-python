@@ -8,7 +8,7 @@ import pytest
 import pathlib
 import numpy as np
 import warnings
-from importlib_resources import files
+from importlib.resources import files
 from openpiv import windef
 from openpiv.test import test_process
 from openpiv.tools import display_vector_field, display_vector_field_from_arrays, save

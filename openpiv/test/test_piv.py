@@ -1,7 +1,7 @@
 """Tests for the piv module"""
 import numpy as np
 import pytest
-from importlib_resources import files
+from importlib.resources import files
 from openpiv import piv, tools
 from openpiv.pyprocess import extended_search_area_piv
 import matplotlib

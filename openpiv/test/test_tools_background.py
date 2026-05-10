@@ -38,7 +38,6 @@ def create_test_images(num_images=3, size=(20, 20)):
     return image_files
 
 
-@pytest.mark.skip(reason="Requires fixing mark_background function")
 def test_mark_background():
     """Test mark_background function"""
     try:
@@ -112,7 +111,6 @@ def test_mark_background2():
             os.unlink(output_file)
 
 
-@pytest.mark.skip(reason="Requires fixing find_reflexions function")
 def test_find_reflexions():
     """Test find_reflexions function"""
     try:
@@ -149,7 +147,6 @@ def test_find_reflexions():
             os.unlink(output_file)
 
 
-@pytest.mark.skip(reason="Requires fixing find_boundaries function")
 def test_find_boundaries():
     """Test find_boundaries function"""
     try:
