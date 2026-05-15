@@ -105,6 +105,7 @@ s.num_iterations = 3
 - **Key dependencies**: numpy ≥2.0, scipy ≥1.11, scikit-image ≥0.23, matplotlib ≥3.8, imageio ≥2.35, natsort, tqdm
 
 ### Development Notes
+- **No Cython extensions**: Although the package description still mentions "Cython modules" (legacy), all Cython (`.pyx`) files have been removed and converted to pure Python. `python setup.py build_ext --inplace` takes <1 second with nothing to compile.
 - Uses stdlib `importlib.resources.files()` (NOT the third-party `importlib_resources`) to locate bundled data
 - Test configurations in `openpiv/test/conftest.py` disable matplotlib GUI (uses `Agg` backend, patches `plt.show`)
 - Sample data bundled at `openpiv/data/test1/`; accessed via `files('openpiv.data').joinpath('test1/...')`
