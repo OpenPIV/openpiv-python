@@ -213,31 +213,39 @@ def test_find_subpixel_peak_position():
         find_subpixel_peak_position(corr_gauss, subpixel_method="invalid_method")
 
 def test_vectorized_sig2noise_ratio():
-    """Test vectorized_sig2noise_ratio function"""
-    # Create a simple correlation map with a clear peak
-    corr = np.zeros((3, 5, 5))
+    """Test vectorized_sig2noise_ratio function
 
-    # First correlation map: clear peak
-    corr[0, 2, 2] = 1.0
-    corr[0, :2, :] = 0.1
-    corr[0, 3:, :] = 0.1
+    The correlation maps are 16 x 16 with all peaks away from the map
+    borders, so no window trips the validity flag (weak or border peaks)
+    and every ratio stays positive.
+    """
+    corr = np.full((3, 16, 16), 0.05)
 
-    # Second correlation map: two peaks
-    corr[1, 2, 2] = 1.0
-    corr[1, 0, 0] = 0.5
+    # First correlation map: clear peak, faint interior second peak
+    corr[0, 8, 8] = 1.0
+    corr[0, 4, 4] = 0.1
 
-    # Third correlation map: noisy
-    corr[2, 2, 2] = 0.3
-    corr[2] = corr[2] + 0.1
+    # Second correlation map: two interior peaks; the secondary one at
+    # (8, 10) sits inside the width=2 exclusion box but outside the
+    # width=1 box, so the ratio must depend on the chosen width
+    corr[1, 8, 8] = 1.0
+    corr[1, 8, 10] = 0.5
+    corr[1, 4, 4] = 0.3
+
+    # Third correlation map: noisy, two interior peaks of similar height
+    corr[2, 8, 8] = 0.4
+    corr[2, 4, 12] = 0.35
 
     # Test peak2peak method
     s2n_p2p = vectorized_sig2noise_ratio(corr, sig2noise_method='peak2peak', width=1)
     assert s2n_p2p.shape == (3,)
+    assert np.all(s2n_p2p > 0)  # no window is flagged
     assert s2n_p2p[0] > s2n_p2p[2]  # Clear peak should have higher S2N than noisy
 
     # Test peak2mean method
     s2n_p2m = vectorized_sig2noise_ratio(corr, sig2noise_method='peak2mean')
     assert s2n_p2m.shape == (3,)
+    assert np.all(s2n_p2m > 0)  # no window is flagged
     assert s2n_p2m[0] > s2n_p2m[2]  # Clear peak should have higher S2N than noisy
 
     # Test with different width
@@ -248,6 +256,45 @@ def test_vectorized_sig2noise_ratio():
     # Test with invalid method
     with pytest.raises(Exception):
         vectorized_sig2noise_ratio(corr, sig2noise_method='invalid_method')
+
+def test_vectorized_sig2noise_ratio_flags_invalid_windows():
+    """Windows failing the validity checks must return a zero ratio.
+
+    Regression test: ``peak2peak[flag is True] = 0`` indexed with the
+    Python expression ``flag is True`` (a constant ``False``), which numpy
+    treats as an empty boolean mask, so the flag was silently never
+    applied and invalid windows leaked raw ratios.
+    """
+    corr = np.full((4, 16, 16), 0.05)
+
+    # Window 0: healthy interior peaks -> must stay positive
+    corr[0, 8, 8] = 1.0
+    corr[0, 4, 4] = 0.5
+
+    # Window 1: first peak on the map border
+    corr[1, 0, 5] = 1.0
+    corr[1, 8, 8] = 0.5
+
+    # Window 2: no signal (first peak below the 1e-3 threshold)
+    corr[2] = 1e-5
+    corr[2, 8, 8] = 5e-4
+
+    # Window 3: healthy first peak but second peak on the map border
+    corr[3, 8, 8] = 1.0
+    corr[3, 0, 3] = 0.9
+
+    s2n_p2p = vectorized_sig2noise_ratio(corr, sig2noise_method='peak2peak', width=1)
+    assert s2n_p2p[0] > 0
+    assert s2n_p2p[1] == 0  # border first peak
+    assert s2n_p2p[2] == 0  # no signal
+    assert s2n_p2p[3] == 0  # border second peak
+
+    # peak2mean only checks the first peak
+    s2n_p2m = vectorized_sig2noise_ratio(corr, sig2noise_method='peak2mean')
+    assert s2n_p2m[0] > 0
+    assert s2n_p2m[1] == 0  # border first peak
+    assert s2n_p2m[2] == 0  # no signal
+    assert s2n_p2m[3] > 0  # second peak is irrelevant for peak2mean
 
 def test_fft_correlate_images():
     """Test fft_correlate_images function"""
