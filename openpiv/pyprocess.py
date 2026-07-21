@@ -646,7 +646,7 @@ def vectorized_sig2noise_ratio(correlation,
             out=np.zeros_like(peaks1),
             where=(peaks2 > 0.0)
         )
-        peak2peak[flag is True] = 0 # replace invalid values
+        peak2peak[flag] = 0  # replace invalid values
         return peak2peak
     
     elif sig2noise_method == "peak2mean":
@@ -667,7 +667,7 @@ def vectorized_sig2noise_ratio(correlation,
             out=np.zeros_like(peaks1max),
             where=(peaks2mean > 0.0)
         )
-        peak2mean[flag is True] = 0 # replace invalid values
+        peak2mean[flag] = 0  # replace invalid values
         return peak2mean
     else:
         raise ValueError(f"sig2noise_method not supported: {sig2noise_method}")
