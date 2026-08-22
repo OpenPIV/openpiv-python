@@ -1,8 +1,10 @@
 """ Testing validation functions """
+import time
 from typing import Tuple
 import numpy as np
 from importlib.resources import files
 import matplotlib.pyplot as plt
+from scipy.ndimage import generic_filter
 
 from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.tools import imread
@@ -393,3 +395,26 @@ def test_typical_validation_with_plots():
     finally:
         # Restore plt.show
         plt.show = original_show
+
+
+def test_local_median_val_matches_generic_filter_and_is_fast():
+    """_local_nanmedian must match the scipy.ndimage.generic_filter reference
+    it replaced, and stay far under generic_filter's runtime on a realistic
+    grid (regression guard against reintroducing the per-pixel Python-callback
+    bottleneck).
+    """
+    rng = np.random.default_rng(0)
+    size = 1
+    u = rng.random((169, 340)) * 10
+    v = rng.random((169, 340)) * 10
+
+    reference = generic_filter(
+        u, np.nanmedian, mode='constant', cval=np.nan, size=(2 * size + 1, 2 * size + 1)
+    )
+
+    t0 = time.perf_counter()
+    fast = validation._local_nanmedian(u, size)
+    fast_time = time.perf_counter() - t0
+
+    assert np.allclose(fast, reference, equal_nan=True)
+    assert fast_time < 1.0  # generic_filter reference takes ~3s on this grid size

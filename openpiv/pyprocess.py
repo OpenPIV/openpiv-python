@@ -6,7 +6,8 @@ import numpy.lib.stride_tricks
 import numpy as np
 from numpy import log
 from numpy import ma
-from numpy.fft import rfft2 as rfft2_, irfft2 as irfft2_, fftshift as fftshift_
+from scipy.fft import rfft2 as rfft2_, irfft2 as irfft2_
+from numpy.fft import fftshift as fftshift_
 from scipy.signal import convolve2d as conv_
 
 

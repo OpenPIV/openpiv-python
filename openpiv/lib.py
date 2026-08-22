@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
 
 def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
@@ -92,8 +93,12 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
     n_nans = len(nan_indices)
 
     # arrays which contain replaced values to check for convergence
-    replaced_new = np.zeros(n_nans)
     replaced_old = np.zeros(n_nans)
+
+    # broadcastable view of the kernel weights, one axis per array dimension
+    # plus one matching axis per kernel dimension (for the windowed reduction)
+    kernel_b = kernel.reshape((1,) * n_dim + kernel.shape)
+    window_axes = tuple(range(n_dim, 2 * n_dim))
 
     # make several passes
     # until we reach convergence
@@ -101,47 +106,26 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
         # note: identifying new nan indices and looping other the new indices
         # would give slightly different result
 
-        # for each NaN element
-        for k in range(n_nans):
-            ind = nan_indices[
-                k
-            ]  # 2 or 3 indices indicating the position of a nan element
-            # init to 0.0
-            replaced_new[k] = 0.0
+        # NaN-pad by kernel_size so that out-of-bounds neighbours behave like
+        # the boundary check in the original per-element loop (i.e. they are
+        # excluded from both the weighted sum and its normalization).
+        padded = np.pad(np.asarray(filled), kernel_size, mode="constant",
+                         constant_values=np.nan)
+        # windows.shape == array.shape + kernel.shape: one (2*kernel_size+1)^n_dim
+        # neighbourhood per array element, vectorized instead of a per-NaN
+        # Python loop with a fresh np.meshgrid call each time.
+        windows = sliding_window_view(padded, kernel.shape)
 
-            # generating a list of indices of the convolution window in the
-            # array
-            slice_indices = np.array(np.meshgrid(*[range(i - kernel_size,
-                                     i + kernel_size + 1) for i in ind]))
+        valid = ~np.isnan(windows)
+        weights = np.where(valid, kernel_b, 0)
+        non_nan = weights.sum(axis=window_axes)
+        weighted_sum = (np.where(valid, windows, 0) * kernel_b).sum(axis=window_axes)
 
-            # identifying all indices strictly inside the image edges:
-            in_mask = np.array(
-                [
-                    np.logical_and(
-                        slice_indices[i] < array.shape[i],
-                        slice_indices[i] >= 0
-                    )
-                    for i in range(n_dim)
-                ]
-            )
-            # logical and over x,y (and z) indices
-            in_mask = np.prod(in_mask, axis=0).astype(bool)
+        # convolution with the kernel; stays NaN where only NaNs are around
+        full_new = np.divide(weighted_sum, non_nan,
+                              out=np.full(array.shape, np.nan), where=non_nan > 0)
 
-            # extract window from array
-            win = filled[tuple(slice_indices[:, in_mask])]
-
-            # selecting the same points from the kernel
-            kernel_in = kernel[in_mask]
-
-            # sum of elements of the kernel that are not nan in the window
-            non_nan = np.sum(kernel_in[~np.isnan(win)])
-
-            if non_nan > 0:
-                # convolution with the kernel
-                replaced_new[k] = np.nansum(win * kernel_in) / non_nan
-            else:
-                # don't do anything if there is only nans around
-                replaced_new[k] = np.nan
+        replaced_new = full_new[tuple(nan_indices.T)]
 
         # bulk replace all new values in array
         filled[tuple(nan_indices.T)] = replaced_new

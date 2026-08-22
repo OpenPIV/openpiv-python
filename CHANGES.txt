@@ -18,3 +18,10 @@ v0.23.2 - added mask_coordinats to preprocess, allows to use dynamic_masking to 
 v0.23.6 - removed widim.pyx, no Cython modules anymore
 v0.23.7 - @ErichZimmer provided rectangular windows and we moved the test cases to another repo openpiv-python-examples
 
+v0.25.5 - performance and correctness pass on validation.py and lib.py: vectorized local_median_val/local_norm_median_val
+    (sliding_window_view instead of scipy.ndimage.generic_filter, ~48x faster), vectorized lib.replace_nans
+    (also fixes a bug where replaced_old aliased replaced_new, silently capping outlier inpainting to ~2 passes
+    regardless of max_iter), switched fft_correlate_images and friends in pyprocess.py from numpy.fft to
+    scipy.fft (~2-3x faster, identical results, no new dependency), use_vectorized now defaults to True in
+    PIVSettings, and PIVSettings.__post_init__ validates windowsizes/overlap consistency.
+

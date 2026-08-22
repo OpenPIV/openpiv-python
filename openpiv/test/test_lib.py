@@ -156,6 +156,34 @@ def test_replace_nans_no_nans():
     assert np.array_equal(array, filled)
 
 
+def test_replace_nans_propagates_past_two_iterations():
+    """Regression test: a previous implementation compared
+    ``replaced_new`` against ``replaced_old`` using ``replaced_old =
+    replaced_new`` where ``replaced_new`` was a persistent, in-place-mutated
+    buffer. That made ``replaced_old`` alias the same array object from the
+    second iteration onward, so the convergence check always saw a zero
+    difference and broke early -- silently capping the fill to ~2 passes no
+    matter how large ``max_iter``/how small ``tol`` were.
+
+    A run of 7 consecutive NaNs needs more than 2 passes for the fill to
+    reach the middle from either open end, so it only converges to the
+    correct (symmetric, monotonically decreasing towards the middle) profile
+    if iteration actually continues past pass 2.
+    """
+    array = np.zeros((3, 11))
+    array[1, :] = 10.0
+    array[1, 2:9] = np.nan
+
+    filled = replace_nans(array, max_iter=20, tol=1e-9, kernel_size=1, method="localmean")
+
+    row = filled[1]
+    assert not np.any(np.isnan(row))
+    assert np.allclose(row, row[::-1])  # symmetric profile
+    # strictly closer to the (low) center than to the (high) open ends
+    center = row[5]
+    assert center < row[3] < row[2] < row[0]
+
+
 def test_get_dist_2d():
     """Test get_dist function with 2D kernel"""
     kernel = np.zeros((5, 5))
