@@ -64,7 +64,7 @@ copyright = '2014, OpenPIV team'
 # built documents.
 #
 # The short X.Y version.
-version = '0.25.5'
+version = '0.26.0'
 # The full version, including alpha/beta/rc tags.
 # release = '0.0.1a'
 
