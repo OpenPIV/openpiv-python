@@ -41,7 +41,7 @@ class PIVSettings:
     static_mask: Optional[np.ndarray] = None # or a boolean matrix of image shape
 
     # "Processing Parameters"
-    backend: str = "scipy"  # Backend for FFT cross-correlation: 'scipy' or 'rust'
+    backend: str = "auto"  # Backend for PIV processing: 'auto', 'scipy', or 'rust'
     correlation_method: str = "circular"  # ['circular', 'linear']
     normalized_correlation: bool = False
 

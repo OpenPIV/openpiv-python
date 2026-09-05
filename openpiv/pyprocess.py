@@ -973,7 +973,7 @@ def extended_search_area_piv(
     width: int=2,
     normalized_correlation: bool=False,
     use_vectorized: bool=False,
-    backend: str="scipy",
+    backend: str="auto",
 ):
     """Standard PIV cross-correlation algorithm, with an option for
     extended area search that increased dynamic range. The search region
@@ -1098,8 +1098,8 @@ def extended_search_area_piv(
     n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
     # We implement the new vectorized code
-    aa = sliding_window_array(frame_a, search_area_size, overlap)
-    bb = sliding_window_array(frame_b, search_area_size, overlap)
+    aa = sliding_window_array(frame_a, search_area_size, overlap, backend=backend)
+    bb = sliding_window_array(frame_b, search_area_size, overlap, backend=backend)
 
     # for the case of extended seearch, the window size is smaller than
     # the search_area_size. In order to keep it all vectorized the
