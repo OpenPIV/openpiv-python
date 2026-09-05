@@ -1,6 +1,7 @@
-﻿import numpy as np
+import numpy as np
 import pytest
-import openpiv_rust
+
+openpiv_rust = pytest.importorskip("openpiv_rust")
 from openpiv import pyprocess
 
 

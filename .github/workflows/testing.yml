@@ -7,6 +7,7 @@ jobs:
     name: Test SciPy Backend (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
@@ -23,11 +24,11 @@ jobs:
 
       - name: Install dependencies (pure Python / SciPy mode)
         run: |
-          uv venv --python ${{ matrix.python-version }}
-          uv pip install ".[dev]" pytest
+          uv venv .venv --python ${{ matrix.python-version }}
+          uv pip install --python .venv/bin/python -e . pytest
 
       - name: Run tests (SciPy backend)
-        run: uv run pytest openpiv -v
+        run: .venv/bin/pytest openpiv/test -v
 
   test-rust:
     name: Test Rust Backend (Python 3.12)
@@ -48,13 +49,13 @@ jobs:
 
       - name: Install dependencies & maturin
         run: |
-          uv venv --python 3.12
-          uv pip install maturin pytest
-          uv pip install -e .
+          uv venv .venv --python 3.12
+          uv pip install --python .venv/bin/python -e . pytest maturin
 
       - name: Build & install openpiv_rust
         run: |
-          uv run maturin develop --manifest-path crates/openpiv_rust/Cargo.toml --release
+          source .venv/bin/activate
+          maturin develop --manifest-path crates/openpiv_rust/Cargo.toml --release
 
       - name: Run tests (Rust backend active)
-        run: uv run pytest openpiv -v
+        run: .venv/bin/pytest openpiv/test -v

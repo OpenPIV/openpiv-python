@@ -5,6 +5,8 @@ import numpy as np
 import pytest
 from imageio.v3 import imwrite
 
+openpiv_rust = pytest.importorskip("openpiv_rust")
+
 from openpiv import windef
 from openpiv.settings import PIVSettings
 from openpiv.test import test_process

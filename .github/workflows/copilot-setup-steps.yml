@@ -31,4 +31,4 @@ jobs:
         run: uv python install 3.12
 
       - name: Install project dependencies
-        run: uv pip install -e .
+        run: uv pip install --system -e .

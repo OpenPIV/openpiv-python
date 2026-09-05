@@ -5,7 +5,7 @@ import scipy.fft
 from pathlib import Path
 from importlib.resources import files
 from openpiv import pyprocess, tools, validation, filters
-import openpiv_rust
+openpiv_rust = pytest.importorskip("openpiv_rust")
 
 @pytest.mark.parametrize("win_size", [16, 32, 64])
 @pytest.mark.parametrize("norm", [True, False])
