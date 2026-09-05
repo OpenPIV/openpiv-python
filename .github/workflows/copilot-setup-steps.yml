@@ -1,4 +1,4 @@
-﻿name: "Copilot Setup Steps"
+name: "Copilot Setup Steps"
 
 # Run automatically when this file changes, and allow manual runs from the Actions tab.
 on:
@@ -31,4 +31,6 @@ jobs:
         run: uv python install 3.12
 
       - name: Install project dependencies
-        run: uv pip install --system -e .
+        run: |
+          uv venv
+          uv pip install -e .
