@@ -1,7 +1,9 @@
 # OpenPIV
 [![Python package](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml/badge.svg)](https://github.com/OpenPIV/openpiv-python/actions/workflows/testing.yml)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18304582.svg)](https://doi.org/10.5281/zenodo.18304582)
-![PyPI](https://img.shields.io/pypi/v/openpiv)
+[![Wheels](https://github.com/OpenPIV/openpiv-python/actions/workflows/wheels.yml/badge.svg)](https://github.com/OpenPIV/openpiv-python/actions/workflows/wheels.yml)
+[![PyPI](https://img.shields.io/pypi/v/openpiv.svg)](https://pypi.org/project/openpiv/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.593157.svg)](https://doi.org/10.5281/zenodo.593157)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 
 OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of 
@@ -191,7 +193,21 @@ These and many additional examples are in another repository: [OpenPIV-Python-Ex
 Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license. 
 
 ## How to cite this work
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4409178.svg)](https://doi.org/10.5281/zenodo.4409178)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.593157.svg)](https://doi.org/10.5281/zenodo.593157)
+
+If you use OpenPIV in your scientific research, please cite the persistent software archive on Zenodo:
+
+```bibtex
+@software{openpiv_python,
+  author       = {Liberzon, Alex and K{\"a}ufer, Theo and Bauer, Andreas and Vennemann, Peter and Zimmer, Erich and contributors},
+  title        = {OpenPIV: Python and Rust Acceleration for Particle Image Velocimetry},
+  year         = {2026},
+  publisher    = {Zenodo},
+  version      = {v0.26.1},
+  doi          = {10.5281/zenodo.593157},
+  url          = {https://doi.org/10.5281/zenodo.593157}
+}
+```
 
 
 

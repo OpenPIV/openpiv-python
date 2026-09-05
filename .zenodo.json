@@ -1,0 +1,45 @@
+{
+  "title": "OpenPIV/openpiv-python: OpenPIV-Python",
+  "upload_type": "software",
+  "description": "OpenPIV consists of Python and compiled acceleration modules for scripting and executing the analysis of particle image velocimetry (PIV) image pairs. It features a high-performance dual-backend engine combining multi-threaded Rust acceleration with pure Python/SciPy reference routines.",
+  "creators": [
+    {
+      "name": "Liberzon, Alex",
+      "affiliation": "School of Mechanical Engineering, Tel Aviv University",
+      "orcid": "0000-0002-6882-4191"
+    },
+    {
+      "name": "Käufer, Theo",
+      "affiliation": "von Karman Institute for Fluid Dynamics"
+    },
+    {
+      "name": "Bauer, Andreas",
+      "affiliation": "Institute of Biophysics, FAU"
+    },
+    {
+      "name": "Vennemann, Peter",
+      "affiliation": "FH Münster University of Applied Sciences"
+    },
+    {
+      "name": "Zimmer, Erich",
+      "affiliation": "OpenPIV Contributors"
+    }
+  ],
+  "access_right": "open",
+  "license": "GPL-3.0-or-later",
+  "keywords": [
+    "particle image velocimetry",
+    "piv",
+    "fluid dynamics",
+    "optical flow",
+    "rust",
+    "cross-correlation"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/OpenPIV/openpiv-python",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}
