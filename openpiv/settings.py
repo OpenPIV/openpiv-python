@@ -41,8 +41,9 @@ class PIVSettings:
     static_mask: Optional[np.ndarray] = None # or a boolean matrix of image shape
 
     # "Processing Parameters"
-    correlation_method: str="circular"  # ['circular', 'linear']
-    normalized_correlation: bool=False
+    backend: str = "scipy"  # Backend for FFT cross-correlation: 'scipy' or 'rust'
+    correlation_method: str = "circular"  # ['circular', 'linear']
+    normalized_correlation: bool = False
 
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2
@@ -147,6 +148,7 @@ class PIVSettings:
 
     show_all_plots: bool=False
 
+    n_cpus: int = 1  # Number of CPU processes for multiprocessing batch evaluation
     invert: bool=False  # for the test_invert
 
     fmt: str="%.4e"

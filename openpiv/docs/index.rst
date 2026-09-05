@@ -31,6 +31,7 @@ Contents:
    src/windef
    src/masking
    src/developers
+   src/fft_correlation_backends
    src/api_reference
    src/faq
 

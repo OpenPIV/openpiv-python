@@ -1,0 +1,16 @@
+[package]
+name = "openpiv_rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "openpiv_rust"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+numpy = "0.23"
+rustfft = "6.2"
+realfft = "3.4"
+rayon = "1.10"
+num-complex = "0.4"
