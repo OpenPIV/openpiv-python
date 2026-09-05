@@ -1,4 +1,4 @@
-﻿"""OpenPIV Performance & Backend Benchmarking Suite
+"""OpenPIV Performance & Backend Benchmarking Suite
 
 Run this script to benchmark cross-correlation, subpixel peak finding,
 and end-to-end multi-pass windef deformation across available backends.

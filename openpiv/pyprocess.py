@@ -192,6 +192,7 @@ def sliding_window_array(
     image: np.ndarray, 
     window_size: Tuple[int,int]=(64,64),
     overlap: Tuple[int,int]=(32,32),
+    backend: str="auto",
     )-> np.ndarray:
     '''
     This version does not use numpy as_strided and is much more memory efficient.
@@ -201,10 +202,17 @@ def sliding_window_array(
     with three dimension, of size (n_windows, window_size, window_size), in
     which each slice, (along the first axis) is an interrogation window. 
     '''
-    # if isinstance(window_size, int):
-    #     window_size = (window_size, window_size)
-    # if isinstance(overlap, int):
-    #     overlap = (overlap, overlap)
+    if isinstance(window_size, int):
+        window_size = (window_size, window_size)
+    if isinstance(overlap, int):
+        overlap = (overlap, overlap)
+
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and image.ndim == 2:
+        return openpiv_rust.sliding_window_array(
+            np.ascontiguousarray(image, dtype=np.float64),
+            (int(window_size[0]), int(window_size[1])),
+            (int(overlap[0]), int(overlap[1])),
+        )
 
     x, y = get_rect_coordinates(image.shape, window_size, overlap, center_on_field = False)
     x = (x - window_size[1]//2).astype(int)
@@ -390,7 +398,7 @@ def find_all_second_peaks(corr, width = 2):
     return indexes, peaks
 
 
-def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
+def find_subpixel_peak_position(corr, subpixel_method="gaussian", backend="auto"):
     """
     Find subpixel approximation of the correlation peak.
 
@@ -432,7 +440,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
         raise ValueError(f"Method not implemented {subpixel_method}")
 
-    if HAS_RUST and corr.ndim == 2:
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and corr.ndim == 2:
         return openpiv_rust.find_subpixel_peak_position(
             np.ascontiguousarray(corr, dtype=np.float64),
             subpixel_method=subpixel_method,
@@ -497,7 +505,8 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
 def sig2noise_ratio(
     correlation: np.ndarray,
     sig2noise_method: str="peak2peak",
-    width: int=2
+    width: int=2,
+    backend: str="auto",
     )-> np.ndarray:
     """
     Computes the signal to noise ratio from the correlation map.
@@ -527,6 +536,13 @@ def sig2noise_ratio(
         the signal to noise ratios from the correlation maps.
 
     """
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and correlation.ndim == 3 and sig2noise_method in ("peak2peak", "peak2mean"):
+        return openpiv_rust.sig2noise_ratio(
+            np.ascontiguousarray(correlation, dtype=np.float64),
+            sig2noise_method=sig2noise_method,
+            width=int(width),
+        )
+
     sig2noise = np.zeros(correlation.shape[0])
     corr_max1 = np.zeros(correlation.shape[0])
     corr_max2 = np.zeros(correlation.shape[0])
@@ -1116,7 +1132,8 @@ def extended_search_area_piv(
                                            subpixel_method=subpixel_method)
     else:
         u, v = correlation_to_displacement(corr, n_rows, n_cols,
-                                           subpixel_method=subpixel_method)
+                                           subpixel_method=subpixel_method,
+                                           backend=backend)
 
     # return output depending if user wanted sig2noise information
     if sig2noise_method is not None:
@@ -1126,7 +1143,8 @@ def extended_search_area_piv(
             )
         else:
             sig2noise = sig2noise_ratio(
-                corr, sig2noise_method=sig2noise_method, width=width
+                corr, sig2noise_method=sig2noise_method, width=width,
+                backend=backend,
             )
     else:
         sig2noise = np.zeros_like(u)*np.nan
@@ -1137,7 +1155,8 @@ def extended_search_area_piv(
 
 
 def correlation_to_displacement(corr, n_rows, n_cols,
-                                subpixel_method="gaussian"):
+                                subpixel_method="gaussian",
+                                backend="auto"):
     """
     Correlation maps are converted to displacement for each interrogation
     window using the convention that the size of the correlation map
@@ -1152,7 +1171,7 @@ def correlation_to_displacement(corr, n_rows, n_cols,
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
         raise ValueError(f"Method not implemented {subpixel_method}")
 
-    if HAS_RUST and corr.ndim == 3 and corr.shape[0] == n_rows * n_cols:
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and corr.ndim == 3 and corr.shape[0] == n_rows * n_cols:
         return openpiv_rust.batch_correlation_to_displacement(
             np.ascontiguousarray(corr, dtype=np.float64),
             n_rows,

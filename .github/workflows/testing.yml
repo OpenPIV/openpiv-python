@@ -1,4 +1,4 @@
-﻿name: Python package
+name: Python package
 
 on: [push, pull_request]
 
@@ -59,3 +59,15 @@ jobs:
 
       - name: Run tests (Rust backend active)
         run: .venv/bin/pytest openpiv/test -v
+
+  security-audit:
+    name: Security & Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run Dependency Security Audit (Cargo.lock & Python)
+        run: uv run python .agents/skills/security-audit/scripts/audit_deps.py

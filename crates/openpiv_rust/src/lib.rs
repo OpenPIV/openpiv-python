@@ -182,6 +182,8 @@ impl CircularEngine2D {
         }
 
         // 5. Normalization scale factor + 2D fftshift
+        // Note: realfft inverse FFT does not normalize by (h*w), whereas scipy.fft.irfft2 does.
+        // When normalized_correlation=True, scipy also divides by (h*w) again, requiring (1/(h*w))^2 in Rust.
         let fft_norm = 1.0 / ((h * w) as f64);
         let scale = if normalized_correlation {
             fft_norm * fft_norm
@@ -406,7 +408,7 @@ fn fft_correlate_circular<'py>(
     let mut final_results = vec![0.0; num_wins * win_size];
 
     // Release GIL and compute across threadpool using Rayon with zero-allocation thread-local scratch
-    py.allow_threads(|| {
+    py.detach(|| {
         final_results
             .par_chunks_exact_mut(win_size)
             .enumerate()
@@ -467,7 +469,7 @@ fn fast_batch_cross_correlation<'py>(
 
     let mut final_results = vec![0.0; num_wins * out_win_size];
 
-    py.allow_threads(|| {
+    py.detach(|| {
         final_results
             .par_chunks_exact_mut(out_win_size)
             .enumerate()
@@ -644,7 +646,7 @@ fn batch_find_subpixel_peak_position<'py>(
     let mut peaks_i = vec![0.0; num_wins];
     let mut peaks_j = vec![0.0; num_wins];
 
-    py.allow_threads(|| {
+    py.detach(|| {
         peaks_i
             .par_iter_mut()
             .zip(peaks_j.par_iter_mut())
@@ -695,7 +697,7 @@ fn batch_correlation_to_displacement<'py>(
     let mut u_vec = vec![0.0; num_wins];
     let mut v_vec = vec![0.0; num_wins];
 
-    py.allow_threads(|| {
+    py.detach(|| {
         u_vec
             .par_iter_mut()
             .zip(v_vec.par_iter_mut())
@@ -714,6 +716,325 @@ fn batch_correlation_to_displacement<'py>(
     Ok((u_arr, v_arr))
 }
 
+#[inline]
+fn compute_nanmedian(slice: &mut [f64]) -> f64 {
+    let mut valid_count = 0;
+    for i in 0..slice.len() {
+        if !slice[i].is_nan() {
+            slice.swap(valid_count, i);
+            valid_count += 1;
+        }
+    }
+    if valid_count == 0 {
+        return f64::NAN;
+    }
+    let valid = &mut slice[..valid_count];
+    valid.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    if valid_count % 2 == 1 {
+        valid[valid_count / 2]
+    } else {
+        (valid[valid_count / 2 - 1] + valid[valid_count / 2]) * 0.5
+    }
+}
+
+/// Ultra-fast normalized median filter for PIV outlier detection (Westerweel & Scarano 2005)
+#[pyfunction]
+#[pyo3(signature = (u, v, eps, threshold, size=1))]
+fn local_norm_median_val<'py>(
+    py: Python<'py>,
+    u: PyReadonlyArray2<'py, f64>,
+    v: PyReadonlyArray2<'py, f64>,
+    eps: f64,
+    threshold: f64,
+    size: usize,
+) -> PyResult<Bound<'py, PyArray2<bool>>> {
+    let u_view = u.as_array();
+    let v_view = v.as_array();
+
+    if u_view.shape() != v_view.shape() {
+        return Err(PyValueError::new_err(format!(
+            "u shape {:?} does not match v shape {:?}",
+            u_view.shape(),
+            v_view.shape()
+        )));
+    }
+
+    let h = u_view.shape()[0];
+    let w = u_view.shape()[1];
+    let u_cow = to_c_contiguous_2d(&u_view);
+    let v_cow = to_c_contiguous_2d(&v_view);
+
+    let k = 2 * size + 1;
+    let total_elements = k * k;
+
+    let mut out_mask = vec![false; h * w];
+
+    py.detach(|| {
+        out_mask
+            .par_chunks_mut(w)
+            .enumerate()
+            .for_each(|(r, row_mask)| {
+                let mut all_u = Vec::with_capacity(total_elements);
+                let mut all_v = Vec::with_capacity(total_elements);
+                let mut neigh_u = Vec::with_capacity(total_elements - 1);
+                let mut neigh_v = Vec::with_capacity(total_elements - 1);
+                let mut dev_u = Vec::with_capacity(total_elements - 1);
+                let mut dev_v = Vec::with_capacity(total_elements - 1);
+
+                for c in 0..w {
+                    let val_u = u_cow[r * w + c];
+                    let val_v = v_cow[r * w + c];
+
+                    if val_u.is_nan() || val_v.is_nan() {
+                        row_mask[c] = false;
+                        continue;
+                    }
+
+                    all_u.clear();
+                    all_v.clear();
+                    neigh_u.clear();
+                    neigh_v.clear();
+
+                    for dr in -(size as isize)..=(size as isize) {
+                        let nr = r as isize + dr;
+                        for dc in -(size as isize)..=(size as isize) {
+                            let nc = c as isize + dc;
+                            let is_center = dr == 0 && dc == 0;
+
+                            let (u_val, v_val) = if nr >= 0 && nr < h as isize && nc >= 0 && nc < w as isize {
+                                let idx = nr as usize * w + nc as usize;
+                                (u_cow[idx], v_cow[idx])
+                            } else {
+                                (f64::NAN, f64::NAN)
+                            };
+
+                            all_u.push(u_val);
+                            all_v.push(v_val);
+                            if !is_center {
+                                neigh_u.push(u_val);
+                                neigh_v.push(v_val);
+                            }
+                        }
+                    }
+
+                    let um = compute_nanmedian(&mut all_u);
+                    let vm = compute_nanmedian(&mut all_v);
+
+                    let ym_u = compute_nanmedian(&mut neigh_u.clone());
+                    let ym_v = compute_nanmedian(&mut neigh_v.clone());
+
+                    if ym_u.is_nan() || ym_v.is_nan() {
+                        row_mask[c] = false;
+                        continue;
+                    }
+
+                    dev_u.clear();
+                    for &x in &neigh_u {
+                        if !x.is_nan() {
+                            dev_u.push((x - ym_u).abs());
+                        }
+                    }
+
+                    dev_v.clear();
+                    for &x in &neigh_v {
+                        if !x.is_nan() {
+                            dev_v.push((x - ym_v).abs());
+                        }
+                    }
+
+                    let rm_u = compute_nanmedian(&mut dev_u);
+                    let rm_v = compute_nanmedian(&mut dev_v);
+
+                    if rm_u.is_nan() || rm_v.is_nan() {
+                        row_mask[c] = false;
+                        continue;
+                    }
+
+                    let r0ast_u = (val_u - um).abs() / (rm_u + eps);
+                    let r0ast_v = (val_v - vm).abs() / (rm_v + eps);
+
+                    if r0ast_u.hypot(r0ast_v) > threshold {
+                        row_mask[c] = true;
+                    }
+                }
+            });
+    });
+
+    let py_arr = out_mask.to_pyarray(py).reshape([h, w])?;
+    Ok(py_arr)
+}
+
+/// Batch signal-to-noise ratio calculation across correlation maps in parallel
+#[pyfunction]
+#[pyo3(signature = (correlation, sig2noise_method="peak2peak", width=2))]
+fn sig2noise_ratio<'py>(
+    py: Python<'py>,
+    correlation: PyReadonlyArray3<'py, f64>,
+    sig2noise_method: &str,
+    width: usize,
+) -> PyResult<Bound<'py, PyArray1<f64>>> {
+    let corr_view = correlation.as_array();
+    let num_wins = corr_view.shape()[0];
+    let h = corr_view.shape()[1];
+    let w = corr_view.shape()[2];
+    let win_size = h * w;
+
+    if sig2noise_method != "peak2peak" && sig2noise_method != "peak2mean" {
+        return Err(PyValueError::new_err(format!(
+            "Invalid sig2noise_method '{sig2noise_method}'. Expected 'peak2peak' or 'peak2mean'"
+        )));
+    }
+
+    let corr_cow = to_c_contiguous(&corr_view);
+    let mut s2n_vec = vec![0.0f64; num_wins];
+
+    py.detach(|| {
+        s2n_vec
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(idx, s2n_val)| {
+                let win_slice = &corr_cow[idx * win_size..(idx + 1) * win_size];
+
+                // First peak
+                let mut max1_val = f64::NEG_INFINITY;
+                let mut max1_r = 0;
+                let mut max1_c = 0;
+                for r in 0..h {
+                    for c in 0..w {
+                        let v = win_slice[r * w + c];
+                        if v > max1_val {
+                            max1_val = v;
+                            max1_r = r;
+                            max1_c = c;
+                        }
+                    }
+                }
+
+                if sig2noise_method == "peak2peak" {
+                    if max1_val < 1e-3
+                        || max1_r == 0
+                        || max1_r == h - 1
+                        || max1_c == 0
+                        || max1_c == w - 1
+                    {
+                        *s2n_val = 0.0;
+                    } else {
+                        let r_min = max1_r.saturating_sub(width);
+                        let r_max = (max1_r + width).min(h - 1);
+                        let c_min = max1_c.saturating_sub(width);
+                        let c_max = (max1_c + width).min(w - 1);
+
+                        let mut max2_val = f64::NEG_INFINITY;
+                        let mut max2_r = 0;
+                        let mut max2_c = 0;
+                        for r in 0..h {
+                            for c in 0..w {
+                                if r >= r_min && r <= r_max && c >= c_min && c <= c_max {
+                                    continue;
+                                }
+                                let v = win_slice[r * w + c];
+                                if v > max2_val {
+                                    max2_val = v;
+                                    max2_r = r;
+                                    max2_c = c;
+                                }
+                            }
+                        }
+
+                        let border2 = max2_r == 0 || max2_r == h - 1 || max2_c == 0 || max2_c == w - 1;
+                        if max2_val <= 0.0 || (border2 && max2_val > 0.5 * max1_val) {
+                            *s2n_val = 0.0;
+                        } else {
+                            let ratio = max1_val / max2_val;
+                            *s2n_val = if ratio.is_nan() { 0.0 } else { ratio };
+                        }
+                    }
+                } else if sig2noise_method == "peak2mean" {
+                    if max1_val < 1e-3
+                        || max1_r == 0
+                        || max1_r == h - 1
+                        || max1_c == 0
+                        || max1_c == w - 1
+                    {
+                        max1_val = 0.0;
+                    }
+
+                    let sum: f64 = win_slice.iter().sum();
+                    let mean = (sum / (h * w) as f64).abs();
+                    if mean == 0.0 || mean.is_nan() {
+                        *s2n_val = 0.0;
+                    } else {
+                        let ratio = max1_val / mean;
+                        *s2n_val = if ratio.is_nan() { 0.0 } else { ratio };
+                    }
+                }
+            });
+    });
+
+    Ok(s2n_vec.to_pyarray(py))
+}
+
+/// Slices an image into interrogation windows directly into a 3D contiguous array in parallel
+#[pyfunction]
+#[pyo3(signature = (image, window_size=(64, 64), overlap=(32, 32)))]
+fn sliding_window_array<'py>(
+    py: Python<'py>,
+    image: PyReadonlyArray2<'py, f64>,
+    window_size: (usize, usize),
+    overlap: (usize, usize),
+) -> PyResult<Bound<'py, PyArray3<f64>>> {
+    let img_view = image.as_array();
+    let img_h = img_view.shape()[0];
+    let img_w = img_view.shape()[1];
+
+    let (win_h, win_w) = window_size;
+    let (ov_h, ov_w) = overlap;
+
+    if win_h > img_h || win_w > img_w {
+        return Err(PyValueError::new_err(format!(
+            "Window size ({win_h}, {win_w}) exceeds image size ({img_h}, {img_w})"
+        )));
+    }
+    if ov_h >= win_h || ov_w >= win_w {
+        return Err(PyValueError::new_err(format!(
+            "Overlap ({ov_h}, {ov_w}) must be smaller than window size ({win_h}, {win_w})"
+        )));
+    }
+
+    let step_h = win_h - ov_h;
+    let step_w = win_w - ov_w;
+
+    let n_rows = (img_h - win_h) / step_h + 1;
+    let n_cols = (img_w - win_w) / step_w + 1;
+    let num_wins = n_rows * n_cols;
+
+    let img_cow = to_c_contiguous_2d(&img_view);
+    let win_size_elems = win_h * win_w;
+    let mut out_vec = vec![0.0f64; num_wins * win_size_elems];
+
+    py.detach(|| {
+        out_vec
+            .par_chunks_mut(win_size_elems)
+            .enumerate()
+            .for_each(|(win_idx, win_buf)| {
+                let r_idx = win_idx / n_cols;
+                let c_idx = win_idx % n_cols;
+                let y_start = r_idx * step_h;
+                let x_start = c_idx * step_w;
+
+                for wr in 0..win_h {
+                    let src_start = (y_start + wr) * img_w + x_start;
+                    let dst_start = wr * win_w;
+                    win_buf[dst_start..dst_start + win_w]
+                        .copy_from_slice(&img_cow[src_start..src_start + win_w]);
+                }
+            });
+    });
+
+    let py_arr = out_vec.to_pyarray(py).reshape([num_wins, win_h, win_w])?;
+    Ok(py_arr)
+}
+
 #[pymodule]
 fn openpiv_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(fft_correlate_circular, m)?)?;
@@ -722,5 +1043,8 @@ fn openpiv_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(find_subpixel_peak_position, m)?)?;
     m.add_function(wrap_pyfunction!(batch_find_subpixel_peak_position, m)?)?;
     m.add_function(wrap_pyfunction!(batch_correlation_to_displacement, m)?)?;
+    m.add_function(wrap_pyfunction!(local_norm_median_val, m)?)?;
+    m.add_function(wrap_pyfunction!(sig2noise_ratio, m)?)?;
+    m.add_function(wrap_pyfunction!(sliding_window_array, m)?)?;
     Ok(())
 }

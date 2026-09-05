@@ -1,4 +1,4 @@
-﻿FFT Correlation Backends & Performance Study
+FFT Correlation Backends & Performance Study
 ============================================
 
 This document details the comparative study of 2D cross-correlation algorithms,

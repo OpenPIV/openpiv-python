@@ -1,4 +1,4 @@
-﻿name: Build Binary Wheels & Publish to PyPI
+name: Build Binary Wheels & Publish to PyPI
 
 on:
   push:
