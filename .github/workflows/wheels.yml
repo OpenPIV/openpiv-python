@@ -1,4 +1,4 @@
-﻿name: Build Binary Wheels
+﻿name: Build Binary Wheels & Publish to PyPI
 
 on:
   push:
@@ -8,18 +8,25 @@ on:
       - "explore/**"
     tags:
       - "v*"
-      - "[0-9]*"
+      - "[0-9]*.[0-9]*.[0-9]*"
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_to_pypi:
+        description: "Publish to PyPI regardless of tag (true/false)"
+        required: false
+        default: "false"
 
 permissions:
   contents: write
   id-token: write
 
 jobs:
-  linux:
+  linux-wheels:
+    name: Build Linux Wheels (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [x86_64, aarch64]
     steps:
@@ -40,9 +47,11 @@ jobs:
           name: wheels-linux-${{ matrix.target }}
           path: dist
 
-  windows:
+  windows-wheels:
+    name: Build Windows Wheels (${{ matrix.target }})
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [x64]
     steps:
@@ -63,9 +72,11 @@ jobs:
           name: wheels-windows-${{ matrix.target }}
           path: dist
 
-  macos:
+  macos-wheels:
+    name: Build macOS Wheels (${{ matrix.target }})
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         target: [x86_64, aarch64]
     steps:
@@ -85,21 +96,44 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: dist
 
-  release:
-    name: Publish Wheels to PyPI / GitHub Release
+  python-package:
+    name: Build OpenPIV Python Package (sdist & pure wheel)
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
-    needs: [linux, windows, macos]
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          pattern: wheels-*
+          python-version: "3.12"
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v4.0.0
+        with:
+          poetry-version: "1.8.3"
+      - name: Build sdist and wheel
+        run: poetry build
+      - name: Upload Python distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to_pypi == 'true') }}
+    needs: [linux-wheels, windows-wheels, macos-wheels, python-package]
+    steps:
+      - name: Download all wheels and packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
           merge-multiple: true
           path: dist
-      - name: Publish to PyPI
-        if: ${{ startsWith(github.ref, 'refs/tags/') && env.PYPI_API_TOKEN != '' }}
+      - name: Display files to publish
+        run: ls -la dist/
+      - name: Publish all distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        env:
-          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         with:
           packages-dir: dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+          print-hash: true
