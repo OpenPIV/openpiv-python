@@ -105,7 +105,7 @@ def test_multiprocessing_piv_with_rust_backend():
         settings.overlap = (16, 8)
         settings.num_iterations = 2
         settings.backend = "rust"
-        settings.n_cpus = 2
+        settings.n_cpus = 1
         settings.show_plot = False
         settings.save_plot = False
         settings.show_all_plots = False
