@@ -1,162 +1,245 @@
-FFT Correlation Backends & Performance Study
-============================================
+Dual-Backend Architecture & Performance Acceleration (Rust & SciPy)
+==================================================================
 
-This document details the comparative study of 2D cross-correlation algorithms,
-backends, and performance characteristics in OpenPIV, focusing on both **Circular**
-and **Linear** correlation, `scipy.fft` (PocketFFT), and the `openpiv_rust` compiled backend.
+This document details the dual-backend architecture of OpenPIV, comparing the high-performance
+parallel compiled backend (``openpiv_rust``) with the pure Python/SciPy reference implementation.
+It highlights algorithmic breakthroughs, memory-layout optimizations, and benchmark evaluations
+across all core stages of Particle Image Velocimetry (PIV) processing.
 
 .. contents:: Table of Contents
    :depth: 2
    :local:
 
-Overview
---------
+.. figure:: ../images/dual_backend_architecture.png
+   :alt: OpenPIV Dual-Backend Architecture
+   :align: center
+   :width: 90%
 
-In Particle Image Velocimetry (PIV), cross-correlation between interrogation windows
-is the core computational step. For an image pair split into :math:`N` interrogation
-windows of size :math:`(H \times W)`, the correlation maps are computed using the
-Wiener-Khinchin theorem via Fast Fourier Transforms:
+   *Figure 1: Architectural diagram showing OpenPIV's unified backend dispatch controller,
+   parallel Rust Rayon engine, and portable Python/SciPy reference fallback with guaranteed parity.*
+
+Overview & Dual-Backend Parity
+------------------------------
+
+Particle Image Velocimetry involves computing cross-correlations over thousands of image window pairs,
+interpolating subpixel displacements, estimating signal-to-noise ratios, and filtering spurious vectors
+through spatial validation.
+
+OpenPIV employs a dual-backend paradigm:
+
+1. **Parallel Rust Backend (``openpiv_rust``)**:
+   A multithreaded extension implemented in Rust using `PyO3 <https://pyo3.rs/>`_, `Rayon <https://github.com/rayon-rs/rayon>`_,
+   and `realfft <https://crates.io/crates/realfft>`_. Pre-compiled binary wheels are published to PyPI for
+   Linux (x86_64, aarch64), macOS (Intel, Apple Silicon), and Windows (x86_64).
+
+2. **Pure Python / SciPy Reference Backend**:
+   A zero-compiler, highly portable reference path relying on NumPy and SciPy.
+
+Every accelerated routine guarantees **dual-backend parity**: outputs between the Rust engine
+and the SciPy reference match to machine precision (:math:`\le 10^{-10}` absolute difference).
+
+Explicit Backend Control
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+All processing routines (`extended_search_area_piv`, `simple_piv`, `process_pair`, `PIVSettings`,
+`fft_correlate_images`, `local_norm_median_val`) accept a ``backend`` parameter:
+
+* ``backend="auto"`` *(default)*: Uses the fast parallel Rust backend if installed; cleanly and transparently
+  falls back to SciPy if the compiled binary is not available.
+* ``backend="rust"``: Enforces execution via the Rust engine. Raises an informative ``ImportError`` if not compiled.
+* ``backend="scipy"`` (or ``"python"``): Forces the pure Python / SciPy reference path.
+
+
+Core Accelerated Algorithms
+---------------------------
+
+1. 2D Real-to-Complex FFT Cross-Correlation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For interrogation windows :math:`I_A` and :math:`I_B`, correlation maps are computed via the Wiener-Khinchin theorem:
 
 .. math::
 
    C = \mathcal{F}^{-1} \left( \mathcal{F}(I_B) \cdot \mathcal{F}^*(I_A) \right)
 
-OpenPIV supports two primary correlation paradigms:
+OpenPIV supports both **Circular Correlation** (periodic boundary conditions) and **Linear Correlation**
+(true zero-padded spatial shift).
 
-1. **Circular Correlation (Standard OpenPIV)**:
-   Assumes periodic boundary conditions (toroidal wraparound).
-   Inputs of size :math:`(N \times N)` yield correlation maps of size :math:`(N \times N)`.
-   No zero-padding is required.
+Power-of-2 Optimization (63x63 vs 64x64)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-2. **Linear Correlation (Full / Extended)**:
-   Evaluates true spatial shift without periodic wraparound.
-   For windows of size :math:`s_1` and :math:`s_2`, the full linear correlation has size
-   :math:`(s_1 + s_2 - 1)`. To prevent time-domain aliasing, inputs must be zero-padded
-   to at least this size before applying the FFT.
-
-
-The 63x63 vs 64x64 Power-of-2 Finding
--------------------------------------
-
-In previous versions of OpenPIV, linear correlation in ``openpiv.pyprocess.fft_correlate_images``
-computed the padded transform size as:
+In previous versions, linear correlation for :math:`32 \times 32` windows computed the padded transform size as:
 
 .. code-block:: python
 
-   size = s1 + s2 - 1                                   # e.g., 32 + 32 - 1 = 63
+   size = s1 + s2 - 1                                   # 32 + 32 - 1 = 63
    fsize = 2 ** np.ceil(np.log2(size)).astype(int) - 1  # 64 - 1 = 63 (BUG!)
 
-Why 63 Disabled PocketFFT Optimization
+Padding to an odd composite number (:math:`63 = 3 \times 3 \times 7`) forced PocketFFT out of its hand-tuned
+AVX2/FMA SIMD vector kernels. By enforcing the clean power-of-2 :math:`fsize = 2^{\lceil \log_2(size) \rceil}` (64),
+PocketFFT and RealFFT run at maximum hardware throughput.
+
+2. Zero-Allocation Sliding Window Extraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Splitting large image pairs into overlapping windows historically required creating massive meshgrid index arrays
+(over 1 million integer indices for a :math:`1024 \times 1024` image), consuming 75 ms per call.
+In Rust, ``sliding_window_array`` maps contiguous strided memory directly into the output tensor in parallel,
+reducing extraction time to **21.9 ms** (3.4x speedup).
+
+3. Batched Subpixel Peak Interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-SciPy delegates FFT operations to **PocketFFT** (written in C++ by Martin Reinecke),
-which includes hand-tuned AVX2/FMA vector kernels. However, these SIMD routines rely on
-smooth radix factors (powers of 2: 2, 4, 8, 16, 32, 64).
+Once correlation planes are computed, the fractional peak coordinates are fitted using Gaussian, Centroid,
+or Parabolic estimators. In pure Python, iterating over 961 windows requires thousands of Python interpreter
+evaluations and dynamic boundary checks.
+The Rust engine implements ``batch_correlation_to_displacement``: a fused Rayon parallel pass that evaluates
+first and second peaks and subpixel offsets in native machine code, achieving **0.54 ms** versus 9.10 ms (**16.8x speedup**).
 
-1. Subtracting 1 produced an **odd composite size** :math:`63 = 3 \times 3 \times 7`.
-2. This forced PocketFFT into slow Bluestein/composite transforms, disabling SIMD vectorization.
-3. Furthermore, padding to 63 left an off-by-one boundary alignment when slicing the central window.
+4. Signal-to-Noise Ratio (Peak-to-Peak & Peak-to-Mean)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Power-of-2 Solution
-^^^^^^^^^^^^^^^^^^^^^^^
+Signal-to-noise ratio estimation (``sig2noise_ratio``) validates correlation quality.
+In pure Python, finding the secondary peak required allocating ``numpy.ma.MaskedArray`` masks to obscure
+a :math:`(2 \times \text{width} + 1)` region around the primary peak for each window.
+The Rust routine replaces dynamic masking with a fused, single-pass memory scan with zero heap allocations,
+speeding up peak-to-peak SNR from 111.2 ms to **5.89 ms** (**18.9x speedup**).
 
-By keeping the clean power-of-2 transform size :math:`fsize = 2^{\lceil \log_2(size) \rceil}`
-(e.g., :math:`64 \times 64` for :math:`32 \times 32` windows), PocketFFT achieves optimal
-SIMD execution speed.
+5. Westerweel Universal Outlier Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To recover the exact central correlation window matching ``scipy.signal.correlate``
-to machine precision (:math:`\le 10^{-13}`), the centered slice is:
+The normalized median test (Westerweel & Scarano, 2005) evaluates the spatial consistency of velocity vectors
+against their :math:`3 \times 3` neighborhood.
+In Python, ``scipy.ndimage.generic_filter`` executed Python callbacks for every grid point, taking **890 ms**
+for a modest :math:`64 \times 64` field.
+The Rust implementation executes quickselect median finding on fixed 9-element arrays with zero allocations,
+completing the entire validation pass in **1.53 ms** (**581.6x speedup**).
+
+
+Benchmark Evaluations
+---------------------
+
+.. figure:: ../images/speedup_benchmarks.png
+   :alt: OpenPIV Speedup Benchmarks
+   :align: center
+   :width: 90%
+
+   *Figure 2: Measured speedup factors of OpenPIV parallel Rust routines compared to pure Python/SciPy.*
+
+The benchmark below was conducted on an AMD Ryzen / Intel x86_64 multi-core workstation:
+
+.. list-table:: Benchmark Performance Comparison (Pure Python / SciPy vs Parallel Rust)
+   :widths: 48 20 16 16
+   :header-rows: 1
+
+   * - Component / Pipeline Stage
+     - Pure Python / SciPy
+     - Parallel Rust
+     - Speedup Factor
+   * - **Normalized Median Validation** (Westerweel, 64x64)
+     - 890.28 ms
+     - **1.53 ms**
+     - **581.6x**
+   * - **Signal-to-Noise Ratio (Peak-to-Peak)** (961 windows)
+     - 111.21 ms
+     - **5.89 ms**
+     - **18.9x**
+   * - **Subpixel Peak Interpolation** (961 windows)
+     - 9.10 ms
+     - **0.54 ms**
+     - **16.8x**
+   * - **Signal-to-Noise Ratio (Peak-to-Mean)** (961 windows)
+     - 30.41 ms
+     - **3.99 ms**
+     - **7.6x**
+   * - **Batch Cross-Correlation (Linear)** (225 windows)
+     - 63.45 ms
+     - **10.18 ms**
+     - **6.2x**
+   * - **Sliding Window Extraction** (3,969 windows, 1024x1024)
+     - 74.82 ms
+     - **21.98 ms**
+     - **3.4x**
+   * - **Batch Cross-Correlation (Circular)** (225 windows)
+     - 10.63 ms
+     - **3.31 ms**
+     - **3.2x**
+   * - **End-to-End Extended Search Area PIV** (512x512 image)
+     - 111.56 ms
+     - **30.00 ms**
+     - **3.72x**
+   * - **End-to-End Multi-Pass Windef** (3 passes, 256x256 image)
+     - 158.83 ms
+     - **113.39 ms**
+     - **1.40x**
+
+
+End-to-End Execution & Validation Demo
+--------------------------------------
+
+.. figure:: ../images/piv_validation_demo.png
+   :alt: PIV Vector Field and Validation Demo
+   :align: center
+   :width: 100%
+
+   *Figure 3: End-to-end PIV processing demonstration: (a) raw particle pair frame with interrogation grid,
+   (b) velocity vector field colored by magnitude, and (c) signal-to-noise ratio map with Westerweel outlier flags.*
+
+
+Code Examples
+-------------
+
+1. Quick Analysis with ``simple_piv``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
-   # Exact power of 2 transform size
-   fsize = 2 ** np.ceil(np.log2(size)).astype(int)
+   from openpiv import piv
 
-   # Centered slice extracting (s1) around the zero-displacement lag
-   fslice = (
-       slice(0, image_a.shape[0]),
-       slice(fsize[0] // 2 - s1[0] // 2, fsize[0] // 2 - s1[0] // 2 + s1[0]),
-       slice(fsize[1] // 2 - s1[1] // 2, fsize[1] // 2 - s1[1] // 2 + s1[1]),
+   # Automatically uses Rust acceleration if installed; falls back cleanly to SciPy
+   x, y, u, v, s2n = piv.simple_piv("frame_a.bmp", "frame_b.bmp", backend="auto")
+
+   # Explicitly enforce Rust acceleration
+   x, y, u, v, s2n = piv.simple_piv("frame_a.bmp", "frame_b.bmp", backend="rust")
+
+   # Explicitly enforce pure Python / SciPy reference execution
+   x, y, u, v, s2n = piv.simple_piv("frame_a.bmp", "frame_b.bmp", backend="scipy")
+
+2. Standard PIV with ``extended_search_area_piv``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   from openpiv import pyprocess, tools
+
+   frame_a = tools.imread("frame_a.bmp")
+   frame_b = tools.imread("frame_b.bmp")
+
+   u, v, s2n = pyprocess.extended_search_area_piv(
+       frame_a,
+       frame_b,
+       window_size=32,
+       overlap=16,
+       search_area_size=32,
+       correlation_method="circular",
+       sig2noise_method="peak2peak",
+       backend="auto",
    )
-   f2a = conj(rfft2(image_a, fsize, axes=(-2, -1), workers=workers))
-   f2b = rfft2(image_b, fsize, axes=(-2, -1), workers=workers)
-   corr = fftshift(irfft2(f2a * f2b, axes=(-2, -1)).real, axes=(-2, -1))[fslice]
 
+3. Multigrid Window Deformation (``windef``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Batched Multi-Threading in scipy.fft
-------------------------------------
+.. code-block:: python
 
-``scipy.fft`` supports a ``workers`` parameter (e.g., ``workers=-1`` for all logical cores).
-However, profiling reveals:
+   from openpiv import windef, tools
 
-* On large 2D or 3D volumes, PocketFFT multi-threading scales well.
-* On **batches of tiny 2D windows** (:math:`16 \times 16` or :math:`32 \times 32`),
-  thread synchronization overhead inside PocketFFT often negates multi-core gains
-  (scaling from :math:`1.0\times` to :math:`1.1\times`), because thread splitting occurs
-  per-transform rather than distributing independent windows across workers.
+   settings = windef.PIVSettings()
+   settings.windowsizes = (64, 32, 16)
+   settings.overlap = (32, 16, 8)
+   settings.num_iterations = 3
+   settings.backend = "auto"  # 'auto', 'rust', or 'scipy'
 
+   frame_a = tools.imread("frame_a.bmp")
+   frame_b = tools.imread("frame_b.bmp")
 
-The Rust Acceleration Engine (openpiv_rust)
--------------------------------------------
-
-To overcome Python GIL overhead and achieve linear CPU scaling across window batches,
-OpenPIV provides an optional compiled Rust extension (``openpiv_rust``) built with
-PyO3, Rayon, and RealFFT.
-
-Key Architectural Optimizations in Rust
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-1. **Zero-Allocation Rayon Scratch Pool**:
-   Window transforms use ``par_chunks_exact_mut().for_each_init(...)``, pre-allocating
-   frequency buffers once per worker thread. For 961 windows, this eliminates over
-   8,600 heap allocations per pass.
-
-2. **Native Power-of-2 Real FFT**:
-   Uses ``realfft`` (Real-to-Complex forward and Complex-to-Real inverse), cutting
-   arithmetic and memory bandwidth by 50% compared to full complex transforms.
-
-3. **Batched Subpixel Peak Finding**:
-   In addition to cross-correlation, `openpiv_rust` provides
-   ``batch_correlation_to_displacement``, executing Gaussian/Centroid/Parabolic subpixel
-   peak fitting directly across all windows in parallel, yielding a **28x to 65x speedup**
-   over the nested Python loop.
-
-
-Benchmark Results
------------------
-
-Linear Correlation (225 windows of 32x32)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-============================================  ====================  ==================
-Implementation                                Runtime               Relative Speed
-============================================  ====================  ==================
-``scipy.signal.correlate`` (Python loop)      70.63 ms              1.0x (baseline)
-OpenPIV SciPy (legacy ``fsize=63``)           49.28 ms              1.4x
-OpenPIV SciPy (power-of-2 ``fsize=64``)       39.10 ms              1.8x
-**openpiv_rust** (Rayon + realfft)            **8.26 ms**           **8.5x**
-============================================  ====================  ==================
-
-Displacement Calculation (Peak Finding)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-============================================  ====================  ==================
-Grid / Windows                                Python Loop           openpiv_rust
-============================================  ====================  ==================
-225 windows (32x32)                           5.19 ms               **0.18 ms (28x)**
-961 windows (16x16)                           19.84 ms              **0.30 ms (65x)**
-============================================  ====================  ==================
-
-End-to-End Multi-Pass Windef (3 passes on 256x256 image)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* **SciPy backend**: 110.59 ms
-* **Rust backend (with subpixel Rust engine)**: **81.66 ms** (:math:`1.35\times` speedup)
-
-Conclusion & Usage Guidelines
------------------------------
-
-* For systems with compiled binary extensions available, set ``settings.backend = 'rust'``
-  to maximize throughput in both single-pass and multi-pass deformation workflows.
-* On pure Python / NumPy / SciPy environments, using the exact power-of-2 padding rule
-  ensures optimal PocketFFT vectorization while maintaining exact numerical consistency.
+   x, y, u, v, mask = windef.simple_multipass(frame_a, frame_b, settings)

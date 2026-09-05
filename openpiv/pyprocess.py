@@ -207,7 +207,18 @@ def sliding_window_array(
     if isinstance(overlap, int):
         overlap = (overlap, overlap)
 
-    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and image.ndim == 2:
+    if backend == "rust":
+        if not HAS_RUST:
+            raise ImportError(
+                "openpiv_rust is not installed. Build with maturin to enable Rust acceleration."
+            )
+        if image.ndim == 2:
+            return openpiv_rust.sliding_window_array(
+                np.ascontiguousarray(image, dtype=np.float64),
+                (int(window_size[0]), int(window_size[1])),
+                (int(overlap[0]), int(overlap[1])),
+            )
+    elif backend == "auto" and HAS_RUST and image.ndim == 2:
         return openpiv_rust.sliding_window_array(
             np.ascontiguousarray(image, dtype=np.float64),
             (int(window_size[0]), int(window_size[1])),
@@ -440,7 +451,17 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian", backend="auto"
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
         raise ValueError(f"Method not implemented {subpixel_method}")
 
-    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and corr.ndim == 2:
+    if backend == "rust":
+        if not HAS_RUST:
+            raise ImportError(
+                "openpiv_rust is not installed. Build with maturin to enable Rust acceleration."
+            )
+        if corr.ndim == 2:
+            return openpiv_rust.find_subpixel_peak_position(
+                np.ascontiguousarray(corr, dtype=np.float64),
+                subpixel_method=subpixel_method,
+            )
+    elif backend == "auto" and HAS_RUST and corr.ndim == 2:
         return openpiv_rust.find_subpixel_peak_position(
             np.ascontiguousarray(corr, dtype=np.float64),
             subpixel_method=subpixel_method,
@@ -536,7 +557,18 @@ def sig2noise_ratio(
         the signal to noise ratios from the correlation maps.
 
     """
-    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and correlation.ndim == 3 and sig2noise_method in ("peak2peak", "peak2mean"):
+    if backend == "rust":
+        if not HAS_RUST:
+            raise ImportError(
+                "openpiv_rust is not installed. Build with maturin to enable Rust acceleration."
+            )
+        if correlation.ndim == 3 and sig2noise_method in ("peak2peak", "peak2mean"):
+            return openpiv_rust.sig2noise_ratio(
+                np.ascontiguousarray(correlation, dtype=np.float64),
+                sig2noise_method=sig2noise_method,
+                width=int(width),
+            )
+    elif backend == "auto" and HAS_RUST and correlation.ndim == 3 and sig2noise_method in ("peak2peak", "peak2mean"):
         return openpiv_rust.sig2noise_ratio(
             np.ascontiguousarray(correlation, dtype=np.float64),
             sig2noise_method=sig2noise_method,
@@ -1094,6 +1126,9 @@ def extended_search_area_piv(
     if (window_size[1] > frame_a.shape[0]) or (window_size[0] > frame_a.shape[1]):
         raise ValueError("window size cannot be larger than the image")
 
+    if backend not in ("auto", "rust", "scipy", "python"):
+        raise ValueError(f"Unknown backend '{backend}'. Choose from 'auto', 'rust', or 'scipy'.")
+
     # get field shape
     n_rows, n_cols = get_field_shape(frame_a.shape, search_area_size, overlap)
 
@@ -1171,7 +1206,19 @@ def correlation_to_displacement(corr, n_rows, n_cols,
     if subpixel_method not in ("gaussian", "centroid", "parabolic"):
         raise ValueError(f"Method not implemented {subpixel_method}")
 
-    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and corr.ndim == 3 and corr.shape[0] == n_rows * n_cols:
+    if backend == "rust":
+        if not HAS_RUST:
+            raise ImportError(
+                "openpiv_rust is not installed. Build with maturin to enable Rust acceleration."
+            )
+        if corr.ndim == 3 and corr.shape[0] == n_rows * n_cols:
+            return openpiv_rust.batch_correlation_to_displacement(
+                np.ascontiguousarray(corr, dtype=np.float64),
+                n_rows,
+                n_cols,
+                subpixel_method=subpixel_method,
+            )
+    elif backend == "auto" and HAS_RUST and corr.ndim == 3 and corr.shape[0] == n_rows * n_cols:
         return openpiv_rust.batch_correlation_to_displacement(
             np.ascontiguousarray(corr, dtype=np.float64),
             n_rows,
