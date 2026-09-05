@@ -299,6 +299,7 @@ def test_typical_validation_basic():
 
 def test_typical_validation_normalized_median():
     """Test the typical_validation function with normalized median."""
+    np.random.seed(42)
     # Create test data
     u = np.random.rand(10, 10)
     v = np.random.rand(10, 10)

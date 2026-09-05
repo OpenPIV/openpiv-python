@@ -63,3 +63,64 @@ If you need to install cv2::
     conda install -c conda-forge opencv
 
 
+Developing with or without Rust
+--------------------------------
+
+OpenPIV supports dual computational backends: **pure Python / SciPy** (default) and **compiled Rust** (via ``openpiv_rust``).
+
+Option A: Developing in Pure Python (without Rust)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You do not need a Rust compiler installed. Simply install OpenPIV in editable mode:
+
+.. code-block:: bash
+
+    poetry install
+    # or: pip install -e .
+
+All core functionality, single-pass, and multi-pass deformation will use the optimized
+``scipy.fft`` backend automatically.
+
+To run the test suite:
+
+.. code-block:: bash
+
+    pytest openpiv/test
+
+Option B: Developing with the Rust Extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have the Rust toolchain (``cargo``) installed:
+
+1. Install ``maturin``:
+
+   .. code-block:: bash
+
+       pip install maturin
+
+2. Compile and link ``openpiv_rust`` directly into your Python environment:
+
+   .. code-block:: bash
+
+       cd crates/openpiv_rust
+       maturin develop --release
+       cd ../..
+
+3. Verify that the Rust backend is active:
+
+   .. code-block:: bash
+
+       python -c "import openpiv_rust; print('Rust backend ready!')"
+
+Running the Performance Benchmarks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+OpenPIV includes a dedicated benchmark suite comparing cross-correlation, subpixel
+peak finding, and end-to-end multi-pass Windef across backends:
+
+.. code-block:: bash
+
+    python benchmarks/run_benchmarks.py
+
+
+

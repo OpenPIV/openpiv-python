@@ -754,8 +754,8 @@ class Multiprocesser:
         # for debugging purposes always use n_cpus = 1,
         # since it is difficult to debug multiprocessing stuff.
         if n_cpus > 1:
-            pool = multiprocessing.Pool(processes=n_cpus)
-            res = pool.map(func, image_pairs)
+            with multiprocessing.Pool(processes=n_cpus) as pool:
+                res = pool.map(func, image_pairs)
         else:
             for image_pair in image_pairs:
                 func(image_pair)

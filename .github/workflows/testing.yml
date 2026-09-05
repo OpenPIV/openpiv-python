@@ -1,26 +1,73 @@
 name: Python package
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  test-scipy:
+    name: Test SciPy Backend (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        poetry-version: [1.5.0]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v7
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install poetry
-      uses: abatilo/actions-poetry@v4.0.0
-      with:
-          poetry-version: ${{ matrix.poetry-version }}
-    - name: Install the project dependencies
-      run: poetry install
-    - name: Run the automated tests (for example)
-      run: poetry run pytest openpiv -v
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies (pure Python / SciPy mode)
+        run: |
+          uv venv .venv --python ${{ matrix.python-version }}
+          uv pip install --python .venv/bin/python -e . pytest
+
+      - name: Run tests (SciPy backend)
+        run: .venv/bin/pytest openpiv/test -v
+
+  test-rust:
+    name: Test Rust Backend (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies & maturin
+        run: |
+          uv venv .venv --python 3.12
+          uv pip install --python .venv/bin/python -e . pytest maturin
+
+      - name: Build & install openpiv_rust
+        run: |
+          source .venv/bin/activate
+          maturin develop --manifest-path crates/openpiv_rust/Cargo.toml --release
+
+      - name: Run tests (Rust backend active)
+        run: .venv/bin/pytest openpiv/test -v
+
+  security-audit:
+    name: Security & Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run Dependency Security Audit (Cargo.lock & Python)
+        run: uv run python .agents/skills/security-audit/scripts/audit_deps.py

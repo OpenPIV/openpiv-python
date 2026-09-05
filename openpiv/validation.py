@@ -26,6 +26,12 @@ from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
 from openpiv.settings import PIVSettings
 
+try:
+    import openpiv_rust
+    HAS_RUST = True
+except ImportError:
+    HAS_RUST = False
+
 
 def _local_nanmedian(a: np.ndarray, size: int) -> np.ndarray:
     """Local median over a (2*size+1, 2*size+1) window, NaN-padded at the
@@ -260,7 +266,8 @@ def local_norm_median_val(
         v: np.ndarray,
         ε: float,
         threshold: float,
-        size: int=1
+        size: int=1,
+        backend: str="auto",
         )->np.ndarray:
     """This function is adapted from OpenPIV's implementation of
     validation.local_median_val(). validation.local_median_val() is,
@@ -317,6 +324,15 @@ def local_norm_median_val(
     else:
         masked_u = u
         masked_v = v
+
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and masked_u.ndim == 2 and masked_v.ndim == 2:
+        return openpiv_rust.local_norm_median_val(
+            np.ascontiguousarray(masked_u, dtype=np.float64),
+            np.ascontiguousarray(masked_v, dtype=np.float64),
+            float(ε),
+            float(threshold),
+            size=int(size),
+        )
 
     um = _local_nanmedian(masked_u, size)
     vm = _local_nanmedian(masked_v, size)
