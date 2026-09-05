@@ -9,40 +9,52 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        poetry-version: [1.5.0]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install poetry
-      uses: abatilo/actions-poetry@v4.0.0
-      with:
-          poetry-version: ${{ matrix.poetry-version }}
-    - name: Install dependencies (pure Python / SciPy mode)
-      run: poetry install
-    - name: Run tests (SciPy backend)
-      run: poetry run pytest openpiv -v
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install dependencies (pure Python / SciPy mode)
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install ".[dev]" pytest
+
+      - name: Run tests (SciPy backend)
+        run: uv run pytest openpiv -v
 
   test-rust:
     name: Test Rust Backend (Python 3.12)
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Set up Rust
-      uses: dtolnay/rust-toolchain@stable
-    - name: Install poetry & maturin
-      run: |
-        pip install poetry maturin
-        poetry install
-    - name: Build & install openpiv_rust
-      run: |
-        poetry run maturin develop --manifest-path crates/openpiv_rust/Cargo.toml --release
-    - name: Run tests (Rust backend active)
-      run: poetry run pytest openpiv -v
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies & maturin
+        run: |
+          uv venv --python 3.12
+          uv pip install maturin pytest
+          uv pip install -e .
+
+      - name: Build & install openpiv_rust
+        run: |
+          uv run maturin develop --manifest-path crates/openpiv_rust/Cargo.toml --release
+
+      - name: Run tests (Rust backend active)
+        run: uv run pytest openpiv -v

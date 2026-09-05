@@ -101,15 +101,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.12"
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v4.0.0
-        with:
-          poetry-version: "1.8.3"
+          enable-cache: true
       - name: Build sdist and wheel
-        run: poetry build
+        run: uv build --out-dir dist
       - name: Upload Python distribution
         uses: actions/upload-artifact@v4
         with:
@@ -130,10 +127,7 @@ jobs:
           path: dist
       - name: Display files to publish
         run: ls -la dist/
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Publish all distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          skip-existing: true
-          print-hash: true
+        run: uv publish --token ${{ secrets.PYPI_API_TOKEN }} dist/*
