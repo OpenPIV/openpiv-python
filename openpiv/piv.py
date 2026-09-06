@@ -25,7 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32, 
-               dt=1.0, plot=True, validation_method=None, s2n_thresh=1.3):
+               dt=1.0, plot=True, validation_method=None, s2n_thresh=1.3,
+               backend="auto"):
     """
     Simplified PIV analysis on a pair of images with optional validation.
 
@@ -49,6 +50,8 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
         Method for validation: 'sig2noise' or 'global_std' or None
     s2n_thresh : float, optional
         Signal-to-noise threshold for validation, default is 1.3
+    backend : str, optional
+        Backend to use: 'auto', 'rust', or 'scipy'. Default is 'auto'.
 
     Returns
     -------
@@ -73,7 +76,8 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
         im1.astype(np.int32), im2.astype(np.int32), 
         window_size=window_size,
         overlap=overlap, 
-        search_area_size=search_area_size
+        search_area_size=search_area_size,
+        backend=backend,
     )
     
     # Get coordinates
@@ -198,7 +202,7 @@ def piv_example(plot_animation=True, plot_quiver=True):
 def process_pair(frame_a, frame_b, window_size=32, overlap=16, 
                 search_area_size=32, dt=1.0, validation_method='sig2noise',
                 s2n_threshold=1.3, filter_method='localmean', 
-                filter_kernel_size=1, plot=False):
+                filter_kernel_size=1, plot=False, backend="auto"):
     """
     Complete PIV processing workflow for a single image pair.
     
@@ -228,6 +232,8 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
         Size of the kernel for outlier replacement, default is 1
     plot : bool, optional
         Whether to display a quiver plot of the results, default is False
+    backend : str, optional
+        Backend to use: 'auto', 'rust', or 'scipy'. Default is 'auto'.
         
     Returns
     -------
@@ -247,7 +253,8 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
         frame_a.astype(np.int32), frame_b.astype(np.int32), 
         window_size=window_size,
         overlap=overlap, 
-        search_area_size=search_area_size
+        search_area_size=search_area_size,
+        backend=backend,
     )
     
     # Get coordinates

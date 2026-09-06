@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use OpenPIV in your scientific research, please cite it as below."
+title: "OpenPIV: Python and Rust Acceleration for Particle Image Velocimetry"
+version: 0.26.1
+doi: 10.5281/zenodo.593157
+date-released: 2026-09-05
+url: "https://github.com/OpenPIV/openpiv-python"
+repository-code: "https://github.com/OpenPIV/openpiv-python"
+license: GPL-3.0-or-later
+authors:
+  - family-names: Liberzon
+    given-names: Alex
+    orcid: "https://orcid.org/0000-0002-6882-4191"
+    affiliation: "School of Mechanical Engineering, Tel Aviv University"
+  - family-names: Käufer
+    given-names: Theo
+    affiliation: "von Karman Institute for Fluid Dynamics"
+  - family-names: Bauer
+    given-names: Andreas
+    affiliation: "Institute of Biophysics, FAU"
+  - family-names: Vennemann
+    given-names: Peter
+    affiliation: "FH Münster University of Applied Sciences"
+  - family-names: Zimmer
+    given-names: Erich
+    affiliation: "OpenPIV Contributors"
+keywords:
+  - particle image velocimetry
+  - piv
+  - fluid dynamics
+  - optical flow
+  - rust
+  - cross-correlation

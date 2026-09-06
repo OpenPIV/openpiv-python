@@ -1,0 +1,44 @@
+name: Zenodo Release Synchronization
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish_to_zenodo:
+        description: "Manually trigger Zenodo release synchronization"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  sync-zenodo:
+    name: Sync Release to Zenodo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Zenodo Token
+        id: check-token
+        run: |
+          if [ -n "${{ secrets.ZENODO_TOKEN }}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+            echo "Zenodo API token configured."
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "Notice: ZENODO_TOKEN repository secret is not set."
+            echo "Zenodo synchronization is handled by the native Zenodo GitHub integration (https://zenodo.org/account/settings/github/)."
+          fi
+
+      - name: Upload and Synchronize to Zenodo
+        if: steps.check-token.outputs.has_token == 'true'
+        uses: megasanjay/upload-to-zenodo@v2.0.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          zenodo_token: ${{ secrets.ZENODO_TOKEN }}
+          zenodo_deposition_id: '593157'
+          zenodo_publish: true
+          zenodo_sandbox: false
+          citation_cff: true
+          zenodo_json: true

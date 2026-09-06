@@ -21,9 +21,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import warnings
 from typing import Tuple
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 from scipy.ndimage import generic_filter
 import matplotlib.pyplot as plt
 from openpiv.settings import PIVSettings
+
+try:
+    import openpiv_rust
+    HAS_RUST = True
+except ImportError:
+    HAS_RUST = False
+
+
+def _local_nanmedian(a: np.ndarray, size: int) -> np.ndarray:
+    """Local median over a (2*size+1, 2*size+1) window, NaN-padded at the
+    edges (same behavior as scipy.ndimage.generic_filter(a, np.nanmedian,
+    mode='constant', cval=np.nan, size=(2*size+1, 2*size+1)) but vectorized
+    via sliding_window_view instead of one Python call per output pixel).
+    """
+    k = 2 * size + 1
+    padded = np.pad(a.astype(float), size, mode='constant', constant_values=np.nan)
+    windows = sliding_window_view(padded, (k, k))
+    return np.nanmedian(windows, axis=(-2, -1))
 
 
 
@@ -234,10 +253,8 @@ def local_median_val(
         masked_u = u
         masked_v = v
 
-    um = generic_filter(masked_u, np.nanmedian, mode='constant',
-                        cval=np.nan, size=(2*size+1, 2*size+1))
-    vm = generic_filter(masked_v, np.nanmedian, mode='constant',
-                        cval=np.nan, size=(2*size+1, 2*size+1))
+    um = _local_nanmedian(masked_u, size)
+    vm = _local_nanmedian(masked_v, size)
 
     ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
 
@@ -249,7 +266,8 @@ def local_norm_median_val(
         v: np.ndarray,
         ε: float,
         threshold: float,
-        size: int=1
+        size: int=1,
+        backend: str="auto",
         )->np.ndarray:
     """This function is adapted from OpenPIV's implementation of
     validation.local_median_val(). validation.local_median_val() is,
@@ -307,18 +325,17 @@ def local_norm_median_val(
         masked_u = u
         masked_v = v
 
-    um = generic_filter(masked_u,
-                        np.nanmedian,
-                        mode='constant',
-                        cval=np.nan,
-                        size=(2*size+1, 2*size+1)
-    )
-    vm = generic_filter(masked_v,
-                        np.nanmedian,
-                        mode='constant',
-                        cval=np.nan,
-                        size=(2*size+1, 2*size+1)
-    )
+    if (backend == "rust" or (backend == "auto" and HAS_RUST)) and masked_u.ndim == 2 and masked_v.ndim == 2:
+        return openpiv_rust.local_norm_median_val(
+            np.ascontiguousarray(masked_u, dtype=np.float64),
+            np.ascontiguousarray(masked_v, dtype=np.float64),
+            float(ε),
+            float(threshold),
+            size=int(size),
+        )
+
+    um = _local_nanmedian(masked_u, size)
+    vm = _local_nanmedian(masked_v, size)
 
     def rfunc(x):
         """
