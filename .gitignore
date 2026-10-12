@@ -30,3 +30,4 @@ target/
 crates/**/target/
 dist/
 *.whl
+/piv_explainer
