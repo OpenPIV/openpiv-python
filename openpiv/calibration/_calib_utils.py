@@ -252,13 +252,19 @@ def get_los_error(
 # This script was originally from Theo's polynomial calibration repository.
 @_cal_doc_utils.docfiller
 def get_image_mapping(
-    cam: dict,
-    project_to_z_func: "function",
-    project_points_func: "function"
+    cam,
+    project_to_z_func=None,
+    project_points_func=None,
+    z: float = 0.0,
 ):
     """Get image Mapping.
-    
-    Get image mapping for rectifying 2D images.
+
+    Get image mapping for rectifying 2D images. Fixed version:
+    correct world-Y bounds (previously used world_x), true
+    min/max extent scale (previously centered-abs heuristic) and no
+    off-by-``Scale`` linspace offset. Extra legacy func args are
+    accepted for backward compatibility and ignored (methods on
+    ``cam`` are used).
     
     Parameters
     ----------
@@ -318,76 +324,74 @@ def get_image_mapping(
         cam.resolution[1],
         cam.resolution[0]
     )
-    
+
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
         np.arange(0, cam.resolution[1]),
         np.arange(0, cam.resolution[0]),
         indexing="ij"
     )
-    
+
     image_grid = np.concatenate(
         [py.reshape(-1, 1), px.reshape(-1, 1)],
         axis=-1
     ).astype("float64")
-    
+
     x = image_grid[:, 1]
     y = image_grid[:, 0]
-    
-    # We set Z to zero since there is no depth
-    Z = np.zeros_like(x)
-    
+
+    # project to the requested sheet plane
+    Z = np.zeros_like(x, dtype=np.float64) + float(z)
+
     # project image coordinates to world points
     world_x, world_y, _ = cam.project_to_z(
         [x, y],
         Z
     )
-    
-    world_x = world_x.reshape(field_shape, order='C')
-    world_y = world_y.reshape(field_shape, order='C')
-    
-    # get scale
-    lower_bound_X = np.min(np.absolute(world_x[:, 0]))
-    upper_bound_X = np.min(np.absolute(world_x[:, -1]))
-    lower_bound_Y = np.min(np.absolute(world_x[0, :]))
-    upper_bound_Y = np.min(np.absolute(world_x[-1, :]))
-    
-    scale_X = (lower_bound_X + upper_bound_X) / np.size(world_x, 1)
-    scale_Y = (lower_bound_Y + upper_bound_Y) / np.size(world_x, 0)
-    
-    Scale = min(scale_X, scale_Y)
-    
-    # get border limits
-    min_X = np.min(world_x)
-    max_X = np.max(world_x)
-    min_Y = np.min(world_y)
-    max_Y = np.max(world_y)
-    
-    # create a meshgrid for every x and y point for forward projection.
+
+    world_x = np.asarray(world_x, dtype=np.float64).reshape(field_shape, order='C')
+    world_y = np.asarray(world_y, dtype=np.float64).reshape(field_shape, order='C')
+
+    # get border limits (fixed: Y bounds from world_y, not world_x)
+    finite = np.isfinite(world_x) & np.isfinite(world_y)
+    if not np.any(finite):
+        raise ValueError("Back-projection produced no finite world points")
+    min_X = float(np.min(world_x[finite]))
+    max_X = float(np.max(world_x[finite]))
+    min_Y = float(np.min(world_y[finite]))
+    max_Y = float(np.max(world_y[finite]))
+
+    # true extent-based scale (world units per rectified pixel)
+    scale_X = (max_X - min_X) / cam.resolution[0]
+    scale_Y = (max_Y - min_Y) / cam.resolution[1]
+    Scale = float(min(scale_X, scale_Y))
+
+    # rectified world grid spanning the full extent (fixed: no +Scale offset)
     X, Y = np.meshgrid(
         np.linspace(
-            min_X + Scale,
-            max_X, 
-            num=cam.resolution[0], 
+            min_X,
+            max_X,
+            num=cam.resolution[0],
             endpoint=True
         ),
         np.linspace(
-            min_Y + Scale,
-            max_Y, 
-            num=cam.resolution[1], 
+            min_Y,
+            max_Y,
+            num=cam.resolution[1],
             endpoint=True
         )
     )
-    
+
     X = np.squeeze(X.reshape(-1, 1))
     Y = np.squeeze(Y.reshape(-1, 1))
-    
+    Z = np.zeros_like(X, dtype=np.float64) + float(z)
+
     # project world points to image coordinates
     mapped_grid = cam.project_points(
         [X, Y, Z]
     )
-    
-    mapped_grid_x = mapped_grid[0].reshape(field_shape)
-    mapped_grid_y = mapped_grid[1].reshape(field_shape)
-    
+
+    mapped_grid_x = np.asarray(mapped_grid[0], dtype=np.float64).reshape(field_shape)
+    mapped_grid_y = np.asarray(mapped_grid[1], dtype=np.float64).reshape(field_shape)
+
     return np.array([mapped_grid_x, mapped_grid_y]), Scale
