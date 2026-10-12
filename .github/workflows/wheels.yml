@@ -33,8 +33,8 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Build wheels
@@ -45,7 +45,7 @@ jobs:
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
@@ -58,8 +58,8 @@ jobs:
       matrix:
         target: [x64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           architecture: ${{ matrix.target }}
@@ -70,7 +70,7 @@ jobs:
           args: --release --out dist -i python3.12 --manifest-path crates/openpiv_rust/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-windows-${{ matrix.target }}
           path: dist
@@ -83,8 +83,8 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Build wheels
@@ -94,7 +94,7 @@ jobs:
           args: --release --out dist -i python3.12 --manifest-path crates/openpiv_rust/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-macos-${{ matrix.target }}
           path: dist
@@ -103,15 +103,15 @@ jobs:
     name: Build OpenPIV Python Package (sdist & pure wheel)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - name: Build sdist and wheel
         run: uv build --out-dir dist
       - name: Upload Python distribution
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-dist
           path: dist
@@ -123,7 +123,7 @@ jobs:
     needs: [linux-wheels, windows-wheels, macos-wheels, python-package]
     steps:
       - name: Download all wheels and packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: '*'
           merge-multiple: true
@@ -131,6 +131,6 @@ jobs:
       - name: Display files to publish
         run: ls -la dist/
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
       - name: Publish all distributions to PyPI
         run: uv publish --token ${{ secrets.PYPI_API_TOKEN }} dist/*
