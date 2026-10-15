@@ -31,3 +31,6 @@ crates/**/target/
 dist/
 *.whl
 /piv_explainer
+/.agents
+/.claude
+skills-lock.json
