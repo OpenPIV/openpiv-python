@@ -1,12 +1,55 @@
 import numpy as np
 from typing import Tuple
 
-from .._epipolar_utils import _multi_line_intersect
+from .._epipolar_utils import _multi_line_intersect, _line_intersect
 
 
 __all__ = [
+    "line_intersect",
     "multi_line_intersect"
 ]
+
+
+def line_intersect(
+    cam_1: "poly_model.camera",
+    cam_2: "poly_model.camera",
+    img_points_1: np.ndarray,
+    img_points_2: np.ndarray
+):
+    """Intersect polynomial-computed backward rays.
+
+    Parameters
+    ----------
+    cam_1, cam_2 : poly_model.camera
+        Calibrated polynomial cameras with matching dtypes.
+    img_points_1, img_points_2 : np.ndarray
+        Corresponding image coordinates with shape (2, N).
+
+    Returns
+    -------
+    coords : np.ndarray
+        Midpoint between the closest points on each pair of backward
+        rays, with shape (3, N).
+    dist : np.ndarray
+        Shortest separation between each pair of backward rays,
+        with shape (N,), in world-coordinate units.
+    
+    """
+    cam_1._check_parameters()
+    cam_2._check_parameters()
+
+    if cam_1.dtype != cam_2.dtype:
+        raise ValueError(
+            "Dtypes between camera structures must match"
+        )
+
+    img_points_1 = np.array(img_points_1, dtype=cam_1.dtype)
+    img_points_2 = np.array(img_points_2, dtype=cam_2.dtype)
+
+    t1, r1 = cam_1._get_inverse_vector(img_points_1)
+    t2, r2 = cam_2._get_inverse_vector(img_points_2)
+
+    return _line_intersect(t1, r1, t2, r2)
 
 
 def _dFdx(
