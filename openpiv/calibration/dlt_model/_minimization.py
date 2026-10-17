@@ -35,7 +35,8 @@ def calibrate_dlt(
     Returns
     -------
     H : 2D np.ndarray
-        A 3x3 matrix containing a homography fit for the object and image points.
+        A 3x3 planar homography or 3x4 camera projection matrix containing
+        the DLT fit for the object and image points.
     error : float
         The RMSE error of the DLT fit.
     
@@ -50,36 +51,44 @@ def calibrate_dlt(
     """
     object_points = np.array(object_points, dtype="float64")
     image_points = np.array(image_points, dtype="float64")
-    
+
+    if object_points.ndim != 2:
+        raise ValueError("Object points must be a two-dimensional array")
+    if image_points.ndim != 2 or image_points.shape[0] != 2:
+        raise ValueError("Image points must have shape (2, N)")
+
     ndims = object_points.shape[0]
+
+    if ndims not in (2, 3):
+        raise ValueError("Object points must have shape (2, N) or (3, N)")
+    if object_points.shape[1] != image_points.shape[1]:
+        raise ValueError("Object point image point size mismatch")
     
+    if not (
+        np.all(np.isfinite(object_points))
+        and np.all(np.isfinite(image_points))
+    ):
+        raise ValueError("Calibration points must contain only finite values")
+
     min_points = 4
-    
-    if ndims == 3 and  enforce_coplanar != True:
+
+    if ndims == 3 and enforce_coplanar != True:
         min_points += 2
-    
+
     if object_points.shape[1] < min_points:
         raise ValueError(
             f"Too little points to calibrate. Need at least {min_points} points"
         )
-    
-    if object_points.shape[1] != image_points.shape[1]:
-        raise ValueError(
-            "Object point image point size mismatch"
-        )
 
-    if ndims not in [2, 3]:
-        raise ValueError(
-            "Object points must be in either [X, Y] (shape = [N, 2]) or [X, Y, Z] "+
-            "format (shape = [N, 3]). Recieved shape = [N, {}]".format(ndims)
-        )
-    
     if enforce_coplanar == True:
         if ndims == 3:
-            if np.std(object_points[3]) > 0.00001:
+            z = object_points[2]
+
+            if np.std(z) > 1e-5:
                 raise ValueError(
                     "Object points must be co-planar"
                 )
+            
             ndims = 2
             object_points = object_points[:2, :]
     
@@ -135,191 +144,66 @@ def calibrate_dlt(
         A[1::2, 10] = y * Z
         A[1::2, 11] = y
     
-    # solve
-    U, E, V = np.linalg.svd(A, full_matrices=True)
-    
-    H = V[-1, :]
-    H /= H[-1]
+    # Solve Ah = 0. full_matrices=True is required for the 8x9 matrix
+    # produced by the minimal four-point planar case. The null-space vector
+    # is the final row of the full Vh matrix.
+    _, singular_values, vh = np.linalg.svd(A, full_matrices=True)
+
+    rank_tolerance = (
+        singular_values[0]
+        * max(A.shape)
+        * np.finfo(A.dtype).eps
+    )
+    rank = np.count_nonzero(singular_values > rank_tolerance)
+
+    if rank < A.shape[1] - 1:
+        raise ValueError(
+            "Calibration points form a degenerate DLT configuration"
+        )
+
+    H = vh[-1, :]
+
+    # Prefer the traditional h[-1] == 1 convention. A valid projective
+    # matrix can, however, have a zero final coefficient, so fall back to a
+    # unit-norm representative rather than dividing by zero.
+    coefficient_tolerance = (
+        np.finfo(H.dtype).eps * max(A.shape) * np.linalg.norm(H)
+    )
+    homogeneous_scale = H[-1]
+
+    if abs(homogeneous_scale) <= coefficient_tolerance:
+        homogeneous_scale = np.linalg.norm(H)
+    if abs(homogeneous_scale) <= np.finfo(H.dtype).tiny:
+        raise ValueError("Unable to determine finite DLT coefficients")
+
+    H /= homogeneous_scale
     H = H.reshape([3, ndims+1])
-    
+
     # denormalize DLT matrix
-    H = np.matmul(
-        np.matmul(
-            np.linalg.inv(img_norm_mat),
-            H
-        ),
+    H = np.dot(
+        np.linalg.solve(img_norm_mat, H),
         obj_norm_mat
     )
+
+    if not np.all(np.isfinite(H)) or np.linalg.matrix_rank(H) < 3:
+        raise ValueError("The fitted DLT matrix is rank deficient")
         
     # compute RMSE error
-    xy2 = np.dot(
-        H,
-        homogenize(object_points)
-    )
+    homogeneous_object_points = homogenize(object_points)
+    xy2 = np.dot(H, homogeneous_object_points)
     
-    res = xy2 / xy2[2, :]
-    res = res[:2, :]
+    if not np.all(np.isfinite(xy2)):
+        raise ValueError("The fitted DLT produced non-finite coordinates")
+
+    denominator = xy2[2, :]
+
+    res = xy2[:2, :] / denominator
     
     error = res - image_points
     
     RMSE = get_rmse(error)
     
     return H, RMSE
-
-
-#@_cal_doc_utils.docfiller
-#def calibrate_dlt_robust(
-#    object_points: np.ndarray,
-#    image_points: np.ndarray,
-#    enforce_coplanar: bool=False
-#):
-#    """Coplanar DLT for homography.
-#    
-#    Compute a homography matrix using direct linear transformation. For 2D
-#    lab coordinates, a 2D DLT is performed. For lab coordinates that include
-#    a Z-axis, a 3D DLT is performed. For 3D DLTs, an option to error if the
-#    Z-axis is not co-planar is available.
-#    
-#    Parameters
-#    ----------
-#    %(object_points)s
-#    %(image_points)s
-#    enforce_coplanar : bool
-#        If a Z plane is supplied in the object points, check whether or not the Z
-#        planes are co-planar.
-#        
-#    Returns
-#    -------
-#    H : 2D np.ndarray
-#        A 3x3 matrix containing a homography fit for the object and image points.
-#    error : float
-#        The RMSE error of the DLT fit.
-#
-#    Raises
-#    ------
-#    ValueError
-#        If the object coordinates contain non-planar z-coordinates and
-#        enforce_coplanar is enabled.
-#    ValueError
-#        If there are not enough points to calculate the DLT coefficients.
-#    
-#    """
-#    object_points = np.array(object_points, dtype="float64")
-#    image_points = np.array(image_points, dtype="float64")
-#    
-#    ndims = object_points.shape[0]
-#    
-#    min_points = 10
-#    
-#    if ndims == 3 and  enforce_coplanar != True:
-#        min_points += 8
-#    
-#    if object_points.shape[1] < min_points:
-#        raise ValueError(
-#            f"Too little points to calibrate. Need at least {min_points} points"
-#        )
-#    
-#    if object_points.shape[1] != image_points.shape[1]:
-#        raise ValueError(
-#            "Object point image point size mismatch"
-#        )
-#
-#    if ndims not in [2, 3]:
-#        raise ValueError(
-#            "Object points must be in either [X, Y] (shape = [2, N]) or [X, Y, Z] "+
-#            "format (shape = [3, N]). Recieved shape = [{}, N]".format(ndims)
-#        )
-#    
-#    if enforce_coplanar == True:
-#        if ndims == 3:
-#            if np.std(object_points[3]) > 0.00001:
-#                raise ValueError(
-#                    "Object points must be co-planar"
-#                )
-#            ndims = 2
-#            object_points = object_points[:2, :]
-#    
-#    if ndims == 2:
-#        X_raw, Y_raw = object_points
-#        x_raw, y_raw = image_points
-#        
-#        # normalize for better dlt results
-#        [X, Y], obj_norm_mat = _standardize_points_2d(X_raw, Y_raw)
-#        [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
-#            
-#        # mount constraints
-#        A = np.zeros([x.shape[0] * 2, 21], dtype="float64")
-#        r2 = X*Z + Y*Y
-#        r4 = r2 * r2
-#        r6 = r4 * r2
-#        
-#        A[0::2, 0] = -X
-#        A[0::2, 1] = -Y
-#        A[0::2, 2] = -1
-#        
-#        A[0::2, 3] = -X * r2
-#        A[0::2, 4] = -Y * r2
-#        A[0::2, 5] = -1 * r2
-#        
-#        A[0::2, 6] = -X * r4
-#        A[0::2, 7] = -Y * r4
-#        A[0::2, 8] = -1 * r4
-#        
-#        A[0::2, 18] = x * X
-#        A[0::2, 19] = x * Y
-#        A[0::2, 20] = x
-#
-#        A[1::2, 9] =  -X
-#        A[1::2, 10] = -Y
-#        A[1::2, 11] = -1
-#        
-#        A[1::2, 12] = -X * r2
-#        A[1::2, 13] = -Y * r2
-#        A[1::2, 14] = -1 * r2
-#        
-#        A[1::2, 15] = -X * r4
-#        A[1::2, 16] = -Y * r4
-#        A[1::2, 17] = -1 * r4
-#        
-#        A[1::2, 18] = y * X
-#        A[1::2, 19] = y * Y
-#        A[1::2, 20] = y
-#        
-#    else:
-#        raise ValueError(
-#            "3D robust DLT is not supported"
-#        )
-#    
-#    # solve
-#    U, E, V = np.linalg.svd(A, full_matrices=True)
-#    
-#    H = V[-1, :]
-#    H /= H[-1]
-#    H = H.reshape([3, 7])
-#    
-#    # denormalize DLT matrix
-#    H = np.matmul(
-#        np.matmul(
-#            np.linalg.inv(img_norm_mat),
-#            H
-#        ),
-#        obj_norm_mat
-#    )
-#    
-#    # compute RMSE error
-#    xy2 = np.dot(
-#        H, 
-#        homogenize(object_points)
-#    )
-#    
-#    res = xy2 / xy2[2, :]
-#    res = res[:2, :]
-#    
-#    error = res - image_points
-#    
-#    RMSE = get_rmse(error)
-#    
-#    return H, RMSE
 
 
 @_cal_doc_utils.docfiller
