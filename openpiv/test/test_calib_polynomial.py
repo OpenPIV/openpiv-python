@@ -11,56 +11,29 @@ from openpiv.calibration.calib_utils import get_reprojection_error, get_los_erro
 
 file = os.path.join(os.path.dirname(__file__),"test_calibration_points.npz")
 
-def test_parameters_input():
+@pytest.mark.parametrize("args", ((), ("name",)))
+def test_required_parameters_input(args):
     with pytest.raises(TypeError):
-         # missing camera name
-        poly_model.camera()
-        
-        # missing resolution
-        poly_model.camera(
-            "name"
-        )
-                                 
+        poly_model.camera(*args)
+
+
+@pytest.mark.parametrize("parameters", [
+    {"name": 0},
+    {"resolution": [0]},
+    {"poly_wi": np.zeros(19)},
+    {"poly_wi": np.zeros((10, 10))},
+    {"poly_iw_o": np.zeros(10)},
+    {"poly_iw_o": np.zeros((19, 2))},
+    {"poly_iw_o": np.zeros((10, 10))},
+    {"poly_iw_v": np.zeros(10)},
+    {"poly_iw_v": np.zeros((19, 2))},
+    {"poly_iw_v": np.zeros((10, 10))},
+])
+def test_parameters_input(parameters):
+    kwargs = {"name": "name", "resolution": [0, 0]}
+    kwargs.update(parameters)
     with pytest.raises(ValueError):
-        # name is not a string
-        poly_model.camera(
-            0,
-            resolution=[0, 0]
-        )
-        
-        # not two element tuple
-        poly_model.camera(
-            "name",
-            resolution=[0]
-        )
-        
-        # not 2D
-        poly_model.camera(
-            "name",
-            resolution=[0, 0],
-            poly_wi = np.zeros(19)
-        )
-        
-        # not 2D
-        poly_model.camera(
-            "name",
-            resolution=[0, 0],
-            poly_iw = np.zeros(19)
-        )
-        
-        # not correct shape
-        poly_model.camera(
-            "name",
-            resolution=[0, 0],
-            poly_wi = np.zeros((10, 10))
-        )
-        
-        # not correct shape
-        poly_model.camera(
-            "name",
-            resolution=[0, 0],
-            poly_iw = np.zeros((10, 10))
-        )
+        poly_model.camera(**kwargs)
         
 
 def test_parameters_initialization():
@@ -72,8 +45,8 @@ def test_parameters_initialization():
     assert_(hasattr(cam, "name"))
     assert_(hasattr(cam, "resolution"))
     assert_(hasattr(cam, "poly_wi"))
-    assert_(hasattr(cam, "poly_iw"))
-    assert_(hasattr(cam, "dlt"))
+    assert_(hasattr(cam, "poly_iw_o"))
+    assert_(hasattr(cam, "poly_iw_v"))
     assert_(hasattr(cam, "dtype"))
     
     assert_(len(cam.resolution) == 2)
@@ -84,8 +57,13 @@ def test_parameters_initialization():
     )
     
     assert_equal(
-        cam.poly_iw.shape,
-        [19, 3]
+        cam.poly_iw_o.shape,
+        [10, 2]
+    )
+
+    assert_equal(
+        cam.poly_iw_v.shape,
+        [10, 2]
     )
     
     assert_(cam.dtype in ["float32", "float64"])
@@ -332,7 +310,9 @@ def test_load_parameters_1():
 def test_load_parameters_2():
     cam_orig = poly_model.camera(
         "dummy",
-        resolution = [512, 512]
+        resolution = [512, 512],
+        poly_iw_o = np.arange(20, dtype="float64").reshape(10, 2),
+        poly_iw_v = np.arange(20, 40, dtype="float64").reshape(10, 2)
     )
     
     cam_new = poly_model.camera(
@@ -366,8 +346,13 @@ def test_load_parameters_2():
     )
     
     assert_array_equal(
-        cam_orig.poly_iw, 
-        cam_new.poly_iw
+        cam_orig.poly_iw_o,
+        cam_new.poly_iw_o
+    )
+
+    assert_array_equal(
+        cam_orig.poly_iw_v,
+        cam_new.poly_iw_v
     )
     
     assert_array_equal(
