@@ -181,20 +181,42 @@ def _project_to_z(
             "or numpy ndarray"
         )
     
+    t, r = self._get_inverse_vector(image_points)
+    a = (Z - t[2]) / r[2]
+
+    X = a*r[0] + t[0]
+    Y = a*r[1] + t[1]
+
+    return np.array([X, Y, Z], dtype=dtype)
+
+
+def _get_inverse_vector(
+    self,
+    image_points: np.ndarray
+):
+    """Return per-pixel origins and direction vectors, both shaped [3, N].
+
+    Origins lie on Z=0. Directions are not normalized; their Z component
+    is one. Coefficients use the raw image coordinates, as in project_points.
+    """
+    image_points = np.array(image_points, dtype=self.dtype)
+    x = image_points[0]
+    y = image_points[1]
+
     polynomial_iw = np.array(
         [
             np.ones_like(x),
-            x,     y,     Z, 
-            x*y,   x*Z,   y*Z,
-            x**2,  y**2,  Z**2,
-            x**3,  x*x*y, x*x*Z,
-            y**3,  x*y*y, y*y*Z,
-            x*Z*Z, y*Z*Z, x*y*Z
+            x,     y,
+            x*x,   x*y,   y*y,
+            x*x*x, x*x*y, x*y*y, y*y*y
         ],
-        dtype=dtype
+        dtype=self.dtype
     ).T
-    
-    return np.dot(
-        polynomial_iw,
-        self.poly_iw
-    ).T
+
+    X, Y = np.dot(polynomial_iw, self.poly_iw_o).T
+    dx, dy = np.dot(polynomial_iw, self.poly_iw_v).T
+
+    t = np.array([X, Y, np.zeros_like(X)], dtype=self.dtype)
+    r = np.array([dx, dy, np.ones_like(dx)], dtype=self.dtype)
+
+    return t, r

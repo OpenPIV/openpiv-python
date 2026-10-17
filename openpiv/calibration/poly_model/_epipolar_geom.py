@@ -1,8 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-from ..dlt_model import (camera as dlt_camera, 
-                         line_intersect as dlt_line_intersect)
+from .._epipolar_utils import _multi_line_intersect
 
 
 __all__ = [
@@ -216,7 +215,7 @@ def _refine_pos3D(
     cams: list,
     object_points: np.ndarray,
     image_points: list,
-    iterations: int=3
+    iterations: int=1
 ):
     dtype = cams[0].dtype
     n_cams = len(cams)
@@ -267,36 +266,32 @@ def _estimate_pos(
     cams: list,
     image_points: list
 ):
-    # only need two cameras for analytical solution
-    cam1 = dlt_camera(
-        "dummy",
-        resolution = cams[0].resolution,
-        coeffs      = cams[0].dlt,
-        dtype      = cams[0].dtype
-    )
-    
-    cam2 = dlt_camera(
-        "dummy",
-        resolution = cams[1].resolution,
-        coeffs     = cams[1].dlt,
-        dtype      = cams[1].dtype
-    )
-    
-    # TODO: Should we use DLT's multi_line_intersect?
-    return dlt_line_intersect(
-        cam1,
-        cam2,
-        image_points[0],
-        image_points[1]
-    )[0]
+    dtype = cams[0].dtype
+    n_points = image_points[0].shape[1]
+
+    lines = []
+    for cam in range(len(cams)):
+        t, r = cams[cam]._get_inverse_vector(image_points[cam])
+        lines.append([t, r])
+
+    object_points = np.zeros([3, n_points], dtype=dtype)
+    for particle in range(n_points):
+        particle_lines = []
+        for cam in range(len(cams)):
+            particle_lines.append([
+                lines[cam][0][:, particle],
+                lines[cam][1][:, particle:particle+1].copy()
+            ])
+        object_points[:, particle] = _multi_line_intersect(particle_lines, dtype)[:, 0]
+
+    return object_points
 
 
 # Now the good part starts :)
 def multi_line_intersect(
     cameras: list,
     image_points: list,
-    init_pos: Tuple[float, float, float]=None,
-    iterations: int=3
+    iterations: int=1
 ):
     """Estimate 3D positions using a gradient descent algorithm.
     
@@ -308,8 +303,7 @@ def multi_line_intersect(
     a specified amount of iterations have been completed. The least squares
     solution is performed via SVD, making it robust to noise and artifacts.
     This is necessary since the intitial particle positions are approximated
-    using the driect linear transforms (DLT) algorithm which ignores
-    all distortion artifacts.
+    using the calibrated backward rays.
     
     Parameters
     ----------
@@ -317,14 +311,8 @@ def multi_line_intersect(
         A list of instances of polynomial cameras.
     img_points : list
         A list of image coordinates for each canera structure.
-    init_pos : list, optional
-        An initial position for all particles given by a tuple of three
-        floats. The ordering of the tuple is (X, Y, Z) in world coordinates
-        and should be the center of the volume (e.g., (0, 0, 0)). If not
-        given, the particle positions are approximated using a DLT-based 
-        algorithm.
     iterations : int, optional
-        The number of iterations each object point recieves.
+        The number of Gauss-Newton iterations each object point recieves.
         
     Returns
     -------
@@ -369,24 +357,12 @@ def multi_line_intersect(
         for i in range(len(image_points)):
             image_points[i] = image_points[i][:, np.newaxis]
     
-    if init_pos is not None:
-        n_particles = image_points[0].shape[1]
-        
-        object_points = np.zeros(
-            [3, n_particles],
-            dtype=dtype1
-        )
-        
-        object_points[0, :] = init_pos[0]
-        object_points[1, :] = init_pos[1]
-        object_points[2, :] = init_pos[2]
-        
-    else:
-        object_points = _estimate_pos(
-            cameras,
-            image_points
-        )
-    
+    object_points = _estimate_pos(
+        cameras,
+        image_points
+    )
+
+    # Refine position using Soloff polynomial
     object_points = _refine_pos3D(
         cameras,
         object_points,

@@ -45,19 +45,19 @@ def _save_parameters(
                 
             f.write(_d2 + '\n')
             
-        for i in range(19):
+        for i in range(10):
             _d2 = ''
-            for j in range(3):
-                _d2 += str(self.poly_iw[i, j]) + ' '
+            for j in range(2):
+                _d2 += str(self.poly_iw_o[i, j]) + ' '
+
+            f.write(_d2 + '\n')
+
+        for i in range(10):
+            _d2 = ''
+            for j in range(2):
+                _d2 += str(self.poly_iw_v[i, j]) + ' '
                 
             f.write(_d2 + '\n')
-            
-        for i in range(3):
-            _c = ''
-            for j in range(self.dlt.shape[1]):
-                _c += str(self.dlt[i, j]) + ' '
-                
-            f.write(_c + '\n')
         
         f.write(self.dtype + '\n')
         
@@ -93,25 +93,27 @@ def _load_parameters(
             _d2 = f.readline()[:-2]
             poly_wi.append(np.array([float(s) for s in _d2.split()]))
         
-        poly_iw = []
-        for i in range(19):
+        poly_iw_o = []
+        for i in range(10):
             _d2 = f.readline()[:-2]
-            poly_iw.append(np.array([float(s) for s in _d2.split()]))
-        
-        dlt = []
-        for i in range(3):
-            _c = f.readline()[:-2]
-            dlt.append(np.array([float(s) for s in _c.split()]))
+            poly_iw_o.append(np.array([float(s) for s in _d2.split()]))
+        if any(len(row) != 2 for row in poly_iw_o):
+            raise ValueError("Old poly_iw file: recalibrate to obtain volume ray coefficients")
+
+        poly_iw_v = []
+        for i in range(10):
+            _d2 = f.readline()[:-2]
+            poly_iw_v.append(np.array([float(s) for s in _d2.split()]))
         
         dtype = f.readline()[:-1]
         
         poly_wi = np.array(poly_wi, dtype=dtype)
-        poly_iw = np.array(poly_iw, dtype=dtype)
-        dlt = np.array(dlt, dtype=dtype)
+        poly_iw_o = np.array(poly_iw_o, dtype=dtype)
+        poly_iw_v = np.array(poly_iw_v, dtype=dtype)
 
     self.name = name
     self.resolution = resolution
     self.poly_wi = poly_wi
-    self.poly_iw = poly_iw
-    self.dlt = dlt
+    self.poly_iw_o = poly_iw_o
+    self.poly_iw_v = poly_iw_v
     self.dtype = dtype

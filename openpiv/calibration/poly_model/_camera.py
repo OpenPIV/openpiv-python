@@ -3,7 +3,7 @@ from typing import Tuple
 
 from ._check_params import _check_parameters
 from ._minimization import _minimize_params
-from ._projection import _project_points, _project_to_z
+from ._projection import _project_points, _project_to_z, _get_inverse_vector
 from ._utils import _save_parameters, _load_parameters
 
 
@@ -17,7 +17,7 @@ class camera(object):
     is based on the Soloff camera model where a polymial mapping function
     is created with third order polynomials in the x- and y-axis and a second
     order polynomial along the z-axis. The polynomial camera models also has
-    a DLT-based estimator for 3D point triangulation for faster convergence.
+    ray-based estimator for 3D point triangulation.
     
     Attributes
     ----------
@@ -27,10 +27,10 @@ class camera(object):
         Resolution of camera in x and y axes respectively.
     poly_wi : np.ndarray
         19 coefficients for world to image polynomial calibration in [x, y]'.
-    poly_iw : np.ndarray
-        19 coefficients for image to world polynomial calibration in [X, Y, Z]'.
-    dlt : np.ndarray
-        12 coefficients for direct linear transformation.
+    poly_iw_o : np.ndarray
+        10 coefficients for ray origins in [X, Y]'.
+    poly_iw_v : np.ndarray
+        10 coefficients for ray slopes in [dX/dZ, dY/dZ]'.
     dtype : str
         The dtype used in the projections.
         
@@ -48,24 +48,25 @@ class camera(object):
         name: str,
         resolution: Tuple[int, int],
         poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
-        poly_iw: np.ndarray=np.ones((3,19), dtype="float64").T,
-        dlt: np.ndarray=np.eye(3, 4),
+        poly_iw_o: np.ndarray=np.ones((2,10), dtype="float64").T,
+        poly_iw_v: np.ndarray=np.ones((2,10), dtype="float64").T,
         dtype: str="float64"
     ):
         self.name = name
         self.resolution = resolution
         self.poly_wi = poly_wi
-        self.poly_iw = poly_iw
-        self.dlt = dlt
+        self.poly_iw_o = poly_iw_o
+        self.poly_iw_v = poly_iw_v
         self.dtype = dtype
         
         # method definitions
-        camera._check_parameters = _check_parameters
-        camera.minimize_params = _minimize_params
-        camera.project_points = _project_points
-        camera.project_to_z = _project_to_z
-        camera.save_parameters = _save_parameters
-        camera.load_parameters = _load_parameters
+        camera._check_parameters   = _check_parameters
+        camera.minimize_params     = _minimize_params
+        camera.project_points      = _project_points
+        camera.project_to_z        = _project_to_z
+        camera._get_inverse_vector = _get_inverse_vector
+        camera.save_parameters     = _save_parameters
+        camera.load_parameters     = _load_parameters
         
         # check camera params at init
         self._check_parameters()

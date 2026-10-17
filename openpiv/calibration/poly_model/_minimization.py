@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.optimize import least_squares
 
-from ..dlt_model import calibrate_dlt
 from .. import _cal_doc_utils
 
 
@@ -81,7 +80,7 @@ def _minimize_params(
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
     
-    if object_points.shape[1] < 19:
+    if object_points.shape[1] < 20:
         raise ValueError(
             "Too little points to calibrate"
         )
@@ -111,20 +110,21 @@ def _minimize_params(
         dtype=dtype
     ).T
     
-    # in the future, break this into three Z subvolumes to further reduce errors.
+    # X,Y are cubic in image coordinates and linear in world Z.
     polynomial_iw = np.array(
         [
             np.ones_like(x),
-            x,     y,     Z, 
-            x*y,   x*Z,   y*Z,
-            x**2,  y**2,  Z**2,
-            x**3,  x*x*y, x*x*Z,
-            y**3,  x*y*y, y*y*Z,
-            x*Z*Z, y*Z*Z, x*y*Z
+            x,       y,
+            x*x,     x*y,     y*y,
+            x*x*x,   x*x*y,   x*y*y,   y*y*y,
+            Z,
+            x*Z,     y*Z,
+            x*x*Z,   x*y*Z,   y*y*Z,
+            x*x*x*Z, x*x*y*Z, x*y*y*Z, y*y*y*Z
         ],
         dtype=dtype
     ).T
-    
+
 
     # world to image (forward projection)
     coeff_wi = np.zeros([19, 2], dtype=dtype)
@@ -142,28 +142,24 @@ def _minimize_params(
             image_points[i]
         )
     
-    # image to world (back projection)
-    coeff_iw = np.zeros([19, 3], dtype=dtype)
-    
-    for i in range(3):
-        coeff_iw[:, i] = np.linalg.lstsq(
-            polynomial_iw,
-            object_points[i], 
+    # image to world (ray origins and direction slopes)
+    coeff_iw = np.zeros([20, 2], dtype=dtype)
+
+    # Scale columns for fitting; stored coefficients use raw image coordinates.
+    scale = np.linalg.norm(polynomial_iw.astype("float64"), axis=0)
+    scale[scale == 0] = 1.0
+    polynomial_iw_scaled = polynomial_iw / scale
+
+    for i in range(2):
+        result = np.linalg.lstsq(
+            polynomial_iw_scaled,
+            object_points[i],
             rcond=None
-        )[0]
-        
-        coeff_iw[:, i] = _refine_poly(
-            coeff_iw[:, i],
-            polynomial_iw,
-            object_points[i]
         )
-    
-    # DLT estimator
-    dlt_matrix, _residual = calibrate_dlt(
-        object_points,
-        image_points
-    )
+        if result[2] != 20:
+            raise ValueError("Volume ray calibration requires full-rank volumetric points")
+        coeff_iw[:, i] = result[0] / scale
 
     self.poly_wi = coeff_wi
-    self.poly_iw = coeff_iw
-    self.dlt = dlt_matrix
+    self.poly_iw_o = coeff_iw[:10, :]
+    self.poly_iw_v = coeff_iw[10:, :]
