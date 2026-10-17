@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, least_squares
 
 from ._normalization import _standardize_points_2d, _standardize_points_3d
 from .._calib_utils import homogenize, get_rmse
@@ -15,39 +15,66 @@ __all__ = [
 def calibrate_dlt(
     object_points: np.ndarray,
     image_points: np.ndarray,
-    enforce_coplanar: bool=False
+    enforce_coplanar: bool=False,
+    nonlinear: bool=False
 ):
-    """Coplanar DLT for homography.
-    
-    Compute a homography matrix using direct linear transformation. For 2D
-    lab coordinates, a 2D DLT is performed. For lab coordinates that include
-    a Z-axis, a 3D DLT is performed. For 3D DLTs, an option to error if the
-    Z-axis is not co-planar is available.
-    
+    """Normalized DLT with optional nonlinear refinement.
+
+    Compute a 3x3 planar homography from 2D lab coordinates or a 3x4 camera
+    projection matrix from 3D lab coordinates using normalized direct linear
+    transformation.
+
+    When enabled, nonlinear refinement minimizes image reprojection error
+    using Levenberg-Marquardt before denormalization. Planar refinement uses
+    an analytical Jacobian; 3D refinement uses a two-point numerical Jacobian.
+
     Parameters
     ----------
     %(object_points)s
     %(image_points)s
-    enforce_coplanar : bool
-        If a Z plane is supplied in the object points, check whether or not the Z
-        planes are co-planar.
-        
+    enforce_coplanar : bool, optional
+        If True, require the standard deviation of supplied Z coordinates
+        to be no greater than 1e-5 in lab-coordinate units. The Z coordinates
+        are then discarded and a planar homography is fitted using X and Y.
+        This checks for a constant-Z plane, not an arbitrarily oriented plane.
+        Default is False.
+    nonlinear : bool, optional
+        If True, refine the initial DLT matrix by minimizing image
+        reprojection error. If False, return the normalized linear DLT
+        solution after denormalization. Default is False.
+
     Returns
     -------
     H : 2D np.ndarray
-        A 3x3 planar homography or 3x4 camera projection matrix containing
-        the DLT fit for the object and image points.
+        A 3x3 planar homography or 3x4 camera projection matrix mapping
+        lab coordinates to homogeneous image coordinates.
     error : float
-        The RMSE error of the DLT fit.
-    
+        RMSE of the image reprojection residuals for the returned matrix.
+
     Raises
     ------
     ValueError
-        If the object coordinates contain non-planar z-coordinates and
-        enforce_coplanar is enabled.
+        If the input shapes are invalid, correspondence counts differ,
+        inputs contain non-finite values, or there are insufficient points.
     ValueError
-        If there are not enough points to calculate the DLT coefficients.
-    
+        If Z coordinates fail the constant-Z check when enforce_coplanar
+        is True.
+    ValueError
+        If normalization fails, the DLT configuration is degenerate, or
+        the fitted matrix is non-finite or rank deficient.
+    ValueError
+        If the fitted matrix produces non-finite homogeneous image
+        coordinates when computing RMSE.
+    RuntimeError
+        If nonlinear refinement fails to converge.
+
+    Notes
+    -----
+    Linear DLT requires at least four planar correspondences or six
+    noncoplanar 3D correspondences. The existing planar nonlinear refinement
+    requires at least five correspondences because it optimizes all nine
+    homography coefficients.
+
     """
     object_points = np.array(object_points, dtype="float64")
     image_points = np.array(image_points, dtype="float64")
@@ -178,6 +205,20 @@ def calibrate_dlt(
 
     H /= homogeneous_scale
     H = H.reshape([3, ndims+1])
+
+    if nonlinear:
+        if ndims == 2:
+            H = _refine2D(
+                H,
+                np.array([X, Y]),
+                np.array([x, y])
+            )
+        else:
+            H = _refine3D(
+                H,
+                np.array([X, Y, Z]),
+                np.array([x, y])
+            )
 
     # denormalize DLT matrix
     H = np.dot(
@@ -370,3 +411,87 @@ def _refine2D(
     new_h = new_h.reshape((3,3))
 
     return new_h
+
+
+def _unpack3D(
+    parameters: np.ndarray,
+    gauge_index: int
+):
+    """Reconstruct a 3x4 matrix from 11 projective parameters."""
+    coefficients = np.empty(12, dtype="float64")
+
+    free_parameters = np.ones(12, dtype=bool)
+    free_parameters[gauge_index] = False
+
+    coefficients[free_parameters] = parameters
+    coefficients[gauge_index] = 1.0
+
+    return coefficients.reshape((3, 4))
+
+
+def _refine_func3D(
+    parameters: np.ndarray,
+    homogeneous_object_points: np.ndarray,
+    image_points: np.ndarray,
+    gauge_index: int
+):
+    """Calculate 3-D DLT image reprojection residuals."""
+    H = _unpack3D(parameters, gauge_index)
+
+    projected_points = np.dot(
+        H,
+        homogeneous_object_points
+    )
+
+    predicted_image_points = (
+        projected_points[:2, :] / projected_points[2, :]
+    )
+
+    # Interleaved residual order:
+    # [x0, y0, x1, y1, ...]
+    residuals = predicted_image_points - image_points
+
+    return residuals.T.ravel()
+
+
+def _refine3D(
+    H: np.ndarray,
+    object_points: np.ndarray,
+    image_points: np.ndarray
+):
+    initial_coefficients = H.ravel().copy()
+
+    # Select a stable local projective gauge.
+    gauge_index = int(
+        np.argmax(np.abs(initial_coefficients))
+    )
+
+    initial_coefficients /= initial_coefficients[gauge_index]
+
+    initial_parameters = np.delete(
+        initial_coefficients,
+        gauge_index
+    )
+
+    result = least_squares(
+        _refine_func3D,
+        x0=initial_parameters,
+        jac="2-point",
+        method="lm",
+        x_scale="jac",
+        args=(
+            homogenize(object_points),
+            image_points,
+            gauge_index
+        )
+    )
+
+    if not result.success:
+        raise RuntimeError(
+            f"3D DLT refinement failed: {result.message}"
+        )
+
+    return _unpack3D(
+        result.x,
+        gauge_index
+    )
