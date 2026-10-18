@@ -205,7 +205,6 @@ def _gaussian_offset(
 def checkerboard_find_points(
     image,
     robust=False,
-    *,
     filter_size=17,
     min_distance=None,
     threshold_rel=0.1
@@ -238,8 +237,7 @@ def checkerboard_find_points(
     points : (2, n) ndarray
         Floating-point image coordinates: x in the first row, y in the second,
         consistent with the other calibration point functions. Pixel centers
-        start at (0, 0); y increases downward. No board size, connectivity or
-        world origin is inferred. No detections gives an array of shape (2, 0).
+        start at (0, 0); y increases downward.
 
     Notes
     -----
@@ -334,8 +332,7 @@ def checkerboard_find_points(
     scale = 2 if robust else 1
     width = 2 * (filter_size // 7) + 1
 
-    # Include both post-filters and the Gaussian fit's neighbors. Keep the
-    # exclusion region fixed in original pixels when upsampling.
+    # Include both post-filters and the Gaussian fit's neighbors.
     border = scale * (
         int(
             np.ceil(
@@ -366,7 +363,7 @@ def checkerboard_find_points(
         width
     )
 
-    # Mask candidates, not the response: clipping the response would create
+    # Mask candidates, not the response. Clipping the response would create
     # artificial maxima at the boundary and corrupt three-point fits there.
     valid = np.zeros(
         image.shape,
