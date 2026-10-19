@@ -17,9 +17,12 @@ from .config import ENV_PREFIX, MODEL_CHOICES, StereoConfig
 from .davis import (
     CameraMarks,
     PlateInfo,
+    VectorField,
     parse_calibration_rms,
     parse_mark_position_table,
     parse_plate_info,
+    read_vector_field,
+    vector_field_grid,
 )
 from .frames import ims_info, read_image, read_pair
 from .pipeline import (
@@ -27,6 +30,7 @@ from .pipeline import (
     build_dewarp_maps,
     build_world_grid,
     common_marks,
+    compare_fields,
     correct_disparity,
     fit_cameras,
     make_camera,
@@ -44,9 +48,11 @@ __all__ = [
     "CameraMarks",
     "PlateInfo",
     "StereoConfig",
+    "VectorField",
     "build_dewarp_maps",
     "build_world_grid",
     "common_marks",
+    "compare_fields",
     "correct_disparity",
     "fit_cameras",
     "ims_info",
@@ -56,9 +62,11 @@ __all__ = [
     "parse_plate_info",
     "read_image",
     "read_pair",
+    "read_vector_field",
     "reconstruct_3c",
     "rectify",
     "reprojection_report",
     "run_2c_piv",
     "triangulation_report",
+    "vector_field_grid",
 ]

@@ -536,3 +536,62 @@ def triangulation_report(
         "max": float(error.max()),
         "planes": planes,
     }
+
+
+def compare_fields(
+    ours: np.ndarray,
+    theirs: np.ndarray,
+    their_x: np.ndarray,
+    their_y: np.ndarray,
+    our_x: np.ndarray,
+    our_y: np.ndarray,
+    valid: np.ndarray | None = None,
+) -> dict:
+    """Compare a reconstructed field with a reference on the reference grid.
+
+    The reconstructed field is interpolated onto the grid of the
+    reference, then the two are compared where the reference is valid.
+
+    Parameters
+    ----------
+    ours:
+        The reconstructed velocity component (1D, one value per node).
+    theirs:
+        The reference component, shaped ``(ny, nx)``.
+    their_x, their_y:
+        The world coordinates (mm) of the reference grid.
+    our_x, our_y:
+        The world coordinates (mm) of the reconstructed nodes.
+    valid:
+        Mask of the valid reference vectors; ``None`` uses ``theirs != 0``.
+
+    Returns
+    -------
+    dict
+        ``median_ours``, ``median_theirs``, ``bias``, ``rmse`` and
+        ``correlation``.
+    """
+    from scipy.interpolate import LinearNDInterpolator
+
+    grid_x, grid_y = np.meshgrid(np.asarray(their_x), np.asarray(their_y))
+    interpolated = LinearNDInterpolator(
+        np.column_stack([np.asarray(our_x), np.asarray(our_y)]),
+        np.asarray(ours, dtype=np.float64),
+        fill_value=np.nan,
+    )(grid_x, grid_y)
+    reference = np.asarray(theirs, dtype=np.float64)
+    if valid is None:
+        valid = reference != 0
+    mask = np.asarray(valid, dtype=bool) & np.isfinite(interpolated)
+    if not np.any(mask):
+        raise ValueError("no overlapping valid vectors to compare")
+    a = interpolated[mask]
+    b = reference[mask]
+    return {
+        "median_ours": float(np.median(a)),
+        "median_theirs": float(np.median(b)),
+        "bias": float(np.mean(a - b)),
+        "rmse": float(np.sqrt(np.mean((a - b) ** 2))),
+        "correlation": float(np.corrcoef(a, b)[0, 1]) if a.size > 2 else float("nan"),
+        "n": int(mask.sum()),
+    }

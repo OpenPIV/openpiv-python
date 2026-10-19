@@ -19,6 +19,7 @@ small synthetic fixtures and do not require the DaVis software.
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,9 +28,13 @@ import numpy as np
 __all__ = [
     "CameraMarks",
     "PlateInfo",
+    "VectorField",
     "parse_calibration_rms",
     "parse_mark_position_table",
     "parse_plate_info",
+    "parse_scales",
+    "read_vector_field",
+    "vector_field_grid",
 ]
 
 
@@ -164,3 +169,167 @@ def parse_plate_info(path: str | Path) -> PlateInfo:
         plate_thickness_mm=_parse_float(root.attrib.get("PlateThicknessMm", "nan")),
         plane_to_plane_distance_mm=_parse_float(root.attrib.get("PlaneToPlaneDistanceMm", "nan")),
     )
+
+
+@dataclass(frozen=True)
+class VectorField:
+    """A DaVis vector field (``.vc7``) with its world grid.
+
+    The components are stored in the *corrected image* frame of DaVis:
+    ``u`` points to the right, ``v`` points **down** the image and ``w``
+    is the out-of-plane component.  DaVis' corrected image has
+    ``y = offset_y - step * row`` (the ``_SCALE_Y`` factor is negative),
+    i.e. the world Y axis points *up* while the image row grows
+    downwards.  The world-frame vertical velocity is therefore
+    ``V_world = -v``.
+
+    Attributes
+    ----------
+    u, v, w:
+        The velocity components in m/s, shaped ``(ny, nx)``.
+    x, y:
+        The world coordinates (mm) of the grid columns and rows.
+    valid:
+        Mask of the vectors DaVis actually computed (the invalid ones are
+        stored as zero).
+    """
+
+    u: np.ndarray
+    v: np.ndarray
+    w: np.ndarray
+    x: np.ndarray
+    y: np.ndarray
+    valid: np.ndarray
+
+    @property
+    def u_world(self) -> np.ndarray:
+        """Horizontal velocity in the world frame (m/s)."""
+        return self.u
+
+    @property
+    def v_world(self) -> np.ndarray:
+        """Vertical velocity in the world frame (m/s).
+
+        The sign is flipped with respect to :attr:`v`: the DaVis
+        corrected image counts its rows downwards, the world Y axis
+        points upwards.
+        """
+        return -self.v
+
+
+def vector_field_grid(
+    scale_x: float, offset_x: float, scale_y: float, offset_y: float,
+    shape: tuple[int, int], spacing_px: float = 16.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """World grid of a DaVis vector field.
+
+    Parameters
+    ----------
+    scale_x, offset_x:
+        The ``_SCALE_X`` factor (mm per pixel) and offset (mm).
+    scale_y, offset_y:
+        The ``_SCALE_Y`` factor and offset.
+    shape:
+        ``(ny, nx)`` of the field.
+    spacing_px:
+        Grid spacing in pixels (16 for the 4x64/75% DaVis recipe).
+
+    Returns
+    -------
+    (x, y)
+        The world coordinates (mm) of the columns and of the rows.  The
+        rows follow the image: the last row is the smallest ``y`` when
+        ``scale_y`` is negative.
+    """
+    ny, nx = shape
+    step = abs(scale_x) * spacing_px
+    x = offset_x + step * np.arange(nx)
+    y = offset_y + np.sign(scale_y) * step * np.arange(ny)
+    return x, y
+
+
+def parse_scales(attributes: Mapping[str, str]) -> dict:
+    """Extract the scale factors of a DaVis vector field.
+
+    Parameters
+    ----------
+    attributes:
+        The attribute dictionary of a ``.vc7`` file; every entry is a
+        multi line string whose first line holds the value and the
+        second one the offset.
+
+    Returns
+    -------
+    dict
+        ``scale`` (velocity, m/s per unit), ``scale_x``, ``offset_x``,
+        ``scale_y`` and ``offset_y``.
+    """
+
+    def _numbers(*names: str) -> tuple[float, float]:
+        for name in names:
+            if name in attributes:
+                break
+        else:
+            raise KeyError(f"none of {names} in the vector field attributes")
+        lines = str(attributes[name]).split("\n")
+        tokens = lines[0].split()
+        value = float(tokens[0])
+        if len(tokens) > 1:
+            # "_SCALE_X: '<value> <offset>'"
+            return value, float(tokens[1])
+        # "FrameScaleX0: '<value>' / '<offset>' on the next line"
+        offset = float(lines[1].split()[0]) if len(lines) > 1 else 0.0
+        return value, offset
+
+    scale, _ = _numbers("_SCALE_I", "FrameScaleI0")
+    scale_x, offset_x = _numbers("_SCALE_X", "FrameScaleX0")
+    scale_y, offset_y = _numbers("_SCALE_Y", "FrameScaleY0")
+    return {
+        "scale": scale,
+        "scale_x": scale_x,
+        "offset_x": offset_x,
+        "scale_y": scale_y,
+        "offset_y": offset_y,
+    }
+
+
+def read_vector_field(path: str | Path, spacing_px: float = 16.0) -> VectorField:
+    """Read a DaVis vector field (``.vc7``) with its world grid.
+
+    The velocities are converted to m/s with the ``_SCALE_I`` factor of
+    the file; the world grid is rebuilt from the ``_SCALE_X`` /
+    ``_SCALE_Y`` factors and offsets.
+
+    Parameters
+    ----------
+    path:
+        The ``.vc7`` file.
+    spacing_px:
+        Grid spacing in pixels, 16 for the ``4x64x64_75`` DaVis recipe.
+
+    Returns
+    -------
+    VectorField
+    """
+    try:
+        import readim7
+    except ImportError as exc:  # pragma: no cover - depends on the environment
+        raise ImportError(
+            "reading DaVis vector fields needs the readim7 package: "
+            'pip install "readim7 @ git+https://github.com/alexlib/readim7.git"'
+        ) from exc
+
+    buffer_, attributes = readim7.get_Buffer_andAttributeList(str(path))
+    array, _ = readim7.buffer_as_array(buffer_)
+    array = np.asarray(array, dtype=np.float64)
+    if array.ndim != 3 or array.shape[0] < 3:
+        raise ValueError(f"{path} does not hold a 3-component vector field")
+
+    scales = parse_scales(attributes)
+    scale = scales["scale"]
+    scale_x, offset_x = scales["scale_x"], scales["offset_x"]
+    scale_y, offset_y = scales["scale_y"], scales["offset_y"]
+
+    u, v, w = array[0] * scale, array[1] * scale, array[2] * scale
+    x, y = vector_field_grid(scale_x, offset_x, scale_y, offset_y, u.shape, spacing_px)
+    return VectorField(u=u, v=v, w=w, x=x, y=y, valid=u != 0)

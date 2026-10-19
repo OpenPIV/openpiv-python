@@ -115,3 +115,61 @@ On the DaVis pitching-wing data set (upper stereo pair, cameras 1 and 2,
 The bulk shift is the offset between the calibration plane and the laser
 sheet — exactly what the planar self-calibration corrects.
 
+## Comparing with a DaVis vector field
+
+`compare` takes the ``.vc7`` written by the DaVis StereoPIV module and
+compares it with the reconstruction, on the grid of the reference:
+
+```bash
+python -m openpiv.examples.stereo --data-root run \
+    --mark-table run/calibration/MarkPositionTable.xml \
+    --pair-index 298 --frame-dt 1.45e-3 \
+    --davis-vector-field run/StereoPIV/B00299.vc7 compare
+```
+
+Two conventions have to be respected:
+
+* the DaVis components live in the **corrected image** frame, where the
+  image row grows downwards while the world Y axis points upwards — the
+  vertical component therefore has to be **flipped** to get the world
+  velocity (`VectorField.v_world` does that);
+* the velocities are in m/s, ours in mm per frame — `frame_dt` (the
+  frame interval in seconds) does the conversion.
+
+With those in place, the reference and the reconstruction agree on the
+reference data set:
+
+| Component | ours | DaVis | bias | RMSE | correlation |
+|---|---|---|---|---|---|
+| U | −0.0006 m/s | −0.0009 m/s | −0.008 | 0.121 | +0.35 |
+| V | −0.0612 m/s | −0.0670 m/s | +0.006 | 0.082 | +0.56 |
+
+## The cycle survey
+
+`survey` measures the particle displacement of **every** frame pair, so
+that you know how much signal a pair carries before comparing it with a
+reference:
+
+```bash
+python -m openpiv.examples.stereo --data-root run --survey-crop 600,400,1200,1200 survey
+```
+
+On the reference data set (300 pairs, 1.45 ms per frame, so 0.44 s of
+recording):
+
+* the **vertical** motion is steady: median 1.3–1.6 px per frame, and its
+  sign never changes along the record;
+* the **horizontal** motion is concentrated in ~10 % of the field (near
+  the wing): the median is 0.3–0.7 px, but the 90th percentile reaches
+  1.9–2.8 px;
+* the record spans 0.44 s, i.e. **22 % of one 0.5 Hz wing cycle** — there
+  is no "fast phase" to be found in it, the horizontal signal varies by
+  less than a factor of two.
+
+That is why a comparison at a single pair can look meaningless: in the
+quiet regions the horizontal velocity is at the noise level, so its sign
+is random and it anti-correlates with any reference. Judge the
+horizontal component in the active region (the 90th percentile of the
+displacement), not over the whole field.
+
+

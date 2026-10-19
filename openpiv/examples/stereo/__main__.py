@@ -222,12 +222,113 @@ def step_piv(config: StereoConfig) -> int:
     return 0
 
 
+def step_survey(config: StereoConfig) -> int:
+    """Measure the particle displacement of every frame pair.
+
+    The result tells how much signal each pair carries -- a pair whose
+    displacement sits at the noise level cannot be compared with a
+    reference, because the sign of a noise dominated component is
+    random.
+    """
+    from .survey import summarize_survey, survey_dispersion, survey_stream
+
+    crop = config.survey_crop
+    records = survey_stream(
+        config, camera=config.cameras[0], crop=crop, progress=True
+    )
+    summary = summarize_survey(records)
+    dispersion = survey_dispersion(records, noise_level=config.noise_level)
+    _log("")
+    _log(f"pairs surveyed      : {summary['n_pairs']}")
+    _log(f"median displacement : {summary['median_speed']:.3f} px")
+    _log(f"max / min           : {summary['max_speed']:.3f} / {summary['min_speed']:.3f} px")
+    _log(f"above noise ({dispersion['noise_level']} px) : "
+         f"{100 * dispersion['fraction_above_noise']:.0f}% of the pairs, "
+         f"{dispersion['sign_changes']} sign changes")
+    _log("strongest pairs:")
+    for record in summary["best"]:
+        _log(
+            f"  pair {record['pair']:4d}: median |u| {record['median_speed']:.3f} px "
+            f"(u {record['median_u']:+.3f}, v {record['median_v']:+.3f})"
+        )
+    out = config.ensure_out()
+    with (out / "survey.csv").open("w") as handle:
+        handle.write("pair,camera,median_u,median_v,median_speed,n_vectors\n")
+        for record in records:
+            handle.write(
+                f"{record['pair']},{record['camera']},{record['median_u']:.6f},"
+                f"{record['median_v']:.6f},{record['median_speed']:.6f},"
+                f"{record['n_vectors']}\n"
+            )
+    _log(f"survey -> {out / 'survey.csv'}")
+    return 0
+
+
+def step_compare(config: StereoConfig) -> int:
+    """Compare the reconstruction with a DaVis vector field.
+
+    The reference is a ``.vc7`` written by the DaVis StereoPIV module.
+    Its components live in the *corrected image* frame, so the vertical
+    component has to be flipped to get the world-frame velocity.
+    """
+    if config.davis_vector_field is None:
+        raise SystemExit("no reference given: pass --davis-vector-field FILE.vc7")
+
+    marks = _require_marks(config)
+    cams, _ = _load_cameras(config, marks)
+    raw = _read_pairs(config)
+    fields = []
+    for pulse_a, pulse_b in raw:
+        fields.append(
+            pipeline.run_2c_piv(
+                pulse_a.astype(np.float32),
+                pulse_b.astype(np.float32),
+                config.piv_window,
+                config.piv_overlap,
+            )
+        )
+    U, V, W = pipeline.reconstruct_3c(
+        cams,
+        [fields[0][0], fields[1][0]],
+        [fields[0][1], fields[1][1]],
+        [fields[0][2], fields[1][2]],
+        [fields[0][3], fields[1][3]],
+        z=config.sheet_z,
+    )
+    # mm per frame -> m/s (the frame rate has to be given)
+    to_ms = 1e-3 / config.frame_dt if config.frame_dt else 1.0
+    world_x, world_y = pipeline.backproject_to_plane(
+        cams[0], fields[0][0], fields[0][1], z=config.sheet_z
+    )
+    reference = davis.read_vector_field(config.davis_vector_field)
+    _log(f"reference: {config.davis_vector_field.name} "
+         f"({reference.u.shape[1]}x{reference.u.shape[0]} vectors, "
+         f"{100 * reference.valid.mean():.0f}% valid)")
+    for name, ours, theirs in (
+        ("U", U * to_ms, reference.u_world),
+        ("V", V * to_ms, reference.v_world),
+        ("W", W * to_ms, reference.w),
+    ):
+        stats = pipeline.compare_fields(
+            ours, theirs, reference.x, reference.y, world_x, world_y, reference.valid
+        )
+        _log(
+            f"  {name}: ours {stats['median_ours']:+.4f} | "
+            f"reference {stats['median_theirs']:+.4f} m/s | "
+            f"bias {stats['bias']:+.4f} | RMSE {stats['rmse']:.4f} | "
+            f"corr {stats['correlation']:+.3f} | n {stats['n']}"
+        )
+    return 0
+
+
 STEPS = {
     "info": step_info,
     "calibrate": step_calibrate,
     "dewarp": step_dewarp,
     "disparity": step_disparity,
     "piv": step_piv,
+    "survey": step_survey,
+    "compare": step_compare,
 }
 
 

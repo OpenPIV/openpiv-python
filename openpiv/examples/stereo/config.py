@@ -94,6 +94,15 @@ class StereoConfig:
         Camera model used for the stereo pair, see :data:`MODEL_CHOICES`.
     grid_stride:
         Pixel stride used when back-projecting the common world grid.
+    davis_vector_field:
+        A DaVis ``.vc7`` vector field used by the ``compare`` step.
+    frame_dt:
+        Frame interval in seconds, needed to convert mm/frame into m/s.
+    survey_crop:
+        ``(x0, y0, width, height)`` box the survey measures in.
+    noise_level:
+        Displacement (pixels) above which a pair counts as carrying a
+        signal, used by the survey.
     """
 
     data_root: Path
@@ -111,6 +120,10 @@ class StereoConfig:
     piv_overlap: int = 32
     model: str = "poly"
     grid_stride: int = 4
+    davis_vector_field: Path | None = None
+    frame_dt: float | None = None
+    survey_crop: tuple[int, int, int, int] | None = None
+    noise_level: float = 0.1
 
     def __post_init__(self) -> None:
         if len(self.cameras) < 2:
@@ -119,6 +132,19 @@ class StereoConfig:
             raise ValueError(f"model must be one of {MODEL_CHOICES}, got {self.model!r}")
         if not self.disparity_passes:
             raise ValueError("at least one disparity pass is required")
+        # accept strings for the paths
+        object.__setattr__(self, "data_root", Path(self.data_root).expanduser())
+        object.__setattr__(self, "cameras", tuple(int(camera) for camera in self.cameras))
+        object.__setattr__(self, "ims_files", {
+            int(camera): Path(path) for camera, path in dict(self.ims_files).items()
+        })
+        for name in ("mark_table", "davis_calibration", "output_dir"):
+            value = getattr(self, name)
+            if value is not None:
+                object.__setattr__(self, name, Path(value).expanduser())
+        object.__setattr__(
+            self, "sensor_size", (int(self.sensor_size[0]), int(self.sensor_size[1]))
+        )
 
     # ------------------------------------------------------------------
     # derived paths
@@ -200,6 +226,9 @@ class StereoConfig:
             piv_window=_env_int("PIV_WINDOW", 64),
             piv_overlap=_env_int("PIV_OVERLAP", 32),
             model=os.environ.get(ENV_PREFIX + "MODEL", "poly"),
+            davis_vector_field=_env_path("DAVIS_VECTOR_FIELD"),
+            frame_dt=_env_float("FRAME_DT", 0.0) or None,
+            noise_level=_env_float("NOISE_LEVEL", 0.1),
         )
 
     @classmethod
@@ -226,6 +255,14 @@ class StereoConfig:
         parser.add_argument("--piv-window", type=int, default=None)
         parser.add_argument("--piv-overlap", type=int, default=None)
         parser.add_argument("--self-cal-iterations", type=int, default=None)
+        parser.add_argument("--davis-vector-field", type=Path, default=None,
+                            help="DaVis .vc7 vector field to compare with")
+        parser.add_argument("--frame-dt", type=float, default=None,
+                            help="frame interval in seconds (mm/frame -> m/s)")
+        parser.add_argument("--survey-crop", type=str, default=None,
+                            help="crop box 'x0,y0,width,height' for the survey")
+        parser.add_argument("--noise-level", type=float, default=None,
+                            help="noise level in pixels used by the survey")
         args = parser.parse_args(list(argv) if argv is not None else None)
 
         if env is not None:
@@ -265,4 +302,13 @@ class StereoConfig:
             updates["piv_overlap"] = args.piv_overlap
         if args.self_cal_iterations is not None:
             updates["self_cal_iterations"] = args.self_cal_iterations
+        if args.davis_vector_field is not None:
+            updates["davis_vector_field"] = args.davis_vector_field
+        if args.frame_dt is not None:
+            updates["frame_dt"] = args.frame_dt
+        if args.survey_crop:
+            parts = [int(p) for p in args.survey_crop.replace(",", " ").split()]
+            updates["survey_crop"] = tuple(parts)
+        if args.noise_level is not None:
+            updates["noise_level"] = args.noise_level
         return replace(config, **updates) if updates else config

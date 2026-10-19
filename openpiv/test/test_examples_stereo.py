@@ -368,3 +368,116 @@ def test_cli_reports_missing_files(tmp_path, capsys):
     code = main(["--data-root", str(tmp_path), "--cameras", "1,2", "info"])
     assert_(code == 1)
     assert_("error" in capsys.readouterr().err)
+
+
+# ----------------------------------------------------------------------
+# DaVis vector fields and the comparison
+# ----------------------------------------------------------------------
+def test_vector_field_grid_follows_the_image():
+    from openpiv.examples.stereo.davis import vector_field_grid
+
+    # DaVis' corrected image counts its rows downwards, the world Y axis
+    # points upwards -> the scale factor is negative
+    x, y = vector_field_grid(0.0848439, -95.916, -0.0848439, 47.389, (3, 4), spacing_px=16)
+    assert_(len(x) == 4)
+    assert_(len(y) == 3)
+    assert_allclose(x[0], -95.916)
+    assert_allclose(x[1] - x[0], 16 * 0.0848439)
+    assert_allclose(y[0], 47.389)
+    assert_(y[1] < y[0], "the world Y must decrease with the image row")
+
+
+def test_vector_field_world_components_flip_v():
+    from openpiv.examples.stereo.davis import VectorField
+
+    field = VectorField(
+        u=np.ones((2, 2)),
+        v=np.ones((2, 2)),
+        w=np.zeros((2, 2)),
+        x=np.array([0.0, 1.0]),
+        y=np.array([1.0, 0.0]),
+        valid=np.ones((2, 2), dtype=bool),
+    )
+    assert_allclose(field.u_world, 1.0)
+    assert_allclose(field.v_world, -1.0)
+
+
+def test_compare_fields_recovers_a_known_difference():
+    grid_x = np.linspace(0.0, 10.0, 11)
+    grid_y = np.linspace(0.0, 10.0, 11)
+    reference = np.zeros((11, 11))
+    reference[2:9, 2:9] = 0.5
+    # a varying reference, otherwise the correlation is undefined
+    reference[2:9, 2:9] += np.linspace(0.0, 0.4, 7)[None, :]
+    our_x, our_y = np.meshgrid(grid_x, grid_y)
+    ours = reference.ravel() + 0.01
+    stats = pipeline.compare_fields(
+        ours, reference, grid_x, grid_y, our_x.ravel(), our_y.ravel(),
+        reference != 0,
+    )
+    assert_(stats["n"] == 49)
+    assert_allclose(stats["bias"], 0.01, atol=1e-9)
+    assert_allclose(stats["rmse"], 0.01, atol=1e-9)
+    assert_allclose(stats["correlation"], 1.0, atol=1e-9)
+
+
+def test_compare_fields_requires_overlap():
+    grid_x = np.linspace(0.0, 1.0, 3)
+    grid_y = np.linspace(0.0, 1.0, 3)
+    reference = np.ones((3, 3))
+    with pytest.raises(ValueError):
+        pipeline.compare_fields(
+            np.ones(3), reference, grid_x, grid_y,
+            np.array([100.0, 101.0, 100.5]), np.array([100.0, 100.5, 101.0]),
+            np.ones((3, 3), dtype=bool),
+        )
+
+
+def test_parse_scales():
+    from openpiv.examples.stereo.davis import parse_scales
+
+    attributes = {
+        # the "_SCALE_*" layout: "<value> <offset>" on the first line
+        "_SCALE_I": "0.058513 0\nm/s\nvelocity",
+        "_SCALE_X": "0.0848439 -95.916\nmm\n",
+        "_SCALE_Y": "-0.0848439 47.389\nmm\n",
+    }
+    scales = parse_scales(attributes)
+    assert_allclose(scales["scale"], 0.058513)
+    assert_allclose(scales["scale_x"], 0.0848439)
+    assert_allclose(scales["offset_x"], -95.916)
+    assert_allclose(scales["scale_y"], -0.0848439)
+    assert_allclose(scales["offset_y"], 47.389)
+    # the "FrameScale*0" layout: value and offset on separate lines
+    other = {
+        "FrameScaleI0": "0.058513\n0\nm/s\nvelocity",
+        "FrameScaleX0": "0.0848439\n-95.916\nmm\n",
+        "FrameScaleY0": "-0.0848439\n47.389\nmm\n",
+    }
+    scales = parse_scales(other)
+    assert_allclose(scales["scale"], 0.058513)
+    assert_allclose(scales["offset_x"], -95.916)
+    assert_allclose(scales["offset_y"], 47.389)
+
+
+# ----------------------------------------------------------------------
+# the cycle survey
+# ----------------------------------------------------------------------
+def test_survey_summarize_and_dispersion():
+    from openpiv.examples.stereo.survey import summarize_survey, survey_dispersion
+
+    records = [
+        {"pair": 0, "camera": 1, "median_u": 0.5, "median_v": 1.0, "median_speed": 1.1, "n_vectors": 10},
+        {"pair": 1, "camera": 1, "median_u": -0.4, "median_v": 1.1, "median_speed": 1.2, "n_vectors": 10},
+        {"pair": 2, "camera": 1, "median_u": 0.0, "median_v": 1.2, "median_speed": 1.2, "n_vectors": 10},
+        {"pair": 3, "camera": 1, "median_u": 2.0, "median_v": 0.0, "median_speed": 2.0, "n_vectors": 10},
+    ]
+    summary = summarize_survey(records)
+    assert_(summary["n_pairs"] == 4)
+    assert_(summary["best"][0]["pair"] == 3)
+    assert_allclose(summary["max_speed"], 2.0)
+    dispersion = survey_dispersion(records, noise_level=0.1)
+    # three pairs are above the noise level, and the signed displacement
+    # changes sign twice
+    assert_allclose(dispersion["fraction_above_noise"], 0.75)
+    assert_(dispersion["sign_changes"] == 2)
