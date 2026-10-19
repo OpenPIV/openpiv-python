@@ -1,10 +1,9 @@
 import numpy as np
 from scipy.optimize import curve_fit, least_squares
 
-from ._normalization import _standardize_points_2d, _standardize_points_3d
-from .._calib_utils import homogenize, get_rmse
 from .. import _cal_doc_utils
-
+from .._calib_utils import get_rmse, homogenize
+from ._normalization import _standardize_points_2d, _standardize_points_3d
 
 __all__ = [
     "calibrate_dlt"
@@ -90,7 +89,7 @@ def calibrate_dlt(
         raise ValueError("Object points must have shape (2, N) or (3, N)")
     if object_points.shape[1] != image_points.shape[1]:
         raise ValueError("Object point image point size mismatch")
-    
+
     if not (
         np.all(np.isfinite(object_points))
         and np.all(np.isfinite(image_points))
@@ -99,7 +98,7 @@ def calibrate_dlt(
 
     min_points = 4
 
-    if ndims == 3 and enforce_coplanar != True:
+    if ndims == 3 and not enforce_coplanar:
         min_points += 2
 
     if object_points.shape[1] < min_points:
@@ -107,26 +106,25 @@ def calibrate_dlt(
             f"Too little points to calibrate. Need at least {min_points} points"
         )
 
-    if enforce_coplanar == True:
-        if ndims == 3:
-            z = object_points[2]
+    if enforce_coplanar and ndims == 3:
+        z = object_points[2]
 
-            if np.std(z) > 1e-5:
-                raise ValueError(
-                    "Object points must be co-planar"
-                )
-            
-            ndims = 2
-            object_points = object_points[:2, :]
-    
+        if np.std(z) > 1e-5:
+            raise ValueError(
+                "Object points must be co-planar"
+            )
+
+        ndims = 2
+        object_points = object_points[:2, :]
+
     if ndims == 2:
         X_raw, Y_raw = object_points
         x_raw, y_raw = image_points
-        
+
         # normalize for better dlt results
         [X, Y], obj_norm_mat = _standardize_points_2d(X_raw, Y_raw)
         [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
-            
+
         # mount constraints
         A = np.zeros([x.shape[0] * 2, 9], dtype="float64")
         A[0::2, 0] = -X
@@ -142,7 +140,7 @@ def calibrate_dlt(
         A[1::2, 6] = y * X
         A[1::2, 7] = y * Y
         A[1::2, 8] = y
-        
+
     else:
         X_raw, Y_raw, Z_raw = object_points
         x_raw, y_raw = image_points
@@ -170,7 +168,7 @@ def calibrate_dlt(
         A[1::2, 9]  = y * Y
         A[1::2, 10] = y * Z
         A[1::2, 11] = y
-    
+
     # Solve Ah = 0. full_matrices=True is required for the 8x9 matrix
     # produced by the minimal four-point planar case. The null-space vector
     # is the final row of the full Vh matrix.
@@ -228,22 +226,22 @@ def calibrate_dlt(
 
     if not np.all(np.isfinite(H)) or np.linalg.matrix_rank(H) < 3:
         raise ValueError("The fitted DLT matrix is rank deficient")
-        
+
     # compute RMSE error
     homogeneous_object_points = homogenize(object_points)
     xy2 = np.dot(H, homogeneous_object_points)
-    
+
     if not np.all(np.isfinite(xy2)):
         raise ValueError("The fitted DLT produced non-finite coordinates")
 
     denominator = xy2[2, :]
 
     res = xy2[:2, :] / denominator
-    
+
     error = res - image_points
-    
+
     RMSE = get_rmse(error)
-    
+
     return H, RMSE
 
 
@@ -255,11 +253,11 @@ def _minimize_params(
     enforce_coplanar: bool=False
 ):
     """Least squares wrapper for DLT calibration.
-    
+
     A wrapper around the function 'calibrate_dlt' for use with camera structures.
     In the future, a robust DLT calibration would be implemented and its
     interface would be linked here too.
-    
+
     Parameters
     ----------
     %(object_points)s
@@ -267,7 +265,7 @@ def _minimize_params(
     enforce_coplanar : bool
         If a Z plane is supplied in the object points, check whether or not
         the Z planes are co-planar.
-        
+
     Examples
     --------
     >>> import numpy as np
@@ -288,7 +286,7 @@ def _minimize_params(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = dlt_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -303,13 +301,13 @@ def _minimize_params(
         [img_x, img_y]
     )
     2.6181007833551034e-07
-    
+
     """
-    
+
     self._check_parameters()
-    
+
     dtype = self.dtype
-    
+
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
 
@@ -318,7 +316,7 @@ def _minimize_params(
         image_points,
         enforce_coplanar
     )
-    
+
     self.coeffs = H
 
 
@@ -335,7 +333,7 @@ def _refine_func2D(
     y = (h21 * X + h22 * Y + h23) / (h31 * X + h32 * Y + h33)
 
     res = np.zeros_like(data)
-    
+
     res[0::2] = x
     res[1::2] = y
 
@@ -352,7 +350,7 @@ def _refine_jac2D(
     Y = data[1::2]
 
     N = data.shape[0]
-    
+
     jac = np.zeros((N, 9), dtype="float64")
 
     s_x = h11 * X + h12 * Y + h13
@@ -373,7 +371,7 @@ def _refine_jac2D(
     jac[1::2, 6] = (-s_y * X) / w_sq
     jac[1::2, 7] = (-s_y * Y) / w_sq
     jac[1::2, 8] = -s_y / w_sq
-    
+
     return jac
 
 
@@ -382,7 +380,7 @@ def _refine2D(
     object_points,
     image_points
 ):
-    
+
     X, Y = object_points
     x, y = image_points
 
@@ -400,17 +398,16 @@ def _refine2D(
 
     # curve_fit uses damped Newton-Raphson optimization (aka LM) by default
     new_h, _ = curve_fit(
-        _refine_func2D, 
-        independent, 
-        dependent, 
-        p0=init_guess, 
+        _refine_func2D,
+        independent,
+        dependent,
+        p0=init_guess,
         jac=_refine_jac2D
     )
-    
-    new_h /= new_h[-1]
-    new_h = new_h.reshape((3,3))
 
-    return new_h
+    new_h /= new_h[-1]
+    return new_h.reshape((3,3))
+
 
 
 def _unpack3D(

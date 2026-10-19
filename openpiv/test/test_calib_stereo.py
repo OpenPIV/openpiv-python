@@ -1,7 +1,8 @@
 """RED tests for stereo-PIV 1-4: calib, dewarp, disparity, 3C reconstruction."""
 import os
+
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_
+from numpy.testing import assert_, assert_array_almost_equal
 
 file = os.path.join(os.path.dirname(__file__), "test_calibration_points.npz")
 
@@ -127,7 +128,8 @@ def test_05_self_calibration_reduces_residual():
     ys = rng.integers(0, H, 500)
     xs = rng.integers(0, W, 500)
     img[ys, xs] = 255.0
-    from scipy.ndimage import gaussian_filter, shift as ndshift
+    from scipy.ndimage import gaussian_filter
+    from scipy.ndimage import shift as ndshift
     img = gaussian_filter(img, 1.0)
     # simulate mis-registered right camera by 2px
     imgL, imgR = img, ndshift(img, shift=(1.0, 2.0), order=1, mode="constant")
@@ -138,8 +140,38 @@ def test_05_self_calibration_reduces_residual():
     assert_(out["residual_after"] <= out["residual_before"])
 
 
+def test_07_correct_maps_cancels_the_disparity():
+    # regression: the symmetric map correction must *reduce* the disparity
+    # (the left camera samples the map at W - D/2, the right one at W + D/2)
+    from scipy.ndimage import gaussian_filter
+    from scipy.ndimage import shift as ndshift
+
+    from openpiv.calibration import stereo
+    rng = np.random.default_rng(5)
+    H, W = 256, 256
+    img = np.zeros((H, W), dtype=np.float32)
+    img[rng.integers(0, H, 500), rng.integers(0, W, 500)] = 255.0
+    img = gaussian_filter(img, 1.0)
+    dx_true, dy_true = 3.0, -2.0
+    imgR = ndshift(img, shift=(dy_true, dx_true), order=1, mode="constant")
+    x, y, dx, dy, _ = stereo.estimate_disparity(img, imgR, window_size=32, overlap=16)
+    before = float(np.nanmedian(np.hypot(dx, dy)))
+    identity = (
+        np.tile(np.arange(W, dtype=float), (H, 1)),
+        np.tile(np.arange(H, dtype=float)[:, None], (1, W)),
+        np.tile(np.arange(W, dtype=float), (H, 1)),
+        np.tile(np.arange(H, dtype=float)[:, None], (1, W)),
+    )
+    maps = stereo.correct_maps(identity, x, y, dx, dy, factor=0.5)
+    left = stereo.dewarp_image(img, maps[0], maps[1])
+    right = stereo.dewarp_image(imgR, maps[2], maps[3])
+    _, _, dx2, dy2, _ = stereo.estimate_disparity(left, right, window_size=32, overlap=16)
+    after = float(np.nanmedian(np.hypot(dx2, dy2)))
+    assert_(after < 0.25 * before, f"disparity {before:.3f} px -> {after:.3f} px")
+
+
 def test_06_triangulate_and_image_mapping():
-    from openpiv.calibration import stereo, calib_utils
+    from openpiv.calibration import calib_utils, stereo
     cams = _get_stereo_cams()
     # legacy single-cam mapping still works and is finite
     for cam in cams:

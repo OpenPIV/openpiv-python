@@ -1,8 +1,10 @@
 import sys
 import time
+
 import numpy as np
-from openpiv import pyprocess
 import openpiv_rust
+
+from openpiv import pyprocess
 
 print('=== OpenPIV Rust vs scipy.fft Benchmark & Validation ===', flush=True)
 

@@ -9,24 +9,24 @@ def _project_points(
     object_points: np.ndarray
 ):
     """Project object points to image points.
-    
+
     Project object, or real world points, to image points.
-    
+
     Parameters
     ----------
     %(object_points)s
-        
+
     Returns
     -------
     %(x_img_coord)s
     %(y_img_coord)s
-        
+
     Examples
     --------
     >>> import numpy as np
     >>> from importlib_resources import files
     >>> from openpiv.calibration import poly_model
-    
+
     >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
 
     >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
@@ -41,7 +41,7 @@ def _project_points(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = poly_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -49,32 +49,32 @@ def _project_points(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
-        
+
     >>> cam.project_points(
             obj_points
         )
     array([[-44.24281474, -33.56231972, -22.84229244],
            [ 89.63444964, 211.90372246, 334.60601499]])
-        
+
     >>> img_points
     array([[-44.33764398, -33.67518587, -22.97467733],
            [ 89.61102873, 211.8863641 , 334.5980555 ]])
-    
-    """ 
+
+    """
     self._check_parameters()
-    
+
     dtype = self.dtype
-    
+
     object_points = np.array(object_points, dtype=dtype)
-    
+
     X = object_points[0]
     Y = object_points[1]
     Z = object_points[2]
-    
+
     polynomial_wi = np.array(
         [
             np.ones_like(X),
-            X,     Y,     Z, 
+            X,     Y,     Z,
             X*Y,   X*Z,   Y*Z,
             X**2,  Y**2,  Z**2,
             X**3,  X*X*Y, X*X*Z,
@@ -83,7 +83,7 @@ def _project_points(
         ],
         dtype=dtype
     ).T
-    
+
     return np.dot(
         polynomial_wi,
         self.poly_wi
@@ -97,26 +97,26 @@ def _project_to_z(
     z: float
 ):
     """Project image points to world points.
-    
+
     Project image points to world points at specified z-plane.
-    
+
     Parameters
     ----------
     %(image_points)s
     %(project_z)s
-        
+
     Returns
     -------
     %(x_lab_coord)s
     %(y_lab_coord)s
     %(z_lab_coord)s
-    
+
     Examples
     --------
     >>> import numpy as np
     >>> from importlib_resources import files
     >>> from openpiv.calibration import poly_model
-    
+
     >>> path_to_calib = files('openpiv.data').joinpath('test7/D_Cal.csv')
 
     >>> obj_x, obj_y, obj_z, img_x, img_y = np.loadtxt(
@@ -131,7 +131,7 @@ def _project_to_z(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = poly_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -139,15 +139,15 @@ def _project_to_z(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
-        
+
     >>> ij = cam.project_points(
             obj_points
         )
-    
+
     >>> ij
     array([[-44.24281474, -33.56231972, -22.84229244],
            [ 89.63444964, 211.90372246, 334.60601499]])
-    
+
     >>> cam.project_to_z(
             ij,
             z=obj_points[2]
@@ -155,22 +155,21 @@ def _project_to_z(
     array([[-105.0088358 , -105.00967895, -105.01057378],
            [ -15.0022918 ,  -10.00166811,   -5.00092353],
            [ -10.00000004,  -10.00000003,  -10.00000002]])
-    
+
     >>> obj_points
     array([[-105., -105., -105.],
            [ -15.,  -10.,   -5.],
-           [ -10.,  -10.,  -10.]]) 
-        
-    """ 
+           [ -10.,  -10.,  -10.]])
+
+    """
     self._check_parameters()
-    
+
     dtype = self.dtype
-    
+
     image_points = np.array(image_points, dtype=dtype)
-    
+
     x = image_points[0]
-    y = image_points[1]
-    
+
     if isinstance(z, np.ndarray):
         Z = np.array(z, dtype=dtype)
     elif isinstance(z, (float, int)):
@@ -180,7 +179,7 @@ def _project_to_z(
             "Unsupported value entered for `z`. `z` must be either a scalar " +
             "or numpy ndarray"
         )
-    
+
     t, r = self._get_inverse_vector(image_points)
     a = (Z - t[2]) / r[2]
 

@@ -8,14 +8,14 @@ def _refine_poly(
     poly_coeffs: np.ndarray,
     polynomial: np.ndarray,
     expected: np.ndarray
-):     
+):
     # use lambdas since it keeps the function definitions local
     def refine_func(coeffs):
         projected = np.dot(polynomial, coeffs)
         return projected - expected
 
     return least_squares(
-            refine_func, 
+            refine_func,
             poly_coeffs,
             method="trf" # more modern lm algorithm
         ).x
@@ -28,14 +28,14 @@ def _minimize_params(
     image_points: list,
 ):
     """Minimize polynomials.
-    
+
     Minimize polynomials using Least Squares minimization.
-    
+
     Parameters
     ----------
     %(object_points)s
     %(image_points)s
-        
+
     Examples
     --------
     >>> import numpy as np
@@ -56,7 +56,7 @@ def _minimize_params(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = poly_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -66,33 +66,33 @@ def _minimize_params(
     )
 
     >>> calib_utils.get_reprojection_error(
-        cam, 
+        cam,
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
     0.16553632335727653
-        
+
     """
     self._check_parameters()
-    
+
     dtype = self.dtype
-    
+
     object_points = np.array(object_points, dtype=dtype)
     image_points = np.array(image_points, dtype=dtype)
-    
+
     if object_points.shape[1] < 20:
         raise ValueError(
             "Too little points to calibrate"
         )
-    
+
     if object_points.shape[1] != image_points.shape[1]:
         raise ValueError(
             "Object point image point size mismatch"
         )
-        
+
     x = image_points[0]
     y = image_points[1]
-    
+
     X = object_points[0]
     Y = object_points[1]
     Z = object_points[2]
@@ -100,7 +100,7 @@ def _minimize_params(
     polynomial_wi = np.array(
         [
             np.ones_like(X),
-            X,     Y,     Z, 
+            X,     Y,     Z,
             X*Y,   X*Z,   Y*Z,
             X**2,  Y**2,  Z**2,
             X**3,  X*X*Y, X*X*Z,
@@ -109,7 +109,7 @@ def _minimize_params(
         ],
         dtype=dtype
     ).T
-    
+
     # X,Y are cubic in image coordinates and linear in world Z.
     polynomial_iw = np.array(
         [
@@ -128,20 +128,20 @@ def _minimize_params(
 
     # world to image (forward projection)
     coeff_wi = np.zeros([19, 2], dtype=dtype)
-    
+
     for i in range(2):
         coeff_wi[:, i] = np.linalg.lstsq(
             polynomial_wi,
-            image_points[i], 
+            image_points[i],
             rcond=None
         )[0]
-        
+
         coeff_wi[:, i] = _refine_poly(
             coeff_wi[:, i],
             polynomial_wi,
             image_points[i]
         )
-    
+
     # image to world (ray origins and direction slopes)
     coeff_iw = np.zeros([20, 2], dtype=dtype)
 

@@ -1,10 +1,9 @@
-from openpiv.pyprocess3D import extended_search_area_piv3D
 import numpy as np
-
-from skimage.util import random_noise
-from skimage import img_as_ubyte
-
 from scipy.ndimage import shift as shift_img
+from skimage import img_as_ubyte
+from skimage.util import random_noise
+
+from openpiv.pyprocess3D import extended_search_area_piv3D
 
 # import warnings
 

@@ -1,5 +1,4 @@
-from scipy._lib import doccer 
-
+from scipy._lib import doccer
 
 __all__ = ['docfiller']
 

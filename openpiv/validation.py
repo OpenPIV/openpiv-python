@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import warnings
-from typing import Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from scipy.ndimage import generic_filter
-import matplotlib.pyplot as plt
+
 from openpiv.settings import PIVSettings
 
 try:
@@ -49,8 +50,8 @@ def _local_nanmedian(a: np.ndarray, size: int) -> np.ndarray:
 def global_val(
     u: np.ndarray,
     v: np.ndarray,
-    u_thresholds: Tuple[int, int],
-    v_thresholds: Tuple[int, int],
+    u_thresholds: tuple[int, int],
+    v_thresholds: tuple[int, int],
     )-> np.ndarray:
     """Eliminate spurious vectors with a global threshold.
 
@@ -84,12 +85,11 @@ def global_val(
 
     warnings.filterwarnings("ignore")
 
-    ind = np.logical_or(
+    return np.logical_or(
         np.logical_or(u < u_thresholds[0], u > u_thresholds[1]),
         np.logical_or(v < v_thresholds[0], v > v_thresholds[1]),
     )
 
-    return ind
 
 
 def global_std(
@@ -195,9 +195,8 @@ def sig2noise_val(
     Part I: Double pulsed systems," Measurement Science & Technology, 1990,
     1, 1202-1215.
     """
-    ind = s2n < threshold
+    return s2n < threshold
 
-    return ind
 
 
 def local_median_val(
@@ -256,9 +255,8 @@ def local_median_val(
     um = _local_nanmedian(masked_u, size)
     vm = _local_nanmedian(masked_v, size)
 
-    ind = (np.abs((u - um)) > u_threshold) | (np.abs((v - vm)) > v_threshold)
+    return (np.abs(u - um) > u_threshold) | (np.abs(v - vm) > v_threshold)
 
-    return ind
 
 
 def local_norm_median_val(
@@ -351,8 +349,7 @@ def local_norm_median_val(
         np.put(y, y.size//2, np.nan) # put NaN in the middle to avoid using
                                      # the middle in the calculations
         ym = np.nanmedian(y) # Um for the current filtering window
-        rm = np.nanmedian(np.abs(np.subtract(y,ym))) # median of |ui-um| or |vi-vm|
-        return rm
+        return np.nanmedian(np.abs(np.subtract(y,ym))) # median of |ui-um| or |vi-vm|
 
     rm_u = generic_filter(masked_u,
                           rfunc,
@@ -376,9 +373,8 @@ def local_norm_median_val(
                                                                           # referenced article
                                                                           # (see description of the function)
 
-    ind = (np.sqrt(np.add(np.square(r0ast_u),np.square(r0ast_v)))) > threshold
+    return (np.sqrt(np.add(np.square(r0ast_u),np.square(r0ast_v)))) > threshold
 
-    return ind
 
 
 def typical_validation(

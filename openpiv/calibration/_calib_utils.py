@@ -1,48 +1,51 @@
+
+
+from typing import Any
+
 import numpy as np
-from typing import Tuple
+
 from . import _cal_doc_utils
 
-
 __all__ = [
-    "homogenize",
-    "get_rmse",
-    "get_reprojection_error",
+    "get_image_mapping",
     "get_los_error",
-    "get_image_mapping"
+    "get_reprojection_error",
+    "get_rmse",
+    "homogenize"
 ]
-    
+
 
 def homogenize(
     points: np.ndarray
 ):
     """Homogenize points.
-    
+
     Homogenize points for further processing and correspondence matching.
     Points are homogenized as such:
     [0, 1, 2, 3, ...]
     [0, 1, 2, 3, ...]
     [1, 1, 1, 1, ...] <-- Appended ones
-    
+
     Parameters
     ----------
     points : np.ndarray
         Points to which ones will be appended to the end of. The array
         shape should be [M, N] where M in the number of dimensions and N is
         the number of points.
-        
+
     Returns
     -------
     points : np.ndarray
         Homogenized points of shape (M+1, N].
-    
+
     """
     a1 = np.ones(
         (1, points.shape[1]),
         dtype=points.dtype
     )
-    
+
     return np.concatenate([
-        points, 
+        points,
         a1
     ])
 
@@ -51,21 +54,21 @@ def get_rmse(
     error: np.ndarray
 ):
     """Get root mean square error (RMSE).
-    
+
     Calculate the root mean square error for statistical purposes.
-    
+
     Parameters
     ----------
     error : np.ndarray
         The residuals between the predicted value and the actual value.
-    
+
     Returns
     -------
     RMSE : float
         The RMSE of the error
-    
+
     """
-    
+
     if len(error.shape) == 2:
         square_error = np.sum(
             np.square(error),
@@ -74,41 +77,40 @@ def get_rmse(
 
     elif len(error.shape) == 1:
         square_error = np.square(error)
-        
+
     else:
         raise ValueError(
-            "Residuals (error) array must be of shape (n) or (2, n), " + 
+            "Residuals (error) array must be of shape (n) or (2, n), " +
             f"recieved shape {error.shape}"
         )
-        
-    rmse = np.sqrt(np.mean(square_error))
-    
-    return rmse
+
+    return np.sqrt(np.mean(square_error))
+
 
 
 @_cal_doc_utils.docfiller
 def get_reprojection_error(
-    cam: "camera",
+    cam: Any,
     object_points: np.ndarray,
     image_points: np.ndarray
 ):
     """Calculate camera calibration error.
-    
+
     Calculate the camera calibration error by projecting object points into image
     points and calculating the root mean square (RMS) error.
-    
+
     Parameters
     ----------
     cam : camera
         An instance of a camera object.
     %(object_points)s
     %(image_points)s
-        
+
     Returns
     -------
     RMSE : float
         Root mean square (RMS) error of camera parameters.
-        
+
     Examples
     --------
     >>> import numpy as np
@@ -129,7 +131,7 @@ def get_reprojection_error(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = dlt_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -139,44 +141,43 @@ def get_reprojection_error(
     )
 
     >>> calib_utils.get_reprojection_error(
-        cam, 
+        cam,
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
     2.6181007833551034e-07
-    
-    """ 
+
+    """
     res = cam.project_points(
         object_points
     )
-        
+
     error = res - image_points
-    
-    RMSE = get_rmse(error)
-    
-    return RMSE
+
+    return get_rmse(error)
+
 
 
 @_cal_doc_utils.docfiller
 def get_los_error(
-    cam: "camera",
+    cam: Any,
     z: float
 ):
     """Calculate camera LOS error.
-    
+
     Calculate camera line of sight error at the selected volume depth.
-    
+
     Parameters
     ----------
     cam : camera
         An instance of a camera object.
     %(project_z)s
-    
+
     Returns
     -------
     RMSE : float
         Root mean square (RMS) error of camera parameters.
-    
+
     Examples
     --------
     >>> import numpy as np
@@ -197,7 +198,7 @@ def get_los_error(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = dlt_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -205,13 +206,13 @@ def get_los_error(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
-    
+
     >>> calib_utils.get_los_error(
             cam,
             z = 0
         )
     1.0097171287719555e-12
-    
+
     """
     # create a meshgrid for every x and y pixel for back projection.
     py, px = np.meshgrid(
@@ -219,34 +220,33 @@ def get_los_error(
         np.arange(0, cam.resolution[0]),
         indexing="ij"
     )
-    
+
     image_grid = np.concatenate(
         [py.reshape(-1, 1), px.reshape(-1, 1)],
         axis=1
     )
-    
+
     x = image_grid[:, 1]
     y = image_grid[:, 0]
-    
+
     # get depth
     Z = np.zeros_like(x) + z
-    
+
     # project image coordinates to world points
     X, Y, Z = cam.project_to_z(
         [x, y],
         Z
     )
-    
+
     # project world points back to image coordinates
     res = cam.project_points(
         [X, Y, Z]
     )
-    
+
     error = res - np.array([x, y])
-    
-    RMSE = get_rmse(error)
-    
-    return RMSE
+
+    return get_rmse(error)
+
 
 
 # This script was originally from Theo's polynomial calibration repository.
@@ -265,14 +265,14 @@ def get_image_mapping(
     off-by-``Scale`` linspace offset. Extra legacy func args are
     accepted for backward compatibility and ignored (methods on
     ``cam`` are used).
-    
+
     Parameters
     ----------
     cam : camera
         An instance of a camera object.
     %(project_to_z_func)s
     %(project_points_func)s
-    
+
     Returns
     -------
     x : 2D np.ndarray
@@ -281,7 +281,7 @@ def get_image_mapping(
         Mappings for y-coordinates.
     scale : float
         Image to world scale factor.
-        
+
     Examples
     --------
     >>> import numpy as np
@@ -302,7 +302,7 @@ def get_image_mapping(
     >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
 
     >>> cam = dlt_model.camera(
-        'cam1', 
+        'cam1',
         [4512, 800]
     )
 
@@ -310,15 +310,15 @@ def get_image_mapping(
         [obj_x, obj_y, obj_z],
         [img_x, img_y]
     )
-    
+
     >>> mappings, scale = calib_utils.get_image_mapping(
             cam,
         )
-        
+
     >>> mappings
-    
+
     >>> scale
-    
+
     """
     field_shape = (
         cam.resolution[1],

@@ -1,14 +1,10 @@
-import numpy as np
 import matplotlib.pyplot as plt
-
-from scipy.fft import rfft2, irfft2
+import numpy as np
+from scipy.fft import irfft2, rfft2
 from scipy.ndimage import shift as shift_img
 
 # In[3]:
-
-
 from openpiv.pyprocess import moving_window_array, normalize_intensity
-
 
 # In[4]:
 
@@ -35,8 +31,7 @@ def fft_correlate_strided_images(image_a, image_b):
     fslice = tuple([slice(0, image_a.shape[0])] + [slice(0, int(sz)) for sz in size])
     f2a = rfft2(image_a, fsize, axes=(-2, -1))
     f2b = rfft2(image_b[:, ::-1, ::-1], fsize, axes=(-2, -1))
-    corr = irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
-    return corr
+    return irfft2(f2a * f2b, axes=(-2, -1)).real[fslice]
 
 
 # In[5]:

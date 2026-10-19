@@ -18,20 +18,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-import pathlib
 import multiprocessing
-from typing import Any, Union, List, Optional
-# import re
+import pathlib
+import sys
+from typing import Any
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.patches as pt
-from natsort import natsorted
-from scipy.ndimage import maximum_filter
+import matplotlib.pyplot as plt
+
+# import re
+import numpy as np
 
 # from builtins import range
-from imageio.v3 import imread as _imread, imwrite as _imsave
+from imageio.v3 import imread as _imread
+from imageio.v3 import imwrite as _imsave
+from natsort import natsorted
+from scipy.ndimage import maximum_filter
+from skimage.feature import canny
 
 
 def _read_image_stack(list_img: list) -> np.ndarray:
@@ -77,7 +80,7 @@ def _prepare_image_for_save(arr: np.ndarray, preserve_tiff_depth: bool = False) 
     return np.clip(image, 0, 255).astype(np.uint8)
 
 
-def natural_sort(file_list: List[pathlib.Path]) -> List[pathlib.Path]:
+def natural_sort(file_list: list[pathlib.Path]) -> list[pathlib.Path]:
     """ Creates naturally sorted list """
     # convert = lambda text: int(text) if text.isdigit() else text.lower()
     # alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
@@ -109,13 +112,13 @@ def display_vector_field_from_arrays(
     v: np.ndarray,
     flags: np.ndarray,
     mask: np.ndarray,
-    on_img: Optional[bool] = False,
-    image_name: Optional[Union[pathlib.Path, str]] = None,
-    window_size: Optional[int] = 32,
-    scaling_factor: Optional[float] = 1.,
-    ax: Optional[Any] = None,
-    width: Optional[float] = 0.0025,
-    show_invalid: Optional[bool] = True,
+    on_img: bool | None = False,
+    image_name: pathlib.Path | str | None = None,
+    window_size: int | None = 32,
+    scaling_factor: float | None = 1.,
+    ax: Any | None = None,
+    width: float | None = 0.0025,
+    show_invalid: bool | None = True,
     **kw
 ):
     """ Displays quiver plot of the data in five arrays: x,y,u,v and flags
@@ -238,14 +241,14 @@ def display_vector_field_from_arrays(
 
 
 def display_vector_field(
-    filename: Union[pathlib.Path, str],
-    on_img: Optional[bool] = False,
-    image_name: Optional[Union[pathlib.Path, str]] = None,
-    window_size: Optional[int] = 32,
-    scaling_factor: Optional[float] = 1.,
-    ax: Optional[Any] = None,
-    width: Optional[float] = 0.0025,
-    show_invalid: Optional[bool] = True,
+    filename: pathlib.Path | str,
+    on_img: bool | None = False,
+    image_name: pathlib.Path | str | None = None,
+    window_size: int | None = 32,
+    scaling_factor: float | None = 1.,
+    ax: Any | None = None,
+    width: float | None = 0.0025,
+    show_invalid: bool | None = True,
     **kw
 ):
     """ Displays quiver plot of the data stored in the file
@@ -507,12 +510,12 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
     print("mark1..")
     mark1 = np.where(_read_image_stack(list_img1).sum(axis=0) >= float(threshold) * len(list_img1), 255, 0).astype(np.uint8)
     print("[DONE]")
-    print((mark1.shape))
+    print(mark1.shape)
     print("mark2..")
     mark2 = np.where(_read_image_stack(list_img2).sum(axis=0) >= float(threshold) * len(list_img2), 255, 0).astype(np.uint8)
     print("[DONE]")
     print("computing boundary")
-    print((mark2.shape))
+    print(mark2.shape)
 
     difference = mark1 != mark2
     neighborhood_difference = maximum_filter(difference.astype(np.uint8), size=5) > 0
@@ -532,13 +535,13 @@ def find_boundaries(threshold, list_img1, list_img2, filename, picname):
 
 
 def save(
-    filename: Union[pathlib.Path, str],
+    filename: pathlib.Path | str,
     x: np.ndarray,
     y: np.ndarray,
     u: np.ndarray,
     v: np.ndarray,
-    flags: Optional[np.ndarray] = None,
-    mask: Optional[np.ndarray] = None,
+    flags: np.ndarray | None = None,
+    mask: np.ndarray | None = None,
     fmt: str = "%.4e",
     delimiter: str = "\t",
 ) -> None:
@@ -639,7 +642,7 @@ class Multiprocesser:
     def __init__(self,
                  data_dir: pathlib.Path,
                  pattern_a: str,
-                 pattern_b: Optional[str] = None,
+                 pattern_b: str | None = None,
                  ) -> None:
         """A class to handle and process large sets of images.
 
@@ -715,7 +718,7 @@ class Multiprocesser:
         self.n_files = len(self.files_a)
 
         # check if everything was fine
-        if not len(self.files_a) == len(self.files_b):
+        if len(self.files_a) != len(self.files_b):
             print(self.files_a)
             print(self.files_b)
 
@@ -755,10 +758,8 @@ class Multiprocesser:
         # since it is difficult to debug multiprocessing stuff.
         if n_cpus > 1:
             with multiprocessing.Pool(processes=n_cpus) as pool:
-                res = pool.map(func, image_pairs)
-        else:
-            for image_pair in image_pairs:
-                func(image_pair)
+                return pool.map(func, image_pairs)
+        return [func(image_pair) for image_pair in image_pairs]
 
 
 def negative(image):
@@ -856,7 +857,7 @@ def display_windows_sampling(x, y, window_size, skip=0, method="standard"):
                 + str(nb_windows)
                 + " windows"
             )
-            for i in range(nb_windows):
+            for _ in range(nb_windows):
                 k = np.random.randint(len(x[0]))  # pick a row and column index
                 l = np.random.randint(len(y))
                 x1 = x[0][k] - window_size / 2

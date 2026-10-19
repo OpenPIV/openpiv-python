@@ -1,24 +1,24 @@
+
+
 import numpy as np
-from typing import Tuple
 
 from ._check_params import _check_parameters
 from ._minimization import _minimize_params
-from ._projection import _project_points, _project_to_z, _get_inverse_vector
-from ._utils import _save_parameters, _load_parameters
-
+from ._projection import _get_inverse_vector, _project_points, _project_to_z
+from ._utils import _load_parameters, _save_parameters
 
 __all__ = ["camera"]
 
 
-class camera(object):
+class camera:
     """An instance of a polynomial camera model.
-    
+
     Create an instance of a polynomial camera. The polynomial camera model
     is based on the Soloff camera model where a polymial mapping function
     is created with third order polynomials in the x- and y-axis and a second
     order polynomial along the z-axis. The polynomial camera models also has
     ray-based estimator for 3D point triangulation.
-    
+
     Attributes
     ----------
     cam_name : str
@@ -33,7 +33,7 @@ class camera(object):
         10 coefficients for ray slopes in [dX/dZ, dY/dZ]'.
     dtype : str
         The dtype used in the projections.
-        
+
     Methods
     -------
     minimize_params
@@ -41,12 +41,12 @@ class camera(object):
     project_to_z
     save_parameters
     load_parameters
-        
+
     """
     def __init__(
         self,
         name: str,
-        resolution: Tuple[int, int],
+        resolution: tuple[int, int],
         poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
         poly_iw_o: np.ndarray=np.ones((2,10), dtype="float64").T,
         poly_iw_v: np.ndarray=np.ones((2,10), dtype="float64").T,
@@ -58,7 +58,7 @@ class camera(object):
         self.poly_iw_o = poly_iw_o
         self.poly_iw_v = poly_iw_v
         self.dtype = dtype
-        
+
         # method definitions
         camera._check_parameters   = _check_parameters
         camera.minimize_params     = _minimize_params
@@ -67,6 +67,6 @@ class camera(object):
         camera._get_inverse_vector = _get_inverse_vector
         camera.save_parameters     = _save_parameters
         camera.load_parameters     = _load_parameters
-        
+
         # check camera params at init
         self._check_parameters()
