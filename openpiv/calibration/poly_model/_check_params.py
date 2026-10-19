@@ -29,31 +29,36 @@ def _check_parameters(self):
             "There must be 19 coefficients in the world to image polynomial"
         )
     
-    if len(self.poly_iw.shape) != 2:
+    if len(self.poly_iw_o.shape) != 2:
         raise ValueError(
-            "Image to world polynomial coefficients must be 2 dimensional."
+            "Ray origin polynomial coefficients must be 2 dimensional."
         )
     
-    if self.poly_iw.shape[0] != 19:
+    if self.poly_iw_o.shape[0] != 10:
         raise ValueError(
-            "Image to world polynomial coefficients must be ordered in [x, y]'"
+            "Ray origin polynomial coefficients must be ordered in [x, y]'"
         )
     
-    if self.poly_iw.shape[1] != 3:
+    if self.poly_iw_o.shape[1] != 2:
         raise ValueError(
-            "There must be 19 coefficients in the image to world polynomial"
+            "There must be 10 coefficients in the ray origin polynomial"
         )
-    
-    if len(self.dlt.shape) != 2:
+
+    if len(self.poly_iw_v.shape) != 2:
         raise ValueError(
-            "DLT coefficients must be 2 dimensional."
+            "Ray direction polynomial coefficients must be 2 dimensional."
         )
-        
-    if self.dlt.shape != (3, 4):
+
+    if self.poly_iw_v.shape[0] != 10:
         raise ValueError(
-            "DLT coefficients must be of shape (3, 4)"
+            "Ray direction polynomial coefficients must be ordered in [x, y]'"
         )
-        
+
+    if self.poly_iw_v.shape[1] != 2:
+        raise ValueError(
+            "There must be 10 coefficients in the ray direction polynomial"
+        )
+
     if self.dtype not in ["float32", "float64"]:
         raise ValueError(
             "Dtype is not supported for camera calibration"

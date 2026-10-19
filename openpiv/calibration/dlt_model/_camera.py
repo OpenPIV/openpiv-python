@@ -46,17 +46,17 @@ class camera(object):
     ):
         self.name = name
         self.resolution = resolution
-        self.coeffs = coeffs
+        self.coeffs = np.array(coeffs, copy=True)
         self.dtype = dtype
         
         # method definitions
-        camera._check_parameters = _check_parameters
+        camera._check_parameters   = _check_parameters
         camera._get_inverse_vector = _get_inverse_vector
-        camera.minimize_params = _minimize_params
-        camera.project_points = _project_points
-        camera.project_to_z = _project_to_z
-        camera.save_parameters = _save_parameters
-        camera.load_parameters = _load_parameters
+        camera.minimize_params     = _minimize_params
+        camera.project_points      = _project_points
+        camera.project_to_z        = _project_to_z
+        camera.save_parameters     = _save_parameters
+        camera.load_parameters     = _load_parameters
         
         # check camera params at init
         self._check_parameters()

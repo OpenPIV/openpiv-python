@@ -5,7 +5,7 @@ def _standardize_points_2d(
     x: np.ndarray,
     y: np.ndarray
 ):
-    """Standardize x and y coordinates.
+    """Normalize 2-D points with an isotropic similarity transform.
     
     Normalize the x and y coordinates through standardization. This allows
     for a better fit when calibrating the direct linear transformation.
@@ -23,22 +23,27 @@ def _standardize_points_2d(
         The normalization matrix for normalization and denormalization.
     
     """
-    x_a = np.mean(x)
-    y_a = np.mean(y)
-    
-    x_s = np.sqrt(2 / np.std(x))
-    y_s = np.sqrt(2 / np.std(y))
-    
-    x_n = x_s * x + (-x_s * x_a)
-    y_n = y_s * y + (-y_s * y_a)
-    
-    xy_norm = np.array([x_n, y_n], dtype="float64")
+    centroid = np.array(
+        [np.mean(x), np.mean(y)],
+        dtype="float64"
+    )
+    centered = np.array(
+        [x - centroid[0], y - centroid[1]],
+        dtype="float64"
+    )
+    mean_distance = np.mean(np.linalg.norm(centered, axis=0))
+
+    if not np.isfinite(mean_distance):
+        raise ValueError("Cannot normalize coincident 2D points")
+
+    scale = np.sqrt(2.0) / mean_distance
+    xy_norm = scale * centered
 
     norm_mat = np.array(
         [
-            [x_s, 0,   -x_s * x_a],
-            [0,   y_s, -y_s * y_a],
-            [0,   0,    1]
+            [scale, 0.0, -scale * centroid[0]],
+            [0.0, scale, -scale * centroid[1]],
+            [0.0, 0.0, 1.0]
         ], 
         dtype="float64"
     )
@@ -51,7 +56,7 @@ def _standardize_points_3d(
     y: np.ndarray,
     z: np.ndarray
 ):
-    """Standardize x, y and z coordinates.
+    """Normalize 3-D points with an isotropic similarity transform.
     
     Normalize the x, y and z coordinates through standardization. This allows
     for a better fit when calibrating the direct linear transformation.
@@ -69,26 +74,32 @@ def _standardize_points_3d(
         The normalization matrix for further normalization and denormalization.
     
     """
-    x_a = np.mean(x)
-    y_a = np.mean(y)
-    z_a = np.mean(z)
-    
-    x_s = np.sqrt(2 / np.std(x))
-    y_s = np.sqrt(2 / np.std(y))
-    z_s = np.sqrt(2 / np.std(z))
-    
-    x_n = x_s * x + (-x_s * x_a)
-    y_n = y_s * y + (-y_s * y_a)
-    z_n = z_s * z + (-z_s * z_a)
-    
-    xyz_norm = np.array([x_n, y_n, z_n], dtype="float64")
+    centroid = np.array(
+        [np.mean(x), np.mean(y), np.mean(z)],
+        dtype="float64"
+    )
+    centered = np.array(
+        [
+            x - centroid[0],
+            y - centroid[1],
+            z - centroid[2]
+        ],
+        dtype="float64"
+    )
+    mean_distance = np.mean(np.linalg.norm(centered, axis=0))
+
+    if not np.isfinite(mean_distance):
+        raise ValueError("Cannot normalize coincident 3D points")
+
+    scale = np.sqrt(3.0) / mean_distance
+    xyz_norm = scale * centered
 
     norm_mat = np.array(
         [
-            [x_s, 0,   0,   -x_s * x_a],
-            [0,   y_s, 0,   -y_s * y_a],
-            [0,   0,   z_s, -z_s * z_a],
-            [0,   0,   0,   1]
+            [scale, 0.0, 0.0, -scale * centroid[0]],
+            [0.0, scale, 0.0, -scale * centroid[1]],
+            [0.0, 0.0, scale, -scale * centroid[2]],
+            [0.0, 0.0, 0.0, 1.0]
         ], 
         dtype="float64"
     )
