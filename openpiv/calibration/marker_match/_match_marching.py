@@ -616,115 +616,115 @@ def match_pairs_marching(
 ):
     """Match a symmetric or two-layer asymmetric target.
     
-        Pair detected image points with physical grid coordinates by
-        following rows and columns from a selected or automatically
-        determined origin. Local image-space step vectors update after
-        each accepted marker to follow changes in spacing and direction.
-    
-        Parameters
-        ----------
-        %(image_points)s
-        origin : array_like, optional
-            Approximate image position of the zero grid point, of shape (2,).
-            The nearest detection is selected. If omitted for a symmetric
-            target, use the marker nearest to the median.
-        origin_x, origin_y : array_like, optional
-            Approximate image positions of the adjacent positive-x and
-            positive-y markers, each of shape (2,). Missing axes are inferred
-            from up to eight nearest neighbors for symmetric targets.
-        spacing : float or sequence of two floats, optional
-            Positive physical spacing between adjacent markers within one
-            layer. A scalar applies to both axes; (spacing_x, spacing_y)
-            specifies independent spacings. Both layers use the same spacing.
-            Default is 1.0.
-        asymmetric : bool, optional
-            Match two interleaved symmetric grids and return both layers.
-            Supplied origin and axis positions identify the first layer.
-            The second layer is offset by half a cell in -x and +y. Default
-            is False.
-        asymmetric_z : float, optional
-            Second-layer z coordinate relative to the first layer, in the
-            same physical units as spacing. Default is 0.0, allowing coplanar
-            interleaved grids. Used only when asymmetric is True.
-        tolerance : float, optional
-            Maximum Euclidean prediction error after expressing the image
-            displacement in local x/y grid steps. Default is 0.25.
-        max_missing : int, optional
-            Number of consecutive missing grid positions allowed before a
-            line search ends. Default is 2.
-        return_indices : bool, optional
-            Also return the column indices of matched detections in the
-            original image_points array. Default is False.
-    
-        Returns
-        -------
-        %(image_points)s
-        %(object_points)s
-        indices : 1D np.ndarray, optional
-            Original input column indices of shape (m,), returned only when
-            return_indices is True. Their ordering matches both point arrays.
-    
-        Raises
-        ------
-        ValueError
-            If automatic origin selection receives an empty point field,
-            grid axes cannot be inferred, required asymmetric seed positions
-            are omitted, or no second-layer origin is found near the
-            half-cell shift.
-        numpy.linalg.LinAlgError
-            If the projected grid basis is singular, for example when
-            supplied axis positions define parallel or zero-length steps.
-    
-        Notes
-        -----
-        For asymmetric targets, first-layer matches are excluded before searching
-        the second layer. The image-space origin is predicted by a half-cell
-        shift along the selected axes, and the object coordinates receive the
-        corresponding x/y/z offsets. 
-    
-        Automatic labeling can swap or reverse physical axes on rotated symmetric
-        targets. Supply both axis positions to fix the physical frame. Missing
-        markers on the y spine can leave entire rows unsearched. Unrelated
-        detections within the acceptance tolerance can still be matched. Each
-        accepted detection is used once, and input arrays are not modified.
-    
-        Origin-and-axis initialization is inspired by CalVi [1]_. Median-based
-        seed selection and expansion using locally updated grid steps follow
-        ideas described by Douskos et al. [2]_.
-    
-        References
-        ----------
-        .. [1] G. Paolillo and T. Astarita, "CalVi User Guide",
-            PaIRS version 0.1.13, revised February 7, 2024,
-            Sections 9 and 11, pp. 11-13 and 19-20.
-            https://www.pairs.unina.it/web/CalVi-Guide.pdf
-    
-        .. [2] V. Douskos, I. Kalisperakis, G. Karras, and E. Petsa,
-            "Fully automatic camera calibration using regular planar
-            patterns", Int. Arch. Photogramm. Remote Sens. Spatial
-            Inf. Sci., XXXVII-B5, pp. 21-26, 2008.
-            See Section 2.1.2, pp. 22-23.
-            https://www.isprs.org/proceedings/XXXVII/congress/5_pdf/04.pdf
-    
-        Examples
-        --------
-        >>> image_points, object_points, = match_pairs_marching(
-        ...     image_points,
-        ...     spacing=(5.0, 5.0)
-        ... )
-    
-        >>> image_points, object_points, indices = match_pairs_marching(
-        ...     image_points,
-        ...     origin=origin,
-        ...     origin_x=origin_x,
-        ...     origin_y=origin_y,
-        ...     spacing=(5.0, 5.0),
-        ...     asymmetric=True,
-        ...     asymmetric_z=2.0,
-        ...     return_indices=True
-        ... )
-    
-        """
+    Pair detected image points with physical grid coordinates by
+    following rows and columns from a selected or automatically
+    determined origin. Local image-space step vectors update after
+    each accepted marker to follow changes in spacing and direction.
+
+    Parameters
+    ----------
+    %(image_points)s
+    origin : array_like, optional
+        Approximate image position of the zero grid point, of shape (2,).
+        The nearest detection is selected. If omitted for a symmetric
+        target, use the marker nearest to the median.
+    origin_x, origin_y : array_like, optional
+        Approximate image positions of the adjacent positive-x and
+        positive-y markers, each of shape (2,). Missing axes are inferred
+        from up to eight nearest neighbors for symmetric targets.
+    spacing : float or sequence of two floats, optional
+        Positive physical spacing between adjacent markers within one
+        layer. A scalar applies to both axes; (spacing_x, spacing_y)
+        specifies independent spacings. Both layers use the same spacing.
+        Default is 1.0.
+    asymmetric : bool, optional
+        Match two interleaved symmetric grids and return both layers.
+        Supplied origin and axis positions identify the first layer.
+        The second layer is offset by half a cell in -x and +y. Default
+        is False.
+    asymmetric_z : float, optional
+        Second-layer z coordinate relative to the first layer, in the
+        same physical units as spacing. Default is 0.0, allowing coplanar
+        interleaved grids. Used only when asymmetric is True.
+    tolerance : float, optional
+        Maximum Euclidean prediction error after expressing the image
+        displacement in local x/y grid steps. Default is 0.25.
+    max_missing : int, optional
+        Number of consecutive missing grid positions allowed before a
+        line search ends. Default is 2.
+    return_indices : bool, optional
+        Also return the column indices of matched detections in the
+        original image_points array. Default is False.
+
+    Returns
+    -------
+    %(image_points)s
+    %(object_points)s
+    indices : 1D np.ndarray, optional
+        Original input column indices of shape (m,), returned only when
+        return_indices is True. Their ordering matches both point arrays.
+
+    Raises
+    ------
+    ValueError
+        If automatic origin selection receives an empty point field,
+        grid axes cannot be inferred, required asymmetric seed positions
+        are omitted, or no second-layer origin is found near the
+        half-cell shift.
+    numpy.linalg.LinAlgError
+        If the projected grid basis is singular, for example when
+        supplied axis positions define parallel or zero-length steps.
+
+    Notes
+    -----
+    For asymmetric targets, first-layer matches are excluded before searching
+    the second layer. The image-space origin is predicted by a half-cell
+    shift along the selected axes, and the object coordinates receive the
+    corresponding x/y/z offsets. 
+
+    Automatic labeling can swap or reverse physical axes on rotated symmetric
+    targets. Supply both axis positions to fix the physical frame. Missing
+    markers on the y spine can leave entire rows unsearched. Unrelated
+    detections within the acceptance tolerance can still be matched. Each
+    accepted detection is used once, and input arrays are not modified.
+
+    Origin-and-axis initialization is inspired by CalVi [1]_. Median-based
+    seed selection and expansion using locally updated grid steps follow
+    ideas described by Douskos et al. [2]_.
+
+    References
+    ----------
+    .. [1] G. Paolillo and T. Astarita, "CalVi User Guide",
+        PaIRS version 0.1.13, revised February 7, 2024,
+        Sections 9 and 11, pp. 11-13 and 19-20.
+        https://www.pairs.unina.it/web/CalVi-Guide.pdf
+
+    .. [2] V. Douskos, I. Kalisperakis, G. Karras, and E. Petsa,
+        "Fully automatic camera calibration using regular planar
+        patterns", Int. Arch. Photogramm. Remote Sens. Spatial
+        Inf. Sci., XXXVII-B5, pp. 21-26, 2008.
+        See Section 2.1.2, pp. 22-23.
+        https://www.isprs.org/proceedings/XXXVII/congress/5_pdf/04.pdf
+
+    Examples
+    --------
+    >>> image_points, object_points, = match_pairs_marching(
+    ...     image_points,
+    ...     spacing=(5.0, 5.0)
+    ... )
+
+    >>> image_points, object_points, indices = match_pairs_marching(
+    ...     image_points,
+    ...     origin=origin,
+    ...     origin_x=origin_x,
+    ...     origin_y=origin_y,
+    ...     spacing=(5.0, 5.0),
+    ...     asymmetric=True,
+    ...     asymmetric_z=2.0,
+    ...     return_indices=True
+    ... )
+
+    """
     image_points = np.asarray(
         image_points,
         dtype=np.float64
