@@ -159,7 +159,7 @@ def find_second_peak_3D(corr, i=None, j=None, z=None, width=2):
     jini = max(0, j - width)
     jfin = min(j + width + 1, corr.shape[1])
     zini = max(0, z - width)
-    zfin = min(z + width + 1, corr.shape[1])
+    zfin = min(z + width + 1, corr.shape[2])
 
     tmp[iini:ifin, jini:jfin, zini:zfin] = ma.masked
     (i, j, z), corr_max2 = find_first_peak(tmp)

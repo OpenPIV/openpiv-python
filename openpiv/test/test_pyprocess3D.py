@@ -1,14 +1,49 @@
-from openpiv.pyprocess3D import extended_search_area_piv3D
 import numpy as np
-
-from skimage.util import random_noise
-from skimage import img_as_ubyte
-
+import pytest
 from scipy.ndimage import shift as shift_img
+from skimage import img_as_ubyte
+from skimage.util import random_noise
+
+from openpiv.pyprocess3D import (
+    extended_search_area_piv3D,
+    find_second_peak_3D,
+    sig2noise_ratio,
+)
 
 # import warnings
 
 threshold = 0.1
+
+
+@pytest.mark.parametrize("width", [0, 2])
+@pytest.mark.parametrize("explicit_peak", [False, True])
+@pytest.mark.parametrize("shape,first,second", [
+    ((7, 8, 20), (3, 4, 15), (3, 4, 5)),
+    ((7, 8, 20), (3, 4, 18), (3, 4, 5)),
+    ((7, 20, 8), (3, 10, 4), (3, 5, 4)),
+    ((9, 12, 12), (4, 6, 6), (4, 3, 6)),
+])
+def test_second_peak_uses_depth(shape, first, second, explicit_peak, width):
+    corr = np.zeros(shape)
+    corr[first] = 10.0
+    corr[second] = 4.0
+    original = corr.copy()
+    args = first if explicit_peak else ()
+
+    position, value = find_second_peak_3D(corr, *args, width=width)
+
+    assert position == second
+    assert value == 4.0
+    np.testing.assert_array_equal(corr, original)
+
+
+@pytest.mark.parametrize("depth", [16, 20])
+def test_signal_to_noise_excludes_first_peak_in_deep_volume(depth):
+    corr = np.zeros((7, 8, depth))
+    corr[3, 4, depth - 3] = 10.0
+    corr[3, 4, 5] = 4.0
+
+    assert sig2noise_ratio(corr, sig2noise_method="peak2peak") == 2.5
 
 
 def dist(u, shift):
