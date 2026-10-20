@@ -5,8 +5,8 @@ from .._epipolar_utils import _multi_line_intersect, _line_intersect
 
 
 __all__ = [
-    "line_intersect",
-    "multi_line_intersect"
+    'line_intersect',
+    'multi_line_intersect'
 ]
 
 
@@ -375,10 +375,9 @@ def multi_line_intersect(
     
     # make sure each camera has a set of images
     if n_cams != n_imgs:
-        raise ValueError(
-            f"Camera - image size mismatch. Got {n_cams} cameras and " +
-            f"{n_imgs} images"
-        )
+        msg = f'Camera - image size mismatch. Got {n_cams} cameras and ' +\
+              f'{n_imgs} images'
+        raise ValueError(msg)
     
     # check each camera structure
     for cam in range(n_cams):
@@ -390,9 +389,7 @@ def multi_line_intersect(
         dtype2 = cameras[cam].dtype
         
         if dtype1 != dtype2:
-            raise ValueError(
-                "Dtypes between camera structures must match"
-            )
+            raise ValueError('Dtypes between camera structures must match')
     
     # TODO: we should also check for individual image mismatches
     # if a 1D array is given, extend it

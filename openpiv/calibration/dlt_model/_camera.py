@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import DTypeLike
 from typing import Tuple
 
 from ._check_params import _check_parameters
@@ -7,7 +8,7 @@ from ._projection import _project_points, _project_to_z, _get_inverse_vector
 from ._utils import _save_parameters, _load_parameters
 
 
-__all__ = ["camera"]
+__all__ = ['camera']
 
 
 class camera(object):
@@ -25,7 +26,7 @@ class camera(object):
         Resolution of camera in x and y axes respectively.
     coeffs : np.ndarray
         The coefficients for a DLT matrix.
-    dtype : str
+    dtype : np.dtype
         The dtype used in the projections.
         
     Methods
@@ -42,12 +43,12 @@ class camera(object):
         name: str,
         resolution: Tuple[int, int],
         coeffs: np.ndarray=np.identity(3),
-        dtype: str="float64"
+        dtype: DTypeLike=np.float64
     ):
         self.name = name
         self.resolution = resolution
         self.coeffs = np.array(coeffs, copy=True)
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         
         # method definitions
         camera._check_parameters   = _check_parameters

@@ -150,7 +150,7 @@ def _save_parameters(
             
         f.write(_p + '\n')
         
-        f.write(self.dtype + '\n')
+        f.write(np.dtype(self.dtype).name + '\n')
         
 
 @_cal_doc_utils.docfiller
@@ -200,7 +200,7 @@ def _load_parameters(
             _d2 = f.readline()[:-2]
             distortion2.append(np.array([float(s) for s in _d2.split()]))
             
-        distortion2 = np.array(distortion2, dtype = "float64")
+        distortion2 = np.array(distortion2, dtype = np.float64)
         
         _f = f.readline()[:-2]
         focal = np.array([float(s) for s in _f.split()])
@@ -208,7 +208,7 @@ def _load_parameters(
         _p = f.readline()[:-2]
         principal = np.array([float(s) for s in _p.split()])
         
-        dtype = f.readline()[:-1]
+        dtype = np.dtype(f.readline().strip())
 
     self.name = name
     self.resolution = resolution
@@ -219,7 +219,7 @@ def _load_parameters(
     self.distortion2 = distortion2
     self.focal = focal
     self.principal = principal
-    self.dtype = dtype
+    self.dtype = np.dtype(dtype)
     
     # make sure all parameters are valid
     self._check_parameters()

@@ -52,8 +52,8 @@ def _minimize_params(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = poly_model.camera(
         'cam1', 
@@ -81,14 +81,10 @@ def _minimize_params(
     image_points = np.array(image_points, dtype=dtype)
     
     if object_points.shape[1] < 20:
-        raise ValueError(
-            "Too little points to calibrate"
-        )
+        raise ValueError('Too little points to calibrate')
     
     if object_points.shape[1] != image_points.shape[1]:
-        raise ValueError(
-            "Object point image point size mismatch"
-        )
+        raise ValueError('Object point image point size mismatch')
         
     x = image_points[0]
     y = image_points[1]
@@ -146,7 +142,7 @@ def _minimize_params(
     coeff_iw = np.zeros([20, 2], dtype=dtype)
 
     # Scale columns for fitting; stored coefficients use raw image coordinates.
-    scale = np.linalg.norm(polynomial_iw.astype("float64"), axis=0)
+    scale = np.linalg.norm(polynomial_iw.astype(np.float64), axis=0)
     scale[scale == 0] = 1.0
     polynomial_iw_scaled = polynomial_iw / scale
 
@@ -157,7 +153,9 @@ def _minimize_params(
             rcond=None
         )
         if result[2] != 20:
-            raise ValueError("Volume ray calibration requires full-rank volumetric points")
+            msg = 'Volume ray calibration requires full-rank volumetric points'
+            raise ValueError(msg)
+        
         coeff_iw[:, i] = result[0] / scale
 
     self.poly_wi = coeff_wi

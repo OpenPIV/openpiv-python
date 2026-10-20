@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import DTypeLike
 from typing import Tuple
 
 from ._check_params import _check_parameters
@@ -10,7 +11,7 @@ from ._projection import (_normalize_world_points, _normalize_image_points,
 from ._utils import _get_rotation_matrix, _save_parameters, _load_parameters
 
 
-__all__ = ["camera"]
+__all__ = ['camera']
 
 
 class camera(object):
@@ -58,7 +59,7 @@ class camera(object):
         respectively.
     principal : tuple[float, float]
         Principal point offset for x any y axis respectively.
-    dtype : str
+    dtype : np.dtype
         The dtype used in the projections. All data is copied if the dtype is
         different. It is highly unadvisable to change this parameter.
         
@@ -85,13 +86,13 @@ class camera(object):
         name: str,
         resolution: Tuple[int, int],
         translation: np.ndarray=[0, 0, 1],
-        orientation: np.ndarray=np.zeros(3, dtype="float64"),
+        orientation: np.ndarray=np.zeros(3, dtype=np.float64),
         distortion_model: str="polynomial",
-        distortion1: np.ndarray=np.zeros(8, dtype="float64"),
-        distortion2: np.ndarray=np.zeros([2, 5], dtype="float64"),
+        distortion1: np.ndarray=np.zeros(8, dtype=np.float64),
+        distortion2: np.ndarray=np.zeros([2, 5], dtype=np.float64),
         focal: Tuple[float, float]=[1.0, 1.0],
         principal: Tuple[float, float]=None,
-        dtype: str="float64"
+        dtype: DTypeLike=np.float64
     ):
         translation = np.array(translation, dtype=dtype)
         orientation = np.array(orientation, dtype=dtype)
@@ -106,7 +107,7 @@ class camera(object):
         self.distortion1 = distortion1
         self.distortion2 = distortion2
         self.focal = focal
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         
         if principal is not None:
             self.principal = principal

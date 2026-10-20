@@ -37,8 +37,8 @@ def _project_points(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = poly_model.camera(
         'cam1', 
@@ -127,8 +127,8 @@ def _project_to_z(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = poly_model.camera(
         'cam1', 
@@ -176,10 +176,9 @@ def _project_to_z(
     elif isinstance(z, (float, int)):
         Z = np.zeros_like(x) + z
     else:
-        raise ValueError(
-            "Unsupported value entered for `z`. `z` must be either a scalar " +
-            "or numpy ndarray"
-        )
+        msg = 'Unsupported value entered for `z`. `z` must be either a scalar ' +\
+              'or numpy ndarray'
+        raise ValueError(msg)
     
     t, r = self._get_inverse_vector(image_points)
     a = (Z - t[2]) / r[2]

@@ -89,8 +89,8 @@ def _project_points(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = pinhole_model.camera(
         'cam1', 
@@ -258,8 +258,8 @@ def _project_to_z(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = pinhole_model.camera(
         'cam1', 

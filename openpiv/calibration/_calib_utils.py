@@ -4,11 +4,11 @@ from . import _cal_doc_utils
 
 
 __all__ = [
-    "homogenize",
-    "get_rmse",
-    "get_reprojection_error",
-    "get_los_error",
-    "get_image_mapping"
+    'homogenize',
+    'get_rmse',
+    'get_reprojection_error',
+    'get_los_error',
+    'get_image_mapping'
 ]
     
 
@@ -76,10 +76,9 @@ def get_rmse(
         square_error = np.square(error)
         
     else:
-        raise ValueError(
-            "Residuals (error) array must be of shape (n) or (2, n), " + 
-            f"recieved shape {error.shape}"
-        )
+        msg = 'Residuals (error) array must be of shape (n) or (2, n), ' + \
+             f'recieved shape {error.shape}'
+        raise ValueError(msg)
         
     rmse = np.sqrt(np.mean(square_error))
     
@@ -125,8 +124,8 @@ def get_reprojection_error(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1', 
@@ -193,8 +192,8 @@ def get_los_error(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1', 
@@ -253,8 +252,6 @@ def get_los_error(
 @_cal_doc_utils.docfiller
 def get_image_mapping(
     cam,
-    project_to_z_func=None,
-    project_points_func=None,
     z: float = 0.0,
 ):
     """Get image Mapping.
@@ -270,8 +267,6 @@ def get_image_mapping(
     ----------
     cam : camera
         An instance of a camera object.
-    %(project_to_z_func)s
-    %(project_points_func)s
     
     Returns
     -------
@@ -298,8 +293,8 @@ def get_image_mapping(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1', 
@@ -335,7 +330,7 @@ def get_image_mapping(
     image_grid = np.concatenate(
         [py.reshape(-1, 1), px.reshape(-1, 1)],
         axis=-1
-    ).astype("float64")
+    ).astype(np.float64)
 
     x = image_grid[:, 1]
     y = image_grid[:, 0]
@@ -355,7 +350,8 @@ def get_image_mapping(
     # get border limits (fixed: Y bounds from world_y, not world_x)
     finite = np.isfinite(world_x) & np.isfinite(world_y)
     if not np.any(finite):
-        raise ValueError("Back-projection produced no finite world points")
+        raise ValueError('Back-projection produced no finite world points')
+    
     min_X = float(np.min(world_x[finite]))
     max_X = float(np.max(world_x[finite]))
     min_Y = float(np.min(world_y[finite]))

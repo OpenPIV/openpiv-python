@@ -25,16 +25,16 @@ def _standardize_points_2d(
     """
     centroid = np.array(
         [np.mean(x), np.mean(y)],
-        dtype="float64"
+        dtype=np.float64
     )
     centered = np.array(
         [x - centroid[0], y - centroid[1]],
-        dtype="float64"
+        dtype=np.float64
     )
     mean_distance = np.mean(np.linalg.norm(centered, axis=0))
 
     if not np.isfinite(mean_distance):
-        raise ValueError("Cannot normalize coincident 2D points")
+        raise ValueError('Cannot normalize coincident 2D points')
 
     scale = np.sqrt(2.0) / mean_distance
     xy_norm = scale * centered
@@ -45,7 +45,7 @@ def _standardize_points_2d(
             [0.0, scale, -scale * centroid[1]],
             [0.0, 0.0, 1.0]
         ], 
-        dtype="float64"
+        dtype=np.float64
     )
     
     return xy_norm, norm_mat
@@ -76,7 +76,7 @@ def _standardize_points_3d(
     """
     centroid = np.array(
         [np.mean(x), np.mean(y), np.mean(z)],
-        dtype="float64"
+        dtype=np.float64
     )
     centered = np.array(
         [
@@ -84,12 +84,12 @@ def _standardize_points_3d(
             y - centroid[1],
             z - centroid[2]
         ],
-        dtype="float64"
+        dtype=np.float64
     )
     mean_distance = np.mean(np.linalg.norm(centered, axis=0))
 
     if not np.isfinite(mean_distance):
-        raise ValueError("Cannot normalize coincident 3D points")
+        raise ValueError('Cannot normalize coincident 3D points')
 
     scale = np.sqrt(3.0) / mean_distance
     xyz_norm = scale * centered
@@ -101,7 +101,7 @@ def _standardize_points_3d(
             [0.0, 0.0, scale, -scale * centroid[2]],
             [0.0, 0.0, 0.0, 1.0]
         ], 
-        dtype="float64"
+        dtype=np.float64
     )
     
     return xyz_norm, norm_mat

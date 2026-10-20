@@ -38,8 +38,8 @@ def _project_points(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1', 
@@ -120,10 +120,9 @@ def _get_inverse_vector(
     p = self.coeffs
     
     if p.shape != (3, 4):
-        raise ValueError(
-            "DLT coefficients must be of shape (3, 4); recieved shape " +
-            f"{p.shape}"
-        )
+        msg = 'DLT coefficients must be of shape (3, 4); recieved shape ' + \
+             f'{p.shape}'
+        raise ValueError(msg)
         
     m = p[:, :3]
     t_un = p[:, 3]
@@ -179,8 +178,8 @@ def _project_to_z(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1', 

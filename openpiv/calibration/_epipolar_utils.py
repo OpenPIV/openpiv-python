@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import DTypeLike
 from typing import Tuple
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot as plt
@@ -6,7 +7,7 @@ from matplotlib import pyplot as plt
 from . import _cal_doc_utils
 
 __all__ = [
-    "plot_epipolar_line"
+    'plot_epipolar_line'
 ]
 
 
@@ -153,7 +154,7 @@ def _line_intersect(
 
 def _multi_line_intersect(
     lines: list,
-    dtype: str="float64"
+    dtype: DTypeLike=np.float64
 ):
     """Calculate where two rays intersect.
     

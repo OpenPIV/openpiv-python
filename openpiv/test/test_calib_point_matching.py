@@ -6,7 +6,7 @@ from numpy.testing import (assert_equal, assert_allclose,
                            assert_almost_equal, assert_array_almost_equal,
                            assert_array_equal, assert_)
 
-from openpiv.calibration import calib_utils
+from openpiv.calibration import calib_utils, marker_match
 
 
 def test_find_nearest_points_01():
@@ -42,7 +42,7 @@ def test_find_nearest_points_01():
     ).T
     
     # without NaNs threshold
-    found_points = calib_utils.find_nearest_points(
+    found_points = marker_match.find_nearest_points(
         grid, 
         selected_points,
         threshold=None, 
@@ -55,7 +55,7 @@ def test_find_nearest_points_01():
     )
     
     # with NaNs threshold
-    found_points = calib_utils.find_nearest_points(
+    found_points = marker_match.find_nearest_points(
         grid, 
         selected_points,
         threshold=5, 
@@ -113,7 +113,7 @@ def test_find_nearest_points_02():
         dtype="float64"
     ).T
     
-    found_points = calib_utils.find_nearest_points(
+    found_points = marker_match.find_nearest_points(
         grid, 
         selected_points,
         threshold=5.5, 

@@ -14,21 +14,22 @@ All functions use duck-typing: a camera needs ``project_points``,
 
 from typing import List, Tuple, Dict, Optional, Union
 import numpy as np
+from numpy.typing import DTypeLike
 
 __all__ = [
-    "get_common_world_grid",
-    "get_dewarp_mapping",
-    "dewarp_image",
-    "estimate_disparity",
-    "correct_maps",
-    "self_calibration",
-    "reconstruct_3c",
-    "triangulate",
-    "stereo_reprojection_error",
+    'get_common_world_grid',
+    'get_dewarp_mapping',
+    'dewarp_image',
+    'estimate_disparity',
+    'correct_maps',
+    'self_calibration',
+    'reconstruct_3c',
+    'triangulate',
+    'stereo_reprojection_error',
 ]
 
 
-def _as_z_array(z: Union[float, np.ndarray], n: int, dtype: str = "float64") -> np.ndarray:
+def _as_z_array(z: Union[float, np.ndarray], n: int, dtype: DTypeLike = np.float64) -> np.ndarray:
     if isinstance(z, np.ndarray):
         z = np.asarray(z, dtype=dtype).ravel()
         if z.size == 1:
@@ -67,7 +68,7 @@ def get_common_world_grid(
         px, py = np.meshgrid(xs, ys)
         x = px.ravel()
         y = py.ravel()
-        zz = _as_z_array(z, x.size, getattr(cam, "dtype", "float64"))
+        zz = _as_z_array(z, x.size, getattr(cam, "dtype", np.float64))
         X, Y, _ = cam.project_to_z([x, y], zz)
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(Y, dtype=np.float64)
@@ -116,7 +117,7 @@ def get_dewarp_mapping(
     """
     Xf = np.asarray(Xw, dtype=np.float64).ravel()
     Yf = np.asarray(Yw, dtype=np.float64).ravel()
-    Zf = _as_z_array(z, Xf.size, getattr(cam, "dtype", "float64"))
+    Zf = _as_z_array(z, Xf.size, getattr(cam, "dtype", np.float64))
     proj = cam.project_points(np.array([Xf, Yf, Zf]))
     map_x = np.asarray(proj[0], dtype=np.float64).reshape(Xw.shape)
     map_y = np.asarray(proj[1], dtype=np.float64).reshape(Xw.shape)
@@ -409,7 +410,7 @@ def reconstruct_3c(
     return Dw[0] / dt, Dw[1] / dt, Dw[2] / dt
 
 
-def _dlt_init(cams: list, pts: list, dtype: str = "float64"):
+def _dlt_init(cams: list, pts: list, dtype: DTypeLike = np.float64):
     """DLT-based initial guess (plane-agnostic). Returns None on failure."""
     try:
         from .dlt_model import camera as dlt_camera

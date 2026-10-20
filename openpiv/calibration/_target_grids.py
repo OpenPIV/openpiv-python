@@ -3,8 +3,8 @@ from typing import Tuple
 
 
 __all__ = [
-    "get_simple_grid",
-    "get_asymmetric_grid"
+    'get_simple_grid',
+    'get_asymmetric_grid'
 ]
 
 
@@ -61,8 +61,8 @@ def get_simple_grid(
     >>> object_points
     
     """
-    range_x = np.arange(nx).astype("float64")
-    range_y = np.arange(ny).astype("float64")
+    range_x = np.arange(nx).astype(np.float64)
+    range_y = np.arange(ny).astype(np.float64)
     
     origin_x = range_x[x_ind]
     origin_y = range_y[y_ind]
@@ -80,7 +80,7 @@ def get_simple_grid(
     
     object_points = np.array(
         [x.ravel(), y.ravel(), np.zeros_like(x).ravel() + z],
-        dtype="float64"
+        dtype=np.float64
     )
     
     return object_points
@@ -168,5 +168,5 @@ def get_asymmetric_grid(
             _grid_y, 
             _grid_z
         ],
-        dtype="float64"
+        dtype=np.float64
     )
