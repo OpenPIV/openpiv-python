@@ -1,6 +1,6 @@
 
-
 import numpy as np
+from numpy.typing import DTypeLike
 
 from ._check_params import _check_parameters
 from ._distortion import (
@@ -19,7 +19,7 @@ from ._projection import (
 )
 from ._utils import _get_rotation_matrix, _load_parameters, _save_parameters
 
-__all__ = ["camera"]
+__all__ = ['camera']
 
 
 class camera:
@@ -67,7 +67,7 @@ class camera:
         respectively.
     principal : tuple[float, float]
         Principal point offset for x any y axis respectively.
-    dtype : str
+    dtype : np.dtype
         The dtype used in the projections. All data is copied if the dtype is
         different. It is highly unadvisable to change this parameter.
 
@@ -93,27 +93,21 @@ class camera:
         self,
         name: str,
         resolution: tuple[int, int],
-        translation: np.ndarray | None=None,
-        orientation: np.ndarray | None=None,
+        translation: np.ndarray=None,
+        orientation: np.ndarray=np.zeros(3, dtype=np.float64),
         distortion_model: str="polynomial",
-        distortion1: np.ndarray | None=None,
-        distortion2: np.ndarray | None=None,
+        distortion1: np.ndarray=np.zeros(8, dtype=np.float64),
+        distortion2: np.ndarray=np.zeros([2, 5], dtype=np.float64),
         focal: tuple[float, float]=[1.0, 1.0],
         principal: tuple[float, float] | None=None,
-        dtype: str="float64"
+        dtype: DTypeLike=np.float64
     ):
-        translation = np.array(
-            [0, 0, 1] if translation is None else translation, dtype=dtype
-        )
-        orientation = np.array(
-            np.zeros(3) if orientation is None else orientation, dtype=dtype
-        )
-        distortion1 = np.array(
-            np.zeros(8) if distortion1 is None else distortion1, dtype=dtype
-        )
-        distortion2 = np.array(
-            np.zeros([2, 5]) if distortion2 is None else distortion2, dtype=dtype
-        )
+        if translation is None:
+            translation = [0, 0, 1]
+        translation = np.array(translation, dtype=dtype)
+        orientation = np.array(orientation, dtype=dtype)
+        distortion1 = np.array(distortion1, dtype=dtype)
+        distortion2 = np.array(distortion2, dtype=dtype)
 
         self.name = name
         self.resolution = resolution
@@ -123,7 +117,7 @@ class camera:
         self.distortion1 = distortion1
         self.distortion2 = distortion2
         self.focal = focal
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
 
         if principal is not None:
             self.principal = principal

@@ -28,4 +28,4 @@ from ._camera import *
 from ._epipolar_geom import *
 from ._minimization import *
 
-__all__ = [s for s in dir() if not s.startswith("_")]
+__all__ = [s for s in dir() if not s.startswith('_')]

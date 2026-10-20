@@ -1,13 +1,13 @@
 
-
 import numpy as np
+from numpy.typing import DTypeLike
 
 from ._check_params import _check_parameters
 from ._minimization import _minimize_params
 from ._projection import _get_inverse_vector, _project_points, _project_to_z
 from ._utils import _load_parameters, _save_parameters
 
-__all__ = ["camera"]
+__all__ = ['camera']
 
 
 class camera:
@@ -31,7 +31,7 @@ class camera:
         10 coefficients for ray origins in [X, Y]'.
     poly_iw_v : np.ndarray
         10 coefficients for ray slopes in [dX/dZ, dY/dZ]'.
-    dtype : str
+    dtype : np.dtype
         The dtype used in the projections.
 
     Methods
@@ -47,17 +47,17 @@ class camera:
         self,
         name: str,
         resolution: tuple[int, int],
-        poly_wi: np.ndarray=np.ones((2,19), dtype="float64").T,
-        poly_iw_o: np.ndarray=np.ones((2,10), dtype="float64").T,
-        poly_iw_v: np.ndarray=np.ones((2,10), dtype="float64").T,
-        dtype: str="float64"
+        poly_wi: np.ndarray=np.ones((2,19), dtype=np.float64).T,
+        poly_iw_o: np.ndarray=np.ones((2,10), dtype=np.float64).T,
+        poly_iw_v: np.ndarray=np.ones((2,10), dtype=np.float64).T,
+        dtype: DTypeLike=np.float64
     ):
         self.name = name
         self.resolution = resolution
         self.poly_wi = poly_wi
         self.poly_iw_o = poly_iw_o
         self.poly_iw_v = poly_iw_v
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
 
         # method definitions
         camera._check_parameters   = _check_parameters

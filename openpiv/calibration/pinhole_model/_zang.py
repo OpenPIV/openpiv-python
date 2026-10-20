@@ -3,7 +3,7 @@ import numpy as np
 from ..dlt_model import calibrate_dlt
 
 __all__ = [
-    "calibrate_intrinsics"
+    'calibrate_intrinsics'
 ]
 
 
@@ -26,7 +26,7 @@ def _get_all_homography(
         )
         all_H.append(H)
 
-    return np.array(all_H, dtype="float64").reshape((len(all_H), 3, 3))
+    return np.array(all_H, dtype=np.float64).reshape((len(all_H), 3, 3))
 
 
 def _get_Vij(
@@ -34,7 +34,7 @@ def _get_Vij(
     i: int,
     j: int
 ):
-    v_ij = np.zeros((all_h.shape[0], 6), dtype="float64")
+    v_ij = np.zeros((all_h.shape[0], 6), dtype=np.float64)
 
     v_ij[:, 0] = all_h[:, 0, i] * all_h[:, 0, j]
     v_ij[:, 1] = all_h[:, 0, i] * all_h[:, 1, j] + all_h[:, 1, i] * all_h[:, 0, j]
@@ -53,7 +53,7 @@ def _get_B(
     v_01 = _get_Vij(all_h, 0, 1)
     v_11 = _get_Vij(all_h, 1, 1)
 
-    v = np.zeros((all_h.shape[0] * 2, 6), dtype = "float64")
+    v = np.zeros((all_h.shape[0] * 2, 6), dtype = np.float64)
 
     v[0::2, :] = v_01
     v[1::2, :] = v_00 - v_11

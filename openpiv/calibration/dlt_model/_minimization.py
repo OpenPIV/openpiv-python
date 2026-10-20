@@ -6,7 +6,7 @@ from .._calib_utils import get_rmse, homogenize
 from ._normalization import _standardize_points_2d, _standardize_points_3d
 
 __all__ = [
-    "calibrate_dlt"
+    'calibrate_dlt'
 ]
 
 
@@ -21,11 +21,8 @@ def calibrate_dlt(
 
     Compute a 3x3 planar homography from 2D lab coordinates or a 3x4 camera
     projection matrix from 3D lab coordinates using normalized direct linear
-    transformation.
-
-    When enabled, nonlinear refinement minimizes image reprojection error
-    using Levenberg-Marquardt before denormalization. Planar refinement uses
-    an analytical Jacobian; 3D refinement uses a two-point numerical Jacobian.
+    transformation. When enabled, nonlinear refinement minimizes image reprojection error
+    using Levenberg-Marquardt before denormalization.
 
     Parameters
     ----------
@@ -33,9 +30,7 @@ def calibrate_dlt(
     %(image_points)s
     enforce_coplanar : bool, optional
         If True, require the standard deviation of supplied Z coordinates
-        to be no greater than 1e-5 in lab-coordinate units. The Z coordinates
-        are then discarded and a planar homography is fitted using X and Y.
-        This checks for a constant-Z plane, not an arbitrarily oriented plane.
+        to be no greater than 1e-5 in lab-coordinate units.
         Default is False.
     nonlinear : bool, optional
         If True, refine the initial DLT matrix by minimizing image
@@ -75,26 +70,26 @@ def calibrate_dlt(
     homography coefficients.
 
     """
-    object_points = np.array(object_points, dtype="float64")
-    image_points = np.array(image_points, dtype="float64")
+    object_points = np.array(object_points, dtype=np.float64)
+    image_points = np.array(image_points, dtype=np.float64)
 
     if object_points.ndim != 2:
-        raise ValueError("Object points must be a two-dimensional array")
+        raise ValueError('Object points must be a two-dimensional array')
     if image_points.ndim != 2 or image_points.shape[0] != 2:
-        raise ValueError("Image points must have shape (2, N)")
+        raise ValueError('Image points must have shape (2, N)')
 
     ndims = object_points.shape[0]
 
     if ndims not in (2, 3):
-        raise ValueError("Object points must have shape (2, N) or (3, N)")
+        raise ValueError('Object points must have shape (2, N) or (3, N)')
     if object_points.shape[1] != image_points.shape[1]:
-        raise ValueError("Object point image point size mismatch")
+        raise ValueError('Object point image point size mismatch')
 
     if not (
         np.all(np.isfinite(object_points))
         and np.all(np.isfinite(image_points))
     ):
-        raise ValueError("Calibration points must contain only finite values")
+        raise ValueError('Calibration points must contain only finite values')
 
     min_points = 4
 
@@ -103,7 +98,7 @@ def calibrate_dlt(
 
     if object_points.shape[1] < min_points:
         raise ValueError(
-            f"Too little points to calibrate. Need at least {min_points} points"
+            f'Too little points to calibrate. Need at least {min_points} points'
         )
 
     if enforce_coplanar and ndims == 3:
@@ -111,7 +106,7 @@ def calibrate_dlt(
 
         if np.std(z) > 1e-5:
             raise ValueError(
-                "Object points must be co-planar"
+                'Object points must be co-planar'
             )
 
         ndims = 2
@@ -126,7 +121,7 @@ def calibrate_dlt(
         [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
 
         # mount constraints
-        A = np.zeros([x.shape[0] * 2, 9], dtype="float64")
+        A = np.zeros([x.shape[0] * 2, 9], dtype=np.float64)
         A[0::2, 0] = -X
         A[0::2, 1] = -Y
         A[0::2, 2] = -1
@@ -150,7 +145,7 @@ def calibrate_dlt(
         [x, y], img_norm_mat = _standardize_points_2d(x_raw, y_raw)
 
         # mount constraints
-        A = np.zeros([x.shape[0] * 2, 12], dtype="float64")
+        A = np.zeros([x.shape[0] * 2, 12], dtype=np.float64)
         A[0::2, 0] = -X
         A[0::2, 1] = -Y
         A[0::2, 2] = -Z
@@ -171,7 +166,7 @@ def calibrate_dlt(
 
     # Solve Ah = 0. full_matrices=True is required for the 8x9 matrix
     # produced by the minimal four-point planar case. The null-space vector
-    # is the final row of the full Vh matrix.
+    # is the final row of the full Vh matrix and has our linear estimate.
     _, singular_values, vh = np.linalg.svd(A, full_matrices=True)
 
     rank_tolerance = (
@@ -183,14 +178,11 @@ def calibrate_dlt(
 
     if rank < A.shape[1] - 1:
         raise ValueError(
-            "Calibration points form a degenerate DLT configuration"
+            'Calibration points form a degenerate DLT configuration'
         )
 
     H = vh[-1, :]
 
-    # Prefer the traditional h[-1] == 1 convention. A valid projective
-    # matrix can, however, have a zero final coefficient, so fall back to a
-    # unit-norm representative rather than dividing by zero.
     coefficient_tolerance = (
         np.finfo(H.dtype).eps * max(A.shape) * np.linalg.norm(H)
     )
@@ -199,7 +191,7 @@ def calibrate_dlt(
     if abs(homogeneous_scale) <= coefficient_tolerance:
         homogeneous_scale = np.linalg.norm(H)
     if abs(homogeneous_scale) <= np.finfo(H.dtype).tiny:
-        raise ValueError("Unable to determine finite DLT coefficients")
+        raise ValueError('Unable to determine finite DLT coefficients')
 
     H /= homogeneous_scale
     H = H.reshape([3, ndims+1])
@@ -225,14 +217,14 @@ def calibrate_dlt(
     )
 
     if not np.all(np.isfinite(H)) or np.linalg.matrix_rank(H) < 3:
-        raise ValueError("The fitted DLT matrix is rank deficient")
+        raise ValueError('The fitted DLT matrix is rank deficient')
 
     # compute RMSE error
     homogeneous_object_points = homogenize(object_points)
     xy2 = np.dot(H, homogeneous_object_points)
 
     if not np.all(np.isfinite(xy2)):
-        raise ValueError("The fitted DLT produced non-finite coordinates")
+        raise ValueError('The fitted DLT produced non-finite coordinates')
 
     denominator = xy2[2, :]
 
@@ -282,8 +274,8 @@ def _minimize_params(
         delimiter=','
     )
 
-    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype="float64")
-    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype="float64")
+    >>> obj_points = np.array([obj_x[0:3], obj_y[0:3], obj_z[0:3]], dtype=np.float64)
+    >>> img_points = np.array([img_x[0:3], img_y[0:3]], dtype=np.float64)
 
     >>> cam = dlt_model.camera(
         'cam1',
@@ -351,7 +343,7 @@ def _refine_jac2D(
 
     N = data.shape[0]
 
-    jac = np.zeros((N, 9), dtype="float64")
+    jac = np.zeros((N, 9), dtype=np.float64)
 
     s_x = h11 * X + h12 * Y + h13
     s_y = h21 * X + h22 * Y + h23
@@ -414,8 +406,7 @@ def _unpack3D(
     parameters: np.ndarray,
     gauge_index: int
 ):
-    """Reconstruct a 3x4 matrix from 11 projective parameters."""
-    coefficients = np.empty(12, dtype="float64")
+    coefficients = np.empty(12, dtype=np.float64)
 
     free_parameters = np.ones(12, dtype=bool)
     free_parameters[gauge_index] = False
@@ -432,7 +423,6 @@ def _refine_func3D(
     image_points: np.ndarray,
     gauge_index: int
 ):
-    """Calculate 3-D DLT image reprojection residuals."""
     H = _unpack3D(parameters, gauge_index)
 
     projected_points = np.dot(
@@ -473,9 +463,9 @@ def _refine3D(
     result = least_squares(
         _refine_func3D,
         x0=initial_parameters,
-        jac="2-point",
-        method="lm",
-        x_scale="jac",
+        jac='2-point',
+        method='lm',
+        x_scale='jac',
         args=(
             homogenize(object_points),
             image_points,
@@ -485,7 +475,7 @@ def _refine3D(
 
     if not result.success:
         raise RuntimeError(
-            f"3D DLT refinement failed: {result.message}"
+            f'3D DLT refinement failed: {result.message}'
         )
 
     return _unpack3D(

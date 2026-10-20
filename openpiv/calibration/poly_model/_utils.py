@@ -59,7 +59,7 @@ def _save_parameters(
 
             f.write(_d2 + '\n')
 
-        f.write(self.dtype + '\n')
+        f.write(np.dtype(self.dtype).name + '\n')
 
 
 def _load_parameters(
@@ -89,23 +89,24 @@ def _load_parameters(
         resolution = np.array([float(s) for s in _r.split()])
 
         poly_wi = []
-        for _ in range(19):
+        for _i in range(19):
             _d2 = f.readline()[:-2]
             poly_wi.append(np.array([float(s) for s in _d2.split()]))
 
         poly_iw_o = []
-        for _ in range(10):
+        for _i in range(10):
             _d2 = f.readline()[:-2]
             poly_iw_o.append(np.array([float(s) for s in _d2.split()]))
         if any(len(row) != 2 for row in poly_iw_o):
-            raise ValueError("Old poly_iw file: recalibrate to obtain volume ray coefficients")
+            msg = 'Old poly_iw file: recalibrate to obtain volume ray coefficients'
+            raise ValueError(msg)
 
         poly_iw_v = []
-        for _ in range(10):
+        for _i in range(10):
             _d2 = f.readline()[:-2]
             poly_iw_v.append(np.array([float(s) for s in _d2.split()]))
 
-        dtype = f.readline()[:-1]
+        dtype = np.dtype(f.readline().strip())
 
         poly_wi = np.array(poly_wi, dtype=dtype)
         poly_iw_o = np.array(poly_iw_o, dtype=dtype)
@@ -116,4 +117,4 @@ def _load_parameters(
     self.poly_wi = poly_wi
     self.poly_iw_o = poly_iw_o
     self.poly_iw_v = poly_iw_v
-    self.dtype = dtype
+    self.dtype = np.dtype(dtype)

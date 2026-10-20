@@ -47,7 +47,7 @@ def _save_parameters(
 
             f.write(_c + '\n')
 
-        f.write(self.dtype + '\n')
+        f.write(np.dtype(self.dtype).name + '\n')
 
 
 @_cal_doc_utils.docfiller
@@ -82,15 +82,15 @@ def _load_parameters(
         resolution = np.array([float(s) for s in _r.split()])
 
         coefficients = []
-        for _ in range(3):
+        for _i in range(3):
             _c = f.readline()[:-2]
             coefficients.append(np.array([float(s) for s in _c.split()]))
 
-        dtype = f.readline()[:-1]
+        dtype = np.dtype(f.readline().strip())
 
         coefficients = np.array(coefficients, dtype = dtype)
 
     self.name = name
     self.resolution = resolution
     self.coeffs = coefficients
-    self.dtype = dtype
+    self.dtype = np.dtype(dtype)

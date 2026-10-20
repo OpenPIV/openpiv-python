@@ -1,6 +1,6 @@
 
-
 import numpy as np
+from numpy.typing import DTypeLike
 from skimage.feature import match_template
 
 from openpiv.pyprocess import (
@@ -13,12 +13,12 @@ from openpiv.pyprocess import (
 )
 
 __all__ = [
-    "detect_markers_blobs",
-    "detect_markers_template",
-    "get_circular_template",
-    "get_cross_template",
-    "get_new_template",
-    "preprocess_image"
+    'detect_markers_blobs',
+    'detect_markers_template',
+    'get_circular_template',
+    'get_cross_template',
+    'get_new_template',
+    'preprocess_image'
 ]
 
 
@@ -135,9 +135,7 @@ def preprocess_image(
 
     if morph_size is not None:
         if morph_size % 2 != 1:
-            raise ValueError(
-                "Morphology size must be odd"
-            )
+            raise ValueError('Morphology size must be odd')
 
         for _ in range(morph_iter):
             cal_img = grey_erosion(
@@ -157,9 +155,7 @@ def preprocess_image(
 
     if median_size is not None:
         if median_size % 2 != 1:
-            raise ValueError(
-                "Median width must be odd"
-            )
+            raise ValueError('Median width must be odd')
 
         cal_img = median_filter(
             cal_img,
@@ -169,7 +165,9 @@ def preprocess_image(
 
     # binarization
     if binarize_thresh is not None:
-        cal_img = np.where(cal_img > binarize_thresh, 1, 0).astype(bool, copy=False)
+        cal_img = np.where(
+            cal_img > binarize_thresh, 1, 0
+        ).astype(bool, copy=False)
 
     # if a mask is supplied, copy it to minimize unwarranted mutations
     if mask is not None:
@@ -230,7 +228,7 @@ def get_circular_template(
 
     disk = np.zeros(
         (dot_size, dot_size),
-        dtype="float64"
+        dtype=np.float64
     )
 
     ys, xs = np.indices([dot_size, dot_size])
@@ -290,7 +288,7 @@ def get_cross_template(
 
     cross = np.zeros(
         (template_size, template_size),
-        dtype="float64"
+        dtype=np.float64
     )
 
     ys, xs = np.abs(
@@ -311,7 +309,7 @@ def get_new_template(
     pos_x: np.ndarray,
     pos_y: np.ndarray,
     template_radius: int,
-    dtype: str="float64"
+    dtype: DTypeLike=np.float64
 ):
     """Create a new template.
 
@@ -327,7 +325,7 @@ def get_new_template(
         The positions where the sampling occurs.
     template_radius : int
         The radius of the cross in the template.
-    dtype : str
+    dtype : data-type, optional
         The data type of thenew template
 
     Returns
@@ -467,7 +465,7 @@ def _merge_points(
 
     """
     # create 2D array of coordinates
-    pos = np.array([pos_x, pos_y], dtype="float64").T
+    pos = np.array([pos_x, pos_y], dtype=np.float64).T
 
     # find clusters
     clusters = np.hypot(
@@ -948,7 +946,7 @@ def detect_markers_template(
         )
 
     return_list = [
-        np.array([pos_x, pos_y], dtype="float64")
+        np.array([pos_x, pos_y], dtype=np.float64)
     ]
 
     if return_corr:
@@ -1006,7 +1004,7 @@ def detect_markers_blobs(
     """
     from scipy.ndimage import center_of_mass, label
 
-    image = image.astype("float64")
+    image = image.astype(np.float64)
 
     # set ROI if needed
     off_x = off_y = 0
@@ -1053,10 +1051,10 @@ def detect_markers_blobs(
         valid_labels_ind
     )
 
-    _pos = np.array(_pos, dtype="float64")
+    _pos = np.array(_pos, dtype=np.float64)
 
     # rearrange x and y coordinates and apply roi offsets
-    pos = np.empty_like(_pos, dtype="float64")
+    pos = np.empty_like(_pos, dtype=np.float64)
 
     pos[:, 0] = _pos[:, 1] + off_x
     pos[:, 1] = _pos[:, 0] + off_y

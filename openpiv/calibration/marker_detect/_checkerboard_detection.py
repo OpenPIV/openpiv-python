@@ -2,22 +2,15 @@ import numpy as np
 from scipy import ndimage
 
 __all__ = [
-    "checkerboard_find_points"
+    'checkerboard_find_points'
 ]
 
 
 def _rotate_image(
-    image,
-    angle,
-    output_shape=None
-):
-    """Rotate an image around a center.
-
-    Rotate an image aroudn the center. If output_shape is none, then rotate
-    the corners to get the size of the rotated image and insert the image.
-    Images are rotated using bilinear interpolation.
-
-    """
+    image: np.ndarray,
+    angle: float,
+    output_shape: tuple | None=None
+) -> np.ndarray:
     cosine, sine = np.cos(angle), np.sin(angle)
 
     matrix = np.array(
@@ -77,25 +70,23 @@ def _rotate_image(
         source,
         output=rotated,
         order=1,
-        mode="grid-constant",
-        cval=0,
-        prefilter=False
+        mode="constant",
+        cval=0
     )
 
     return rotated
 
 
 def _corner_response(
-    image,
-    length,
-    width
-):
+    image: np.ndarray,
+    length: int,
+    width: int
+) -> np.ndarray:
     """Create a response field using rotated images and blur filters.
 
     Create a response field of checkerboard corners using an approximated
     radon filter. This is accomplished by rotating an image, applying a
-    box blur filter, and rotating the image back. Summing the images creates
-    the response field used for subpixel corner detection.
+    box blur filter, and rotating the image back.
 
     """
     angles = [
@@ -133,7 +124,6 @@ def _corner_response(
 
     averages = np.stack(averages)
 
-    # A junction has one angular maximum and one minimum over half a turn.
     profile = np.rint(averages * 255)
 
     left, right = (
@@ -170,11 +160,10 @@ def _corner_response(
 
 ## TODO: Use OpenPIV's 3 point subpixel estimators
 def _gaussian_offset(
-    left,
-    center,
-    right
-):
-    """Three-point Gaussian peak fit; invalid/flat fits stay at the pixel."""
+    left: np.ndarray,
+    center: np.ndarray,
+    right: np.ndarray
+) -> np.ndarray:
     offset = np.zeros_like(
         center,
         dtype=float
@@ -201,13 +190,137 @@ def _gaussian_offset(
     return offset
 
 
+def _mask_candidates(
+    response: np.ndarray,
+    border: int,
+    radius: int,
+    threshold_rel: float
+) -> np.ndarray:
+    valid = np.zeros(
+        response.shape,
+        dtype=bool
+    )
+
+    valid[border:-border, border:-border] = True
+    peak = response[valid].max()
+
+    if peak <= np.finfo(float).eps:
+        return np.zeros(
+            response.shape,
+            dtype=bool
+        )
+
+    local_maximum = ndimage.maximum_filter(
+        response,
+        size=2 * radius + 1
+    )
+
+    minimum_response = peak * threshold_rel
+
+    candidates = valid.copy()
+    candidates &= response >= minimum_response
+    candidates &= response > 0
+    candidates &= response == local_maximum
+
+    return candidates
+
+
+def _refine_candidates(
+    response: np.ndarray,
+    candidates: np.ndarray
+) -> np.ndarray:
+    labels, count = ndimage.label(
+        candidates,
+        structure=np.ones((3, 3))
+    )
+
+    if count == 0:
+        return np.empty(
+            (2, 0),
+            dtype=float
+        )
+
+    positions = np.asarray(
+        ndimage.maximum_position(
+            response,
+            labels,
+            np.arange(1, count + 1)
+        )
+    )
+
+    y, x = positions.T
+
+    dx = _gaussian_offset(
+        response[y, x - 1],
+        response[y, x],
+        response[y, x + 1]
+    )
+
+    dy = _gaussian_offset(
+        response[y - 1, x],
+        response[y, x],
+        response[y + 1, x]
+    )
+
+    return np.array(
+        [
+            x + dx,
+            y + dy
+        ]
+    )
+
+
+def _filter_candidates(
+    image: np.ndarray,
+    points: np.ndarray,
+    length: int
+) -> np.ndarray:
+    if points.shape[1] == 0:
+        return points
+
+    # Opposing samples agree at a checkerboard crossing, but not at an edge
+    angles = (np.arange(16) + 0.5) * (2 * np.pi / 16)
+
+    ring = points[:, :, None] + (length / 2) * np.array(
+        [
+            np.cos(angles),
+            np.sin(angles)
+        ]
+    )[:, None, :]
+
+    samples = ndimage.map_coordinates(
+        image,
+        ring[::-1],
+        order=1,
+        mode="nearest",
+        prefilter=False
+    )
+
+    symmetry_error = np.mean(
+        np.abs(
+            samples - np.roll(samples, 8, axis=1)
+        ),
+        axis=1
+    )
+
+    local_contrast = np.ptp(
+        samples,
+        axis=1
+    )
+
+    valid = local_contrast > 0
+    valid &= symmetry_error < 0.25 * local_contrast
+
+    return points[:, valid]
+
+
 def checkerboard_find_points(
-    image,
-    robust=False,
-    filter_size=17,
-    min_distance=None,
-    threshold_rel=0.1
-):
+    image: np.ndarray,
+    robust: bool=False,
+    filter_size: int=17,
+    min_distance: int | None=None,
+    threshold_rel: float=0.4
+) -> np.ndarray:
     """Find subpixel checkerboard intersections for later point matching.
 
     Parameters
@@ -246,9 +359,7 @@ def checkerboard_find_points(
     using a three-point Gaussian fit. A point-symmetry check rejects ordinary
     edges and tile outlines. Intersections within roughly one filter length
     of the image boundary are excluded because their filter support is
-    incomplete. The detector uses one filter scale; tune ``filter_size`` for
-    very small tiles or strong perspective. A plain checkerboard has no unique
-    origin.
+    incomplete.
 
     References
     ----------
@@ -263,7 +374,7 @@ def checkerboard_find_points(
 
     Examples
     --------
-    >>> from openpiv.calibration import checkerboard_find_points
+    >>> from openpiv.calibration.marker_detect import checkerboard_find_points
     >>> points = checkerboard_find_points(calibration_image, robust=True)
     >>> x, y = points
 
@@ -331,7 +442,8 @@ def checkerboard_find_points(
     scale = 2 if robust else 1
     width = 2 * (filter_size // 7) + 1
 
-    # Include both post-filters and the Gaussian fit's neighbors.
+    # Include both post-filters and the Gaussian fit's neighbors. Keep the
+    # exclusion region fixed in original pixels when upsampling.
     border = scale * (
         int(
             np.ceil(
@@ -362,105 +474,22 @@ def checkerboard_find_points(
         width
     )
 
-    # Mask candidates, not the response. Clipping the response would create
-    # artificial maxima at the boundary and corrupt three-point fits there.
-    valid = np.zeros(
-        image.shape,
-        dtype=bool
+    candidates = _mask_candidates(
+        response,
+        border,
+        min_distance * scale,
+        threshold_rel
     )
 
-    valid[border:-border, border:-border] = True
-    peak = response[valid].max()
-
-    if peak <= np.finfo(float).eps:
-        return empty
-
-    radius = min_distance * scale
-
-    candidates = (
-        valid &
-        (response >= peak * threshold_rel) &
-        (response > 0) &
-        (
-            response == ndimage.maximum_filter(
-                response,
-                2 * radius + 1
-            )
-        )
+    points = _refine_candidates(
+        response,
+        candidates
     )
 
-    # Collapse equal-valued connected plateaus into a single detection.
-    labels, count = ndimage.label(
-        candidates,
-        structure=np.ones((3, 3))
-    )
-
-    if count == 0:
-        return empty
-
-    positions = np.asarray(
-        ndimage.maximum_position(
-            response,
-            labels,
-            np.arange(1, count + 1)
-        )
-    )
-
-    y, x = positions.T
-
-    dx = _gaussian_offset(
-        response[y, x - 1],
-        response[y, x],
-        response[y, x + 1]
-    )
-
-    dy = _gaussian_offset(
-        response[y - 1, x],
-        response[y, x],
-        response[y + 1, x]
-    )
-
-    points = np.array(
-        [
-            x + dx,
-            y + dy
-        ]
-    )
-
-    # Opposing samples agree at a checkerboard crossing, but not at an edge
-    # or an L/T junction. A small ring stays inside the nearest four tiles.
-    angles = (np.arange(16) + 0.5) * (2 * np.pi / 16)
-
-    ring = points[:, :, None] + (length / 2) * np.array(
-        [
-            np.cos(angles),
-            np.sin(angles)
-        ]
-    )[:, None, :]
-
-    samples = ndimage.map_coordinates(
+    points = _filter_candidates(
         image,
-        ring[::-1],
-        order=1,
-        mode="nearest",
-        prefilter=False
+        points,
+        length
     )
-
-    symmetry_error = np.mean(
-        np.abs(
-            samples - np.roll(samples, 8, axis=1)
-        ),
-        axis=1
-    )
-
-    local_contrast = np.ptp(
-        samples,
-        axis=1
-    )
-
-    points = points[
-        :,
-        (local_contrast > 0) & (symmetry_error < 0.25 * local_contrast)
-    ]
 
     return (points + 0.5) / scale - 0.5

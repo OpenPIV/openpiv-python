@@ -12,7 +12,6 @@ def _refine_func(
     correct_focal: bool,
     correct_distortion: bool
 ):
-    """Apply trial parameters and return image reprojection residuals."""
     camera.translation = parameters[0:3]
     camera.orientation = parameters[3:6]
     camera.principal = parameters[6:8]
@@ -80,9 +79,7 @@ def _minimize_params(
     image_points = np.array(image_points, dtype=self.dtype)
 
     if object_points.shape[1] != image_points.shape[1]:
-        raise ValueError(
-            "Object point image point size mismatch"
-        )
+        raise ValueError('Object point image point size mismatch')
 
     # Pack only parameters that will be refined.
     parameters = [
@@ -110,9 +107,8 @@ def _minimize_params(
     )
 
     if object_points.shape[1] < min_points:
-        raise ValueError(
-            f"Too few points to calibrate. Need at least {min_points} points"
-        )
+        msg = f'Too few points to calibrate. Need at least {min_points} points'
+        raise ValueError(msg)
 
     args = (
         self,
@@ -137,9 +133,7 @@ def _minimize_params(
         _refine_func(res.x, *args)
 
         if not res.success:
-            raise RuntimeError(
-                f"Pinhole refinement failed: {res.message}"
-            )
+            raise RuntimeError(f'Pinhole refinement failed: {res.message}')
 
         # Continue subsequent passes from the returned solution.
         params_to_minimize = res.x
