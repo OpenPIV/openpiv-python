@@ -12,7 +12,7 @@ DLT Model
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-    
+
 Pinhole Model
 =============
     calibrate_intrinsics - Calculate the intrinsic parameters using Zang's algorithm
@@ -20,7 +20,7 @@ Pinhole Model
     calibrate_dlt - Calibrate and return DLT coefficients and fitting error
     line_intersect - Using two lines, locate where those lines intersect
     multi_line_intersect - Using multiple lines, approximate their intersection
-   
+
 Polynomial Model
 ================
     camera - Create an instance of a Soloff camera model
@@ -38,7 +38,7 @@ Calibration Grid
 ================
     get_asymmetric_grid - Create an asymmetric rectangular calibration grid
     get_simple_grid - Create a simple rectangular calibration grid
-    
+
 Match Calibration Points
 ========================
     find_corners - Locate 4 or 6 corners of a calibration grid
@@ -47,7 +47,7 @@ Match Calibration Points
     get_pairs_proj - Match marker pairs using a rough projection estimate
     reorder_image_points - Reorder image points in ascending order
     show_calibration_image - Plot calibration image and markers
-    
+
 Utils
 =====
     homogenize - Homogenize array by appending ones to the last axis

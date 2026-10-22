@@ -8,7 +8,7 @@ model is an approximation of how light rays are captured by a camera. Under
 ideal circumstances, lab coordinates can be mapped to image sensor
 coordinates (also known as pixel coordinates). However, cameras are not
 usually ideal and are placed arbitrarily in the lab space. This means that
-the lab coordinates have to be transformed into normalized camera 
+the lab coordinates have to be transformed into normalized camera
 coordinates to remove this arbitrary translation. The normalized camera
 coordinates are calculated as explained in readme pinhole camera model file.
 
@@ -25,6 +25,5 @@ Functions
 from ._camera import *
 from ._epipolar_geom import *
 from ._zang import *
-
 
 __all__ = [s for s in dir() if not s.startswith('_')]

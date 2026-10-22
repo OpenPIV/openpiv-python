@@ -1,12 +1,16 @@
 import os
 from pathlib import Path
+
 import matplotlib
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import numpy as np
 from importlib.resources import files
-from openpiv import tools, pyprocess, validation
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+
+from openpiv import pyprocess, tools, validation
 
 DOCS_IMG_DIR = Path(__file__).resolve().parent / "images"
 DOCS_IMG_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,7 +40,7 @@ def generate_benchmark_figure():
         "End-to-End Search Area PIV\n(512x512 image)",
         "Multi-Pass Windef\n(3 passes, 256x256)",
     ]
-    
+
     speedups = [581.6, 18.9, 16.8, 7.6, 6.2, 3.4, 3.2, 3.7, 1.4]
     scipy_times = ["890.3 ms", "111.2 ms", "9.1 ms", "30.4 ms", "63.5 ms", "74.8 ms", "10.6 ms", "111.6 ms", "158.8 ms"]
     rust_times = ["1.53 ms", "5.89 ms", "0.54 ms", "3.99 ms", "10.18 ms", "21.98 ms", "3.31 ms", "30.00 ms", "113.39 ms"]
@@ -67,7 +71,7 @@ def generate_benchmark_figure():
     ax.set_axisbelow(True)
 
     # Annotate bars
-    for i, (bar, spd, st, rt) in enumerate(zip(bars, speedups, scipy_times, rust_times)):
+    for bar, spd, st, rt in zip(bars, speedups, scipy_times, rust_times):
         width = bar.get_width()
         label_text = f" {spd:.1f}x  ({st} \u2192 {rt})"
         ax.text(width * 1.08, bar.get_y() + bar.get_height() / 2, label_text,
@@ -121,7 +125,7 @@ def generate_architecture_diagram():
 
     # Arrows from user to dispatch
     ax.annotate("", xy=(50, 72), xytext=(50, 78),
-                arrowprops=dict(arrowstyle="->", lw=1.8, color="#5f6368"))
+                arrowprops={"arrowstyle": "->", "lw": 1.8, "color": "#5f6368"})
 
     # Backend Columns
     # Left: Rust Engine
@@ -164,10 +168,10 @@ def generate_architecture_diagram():
 
     # Dispatch arrows
     ax.annotate("backend in ('auto', 'rust')", xy=(26, 56), xytext=(40, 62),
-                arrowprops=dict(arrowstyle="->", lw=1.8, color="#d93025"),
+                arrowprops={"arrowstyle": "->", "lw": 1.8, "color": "#d93025"},
                 ha="right", va="bottom", fontsize=9, fontweight="bold", color="#d93025")
     ax.annotate("backend in ('scipy', 'fallback')", xy=(74, 56), xytext=(60, 62),
-                arrowprops=dict(arrowstyle="->", lw=1.8, color="#1e8e3e"),
+                arrowprops={"arrowstyle": "->", "lw": 1.8, "color": "#1e8e3e"},
                 ha="left", va="bottom", fontsize=9, fontweight="bold", color="#1e8e3e")
 
     # Parity Banner at Bottom
@@ -244,7 +248,7 @@ def generate_pipeline_demo_figure():
     im3 = axes[2].imshow(s2n, cmap="viridis", origin="upper")
     cbar2 = plt.colorbar(im3, ax=axes[2], fraction=0.046, pad=0.04)
     cbar2.set_label("Signal-to-Noise Ratio (Peak-to-Peak)")
-    
+
     # Highlight flagged outliers from local_norm_median_val
     outlier_y, outlier_x = np.where(mask)
     if len(outlier_x) > 0:

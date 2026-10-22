@@ -2,12 +2,11 @@ import numpy as np
 
 from .. import _cal_doc_utils
 
-
 __all__ = [
-    'show_calibration_image',
-    'find_nearest_points',
+    'find_median_point',
     'find_middle_point',
-    'find_median_point'
+    'find_nearest_points',
+    'show_calibration_image'
 ]
 
 
@@ -20,17 +19,17 @@ __all__ = [
 # @ErichZimmer - Changes (Decemmber 2, 2023):
 # Revised function
 def show_calibration_image(
-    image: np.ndarray, 
+    image: np.ndarray,
     markers: np.ndarray,
     figsize=(8,11),
     radius: int=30,
     fontsize=20
 ):
     """Plot markers on image.
-    
+
     Plot markers on image and their associated index. This allows one to find the
     origin, x-axis, and y-axis point indexes for object-image point matching.
-    
+
     Parameters
     ----------
     image : 2D np.ndarray
@@ -39,13 +38,13 @@ def show_calibration_image(
         A 2D array containing image marker coordinates in [x, y]` image coordinates.
     radius : int, optional
         The radius of the circle drawn around the marker point.
-    
+
     Returns
     -------
     None
-    
+
     Let cal_img be a calibration image.
-    
+
     >>> marks_pos = calib_utils.detect_markers_template(
             cal_img,
             window_size = 64,
@@ -55,42 +54,42 @@ def show_calibration_image(
             merge_iter=5,
             min_count=8,
         )
-    
+
     >>> calib_utils.show_calibration_image(
         cal_img,
         marks_pos
     )
-    
+
     """
-    from PIL import Image, ImageFont, ImageDraw
     from matplotlib import pyplot as plt
-    
+    from PIL import Image, ImageDraw, ImageFont
+
     markers = markers.T
-    
+
     # funtction to show th clalibration iamge with numbers and circles
     plt.close('all')
-    
+
     marker_numbers=np.arange(0,np.size(markers[:,0]))
-    
+
     image_p = Image.fromarray(np.uint8((image/np.max(image[::]))*255))
-    
+
     draw = ImageDraw.Draw(image_p)
     font = ImageFont.truetype("arial.ttf", fontsize)
-    
-    for i in range(0, np.size(markers, 0)):
+
+    for i in range(np.size(markers, 0)):
         x, y=markers[i,:]
         draw.text((x, y), str(marker_numbers[i]), fill=(255),
                   anchor='mb',font=font)
-        
+
     plt.figure(1)
     fig, ax = plt.subplots(figsize=figsize)
     ax.imshow(image_p)
-    
+
     for marker in markers:
         x, y = marker
         c = plt.Circle((x, y), radius, color='red', linewidth=2, fill=False)
         ax.add_patch(c)
-        
+
     plt.show()
     plt.pause(1)
 
@@ -99,17 +98,17 @@ def show_calibration_image(
 def find_nearest_points(
     image_points: np.ndarray,
     point: np.ndarray,
-    threshold: float=None,
+    threshold: float | None=None,
     flag_nans: bool=False,
     return_indices: bool=False
 ):
     """Locate the nearest image point.
-    
+
     Locate the closest image point to the user selected image point.
     This function is implemented by find the minimum distance to the
     point of interest, so it will always return a point no matter how
     (un)realistic that point is.
-    
+
     Parameters
     ----------
     %(image_points)s
@@ -123,36 +122,36 @@ def find_nearest_points(
         are represented by -1 when return_indices is enabled.
     return_indices : bool, optional
         Return input column indices instead of matched coordinates.
-        
+
     Returns
     -------
     points : np.ndarray
         Matched coordinates of shape (2, m), or a one-dimensional array
         of input column indices when return_indices is enabled.
-    
+
     """
     dist = np.linalg.norm(
-        [   
+        [
             image_points[0][:, np.newaxis] - point[0],
             image_points[1][:, np.newaxis] - point[1]
         ],
         axis=0
     )
-        
+
     index = np.argmin(dist, axis = 0)
-    
+
     set_to_nan = np.zeros_like(index).astype("bool")
-    
+
     if threshold is not None:
         min_dist = np.min(dist, axis=0)
-        
-        if flag_nans == True:
+
+        if flag_nans:
             set_to_nan[min_dist > threshold] = True
-            
+
         else:
             index = index[min_dist < threshold]
             set_to_nan = np.zeros_like(index).astype("bool")
-        
+
     if return_indices:
         index[set_to_nan] = -1
         return index
@@ -162,7 +161,7 @@ def find_nearest_points(
     if flag_nans:
         candidate_points = candidate_points.astype(np.float64, copy=False)
         candidate_points[:, set_to_nan] = np.nan
-    
+
     return candidate_points
 
 

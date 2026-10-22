@@ -73,10 +73,61 @@ Workflow
    partner images — separately for pulse A and pulse B, averaged —
    and correct the maps (``estimate_disparity`` → ``correct_maps``).
    The laser sheet drifts, so **every pair gets its own correction**.
-4. 2C PIV per dewarped camera (``pyprocess.extended_search_area_piv``),
-   validate, then ``reconstruct_3c`` → :math:`(U,V,W)`.
+4. 2C PIV per camera, validate, then ``reconstruct_3c`` → :math:`(U,V,W)`.
 5. Batch: repeat 3–4 over the pair range (maps are ~150 MB each — save
    vectors and disparity statistics, not maps).
+
+.. _stereo_frames:
+
+Which frame the displacements are in
+------------------------------------
+
+The 2C PIV has to run in the frame the Jacobian :math:`J` was derived for,
+and that is the **camera** frame:
+
+- PIV on the **dewarped** images measures the displacement in the *rectified*
+  (world-grid) frame, in grid pixels. That is the right frame for the
+  **disparity** (both cameras are on the same grid there, so the particles
+  match), but it is *not* the frame of :math:`J = \partial F/\partial X`:
+  feeding rectified displacements into ``reconstruct_3c`` silently mixes
+  frames and biases :math:`(U,V,W)`.
+- PIV on the **raw** images measures the displacement in the camera frame,
+  which is exactly what ``reconstruct_3c`` expects. The price is that the two
+  cameras no longer share a grid, so the partner field has to be sampled at
+  the projected position of each particle
+  (``openpiv.examples.stereo.pipeline.reconstruct_3c`` does this: back-project
+  onto the sheet plane, project into the partner camera, interpolate).
+
+The sign convention of the disparity correction follows the same reasoning:
+the left camera samples its map at :math:`W - D/2` and the right one at
+:math:`W + D/2`, so that the particle lands on the same (midpoint) world node
+in both cameras. With the opposite signs the correction *doubles* the
+measured disparity instead of cancelling it.
+
+Conditioning
+------------
+
+With two cameras the system :math:`J\,V = d` is :math:`4 \times 3` and
+rank-deficient in the least observable direction. For a typical DaVis
+stereo pair the singular values of :math:`J` are of the order
+:math:`3.4\cdot10^3`, :math:`15`, :math:`13`, and the weak direction is
+**in-plane** (the two views are nearly aligned in :math:`X`), not the
+out-of-plane one. The in-plane component along that weak direction is
+therefore the least trustworthy number of the 3C field — check it against a
+second, independent estimate before drawing conclusions from it.
+
+Example package
+---------------
+
+``openpiv.examples.stereo`` drives the whole workflow from a DaVis
+acquisition directory: it parses the DaVis XML exports, fits the pair,
+rectifies, self-calibrates the disparity and reconstructs the 3C field.
+
+.. code-block:: bash
+
+    python -m openpiv.examples.stereo --data-root run \
+        --mark-table run/calibration/MarkPositionTable.xml \
+        --cameras 1,2 --sensor-size 2432,2048 all
 
 API
 ---
@@ -85,4 +136,13 @@ The ``openpiv.calibration.stereo`` module
 -----------------------------------------
 
 .. automodule:: openpiv.calibration.stereo
+    :members:
+
+The ``openpiv.examples.stereo`` package
+---------------------------------------
+
+.. automodule:: openpiv.examples.stereo.pipeline
+    :members:
+
+.. automodule:: openpiv.examples.stereo.davis
     :members:

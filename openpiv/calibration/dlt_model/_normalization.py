@@ -6,22 +6,22 @@ def _standardize_points_2d(
     y: np.ndarray
 ):
     """Normalize 2-D points with an isotropic similarity transform.
-    
+
     Normalize the x and y coordinates through standardization. This allows
     for a better fit when calibrating the direct linear transformation.
-    
+
     Parameters
     ==========
     x, y : np.ndarray
         The coordinates to normalize through standardization.
-        
+
     Returns
     =======
     x_n, y_n : np.ndarray
         Normalized x-y coordinates.
     norm_matrix : np.ndarray
         The normalization matrix for normalization and denormalization.
-    
+
     """
     centroid = np.array(
         [np.mean(x), np.mean(y)],
@@ -44,12 +44,12 @@ def _standardize_points_2d(
             [scale, 0.0, -scale * centroid[0]],
             [0.0, scale, -scale * centroid[1]],
             [0.0, 0.0, 1.0]
-        ], 
+        ],
         dtype=np.float64
     )
-    
+
     return xy_norm, norm_mat
-    
+
 
 def _standardize_points_3d(
     x: np.ndarray,
@@ -57,22 +57,22 @@ def _standardize_points_3d(
     z: np.ndarray
 ):
     """Normalize 3-D points with an isotropic similarity transform.
-    
+
     Normalize the x, y and z coordinates through standardization. This allows
     for a better fit when calibrating the direct linear transformation.
-    
+
     Parameters
     ==========
     x, y, z : np.ndarray
         The coordinates to normalize through standardization.
-        
+
     Returns
     =======
     x_n, y_n, z_n : np.ndarray
         Normalized x, y, z coordinates.
     norm_matrix : np.ndarray
         The normalization matrix for further normalization and denormalization.
-    
+
     """
     centroid = np.array(
         [np.mean(x), np.mean(y), np.mean(z)],
@@ -100,8 +100,8 @@ def _standardize_points_3d(
             [0.0, scale, 0.0, -scale * centroid[1]],
             [0.0, 0.0, scale, -scale * centroid[2]],
             [0.0, 0.0, 0.0, 1.0]
-        ], 
+        ],
         dtype=np.float64
     )
-    
+
     return xyz_norm, norm_mat

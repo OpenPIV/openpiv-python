@@ -12,24 +12,25 @@ All functions use duck-typing: a camera needs ``project_points``,
 ``project_to_z``, ``resolution`` and ``dtype``.
 """
 
-from typing import List, Tuple, Dict, Optional, Union
+from typing import Optional, Union
+
 import numpy as np
 from numpy.typing import DTypeLike
 
 __all__ = [
-    'get_common_world_grid',
-    'get_dewarp_mapping',
+    'correct_maps',
     'dewarp_image',
     'estimate_disparity',
-    'correct_maps',
-    'self_calibration',
+    'get_common_world_grid',
+    'get_dewarp_mapping',
     'reconstruct_3c',
-    'triangulate',
+    'self_calibration',
     'stereo_reprojection_error',
+    'triangulate',
 ]
 
 
-def _as_z_array(z: Union[float, np.ndarray], n: int, dtype: DTypeLike = np.float64) -> np.ndarray:
+def _as_z_array(z: float | np.ndarray, n: int, dtype: DTypeLike = np.float64) -> np.ndarray:
     if isinstance(z, np.ndarray):
         z = np.asarray(z, dtype=dtype).ravel()
         if z.size == 1:
@@ -43,10 +44,10 @@ def _as_z_array(z: Union[float, np.ndarray], n: int, dtype: DTypeLike = np.float
 def get_common_world_grid(
     cams: list,
     z: float = 0.0,
-    nx: Optional[int] = None,
-    ny: Optional[int] = None,
+    nx: int | None = None,
+    ny: int | None = None,
     stride: int = 4,
-) -> Tuple[np.ndarray, np.ndarray, dict]:
+) -> tuple[np.ndarray, np.ndarray, dict]:
     """Common world grid at sheet plane ``z`` (intersection of FOVs).
 
     Back-projects a strided pixel grid per camera via
@@ -107,8 +108,8 @@ def get_dewarp_mapping(
     cam,
     Xw: np.ndarray,
     Yw: np.ndarray,
-    z: Union[float, np.ndarray] = 0.0,
-) -> Tuple[np.ndarray, np.ndarray]:
+    z: float | np.ndarray = 0.0,
+) -> tuple[np.ndarray, np.ndarray]:
     """Image coords (map_x, map_y) for each world node.
 
     Forward-projects ``(Xw, Yw, z)`` via ``cam.project_points``.
@@ -146,16 +147,18 @@ def estimate_disparity(
     overlap: int = 16,
     correlation_method: str = "circular",
     subpixel_method: str = "gaussian",
-    sig2noise_method: Union[str, None] = "peak2peak",
+    sig2noise_method: str | None = "peak2peak",
     **kwargs,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Disparity ``D = R - L`` between dewarped pair (same-t).
 
     Wraps :func:`openpiv.pyprocess.extended_search_area_piv`.
     Returns ``x, y, dx, dy, s2n`` on the PIV grid.
     """
     from openpiv.pyprocess import (
-        extended_search_area_piv, get_field_shape, get_rect_coordinates,
+        extended_search_area_piv,
+        get_field_shape,
+        get_rect_coordinates,
     )
     A = np.asarray(imgL_rect, dtype=np.float32)
     B = np.asarray(imgR_rect, dtype=np.float64 if imgR_rect.dtype != np.float32 else np.float32)
@@ -209,7 +212,7 @@ def _interp_to_full(xg, yg, dx, dy, Xo, Yo):
     )
 
 
-def correct_maps(maps, x, y, dx, dy, factor: float = 0.5) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def correct_maps(maps, x, y, dx, dy, factor: float = 0.5) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Apply a disparity field to dewarp mappings (Wieneke half-correction).
 
     The corrected map at world node ``W`` samples the old map at
@@ -235,8 +238,10 @@ def correct_maps(maps, x, y, dx, dy, factor: float = 0.5) -> Tuple[np.ndarray, n
         np.asarray(x), np.asarray(y),
         np.asarray(dx), np.asarray(dy), Xo, Yo,
     )
-    sampleL = np.array([(Yo + factor * Dy_full).ravel(), (Xo + factor * Dx_full).ravel()])
-    sampleR = np.array([(Yo - factor * Dy_full).ravel(), (Xo - factor * Dx_full).ravel()])
+    # the left camera samples the map at W - D/2, the right one at W + D/2,
+    # so that both see the particle at the same (midpoint) world node
+    sampleL = np.array([(Yo - factor * Dy_full).ravel(), (Xo - factor * Dx_full).ravel()])
+    sampleR = np.array([(Yo + factor * Dy_full).ravel(), (Xo + factor * Dx_full).ravel()])
     return (
         _mc(mapLx, sampleL, order=1, mode="nearest").reshape(ny, nx),
         _mc(mapLy, sampleL, order=1, mode="nearest").reshape(ny, nx),
@@ -355,7 +360,7 @@ def reconstruct_3c(
     world_points: np.ndarray,
     dt: float = 1.0,
     iterations: int = 5,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """3C world velocity from two (or more) 2C pixel-displacement views.
 
     Soloff (1997): ``[u1,v1,u2,v2]^T = J * [U,V,W]^T * dt`` solved
@@ -379,7 +384,7 @@ def reconstruct_3c(
 
     def _fwd(Dw_j, j):
         return np.concatenate([
-            (np.asarray(c.project_points((X[:, [j]] + Dw_j[:, None])), dtype=np.float64)
+            (np.asarray(c.project_points(X[:, [j]] + Dw_j[:, None]), dtype=np.float64)
              - np.asarray(c.project_points(X[:, [j]]), dtype=np.float64)).ravel()
             for c in cams
         ])
@@ -491,7 +496,7 @@ def triangulate(
     return X
 
 
-def stereo_reprojection_error(cams: list, obj_points: np.ndarray, img_points_list: list) -> Dict[str, float]:
+def stereo_reprojection_error(cams: list, obj_points: np.ndarray, img_points_list: list) -> dict[str, float]:
     """Per-camera RMS reprojection error + triangulation residual."""
     from . import _calib_utils as cu
     errs = {}

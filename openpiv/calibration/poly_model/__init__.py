@@ -27,5 +27,4 @@ conventions that are normally protected behind namespaces.
 from ._camera import *
 from ._epipolar_geom import *
 
-
 __all__ = [s for s in dir() if not s.startswith('_')]

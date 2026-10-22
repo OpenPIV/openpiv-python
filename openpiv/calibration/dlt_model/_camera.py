@@ -1,23 +1,22 @@
+
 import numpy as np
 from numpy.typing import DTypeLike
-from typing import Tuple
 
 from ._check_params import _check_parameters
 from ._minimization import _minimize_params
-from ._projection import _project_points, _project_to_z, _get_inverse_vector
-from ._utils import _save_parameters, _load_parameters
-
+from ._projection import _get_inverse_vector, _project_points, _project_to_z
+from ._utils import _load_parameters, _save_parameters
 
 __all__ = ['camera']
 
 
-class camera(object):
+class camera:
     """An instance of a DLT camera model.
-    
+
     Create an instance of a DLT camera. The DLT camera model is based on
     the direct linear transformation where image points and object points
     are mapped through a 3x3 or 3x4 matrix.
-    
+
     Attributes
     ----------
     name : str
@@ -28,7 +27,7 @@ class camera(object):
         The coefficients for a DLT matrix.
     dtype : np.dtype
         The dtype used in the projections.
-        
+
     Methods
     -------
     minimize_params
@@ -36,12 +35,12 @@ class camera(object):
     project_to_z
     save_parameters
     load_parameters
-        
+
     """
     def __init__(
         self,
         name: str,
-        resolution: Tuple[int, int],
+        resolution: tuple[int, int],
         coeffs: np.ndarray=np.identity(3),
         dtype: DTypeLike=np.float64
     ):
@@ -49,7 +48,7 @@ class camera(object):
         self.resolution = resolution
         self.coeffs = np.array(coeffs, copy=True)
         self.dtype = np.dtype(dtype)
-        
+
         # method definitions
         camera._check_parameters   = _check_parameters
         camera._get_inverse_vector = _get_inverse_vector
@@ -58,6 +57,6 @@ class camera(object):
         camera.project_to_z        = _project_to_z
         camera.save_parameters     = _save_parameters
         camera.load_parameters     = _load_parameters
-        
+
         # check camera params at init
         self._check_parameters()

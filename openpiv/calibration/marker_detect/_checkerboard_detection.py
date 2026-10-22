@@ -1,7 +1,6 @@
 import numpy as np
 from scipy import ndimage
 
-
 __all__ = [
     'checkerboard_find_points'
 ]
@@ -10,7 +9,7 @@ __all__ = [
 def _rotate_image(
     image: np.ndarray,
     angle: float,
-    output_shape: tuple=None
+    output_shape: tuple | None=None
 ) -> np.ndarray:
     cosine, sine = np.cos(angle), np.sin(angle)
 
@@ -84,7 +83,7 @@ def _corner_response(
     width: int
 ) -> np.ndarray:
     """Create a response field using rotated images and blur filters.
-    
+
     Create a response field of checkerboard corners using an approximated
     radon filter. This is accomplished by rotating an image, applying a
     box blur filter, and rotating the image back.
@@ -319,7 +318,7 @@ def checkerboard_find_points(
     image: np.ndarray,
     robust: bool=False,
     filter_size: int=17,
-    min_distance: int=None,
+    min_distance: int | None=None,
     threshold_rel: float=0.4
 ) -> np.ndarray:
     """Find subpixel checkerboard intersections for later point matching.
@@ -367,7 +366,7 @@ def checkerboard_find_points(
     .. [1] OpenCV contributors. FastX corner detector, implemented in
        ``modules/calib3d/src/chessboard.cpp``.
        https://github.com/opencv/opencv/blob/4.x/modules/calib3d/src/chessboard.cpp
-    
+
     .. [2] Alexander Duda and Udo Frese. "Accurate Detection and Localization
        of Checkerboard Corners for Calibration." Proceedings of the British
        Machine Vision Conference (BMVC), 2018.

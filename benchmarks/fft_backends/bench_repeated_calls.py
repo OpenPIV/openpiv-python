@@ -4,6 +4,7 @@ per pass -- the scenario where FFTW's MEASURE/wisdom planning should pay off
 its upfront planning cost. Throwaway script for explore/fft-backends.
 """
 import time
+
 import numpy as np
 
 N_CALLS = 40  # ~ processing 40 image pairs at one pass/window size

@@ -4,15 +4,16 @@ Created on Fri Oct  4 14:33:21 2019
 @author: Theo
 """
 
-import pytest
 import pathlib
-import numpy as np
 import warnings
 from importlib.resources import files
+
+import numpy as np
+import pytest
+
 from openpiv import windef
 from openpiv.test import test_process
-from openpiv.tools import display_vector_field, display_vector_field_from_arrays, save
-from openpiv.tools import imread
+from openpiv.tools import display_vector_field, display_vector_field_from_arrays, imread, save
 
 frame_a, frame_b = test_process.create_pair(image_size=256)
 shift_u, shift_v, threshold = test_process.SHIFT_U, test_process.SHIFT_V, \
@@ -35,15 +36,15 @@ shift_u, shift_v, threshold = test_process.SHIFT_U, test_process.SHIFT_V, \
 # circular cross correlation
 def test_first_pass_circ():
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning, 
+        warnings.filterwarnings("ignore", category=RuntimeWarning,
                                message="Mean of empty slice")
         warnings.filterwarnings("ignore", category=RuntimeWarning,
                                message="invalid value encountered in scalar divide")
-        
+
         # Test code here
         settings = windef.PIVSettings()
         # ... rest of your settings
-        
+
         x, y, u, v, s2n = windef.first_pass(
             frame_a,
             frame_b,
@@ -52,9 +53,9 @@ def test_first_pass_circ():
         print("\n", x, y, u, v, s2n)
         assert np.allclose(u, shift_u, atol=threshold)
         assert np.allclose(v, shift_v, atol=threshold)
-        
+
         save('tmp.txt',x,y,u,v)
-    
+
     # Outside the warning suppression block
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -100,7 +101,7 @@ def test_multi_pass_circ():
     print(f"Pass {i}\n")
     print(x)
     print(y)
-    print(u) 
+    print(u)
     print(v)
     print(s2n)
     assert np.allclose(u, shift_u, atol=threshold)
@@ -239,10 +240,10 @@ def test_simple_multipass():
         frame_b,
         settings,
     )
-    
+
     save('tmp.txt', x, y, u, v)
     display_vector_field('tmp.txt')
-        
+
     # print("simple multipass\n")
     # print(x,y,u,v,mask)
     # print(u[:4,:4])
@@ -250,8 +251,8 @@ def test_simple_multipass():
     # print(shift_u)
     # print(shift_v)
 
-#     # note the -shift_v 
-#     # the simple_multipass also transforms units, so 
+#     # note the -shift_v
+#     # the simple_multipass also transforms units, so
 #     # the plot is in the image-like space
 
 #     assert np.allclose(u, shift_u, atol=threshold)
@@ -289,8 +290,8 @@ def test_simple_rectangular_window():
         frame_b,
         settings,
     )
-    
-        
+
+
     settings.windowsizes = ((64, 32),)
     settings.overlap = ((32, 16),)
     settings.num_iterations = 1
@@ -322,15 +323,15 @@ def test_simple_rectangular_window():
         settings,
     )
     assert np.diff(x[0,:2]) == 16
-    assert np.diff(y[:2,0]) == -8    
-    
+    assert np.diff(y[:2,0]) == -8
+
 
 
     settings.show_all_plots = False
     settings.show_plot = True
 
     windef.piv(settings)
-    
+
     im1 = imread(files('openpiv.data').joinpath('test1/exp1_001_a.bmp'))
     im2 = imread(files('openpiv.data').joinpath('test1/exp1_001_b.bmp'))
     x, y, u, v, mask = windef.simple_multipass(
@@ -339,4 +340,4 @@ def test_simple_rectangular_window():
         settings,
     )
     display_vector_field_from_arrays(x, y, u, v, 0*u, 0*v)
-    
+

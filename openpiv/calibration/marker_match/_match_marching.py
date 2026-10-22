@@ -1,11 +1,7 @@
 import numpy as np
 
 from .. import _cal_doc_utils
-from ._match_points import (
-    find_nearest_points,
-    find_median_point
-)
-
+from ._match_points import find_median_point, find_nearest_points
 
 __all__ = [
     'get_pairs_marching',
@@ -51,11 +47,11 @@ def _initial_steps(
     distances = np.linalg.norm(offsets, axis=0)
     order = np.lexsort((image_points[1], image_points[0], distances))
     order = order[distances[order] > 1e-10][:8]
-    
+
     neighbors = offsets[:, order]
     angles = np.arctan2(neighbors[1], neighbors[0])
     neighbors = neighbors[:, np.argsort(angles)]
-    
+
     best = None
     best_score = None
 
@@ -112,14 +108,14 @@ def _initial_steps(
             axis=0
         )
         support = np.count_nonzero(residual < 0.2)
-        
+
         cosine = abs(
             np.dot(
                 basis[:, 0],
                 basis[:, 1]
             )
         ) / np.prod(lengths)
-        
+
         score = (support, -cosine, -lengths.sum())
 
         if best_score is None or score > best_score:
@@ -152,7 +148,7 @@ def _find_prediction(
         basis,
         image_points[:, available] - prediction[:, None]
     )
-    
+
     nearest = find_nearest_points(
         residual,
         np.zeros(2),
@@ -223,7 +219,7 @@ def _search_line(
             continue
 
         point = image_points[:, index]
-        
+
         # Average over intervening cells when detections are missing.
         basis[:, axis] = (point - previous) / (sign * (offset - previous_offset))
         current = point
@@ -231,7 +227,7 @@ def _search_line(
         previous_offset = offset
         missing = 0
         used[index] = True
-        
+
         indices.append(index)
         offsets.append(sign * offset)
         steps.append(basis[:, axis].copy())
@@ -468,15 +464,15 @@ def _symmetric(
     used[origin_index] = True
     indices = [origin_index]
     grid = [(0, 0)]
-    
-    options = dict(
-        tolerance=tolerance,
-        max_missing=max_missing,
-        used=used
-    )
-    
+
+    options = {
+        'tolerance': tolerance,
+        'max_missing': max_missing,
+        'used': used
+    }
+
     step_x, step_y = basis[:, 0], basis[:, 1]
-    
+
     row_step = _fill_row(
         image_points,
         origin,
@@ -513,10 +509,10 @@ def _symmetric(
 
             index, column, row, local_x, local_y = found
             current = image_points[:, index]
-            
+
             indices.append(index)
             grid.append((column, row))
-            
+
             local_x = _fill_row(
                 image_points,
                 current,
@@ -533,13 +529,13 @@ def _symmetric(
         grid,
         dtype=np.float64
     ).T
-    
+
     order = np.lexsort((grid[0], -grid[1]))
     indices = np.asarray(
         indices,
         dtype=int
     )[order]
-    
+
     object_points = np.zeros((3, indices.size))
     object_points[:2] = grid[:, order] * spacing[:, None]
 
@@ -561,12 +557,12 @@ def _asymmetric(
         dtype=bool
     )
     keep[matched_indices] = False
-    
+
     remaining_indices = np.flatnonzero(keep)
     remaining = image_points[:, remaining_indices]
-    
+
     prediction = origin + 0.5 * (basis[:, 1] - basis[:, 0])
-    
+
     index = _find_prediction(
         remaining,
         prediction,
@@ -590,7 +586,7 @@ def _asymmetric(
         tolerance,
         max_missing
     )
-    
+
     objects += np.array(
         [
             -spacing[0] / 2,
@@ -616,7 +612,7 @@ def get_pairs_marching(
     return_indices: bool=False
 ):
     """Match a symmetric or two-layer asymmetric target.
-    
+
     Pair detected image points with physical grid coordinates by
     following rows and columns from a selected or automatically
     determined origin. Local image-space step vectors update after
@@ -681,7 +677,7 @@ def get_pairs_marching(
     For asymmetric targets, first-layer matches are excluded before searching
     the second layer. The image-space origin is predicted by a half-cell
     shift along the selected axes, and the object coordinates receive the
-    corresponding x/y/z offsets. 
+    corresponding x/y/z offsets.
 
     Automatic labeling can swap or reverse physical axes on rotated symmetric
     targets. Supply both axis positions to fix the physical frame. Missing
