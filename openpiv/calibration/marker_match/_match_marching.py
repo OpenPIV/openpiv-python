@@ -8,7 +8,8 @@ from ._match_points import (
 
 
 __all__ = [
-    'match_pairs_marching'
+    'get_pairs_marching',
+    'get_pairs_auto'
 ]
 
 
@@ -602,7 +603,7 @@ def _asymmetric(
 
 
 @_cal_doc_utils.docfiller
-def match_pairs_marching(
+def get_pairs_marching(
     image_points: np.ndarray,
     origin: np.ndarray | None=None,
     origin_x: np.ndarray | None=None,
@@ -793,3 +794,205 @@ def match_pairs_marching(
     result = paired, objects
     
     return result + (indices,) if return_indices else result
+
+
+@_cal_doc_utils.docfiller
+def get_pairs_auto(
+    image_points: np.ndarray,
+    board_size: tuple[int, int],
+    origin: np.ndarray | None=None,
+    origin_x: np.ndarray | None=None,
+    origin_y: np.ndarray | None=None,
+    spacing: float | tuple[float, float]=1.0,
+    set_x_long: bool=True,
+    tolerance: float=0.25,
+    max_missing: int=2,
+    return_indices: bool=False
+):
+    """Match a symmetric board using its known shape and a centered origin.
+
+    March once with unit spacing to identify the board lattice. Use its
+    shape and image directions to select an origin and adjacent axis
+    markers, then march again with the requested physical spacing.
+
+    Parameters
+    ----------
+    %(image_points)s
+    board_size : sequence of two ints
+        Full marker counts along the two board directions, including
+        missing detections. Either order is accepted; set_x_long controls
+        which direction becomes x. For a checkerboard, these are internal
+        corner counts.
+    origin : array_like, optional
+        Approximate image position of the desired origin, of shape (2,).
+        If omitted, select board cell (nx // 2, ny // 2), counted from
+        the upper-left after assigning the axes.
+    origin_x, origin_y : array_like, optional
+        Approximate image positions of adjacent positive-x and positive-y
+        markers, each of shape (2,). Omitted positions use the origin's
+        rightward and upward grid neighbors, respectively.
+    spacing : float or sequence of two floats, optional
+        Positive physical marker spacing. A scalar applies to both axes;
+        (spacing_x, spacing_y) follows the final x/y assignment.
+        Default is 1.0.
+    set_x_long : bool, optional
+        Assign x to the direction with more markers on rectangular
+        boards. If False, assign x to the direction with fewer markers.
+        Square boards use the more horizontal direction for x regardless
+        of this setting. Default is True.
+    tolerance : float, optional
+        Maximum prediction error in local grid cells, passed to both
+        marching calls. Default is 0.25.
+    max_missing : int, optional
+        Consecutive missing positions allowed during marching, passed to
+        both calls. Default is 2.
+    return_indices : bool, optional
+        Also return matched column indices in the original image_points
+        array. Default is False.
+
+    Returns
+    -------
+    %(image_points)s
+    %(object_points)s
+    indices : 1D np.ndarray, optional
+        Original input column indices of shape (k,), returned only when
+        return_indices is True.
+
+    Raises
+    ------
+    ValueError
+        If either march does not recover the requested board shape, an
+        automatically selected origin or axis marker is missing, or the
+        marching function cannot establish the grid.
+
+    Notes
+    -----
+    Input image coordinates have shape (2, n). Returned image and object
+    coordinates have shapes (2, k) and (3, k). Object z is zero, and columns
+    are sorted by descending object y, then ascending object x.
+
+    Shape is measured from integer grid extents, so missing detections
+    remain holes. Automatically selected axes point rightward and upward
+    in the image without being forced perpendicular. Supplied seed
+    positions override the corresponding automatic selections.
+
+    The long direction is determined by marker count, not projected pixel
+    length. The first-pass lattice must identify the full board extents;
+    the wrapper does not reconstruct a completely missing outer row or
+    column. A square board retains the first-pass choice when the two
+    directions are equally horizontal.
+
+    """
+    detected_points = np.asarray(image_points, dtype=np.float64)
+    expected_shape = np.sort(board_size)
+
+    rough_image_points, rough_object_points = get_pairs_marching(
+        detected_points,
+        origin=origin,
+        origin_x=origin_x,
+        origin_y=origin_y,
+        spacing=1.0,
+        tolerance=tolerance,
+        max_missing=max_missing
+    )
+
+    grid = np.rint(rough_object_points[:2]).astype(int)
+    shape = np.ptp(grid, axis=1) + 1
+
+    if not np.array_equal(np.sort(shape), expected_shape):
+        msg = (
+            f'Detected board shape {tuple(shape.tolist())} does not match '
+            f'board_size={tuple(board_size)}'
+        )
+        raise ValueError(msg)
+
+    # Estimate image directions from the first-pass correspondences.
+    coordinates = np.column_stack([
+        grid.T,
+        np.ones(grid.shape[1])
+    ])
+    directions = np.linalg.lstsq(
+        coordinates,
+        rough_image_points.T,
+        rcond=None
+    )[0][:2].T
+
+    if shape[0] == shape[1]:
+        horizontal = abs(directions[0]) / np.linalg.norm(directions, axis=0)
+        x_axis = int(np.argmax(horizontal))
+    elif set_x_long:
+        x_axis = int(np.argmax(shape))
+    else:
+        x_axis = int(np.argmin(shape))
+
+    axes = [x_axis, 1 - x_axis]
+    grid = grid[axes]
+    directions = directions[:, axes]
+    shape = shape[axes]
+
+    if directions[0, 0] < 0:
+        grid[0] *= -1
+
+    if directions[1, 1] > 0:
+        grid[1] *= -1
+
+    # Board columns increase rightward; rows increase downward.
+    grid[0] -= grid[0].min()
+    grid[1] = grid[1].max() - grid[1]
+
+    if origin is None:
+        origin_cell = shape // 2
+    else:
+        index = find_nearest_points(
+            rough_image_points,
+            origin,
+            return_indices=True
+        )[0]
+        origin_cell = grid[:, index]
+
+    cells = [
+        origin_cell,
+        origin_cell + [1, 0],
+        origin_cell + [0, -1]
+    ]
+    positions = [origin, origin_x, origin_y]
+    names = ['origin', 'origin_x', 'origin_y']
+
+    for i in range(3):
+        if positions[i] is not None:
+            continue
+
+        index = np.flatnonzero(np.all(grid == cells[i][:, None], axis=0))
+
+        if index.size == 0:
+            msg = (
+                f'The required {names[i]} marker is missing at '
+                f'board cell {tuple(cells[i].tolist())}'
+            )
+            raise ValueError(msg)
+
+        positions[i] = rough_image_points[:, index[0]]
+
+    result = get_pairs_marching(
+        detected_points,
+        origin=positions[0],
+        origin_x=positions[1],
+        origin_y=positions[2],
+        spacing=spacing,
+        tolerance=tolerance,
+        max_missing=max_missing,
+        return_indices=return_indices
+    )
+
+    spacing = np.broadcast_to(np.asarray(spacing, dtype=np.float64), (2,))
+    grid = np.rint(result[1][:2] / spacing[:, None]).astype(int)
+    shape = np.ptp(grid, axis=1) + 1
+
+    if not np.array_equal(np.sort(shape), expected_shape):
+        msg = (
+            f'Final board shape {tuple(shape.tolist())} does not match '
+            f'board_size={tuple(board_size)}'
+        )
+        raise ValueError(msg)
+
+    return result
