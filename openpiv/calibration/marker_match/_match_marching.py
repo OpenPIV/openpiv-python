@@ -865,23 +865,6 @@ def get_pairs_auto(
         automatically selected origin or axis marker is missing, or the
         marching function cannot establish the grid.
 
-    Notes
-    -----
-    Input image coordinates have shape (2, n). Returned image and object
-    coordinates have shapes (2, k) and (3, k). Object z is zero, and columns
-    are sorted by descending object y, then ascending object x.
-
-    Shape is measured from integer grid extents, so missing detections
-    remain holes. Automatically selected axes point rightward and upward
-    in the image without being forced perpendicular. Supplied seed
-    positions override the corresponding automatic selections.
-
-    The long direction is determined by marker count, not projected pixel
-    length. The first-pass lattice must identify the full board extents;
-    the wrapper does not reconstruct a completely missing outer row or
-    column. A square board retains the first-pass choice when the two
-    directions are equally horizontal.
-
     """
     detected_points = np.asarray(image_points, dtype=np.float64)
     expected_shape = np.sort(board_size)
