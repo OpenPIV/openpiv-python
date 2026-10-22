@@ -2,7 +2,7 @@ import numpy as np
 from scipy import ndimage
 
 __all__ = [
-    'checkerboard_find_points'
+    'detect_checkerboard'
 ]
 
 
@@ -314,7 +314,7 @@ def _filter_candidates(
     return points[:, valid]
 
 
-def checkerboard_find_points(
+def detect_checkerboard(
     image: np.ndarray,
     robust: bool=False,
     filter_size: int=17,

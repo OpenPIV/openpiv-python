@@ -31,8 +31,16 @@ def _correlate_template(
     centered = template - template.mean()
     corr = fftconvolve(image, centered[::-1, ::-1], mode='same')
 
-    mean = uniform_filter(image, size=template.shape, mode='constant')
-    variance = uniform_filter(image**2, size=template.shape, mode='constant')
+    mean = uniform_filter(
+        image, 
+        size=template.shape, 
+        mode='constant'
+    )
+    variance = uniform_filter(
+        image**2, 
+        size=template.shape, 
+        mode='constant'
+    )
     variance -= mean**2
     np.maximum(variance, 0., out=variance)
 
