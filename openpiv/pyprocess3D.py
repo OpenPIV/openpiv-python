@@ -160,7 +160,7 @@ def find_second_peak_3D(corr, i=None, j=None, z=None, width=2):
     jini = max(0, j - width)
     jfin = min(j + width + 1, corr.shape[1])
     zini = max(0, z - width)
-    zfin = min(z + width + 1, corr.shape[1])
+    zfin = min(z + width + 1, corr.shape[2])
 
     tmp[iini:ifin, jini:jfin, zini:zfin] = ma.masked
     (i, j, z), corr_max2 = find_first_peak(tmp)
@@ -387,8 +387,8 @@ def correlate_windows(
 
         f2a = rfftn(normalize_intensity(window_a), s=(nfftx, nffty, nfftz))
         f2b = rfftn(normalize_intensity(window_b), s=(nfftx, nffty, nfftz))
-        corr = irfftn(f2a * f2b).real
-        return corr[
+        corr = irfftn(f2a * f2b, s=(nfftx, nffty, nfftz)).real
+        corr = corr[
             : window_a.shape[0] + window_b.shape[0],
             : window_b.shape[1] + window_a.shape[1],
             : window_b.shape[2] + window_a.shape[2],
