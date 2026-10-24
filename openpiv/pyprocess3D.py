@@ -388,7 +388,7 @@ def correlate_windows(
 
         f2a = rfftn(normalize_intensity(window_a), s=(nfftx, nffty, nfftz))
         f2b = rfftn(normalize_intensity(window_b), s=(nfftx, nffty, nfftz))
-        corr = irfftn(f2a * f2b).real
+        corr = irfftn(f2a * f2b, s=(nfftx, nffty, nfftz)).real
         corr = corr[
             : window_a.shape[0] + window_b.shape[0],
             : window_b.shape[1] + window_a.shape[1],
