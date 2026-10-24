@@ -2,8 +2,9 @@
 import pathlib
 from dataclasses import dataclass
 from importlib.resources import files
-from typing import Optional, Tuple, Union
+
 import numpy as np
+
 
 @dataclass
 class PIVSettings:
@@ -12,7 +13,7 @@ class PIVSettings:
     """
     # "Data related settings"
     # Folder with the images to process
-    filepath_images: Union[pathlib.Path, str] = files('openpiv') / "data" / "test1"  # type: ignore
+    filepath_images: pathlib.Path | str = files('openpiv') / "data" / "test1"  # type: ignore
     # Folder for the outputs
     save_path: pathlib.Path = filepath_images.parent
     # Root name of the output Folder for Result Files
@@ -24,21 +25,21 @@ class PIVSettings:
     # "Region of interest"
     # (50,300,50,300) #Region of interest: (xmin,xmax,ymin,ymax) or 'full'
     # for full image
-    roi: Union[Tuple[int, int, int, int], str] = "full"
+    roi: tuple[int, int, int, int] | str = "full"
 
     # "Image preprocessing"
     # Every image would be processed separately and the
     # average mask is applied to both A, B, but it's varying
     # for the frames sequence
     #: None for no masking
-    #: 'edges' for edges masking, 
+    #: 'edges' for edges masking,
     #: 'intensity' for intensity masking
-    dynamic_masking_method: Optional[str] = None # ['edge','intensity']
+    dynamic_masking_method: str | None = None # ['edge','intensity']
     dynamic_masking_threshold: float = 0.005
     dynamic_masking_filter_size: int = 7
 
     # Static masking applied to all images, A,B
-    static_mask: Optional[np.ndarray] = None # or a boolean matrix of image shape
+    static_mask: np.ndarray | None = None # or a boolean matrix of image shape
 
     # "Processing Parameters"
     backend: str = "auto"  # Backend for PIV processing: 'auto', 'scipy', or 'rust'
@@ -47,10 +48,10 @@ class PIVSettings:
 
     # add the interroagtion window size for each pass.
     # For the moment, it should be a power of 2
-    windowsizes: Tuple[int, ...]=(64,32,16)
-    
+    windowsizes: tuple[int, ...]=(64,32,16)
+
     # The overlap of the interroagtion window for each pass.
-    overlap: Tuple[int, ...] = (32, 16, 8)  # This is 50% overlap
+    overlap: tuple[int, ...] = (32, 16, 8)  # This is 50% overlap
 
     # Has to be a value with base two. In general window size/2 is a good
     # choice.
@@ -76,18 +77,18 @@ class PIVSettings:
 
     # Signal to noise ratio:
     # we can decide to estimate it or not at every vector position
-    # we can decided if we use it for validation or only store it for 
+    # we can decided if we use it for validation or only store it for
     # later post-processing
-    # plus we need some parameters for threshold validation and for the 
+    # plus we need some parameters for threshold validation and for the
     # calculations:
 
-    sig2noise_method: Optional[str]="peak2mean" # or "peak2peak" or "None"
+    sig2noise_method: str | None="peak2mean" # or "peak2peak" or "None"
     # select the width of the masked to masked out pixels next to the main
     # peak
     sig2noise_mask: int=2
     # If extract_sig2noise::False the values in the signal to noise ratio
     # output column are set to NaN
-    
+
     # "Validation based on the signal to noise ratio"
     # Note: only available when extract_sig2noise::True and only for the
     # last pass of the interrogation
@@ -96,8 +97,8 @@ class PIVSettings:
     # minmum signal to noise ratio that is need for a valid vector
     sig2noise_threshold: float=1.0
     sig2noise_validate: bool=True # when it's False we can save time by not
-    #estimating sig2noise ratio at all, so we can set both sig2noise_method to None 
-    
+    #estimating sig2noise ratio at all, so we can set both sig2noise_method to None
+
 
     # "vector validation options"
     # choose if you want to do validation of the first pass: True or False
@@ -111,8 +112,8 @@ class PIVSettings:
     # The first filter is based on the min/max ranges. Observe that these
     # values are defined in
     # terms of minimum and maximum displacement in pixel/frames.
-    min_max_u_disp: Tuple=(-30, 30)
-    min_max_v_disp: Tuple=(-30, 30)
+    min_max_u_disp: tuple=(-30, 30)
+    min_max_v_disp: tuple=(-30, 30)
     # The second filter is based on the global STD threshold
     std_threshold: int=10  # threshold of the std validation
     # The third filter is the median test: pick between normalized and regular
@@ -137,7 +138,7 @@ class PIVSettings:
     # maximum iterations performed to replace the outliers
     max_filter_iteration: int=4
     filter_kernel_size: int=2  # kernel size for the localmean method
-    
+
     # "Output options"
     # Select if you want to save the plotted vectorfield: True or False
     save_plot: bool=False

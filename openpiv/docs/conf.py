@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # OpenPIV documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb  4 13:18:21 2014.
@@ -11,8 +10,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -43,7 +42,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'recommonmark', 
+    'recommonmark',
     'nbsphinx'
 ]
 
@@ -89,7 +88,7 @@ version = '0.26.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -209,8 +208,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'OpenPIV.tex', u'OpenPIV Documentation',
-   u'OpenPIV group', 'manual'),
+  ('index', 'OpenPIV.tex', 'OpenPIV Documentation',
+   'OpenPIV group', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -253,8 +252,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'OpenPIV', u'OpenPIV Documentation',
-   u'OpenPIV group', 'OpenPIV', 'One line description of project.',
+  ('index', 'OpenPIV', 'OpenPIV Documentation',
+   'OpenPIV group', 'OpenPIV', 'One line description of project.',
    'Miscellaneous'),
 ]
 

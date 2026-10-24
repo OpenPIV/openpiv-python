@@ -36,8 +36,9 @@ Contents:
    src/piv_basics
    src/installation_instruction
    src/tutorial1
-   src/windef
-   src/masking
+    src/windef
+    src/stereo_calibration
+    src/masking
    src/developers
    src/fft_correlation_backends
    src/api_reference

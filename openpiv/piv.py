@@ -1,10 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plt
-
-from openpiv import pyprocess, tools, validation, filters
 from importlib.resources import files
 
 import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import numpy as np
+
+from openpiv import filters, pyprocess, tools, validation
 
 """This module contains high-level PIV processing functions that combine
 various steps of the PIV analysis into convenient workflows."""
@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32, 
+def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
                dt=1.0, plot=True, validation_method=None, s2n_thresh=1.3,
                backend="auto"):
     """
@@ -73,17 +73,17 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
 
     # Perform PIV analysis
     u, v, s2n = pyprocess.extended_search_area_piv(
-        im1.astype(np.int32), im2.astype(np.int32), 
+        im1.astype(np.int32), im2.astype(np.int32),
         window_size=window_size,
-        overlap=overlap, 
+        overlap=overlap,
         search_area_size=search_area_size,
         backend=backend,
     )
-    
+
     # Get coordinates
     x, y = pyprocess.get_coordinates(
         image_size=im1.shape,
-        search_area_size=search_area_size, 
+        search_area_size=search_area_size,
         overlap=overlap
     )
 
@@ -95,7 +95,7 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
     else:
         # Default validation using bottom 5% of s2n values
         valid = s2n > np.percentile(s2n, 5)
-    
+
     # Replace outliers
     if np.any(~valid):
         u, v = filters.replace_outliers(u, v, ~valid)
@@ -106,9 +106,9 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
         ax.imshow(im1, cmap=plt.get_cmap("gray"), alpha=0.5, origin="upper")
         ax.quiver(x[valid], y[valid], u[valid], -v[valid], scale=70,
                   color='r', width=.005)
-        plt.title('Velocity field (dt={:.3f})'.format(dt))
+        plt.title(f'Velocity field (dt={dt:.3f})')
         plt.show()
-        
+
     # Transform coordinates to match windef and tools.display_vector_field
     x, y, u, v = tools.transform_coordinates(x, y, u, v)
 
@@ -118,17 +118,17 @@ def simple_piv(im1, im2, window_size=32, overlap=16, search_area_size=32,
 def piv_example(plot_animation=True, plot_quiver=True):
     """
     Demonstrate PIV analysis using example vortex data.
-    
+
     This function loads example images from the package data, performs
     PIV analysis, and displays the results.
-    
+
     Parameters
     ----------
     plot_animation : bool, optional
         Whether to display an animation of the image pair, default is True
     plot_quiver : bool, optional
         Whether to display quiver plots of the results, default is True
-        
+
     Returns
     -------
     x : 2d np.ndarray
@@ -142,7 +142,7 @@ def piv_example(plot_animation=True, plot_quiver=True):
     """
     # Load example images
     im1 = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
-    im2 = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')    
+    im2 = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
 
     frame_a = tools.imread(im1)
     frame_b = tools.imread(im2)
@@ -151,14 +151,15 @@ def piv_example(plot_animation=True, plot_quiver=True):
     if plot_animation:
         images = [frame_a, frame_b]
         fig, ax = plt.subplots()
-        
+
         ims = []
         for i in range(2):
             im = ax.imshow(images[i % 2], animated=True, cmap="gray")
             ims.append([im])
 
-        ani = animation.ArtistAnimation(fig, ims, interval=500, blit=False,
-                                      repeat_delay=0)
+        # the animation object must stay referenced while the window is open
+        _ani = animation.ArtistAnimation(fig, ims, interval=500, blit=False,
+                                         repeat_delay=0)
         plt.title('Image pair animation')
         plt.show()
 
@@ -166,17 +167,17 @@ def piv_example(plot_animation=True, plot_quiver=True):
     window_size = 32
     search_area_size = 64
     overlap = 8
-    
+
     u, v, s2n = pyprocess.extended_search_area_piv(
-        frame_a.astype(np.int32), frame_b.astype(np.int32), 
+        frame_a.astype(np.int32), frame_b.astype(np.int32),
         window_size=window_size,
         search_area_size=search_area_size,
         overlap=overlap
     )
-    
+
     x, y = pyprocess.get_coordinates(
         image_size=frame_a.shape,
-        search_area_size=search_area_size, 
+        search_area_size=search_area_size,
         overlap=overlap
     )
 
@@ -186,7 +187,7 @@ def piv_example(plot_animation=True, plot_quiver=True):
         ax[0].imshow(frame_a, cmap=plt.get_cmap("gray"), alpha=0.8)
         ax[0].quiver(x, y, u, -v, scale=50, color="r")
         ax[0].set_title('Original orientation')
-        
+
         ax[1].quiver(x, y[::-1, :], u, -1*v, scale=50, color="b")
         ax[1].set_title('Flipped y-axis')
         ax[1].set_aspect(1)
@@ -195,19 +196,19 @@ def piv_example(plot_animation=True, plot_quiver=True):
 
     # Transform coordinates for consistency with other functions
     x, y, u, v = tools.transform_coordinates(x, y, u, v)
-    
+
     return x, y, u, v
 
 
-def process_pair(frame_a, frame_b, window_size=32, overlap=16, 
+def process_pair(frame_a, frame_b, window_size=32, overlap=16,
                 search_area_size=32, dt=1.0, validation_method='sig2noise',
-                s2n_threshold=1.3, filter_method='localmean', 
+                s2n_threshold=1.3, filter_method='localmean',
                 filter_kernel_size=1, plot=False, backend="auto"):
     """
     Complete PIV processing workflow for a single image pair.
-    
+
     This function performs PIV analysis with validation and filtering.
-    
+
     Parameters
     ----------
     frame_a : numpy.ndarray
@@ -234,7 +235,7 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
         Whether to display a quiver plot of the results, default is False
     backend : str, optional
         Backend to use: 'auto', 'rust', or 'scipy'. Default is 'auto'.
-        
+
     Returns
     -------
     x : 2d np.ndarray
@@ -250,17 +251,17 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
     """
     # Perform PIV analysis
     u, v, s2n = pyprocess.extended_search_area_piv(
-        frame_a.astype(np.int32), frame_b.astype(np.int32), 
+        frame_a.astype(np.int32), frame_b.astype(np.int32),
         window_size=window_size,
-        overlap=overlap, 
+        overlap=overlap,
         search_area_size=search_area_size,
         backend=backend,
     )
-    
+
     # Get coordinates
     x, y = pyprocess.get_coordinates(
         image_size=frame_a.shape,
-        search_area_size=search_area_size, 
+        search_area_size=search_area_size,
         overlap=overlap
     )
 
@@ -271,15 +272,15 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
         mask = ~validation.global_std(u, v)
     else:
         mask = np.zeros_like(u, dtype=bool)
-    
+
     # Replace outliers
     if np.any(mask):
         u, v = filters.replace_outliers(
-            u, v, mask, 
+            u, v, mask,
             method=filter_method,
             kernel_size=filter_kernel_size
         )
-    
+
     # Plot if requested
     if plot:
         fig, ax = plt.subplots(figsize=(8, 8))
@@ -288,8 +289,8 @@ def process_pair(frame_a, frame_b, window_size=32, overlap=16,
         ax.set_title(f'Velocity field (dt={dt:.3f})')
         plt.tight_layout()
         plt.show()
-    
+
     # Transform coordinates
     x, y, u, v = tools.transform_coordinates(x, y, u, v)
-    
+
     return x, y, u, v, mask

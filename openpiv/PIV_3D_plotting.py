@@ -3,11 +3,11 @@ functions to plot 3D-deformation fields and simple 3D-structures
 """
 
 
+from itertools import chain
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import chain
-from mpl_toolkits.mplot3d import Axes3D
 
 
 def set_axes_equal(ax):
@@ -21,8 +21,8 @@ def set_axes_equal(ax):
       Parameters
     ----------
      ax: matplotlib.axes object
-       
-     
+
+
     """
 
     x_limits = ax.get_xlim3d()
@@ -202,7 +202,7 @@ def quiver_3D(
     arrow_scale=0.15,
     equal_ax=True,
 ):
-    """ 
+    """
     Displaying 3D deformation fields vector arrows
 
     Parameters
@@ -217,33 +217,33 @@ def quiver_3D(
 
      mask_filtered, boolean 3d ndarray or 1d ndarray
           Array, or list with same dimensions as the deformations. Defines the area where deformations are drawn
-          
+
      filter_def: float
           Filter that prevents the display of deformations arrows with length < filter_def
-          
+
      filter_reg: tuple,list or int
           Filter that prevents the display of every i-th deformations arrows separatly alon each axis.
           filter_reg=(2,2,2) means that only every second arrow along x,y z axis is displayed leading to
           a total reduction of displayed arrows by a factor of 8. filter_reg=3 is interpreted
           as (3,3,3).
-          
+
      cmap: string
           matplotlib colorbar that defines the coloring of the arrow
-          
+
      quiv_args: dict
          Dictionary with kwargs passed on to the matplotlib quiver function.
 
      vmin,vmax: float
          Upper and lower bounds for the colormap. Works like vmin and vmax in plt.imshow().
-         
+
     arrow_scale: float
-        Automatic scaling of the quiver arrows so that the longest arrow has the 
+        Automatic scaling of the quiver arrows so that the longest arrow has the
         length axis length * arrow_scale. Arrow length can alternatively be set by
-        passing a "lenght" argument in quiv_args. 
-    
+        passing a "lenght" argument in quiv_args.
+
     equal_axes: bool
         resize the figure axis so that they are have equal scaling.
-    
+
 
     Returns
     -------
@@ -283,8 +283,7 @@ def quiver_3D(
             x, y, z = np.indices(u.shape)
         else:
             raise ValueError(
-                "displacement data has wrong number of dimensions (%s). Use 1d array, list, or 3d array."
-                % str(len(u.shape))
+                f"displacement data has wrong number of dimensions ({len(u.shape)!s}). Use 1d array, list, or 3d array."
             )
 
     # conversion to array

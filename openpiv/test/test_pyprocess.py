@@ -1,8 +1,18 @@
 import numpy as np
 import pytest
-from openpiv.pyprocess import get_field_shape, get_coordinates, get_rect_coordinates
-from openpiv.pyprocess import sliding_window_array, find_first_peak, find_subpixel_peak_position
-from openpiv.pyprocess import vectorized_sig2noise_ratio, fft_correlate_images, correlate_windows
+
+from openpiv.pyprocess import (
+    correlate_windows,
+    fft_correlate_images,
+    find_first_peak,
+    find_subpixel_peak_position,
+    get_coordinates,
+    get_field_shape,
+    get_rect_coordinates,
+    sliding_window_array,
+    vectorized_sig2noise_ratio,
+)
+
 
 def test_get_field_shape():
     """Test get_field_shape function with various inputs"""
@@ -254,7 +264,7 @@ def test_vectorized_sig2noise_ratio():
     assert not np.array_equal(s2n_p2p, s2n_width2)
 
     # Test with invalid method
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         vectorized_sig2noise_ratio(corr, sig2noise_method='invalid_method')
 
 def test_vectorized_sig2noise_ratio_flags_invalid_windows():

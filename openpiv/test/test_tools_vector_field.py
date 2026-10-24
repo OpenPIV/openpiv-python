@@ -1,12 +1,17 @@
 """Tests for vector field operations in tools.py"""
 import os
 import tempfile
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
+
 from openpiv.tools import (
-    save, display_vector_field, display_vector_field_from_arrays,
-    transform_coordinates, display_windows_sampling
+    display_vector_field,
+    display_vector_field_from_arrays,
+    display_windows_sampling,
+    save,
+    transform_coordinates,
 )
 
 

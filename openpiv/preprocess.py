@@ -1,15 +1,14 @@
 """This module contains image processing routines that improve
 images prior to PIV processing."""
 
-import numpy as np
-from scipy.ndimage import median_filter, gaussian_filter, binary_fill_holes,\
-     map_coordinates
-from skimage.util import img_as_float, img_as_ubyte
-from skimage import exposure
-from skimage import filters
-from skimage.measure import find_contours, approximate_polygon, points_in_poly
-from skimage.transform import rescale
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.ndimage import binary_fill_holes, gaussian_filter, map_coordinates, median_filter
+from skimage import exposure, filters
+from skimage.measure import approximate_polygon, find_contours, points_in_poly
+from skimage.transform import rescale
+from skimage.util import img_as_float, img_as_ubyte
+
 from openpiv.tools import imread
 
 __licence_ = """
@@ -191,18 +190,17 @@ def normalize_array(array, axis = None):
         if denominator == 0 or np.isnan(denominator):
             return np.zeros_like(array)
         return (array - min_val) / denominator
-    else:
-        min_val = np.nanmin(array, axis=axis, keepdims=True)
-        max_val = np.nanmax(array, axis=axis, keepdims=True)
-        denominator = max_val - min_val
-        # Handle the case where all values are the same (max = min)
-        # Use np.divide with 'where' to avoid division by zero
-        return np.divide(
-            array - min_val,
-            denominator,
-            out=np.zeros_like(array),
-            where=(denominator != 0)
-        )
+    min_val = np.nanmin(array, axis=axis, keepdims=True)
+    max_val = np.nanmax(array, axis=axis, keepdims=True)
+    denominator = max_val - min_val
+    # Handle the case where all values are the same (max = min)
+    # Use np.divide with 'where' to avoid division by zero
+    return np.divide(
+        array - min_val,
+        denominator,
+        out=np.zeros_like(array),
+        where=(denominator != 0)
+    )
 
 
 def standardize_array(array, axis = None):
@@ -226,9 +224,8 @@ def standardize_array(array, axis = None):
     array = array.astype(np.float32)
     if axis is None:
         return((array - np.nanmean(array)) / np.nanstd(array))
-    else:
-        return((array - np.nanmean(array, axis = axis, keepdims=True)) /
-               np.nanstd(array, axis = axis, keepdims=True))
+    return((array - np.nanmean(array, axis = axis, keepdims=True)) /
+           np.nanstd(array, axis = axis, keepdims=True))
 
 
 def instensity_cap(img, std_mult = 2):
@@ -355,8 +352,7 @@ def local_variance_normalization(img, sigma_1 = 2, sigma_2 = 1, clip = True):
     )
     if clip:
         img[img < 0] = 0
-    img = (img - img.min()) / (img.max() - img.min())
-    return img
+    return (img - img.min()) / (img.max() - img.min())
 
 
 
@@ -389,8 +385,7 @@ def contrast_stretch(img, lower_limit = 2, upper_limit = 98):
 
     lower = np.percentile(img, lower_limit)
     upper = np.percentile(img, upper_limit)
-    img = exposure.rescale_intensity(img, in_range=(lower, upper)) #type:ignore
-    return img
+    return exposure.rescale_intensity(img, in_range=(lower, upper)) #type:ignore
 
 def threshold_binarize(img, threshold, max_val = 255):
     """

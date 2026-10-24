@@ -1,8 +1,10 @@
 """Tests for basic utility functions in tools.py"""
 import pathlib
+
 import numpy as np
 import pytest
-from openpiv.tools import natural_sort, sorted_unique, display, negative
+
+from openpiv.tools import display, natural_sort, negative, sorted_unique
 
 
 def test_natural_sort():
@@ -46,7 +48,7 @@ def test_sorted_unique():
     result = sorted_unique(arr)
 
     # Check that result contains the unique values
-    assert set(result) == set([1, 2, 3])
+    assert set(result) == {1, 2, 3}
     # Check that result is sorted
     assert np.all(np.diff(result) > 0)
 
@@ -55,7 +57,7 @@ def test_sorted_unique():
     result = sorted_unique(arr)
 
     # Check that result contains the unique values
-    assert set(result) == set([1, 2, 5, 10])
+    assert set(result) == {1, 2, 5, 10}
     # Check that result is sorted
     assert np.all(np.diff(result) > 0)
 

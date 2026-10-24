@@ -6,33 +6,31 @@ Created on Fri Oct  4 14:04:04 2019
 """
 
 import pathlib
-from typing import Optional, Tuple, Union
+from typing import Optional
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.ndimage as scn
+from scipy.interpolate import RectBivariateSpline
 from skimage.util import invert
 
-from scipy.interpolate import RectBivariateSpline
-import matplotlib.pyplot as plt
-
-from openpiv.tools import Multiprocesser, display_vector_field, transform_coordinates
-from openpiv import validation, filters, tools, scaling, preprocess
-from openpiv.pyprocess import extended_search_area_piv, get_rect_coordinates, \
-    get_field_shape
-from openpiv import smoothn
+from openpiv import filters, preprocess, scaling, smoothn, tools, validation
+from openpiv.pyprocess import extended_search_area_piv, get_field_shape, get_rect_coordinates
 from openpiv.settings import PIVSettings
+from openpiv.tools import Multiprocesser, display_vector_field, transform_coordinates
 
 
 def prepare_images(
     file_a: pathlib.Path,
     file_b: pathlib.Path,
     settings: "PIVSettings",
-    )-> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    )-> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     """ prepares two images for the PIV pass
 
     Args:
         file_a (pathlib.Path): filename of frame A
         file_b (pathlib.Path): filename of frame B
-        settings (_type_): windef.Settings() 
+        settings (_type_): windef.Settings()
     """
     image_mask = None
 
@@ -42,7 +40,7 @@ def prepare_images(
     frame_a = tools.imread(file_a)
     frame_b = tools.imread(file_b)
 
-    
+
     # crop to roi
     if settings.roi == "full":
         pass
@@ -73,12 +71,12 @@ def prepare_images(
         frame_a = np.where(image_mask, 0, frame_a)
         frame_b = np.where(image_mask, 0, frame_b)
 
-    
+
         if settings.show_all_plots:
             _, ax = plt.subplots()
             ax.set_title('Masked frames')
             ax.imshow(np.c_[frame_a, frame_b])
-    
+
 
     if settings.dynamic_masking_method in ("edge", "intensity"):
         frame_a, mask_a = preprocess.dynamic_masking(
@@ -113,7 +111,7 @@ def process_image_pair(args, settings, save_path):
 
     # print(f'Inside func {file_a}, {file_b}, {counter}')
 
-    # frame_a, frame_b are masked as black where we do not 
+    # frame_a, frame_b are masked as black where we do not
     # want to get vectors. later piv would mark it as completely black
     # and set s2n to invalid
     frame_a, frame_b, image_mask = prepare_images(
@@ -139,7 +137,7 @@ def process_image_pair(args, settings, save_path):
 
     if settings.show_all_plots:
         plt.figure()
-        plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+        plt.quiver(x, y, u, v, np.sqrt(u**2+v**2))
         plt.gca().invert_yaxis()
         plt.title('First pass')
 
@@ -153,7 +151,7 @@ def process_image_pair(args, settings, save_path):
         # mask_coords = preprocess.mask_coordinates(image_mask)
         # mark those points on the grid of PIV inside the mask
         # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
-        
+
         grid_mask = scn.map_coordinates(image_mask, [y,x]).astype(bool)
 
 
@@ -164,20 +162,20 @@ def process_image_pair(args, settings, save_path):
 
     if settings.show_all_plots:
         plt.figure()
-        plt.quiver(x, y, u, v, np.sqrt((u**2+v**2)))
+        plt.quiver(x, y, u, v, np.sqrt(u**2+v**2))
         plt.gca().invert_yaxis()
         plt.title('Grid masked arrays')
 
 
     # validation also masks the u,v and returns another flags
-    # the question is whether to merge the two masks or just keep for the 
+    # the question is whether to merge the two masks or just keep for the
     # reference
     if settings.validation_first_pass:
         flags = validation.typical_validation(u, v, s2n, settings)
     else:
         flags = np.zeros_like(u, dtype=bool)
-    
-    
+
+
 
     if settings.show_all_plots:
         plt.figure()
@@ -298,9 +296,9 @@ def process_image_pair(args, settings, save_path):
         v = np.ma.masked_array(v, np.ma.nomask)
 
     # pixel / frame -> pixel / second
-    u /= settings.dt 
+    u /= settings.dt
     v /= settings.dt
-    
+
     # "scales the results pixel-> meter"
     x, y, u, v = scaling.uniform(x, y, u, v,
                                  scaling_factor=settings.scaling_factor)
@@ -320,7 +318,7 @@ def process_image_pair(args, settings, save_path):
 
     if settings.show_plot or settings.save_plot:
         fig, _ = display_vector_field(
-            txt_file, 
+            txt_file,
             scale=settings.scale_plot,
         )
         if settings.save_plot is True:
@@ -345,7 +343,7 @@ class _PIVWorker:
 def piv(settings: "PIVSettings"):
     """The main entry point in which batch PIV evaluation is performed."""
     # if the settings.save_path is a string convert it to Path
-    settings.filepath_images = pathlib.Path(settings.filepath_images) 
+    settings.filepath_images = pathlib.Path(settings.filepath_images)
     settings.save_path = pathlib.Path(settings.save_path)
     save_path_string = (
         f"OpenPIV_results_{settings.windowsizes[settings.num_iterations-1]}_{settings.save_folder_suffix}"
@@ -542,7 +540,7 @@ def first_pass(frame_a, frame_b, settings):
 
     v : 2d np.array
         array containing the u displacement for every interrogation window
-    
+
     s2n: 2d np.array of the signal to noise ratio
 
     """
@@ -745,7 +743,7 @@ def multipass_img_deform(
         plt.figure()
         plt.imshow(frame_b-old_frame_b)
         plt.title('New B - old B')
-        
+
 
     # if do_sig2noise is True
     #     sig2noise_method = sig2noise_method
@@ -836,7 +834,7 @@ def simple_multipass(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
     settings: Optional["PIVSettings"]=None,
-    )->Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    )->tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """_summary_
 
     Args:
@@ -866,7 +864,7 @@ def simple_multipass(
     flags = validation.typical_validation(u, v, s2n, settings)
     u, v = filters.replace_outliers(u, v, flags)
 
-    # multipass 
+    # multipass
     for i in range(1, settings.num_iterations):
 
         x, y, u, v, grid_mask, flags = multipass_img_deform(
@@ -885,7 +883,7 @@ def simple_multipass(
     v = np.ma.fix_invalid(v, fill_value=0.)
 
     # note the use of .data for masked arrays
-    x, y, u, v = transform_coordinates(x, y, u.data, v.data) 
+    x, y, u, v = transform_coordinates(x, y, u.data, v.data)
     return (x, y, u, v, flags)
 
 
@@ -893,7 +891,7 @@ def multigrid_windef(
     frame_a: np.ndarray,
     frame_b: np.ndarray,
     settings: Optional["PIVSettings"] = None,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Multigrid (multi-pass) window deformation PIV evaluation on image arrays.
 
     Iteratively performs coarse-to-fine interrogation with window deformation,

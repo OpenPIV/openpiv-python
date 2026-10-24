@@ -1,9 +1,10 @@
-import numpy.lib.stride_tricks
 import numpy as np
-from scipy.fft import rfftn, irfftn
+import numpy.lib.stride_tricks
 from numpy import ma
+from scipy.fft import irfftn, rfftn
 from tqdm import tqdm
-from openpiv.pyprocess import get_field_shape, find_first_peak
+
+from openpiv.pyprocess import find_first_peak, get_field_shape
 
 """This module contains a pure python implementation of the basic
 cross-correlation algorithm for PIV image processing."""
@@ -255,7 +256,7 @@ def find_subpixel_peak_position(corr, subpixel_method="gaussian"):
                     peak1_j + (cd - cu) / (2 * cd - 4 * c + 2 * cu),
                     peak1_z + (cf - cb) / (2 * cf - 4 * c + 2 * cb),
                 )
-        except:
+        except Exception:
             subp_peak_position = default_peak_position
 
     except IndexError:
@@ -308,10 +309,8 @@ def sig2noise_ratio(corr, sig2noise_method="peak2peak", width=2):
         # if the image is lacking particles, totally black it will correlate to very low value, but not zero
         # if the first peak is on the borders, the correlation map is also wrong
         if corr_max1 < 1e-3 or any(
-            [
-                x == 0 or x == corr.shape[i]
+            x == 0 or x == corr.shape[i]
                 for i, x in enumerate([peak1_i, peak1_j, peak1_z])
-            ]
         ):
             return 0.0
 
@@ -394,12 +393,10 @@ def correlate_windows(
             : window_b.shape[1] + window_a.shape[1],
             : window_b.shape[2] + window_a.shape[2],
         ]
-        return corr
     # elif correlation_method == 'direct':
     #     return convolve2d(normalize_intensity(window_a),
     #                       normalize_intensity(window_b[::-1, ::-1, ::-1]), 'full')
-    else:
-        raise ValueError("method is not implemented")
+    raise ValueError("method is not implemented")
 
 
 def normalize_intensity(window):
@@ -444,10 +441,10 @@ def check_input(window_size, overlap, search_area_size, frame_a, frame_b):
     if any((np.array(search_area_size) - np.array(window_size)) < 0):
         raise ValueError("Search size cannot be smaller than the window_size")
 
-    if any([ws > ims for ws, ims in zip(window_size, frame_a.shape)]):
+    if any(ws > ims for ws, ims in zip(window_size, frame_a.shape)):
         raise ValueError("window size cannot be larger than the image")
 
-    if any([ims_a != ims_b for ims_a, ims_b in zip(frame_a.shape, frame_b.shape)]):
+    if any(ims_a != ims_b for ims_a, ims_b in zip(frame_a.shape, frame_b.shape)):
         raise ValueError("frame a and frame b have different sizes.")
 
     return window_size, overlap, search_area_size
@@ -672,5 +669,4 @@ def extended_search_area_piv3D(
     # return output if user wanted sig2noise information
     if sig2noise_method is not None:
         return u / dt[0], v / dt[1], w / dt[2], sig2noise
-    else:
-        return u / dt[0], v / dt[1], w / dt[2]
+    return u / dt[0], v / dt[1], w / dt[2]

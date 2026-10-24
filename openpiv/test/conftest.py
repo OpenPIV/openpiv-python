@@ -1,8 +1,9 @@
-import pytest
+import traceback
+from unittest.mock import patch
+
 import matplotlib
 import matplotlib.pyplot as plt
-from unittest.mock import patch
-import traceback
+import pytest
 
 # Set non-interactive backend by default
 matplotlib.use('Agg')
@@ -18,14 +19,14 @@ def debug_show(*args, **kwargs):
     print("plt.show() called from:")
     traceback.print_stack()
     # Don't actually call the original show function
-    return None
+    return
 
 # Debug wrapper for plt.draw
 def debug_draw(*args, **kwargs):
     print("plt.draw() called from:")
     traceback.print_stack()
     # Don't actually call the original draw function
-    return None
+    return
 
 # Store and replace the original functions
 plt.original_show = plt.show
@@ -37,7 +38,7 @@ plt.draw = debug_draw
 def configure_plots(request):
     """Fixture to configure plot behavior based on markers"""
     show_plots = request.node.get_closest_marker("show_plots") is not None
-    
+
     if show_plots:
         # If test is marked with show_plots, restore original functions
         print(f"Enabling plots for test: {request.node.name}")
@@ -47,11 +48,13 @@ def configure_plots(request):
         yield
     else:
         # Otherwise, disable all plots
-        with patch('matplotlib.pyplot.show', return_value=None):
-            with patch('matplotlib.pyplot.draw', return_value=None):
-                with patch('matplotlib.backend_bases.FigureManagerBase.show', return_value=None):
-                    with patch('matplotlib.figure.Figure.show', return_value=None):
-                        yield
-    
+        with (
+            patch('matplotlib.pyplot.show', return_value=None),
+            patch('matplotlib.pyplot.draw', return_value=None),
+            patch('matplotlib.backend_bases.FigureManagerBase.show', return_value=None),
+            patch('matplotlib.figure.Figure.show', return_value=None),
+        ):
+            yield
+
     # Close all figures at the end
     plt.close('all')
