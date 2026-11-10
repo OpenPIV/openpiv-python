@@ -1,12 +1,12 @@
 """Tests for background processing functions in tools.py"""
 import os
 import tempfile
+
 import numpy as np
 import pytest
 from PIL import Image
-from openpiv.tools import (
-    mark_background, mark_background2, find_reflexions, find_boundaries
-)
+
+from openpiv.tools import find_boundaries, find_reflexions, mark_background, mark_background2
 
 
 def create_test_images(num_images=3, size=(20, 20)):

@@ -1,11 +1,13 @@
 import os
 import time
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
 from importlib.resources import files
-from openpiv import pyprocess, tools, validation, filters
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
 import openpiv_rust
+
+from openpiv import filters, pyprocess, tools, validation
 
 ARTIFACT_DIR = Path(r"C:\Users\alex\.gemini\antigravity-cli\brain\371a4578-c887-4c4a-bba3-7bbfb7f1997c")
 ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
@@ -27,7 +29,7 @@ def run_real_piv_demo():
 
     # 1. Scipy correlation
     t0 = time.perf_counter()
-    scipy_corr = pyprocess.fft_correlate_images(aa, bb, correlation_method="circular", normalized_correlation=False)
+    pyprocess.fft_correlate_images(aa, bb, correlation_method="circular", normalized_correlation=False)
     t_scipy_corr = time.perf_counter() - t0
 
     # 2. Rust correlation
@@ -71,7 +73,7 @@ def run_real_piv_demo():
 
     # Plot Quiver Comparison
     fig, axes = plt.subplots(1, 3, figsize=(18, 5.5), facecolor="white")
-    
+
     # Panel 1: Scipy
     ax = axes[0]
     ax.imshow(frame_a, cmap="gray", alpha=0.5, origin="upper")
@@ -111,7 +113,7 @@ def run_synthetic_vortex_demo():
     print("\n=== Running Synthetic Vortex Quiver Demo ===")
     np.random.seed(42)
     img_h, img_w = 256, 256
-    
+
     n_particles = 4000
     px = np.random.uniform(0, img_w, n_particles)
     py = np.random.uniform(0, img_h, n_particles)
@@ -124,7 +126,7 @@ def run_synthetic_vortex_demo():
     ry = py - cy
     r = np.sqrt(rx**2 + ry**2) + 1e-6
     v_theta = gamma * r / (r0**2 + r**2)
-    
+
     dx_particles = -v_theta * (ry / r)
     dy_particles = v_theta * (rx / r)
 
@@ -132,7 +134,7 @@ def run_synthetic_vortex_demo():
     frame_b = np.zeros((img_h, img_w), dtype=np.float32)
 
     for i in range(n_particles):
-        x0, y0 = int(round(px[i])), int(round(py[i]))
+        x0, y0 = round(px[i]), round(py[i])
         if 1 <= x0 < img_w - 1 and 1 <= y0 < img_h - 1:
             frame_a[y0, x0] += 200.0
             frame_a[y0+1, x0] += 100.0
@@ -140,7 +142,7 @@ def run_synthetic_vortex_demo():
             frame_a[y0, x0+1] += 100.0
             frame_a[y0, x0-1] += 100.0
 
-        x1, y1 = int(round(px[i] + dx_particles[i])), int(round(py[i] + dy_particles[i]))
+        x1, y1 = round(px[i] + dx_particles[i]), round(py[i] + dy_particles[i])
         if 1 <= x1 < img_w - 1 and 1 <= y1 < img_h - 1:
             frame_b[y1, x1] += 200.0
             frame_b[y1+1, x1] += 100.0
@@ -148,7 +150,6 @@ def run_synthetic_vortex_demo():
             frame_b[y1, x1+1] += 100.0
             frame_b[y1, x1-1] += 100.0
 
-    window_size = 32
     overlap = 16
     search_area_size = 32
 
@@ -158,7 +159,7 @@ def run_synthetic_vortex_demo():
 
     # Scipy correlation
     t0 = time.perf_counter()
-    scipy_corr = pyprocess.fft_correlate_images(aa, bb, correlation_method="circular", normalized_correlation=False)
+    pyprocess.fft_correlate_images(aa, bb, correlation_method="circular", normalized_correlation=False)
     t_scipy_corr = time.perf_counter() - t0
 
     # Rust correlation
@@ -173,7 +174,7 @@ def run_synthetic_vortex_demo():
     x, y = pyprocess.get_coordinates(image_size=frame_a.shape, search_area_size=search_area_size, overlap=overlap)
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), facecolor="white")
-    
+
     # Panel 1: Rust Quiver Field
     ax = axes[0]
     ax.imshow(frame_a, cmap="gray", alpha=0.5, origin="upper")

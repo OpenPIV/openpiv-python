@@ -1,10 +1,13 @@
-import pytest
-import numpy as np
-import scipy.signal
-import scipy.fft
-from pathlib import Path
 from importlib.resources import files
-from openpiv import pyprocess, tools, validation, filters
+from pathlib import Path
+
+import numpy as np
+import pytest
+import scipy.fft
+import scipy.signal
+
+from openpiv import filters, pyprocess, tools, validation
+
 openpiv_rust = pytest.importorskip("openpiv_rust")
 
 @pytest.mark.parametrize("win_size", [16, 32, 64])

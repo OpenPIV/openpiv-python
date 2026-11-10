@@ -1,23 +1,18 @@
 """Test module for PIV_3D_plotting.py"""
 
 import os
+
+import matplotlib
 import numpy as np
 import pytest
-import matplotlib
 
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.testing.compare import compare_images
+from mpl_toolkits.mplot3d import Axes3D
 
-from openpiv.PIV_3D_plotting import (
-    set_axes_equal,
-    scatter_3D,
-    explode,
-    plot_3D_alpha,
-    quiver_3D
-)
+from openpiv.PIV_3D_plotting import explode, plot_3D_alpha, quiver_3D, scatter_3D, set_axes_equal
 
 SKIP_PLOT_TESTS = False
 
@@ -43,9 +38,9 @@ def test_set_axes_equal():
     ax.set_zlim(0, 3)
 
     # Get the original limits
-    x_limits_before = ax.get_xlim3d()
-    y_limits_before = ax.get_ylim3d()
-    z_limits_before = ax.get_zlim3d()
+    ax.get_xlim3d()
+    ax.get_ylim3d()
+    ax.get_zlim3d()
 
     # Apply the function
     set_axes_equal(ax)

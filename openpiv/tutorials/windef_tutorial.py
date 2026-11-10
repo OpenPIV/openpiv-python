@@ -1,7 +1,6 @@
 from importlib.resources import files
+
 from openpiv import windef
-
-
 
 settings = windef.PIVSettings()
 print(settings)

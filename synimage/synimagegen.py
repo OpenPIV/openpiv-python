@@ -18,11 +18,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import matplotlib.pyplot as pl
 import numpy as np
 import scipy
-import scipy.special
 import scipy.interpolate
-import matplotlib.pyplot as pl
+import scipy.special
 
 
 class continuous_flow_field:
@@ -42,20 +42,17 @@ class continuous_flow_field:
 
     def f_U(self, x, y):
         # example for synthetic U velocity
-        u = 2.5 + 0.5 * np.sin((x**2 + y**2) / 0.01)
-        return u
+        return 2.5 + 0.5 * np.sin((x**2 + y**2) / 0.01)
 
     def f_V(self, x, y):
         # example for synthetic V velocity
-        v = 0.5 + 0.1 * np.cos((x**2 + y**2) / 0.01)
-        return v
+        return 0.5 + 0.1 * np.cos((x**2 + y**2) / 0.01)
 
     def get_U_V(self, x, y):
         # return the U and V velocity at a certain position
         if self.inter:
             return self.f_U(x, y)[0], self.f_V(x, y)[0]
-        else:
-            return self.f_U(x, y), self.f_V(x, y)
+        return self.f_U(x, y), self.f_V(x, y)
 
     def create_syn_quiver(self, number_of_grid_points, path=None):
         # return and save a synthetic flow map
@@ -184,9 +181,9 @@ def create_synimage_parameters(
     # Data processing
 
     if path is not None:
-        with open(path, "r") as f:
+        with open(path) as f:
             data = f.readlines()
-        
+
         data = [line.split("\t") for line in data]
         data = np.array(data).astype(float)
         data = np.array(
@@ -232,7 +229,7 @@ def create_synimage_parameters(
     cpl = 0
     for i in range(num_of_par):
         if cpl < num_of_lost_pairs:
-            if -0.4 > particleCenters[i] or 0.4 < particleCenters[i]:
+            if particleCenters[i] < -0.4 or particleCenters[i] > 0.4:
                 per_to_lose = 1 - (0.5 - np.abs(particleCenters[i])) / 0.1
                 if np.random.uniform() < min(per_loss_pairs / 10, 1) * per_to_lose:
                     x_2[i] = np.random.uniform(x_bound[0] * 0.8, x_bound[1] * 1.2)
@@ -345,9 +342,9 @@ def generate_particle_image(
 
     for i in range(x.size):
         if (
-            1 < min_rendered_cols[i]
+            min_rendered_cols[i] > 1
             and max_rendered_cols[i] < width
-            and 1 < min_rendered_rows[i]
+            and min_rendered_rows[i] > 1
             and max_rendered_rows[i] < height
         ):
             index_to_render.append(i)

@@ -10,12 +10,18 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 
 ### Bootstrap and Install Dependencies
 - Use Poetry: `pip install poetry` then `poetry install` (~10 seconds). All development commands should use `poetry run <command>`.
+- The Rust acceleration is optional: `maturin develop --release -m crates/openpiv_rust/Cargo.toml` builds it in place. Without it the SciPy backend is used.
 
 ### Build and Test
-- Run tests: `poetry run pytest openpiv -v` — ~10 seconds, 216 tests pass.
+- **Always run the tests and ruff before committing.** Both are required, a green
+  test suite alone is not enough.
+- Run tests: `poetry run pytest openpiv -v` — ~10 seconds, ~350 tests pass.
 - Run a single test file: `poetry run pytest openpiv/test/test_process.py -v`
+- Lint: `poetry run ruff check .` (config in `pyproject.toml`, `[tool.ruff]`).
+  `poetry run ruff check . --fix` applies the safe fixes; the unsafe ones
+  (`--unsafe-fixes`) can change runtime behaviour and need a test run afterwards.
 - Import test: `poetry run python -c "import openpiv; print('OpenPIV imported successfully')"`
-- No linting tools are configured (no black, flake8, etc.).
+- No formatting tool is configured; ruff's linter is the style gate.
 - `python setup.py build_ext --inplace` is a legacy no-op: all Cython (`.pyx`) files have been removed and converted to pure Python, despite the package description still mentioning "Cython modules".
 
 ### Run Example Workflows
@@ -38,6 +44,8 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 - `preprocess.py` — image preprocessing (background subtraction, masking).
 - `smoothn.py` — robust spline smoothing; a Python port of `smoothn.m` (D. Garcia / Prof. Lewis) bundled for convenience — it is not covered by the OpenPIV license, see README for attribution.
 - `phase_separation.py` — solid-phase / liquid-tracer separation utilities.
+- `calibration/` — camera calibration: `dlt_model/`, `pinhole_model/`, `poly_model/` (Soloff) and `stereo.py` (common world grid, dewarp, disparity self-calibration, 3C reconstruction). The sub-package uses duck typing: a camera needs `project_points`, `project_to_z`, `resolution` and `dtype`.
+- `examples/stereo/` — runnable stereo-PIV example on DaVis data: `config.py` (`StereoConfig`), `davis.py` (DaVis XML exports), `frames.py` (`.ims`/`.im7` via the optional `readim7` dependency), `pipeline.py` (the steps), `__main__.py` (CLI: `info`, `calibrate`, `dewarp`, `disparity`, `piv`, `all`).
 
 ### Typical call chains
 - Quick path: `piv.simple_piv(frame_a, frame_b, plot=False)` → `(x, y, u, v, s2n)`.
@@ -46,7 +54,7 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 - Batch/multi-pass: build a `PIVSettings`, then `windef.piv(settings)`.
 
 ### Tests
-- `openpiv/test/` (~216 tests). `conftest.py` forces the `Agg` matplotlib backend and patches `plt.show` so tests run headless — keep that in mind if adding plotting code.
+- `openpiv/test/` (~350 tests). `conftest.py` forces the `Agg` matplotlib backend and patches `plt.show` so tests run headless — keep that in mind if adding plotting code.
 
 ### Packaging notes
 - Package name on PyPI is `OpenPIV`; import name is lowercase `openpiv`.

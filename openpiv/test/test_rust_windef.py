@@ -1,6 +1,7 @@
 import os
 import pathlib
 import tempfile
+
 import numpy as np
 import pytest
 from imageio.v3 import imwrite
@@ -115,7 +116,7 @@ def test_multiprocessing_piv_with_rust_backend():
 
         result_folders = list(out_dir.glob("OpenPIV_results_*"))
         assert len(result_folders) == 1
-        txt_files = sorted(list(result_folders[0].glob("*.txt")))
+        txt_files = sorted(result_folders[0].glob("*.txt"))
         assert len(txt_files) == 2
         for f in txt_files:
             assert f.stat().st_size > 0

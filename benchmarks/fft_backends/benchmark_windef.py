@@ -1,11 +1,14 @@
-import time
-import tempfile
 import pathlib
+import tempfile
+import time
+
 import numpy as np
 from imageio.v3 import imwrite
+
 from openpiv import windef
 from openpiv.settings import PIVSettings
 from openpiv.test import test_process
+
 
 def run_multigrid(frame_a, frame_b, backend, n_runs=3):
     settings = PIVSettings()
@@ -16,10 +19,10 @@ def run_multigrid(frame_a, frame_b, backend, n_runs=3):
     settings.sig2noise_validate = False
     settings.show_all_plots = False
     settings.show_plot = False
-    
+
     # Warmup
     windef.multigrid_windef(frame_a, frame_b, settings)
-    
+
     times = []
     for _ in range(n_runs):
         t0 = time.perf_counter()
@@ -52,14 +55,14 @@ def run_mp(frame_a, frame_b, backend):
         settings.save_plot = False
         settings.show_all_plots = False
         settings.sig2noise_validate = False
-        
+
         t0 = time.perf_counter()
         windef.piv(settings)
         return (time.perf_counter() - t0) * 1000.0
 
 def main():
     frame_a, frame_b = test_process.create_pair(image_size=256)
-    
+
     print("=" * 60)
     print("  BENCHMARK: Multigrid Window Deformation (256x256, 3 passes)")
     print("=" * 60)

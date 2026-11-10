@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from openpiv.lib import replace_nans, get_dist
+
+from openpiv.lib import get_dist, replace_nans
 
 
 def test_replace_nans_2d():
@@ -79,7 +80,7 @@ def test_replace_nans_convergence():
     # Check that both methods replaced some NaNs
     assert np.sum(np.isnan(filled_low_tol)) < np.sum(np.isnan(array))
     assert np.sum(np.isnan(filled_high_tol)) < np.sum(np.isnan(array))
-    
+
     # Check that original values are preserved
     assert np.allclose(filled_low_tol[0, 0], 1.0)
     assert np.allclose(filled_high_tol[0, 0], 1.0)
@@ -98,7 +99,7 @@ def test_replace_nans_max_iter():
     # Check that both methods replaced some NaNs
     assert np.sum(np.isnan(filled_few_iter)) < np.sum(np.isnan(array))
     assert np.sum(np.isnan(filled_many_iter)) < np.sum(np.isnan(array))
-    
+
     # More iterations should replace more NaNs
     assert np.sum(np.isnan(filled_few_iter)) >= np.sum(np.isnan(filled_many_iter))
 
@@ -117,7 +118,7 @@ def test_replace_nans_kernel_size():
     # Check that both methods replaced some NaNs
     assert np.sum(np.isnan(filled_small_kernel)) < np.sum(np.isnan(array))
     assert np.sum(np.isnan(filled_large_kernel)) < np.sum(np.isnan(array))
-    
+
     # Larger kernel should replace more NaNs in fewer iterations
     assert np.sum(np.isnan(filled_small_kernel)) >= np.sum(np.isnan(filled_large_kernel))
 
@@ -140,7 +141,7 @@ def test_replace_nans_all_nan_neighbors():
 
     # The center element has only NaN neighbors
     filled = replace_nans(array, max_iter=10, tol=1e-6, kernel_size=1, method="localmean")
-    
+
     # The algorithm should still work, but the center might still be NaN after few iterations
     # Let's check that at least some NaNs were replaced
     assert np.sum(np.isnan(filled)) < np.sum(np.isnan(array))
@@ -149,9 +150,9 @@ def test_replace_nans_all_nan_neighbors():
 def test_replace_nans_no_nans():
     """Test replace_nans function with an array that has no NaNs"""
     array = np.ones((5, 5))  # No NaNs
-    
+
     filled = replace_nans(array, max_iter=10, tol=1e-6, kernel_size=1, method="localmean")
-    
+
     # The result should be identical to the input
     assert np.array_equal(array, filled)
 
@@ -188,17 +189,17 @@ def test_get_dist_2d():
     """Test get_dist function with 2D kernel"""
     kernel = np.zeros((5, 5))
     kernel_size = 2
-    
+
     dist, dist_inv = get_dist(kernel, kernel_size)
-    
+
     # Check shapes
     assert dist.shape == (5, 5)
     assert dist_inv.shape == (5, 5)
-    
+
     # Check center value
     assert dist[2, 2] == 0
     assert dist_inv[2, 2] == np.sqrt(2) * kernel_size
-    
+
     # Check corner values (should be furthest from center)
     assert dist[0, 0] > dist[1, 1]
     assert dist_inv[0, 0] < dist_inv[1, 1]
@@ -208,17 +209,17 @@ def test_get_dist_3d():
     """Test get_dist function with 3D kernel"""
     kernel = np.zeros((5, 5, 5))
     kernel_size = 2
-    
+
     dist, dist_inv = get_dist(kernel, kernel_size)
-    
+
     # Check shapes
     assert dist.shape == (5, 5, 5)
     assert dist_inv.shape == (5, 5, 5)
-    
+
     # Check center value
     assert dist[2, 2, 2] == 0
     assert dist_inv[2, 2, 2] == np.sqrt(3) * kernel_size
-    
+
     # Check corner values (should be furthest from center)
     assert dist[0, 0, 0] > dist[1, 1, 1]
     assert dist_inv[0, 0, 0] < dist_inv[1, 1, 1]

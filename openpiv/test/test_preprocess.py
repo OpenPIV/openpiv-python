@@ -1,21 +1,32 @@
 """ Test preprocess """
 import os
+import tempfile
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from imageio.v3 import imread
+from scipy.ndimage import map_coordinates
 from skimage import img_as_float
 from skimage.color import rgb2gray, rgba2rgb
-from imageio.v3 import imread
-import matplotlib.pyplot as plt
-from openpiv.preprocess import (
-    dynamic_masking, mask_coordinates, prepare_mask_from_polygon,
-    prepare_mask_on_grid, normalize_array, standardize_array,
-    instensity_cap, intensity_clip, high_pass, local_variance_normalization,
-    contrast_stretch, threshold_binarize, gen_min_background,
-    gen_lowpass_background, stretch_image
-)
-import tempfile
-from scipy.ndimage import map_coordinates
 
+from openpiv.preprocess import (
+    contrast_stretch,
+    dynamic_masking,
+    gen_lowpass_background,
+    gen_min_background,
+    high_pass,
+    instensity_cap,
+    intensity_clip,
+    local_variance_normalization,
+    mask_coordinates,
+    normalize_array,
+    prepare_mask_from_polygon,
+    prepare_mask_on_grid,
+    standardize_array,
+    stretch_image,
+    threshold_binarize,
+)
 
 test_directory = os.path.split(os.path.abspath(__file__))[0]
 

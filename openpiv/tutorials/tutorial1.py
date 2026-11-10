@@ -1,9 +1,11 @@
 from importlib.resources import files
+
 import numpy as np
-from openpiv import tools, pyprocess, scaling, validation, filters
+
+from openpiv import filters, pyprocess, scaling, tools, validation
 
 # we can run it from any folder
-path = files('openpiv') / "data" / "test1" 
+path = files('openpiv') / "data" / "test1"
 
 
 frame_a  = tools.imread( path / "exp1_001_a.bmp" )
@@ -28,8 +30,8 @@ x, y, u, v = tools.transform_coordinates(x, y, u, v)
 tools.save(str(path / 'test_data.vec') , x, y, u, v, flags)
 # tools.display_vector_field(path / 'test_data.vec', scale=75, width=0.0035)
 tools.display_vector_field(
-    str(path / 'test_data.vec'), 
-    scale=1, 
+    str(path / 'test_data.vec'),
+    scale=1,
     scaling_factor=96.52,
     width=0.0035,
     on_img=True,

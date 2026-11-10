@@ -2,16 +2,17 @@
 Detailed tests for the windef.py module with focus on edge cases and small units.
 """
 
-import pytest
-import numpy as np
-import pathlib
-from importlib.resources import files
-import matplotlib.pyplot as plt
-import tempfile
-import shutil
 import os
+import pathlib
+import shutil
+import tempfile
+from importlib.resources import files
 
-from openpiv import windef, validation, filters, smoothn
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+from openpiv import filters, smoothn, validation, windef
 from openpiv.settings import PIVSettings
 from openpiv.test import test_process
 from openpiv.tools import imread

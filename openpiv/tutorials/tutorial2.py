@@ -1,6 +1,7 @@
 """ Tutorial of using window deformation multi-pass """
 from importlib.resources import files
-from openpiv import tools, pyprocess, validation, filters
+
+from openpiv import filters, pyprocess, tools, validation
 
 
 def func( args ):

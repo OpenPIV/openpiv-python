@@ -2,13 +2,14 @@
 Tests specifically designed to achieve 100% coverage of windef.py
 """
 
-import pytest
-import numpy as np
-import matplotlib.pyplot as plt
-import tempfile
 import pathlib
+import tempfile
 import types
 from importlib.resources import files
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 
 from openpiv import windef
 from openpiv.settings import PIVSettings
@@ -51,9 +52,8 @@ def test_prepare_images_with_invert_and_show_plots_direct():
                 'imshow': lambda *a, **k: None
             })()
             return None, mock_ax
-        else:
-            # For other calls, use the original function
-            return original_subplots(*args, **kwargs)
+        # For other calls, use the original function
+        return original_subplots(*args, **kwargs)
 
     # Replace plt.subplots with our mock function
     plt.subplots = mock_subplots
@@ -86,8 +86,8 @@ def test_multipass_img_deform_with_non_masked_array_after_smoothn():
     x, y, u, v, _ = windef.first_pass(frame_a, frame_b, settings)
 
     # Create masked arrays
-    u_masked = np.ma.masked_array(u, mask=np.ma.nomask)
-    v_masked = np.ma.masked_array(v, mask=np.ma.nomask)
+    np.ma.masked_array(u, mask=np.ma.nomask)
+    np.ma.masked_array(v, mask=np.ma.nomask)
 
     # Store the original piv function to avoid running the full function
     original_piv = windef.piv
@@ -98,7 +98,7 @@ def test_multipass_img_deform_with_non_masked_array_after_smoothn():
         x = np.array([[10, 20], [10, 20]])
         y = np.array([[10, 10], [20, 20]])
         u = np.ma.masked_array(np.ones_like(x), mask=np.ma.nomask)
-        v = np.ma.masked_array(np.ones_like(y), mask=np.ma.nomask)
+        np.ma.masked_array(np.ones_like(y), mask=np.ma.nomask)
 
         # Convert u to a regular numpy array to trigger the error in line 267
         u = np.array(u)
@@ -159,7 +159,7 @@ def test_direct_code_coverage():
     try:
         if not isinstance(u, np.ma.MaskedArray):
             raise ValueError('not a masked array anymore')
-        assert False, "This line should not be reached"
+        raise AssertionError("This line should not be reached")
     except ValueError as e:
         assert str(e) == 'not a masked array anymore'
 

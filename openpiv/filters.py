@@ -1,8 +1,8 @@
 """The openpiv.filters module contains some filtering/smoothing routines."""
-from typing import Tuple, Optional
+
 import numpy as np
-import numpy.typing as npt
 from scipy.signal import convolve
+
 from openpiv.lib import replace_nans
 
 __licence_ = """
@@ -47,10 +47,9 @@ def _gaussian_kernel(half_width: int=1)-> np.ndarray:
 
     if half_width == 0:
         return 1
-    else: 
-        x, y = np.mgrid[-half_width:half_width + 1, -half_width:half_width + 1]
-        g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
-    
+    x, y = np.mgrid[-half_width:half_width + 1, -half_width:half_width + 1]
+    g = np.exp(-(x ** 2 / float(half_width) + y ** 2 / float(half_width)))
+
     return g / g.sum()
 
 
@@ -65,16 +64,15 @@ def gaussian_kernel(sigma:float, truncate:float=4.0)->np.ndarray:
     sigma = sigma ** 2
 
     k = 2 * np.exp(-0.5 * (x ** 2 + y ** 2) / sigma)
-    k = k / np.sum(k)
+    return k / np.sum(k)
 
-    return k
 
 
 def gaussian(
     u: np.ndarray,
     v: np.ndarray,
     half_width: int=1
-    )->Tuple[np.ndarray, np.ndarray]:
+    )->tuple[np.ndarray, np.ndarray]:
     """Smooths the velocity field with a Gaussian kernel.
 
     Parameters
@@ -108,12 +106,12 @@ def replace_outliers(
     u: np.ndarray,
     v: np.ndarray,
     flags: np.ndarray,
-    w: Optional[np.ndarray]=None,
+    w: np.ndarray | None=None,
     method: str="localmean",
     max_iter: int=5,
     tol: float=1e-3,
     kernel_size: int=1,
-    )-> Tuple[np.ndarray, ...]:
+    )-> tuple[np.ndarray, ...]:
     """Replace invalid vectors in an velocity field using an iterative image
         inpainting algorithm.
 
@@ -173,7 +171,7 @@ def replace_outliers(
     # we shall now replace NaNs only at flags positions,
     # regardless the grid_mask (which is a user-provided masked region)
 
-    
+
     has_mask = isinstance(u, np.ma.MaskedArray)
     grid_mask = np.ma.getmaskarray(u).copy() if has_mask else np.ma.nomask
 
@@ -182,7 +180,7 @@ def replace_outliers(
 
     u_data[flags] = np.nan
     v_data[flags] = np.nan
-    
+
     uf = replace_nans(
         u_data, method=method, max_iter=max_iter, tol=tol,
         kernel_size=kernel_size
@@ -192,7 +190,7 @@ def replace_outliers(
         kernel_size=kernel_size
     )
 
- 
+
     uf = np.ma.masked_array(uf, mask=grid_mask)
     vf = np.ma.masked_array(vf, mask=grid_mask)
 
@@ -205,5 +203,5 @@ def replace_outliers(
         )
         wf = np.ma.masked_array(wf, mask=grid_mask)
         return uf, vf, wf
-    
+
     return uf, vf

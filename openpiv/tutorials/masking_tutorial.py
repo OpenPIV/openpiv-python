@@ -1,11 +1,12 @@
-import pathlib
 from importlib.resources import files
-import numpy as np
+
 import matplotlib.pyplot as plt
-from openpiv import tools, scaling, pyprocess, validation, filters,preprocess
+import numpy as np
+
+from openpiv import filters, preprocess, pyprocess, scaling, tools, validation
 
 # we can run it from any folder
-path = files('openpiv') / "data" / "test4" 
+path = files('openpiv') / "data" / "test4"
 
 im_a  = tools.imread(  path / "Camera1-0101.tif")
 im_b  = tools.imread( path / "Camera1-0102.tif")
@@ -22,16 +23,16 @@ plt.imshow(np.c_[frame_a,frame_b],cmap='gray')
 # typical parameters:
 window_size = 32 #pixels
 overlap = 16 # pixels
-search_area_size = 64 # pixels 
+search_area_size = 64 # pixels
 frame_rate = 40 # fps
 
 # process again with the masked images, for comparison# process once with the original images
 u, v, sig2noise = pyprocess.extended_search_area_piv(
-                                                       frame_a.astype(np.int32) , frame_b.astype(np.int32), 
+                                                       frame_a.astype(np.int32) , frame_b.astype(np.int32),
                                                        window_size = window_size,
-                                                       overlap = overlap, 
-                                                       dt=1./frame_rate, 
-                                                       search_area_size = search_area_size, 
+                                                       overlap = overlap,
+                                                       dt=1./frame_rate,
+                                                       search_area_size = search_area_size,
                                                        sig2noise_method = 'peak2peak')
 x, y = pyprocess.get_coordinates( image_size = frame_a.shape, search_area_size = search_area_size, overlap = overlap )
 flags_g = validation.global_val( u, v, (-300.,300.),(-300.,300.))
@@ -64,11 +65,11 @@ plt.imshow(np.c_[masked_a,masked_b],cmap='gray')
 
 # process again with the masked images, for comparison# process once with the original images
 u, v, sig2noise = pyprocess.extended_search_area_piv(
-                                                       masked_a.astype(np.int32) , masked_b.astype(np.int32), 
+                                                       masked_a.astype(np.int32) , masked_b.astype(np.int32),
                                                        window_size = window_size,
-                                                       overlap = overlap, 
-                                                       dt=1./frame_rate, 
-                                                       search_area_size = search_area_size, 
+                                                       overlap = overlap,
+                                                       dt=1./frame_rate,
+                                                       search_area_size = search_area_size,
                                                        sig2noise_method = 'peak2peak')
 x, y = pyprocess.get_coordinates( image_size = masked_a.shape, search_area_size = search_area_size, overlap = overlap )
 flags_g = validation.global_val( u, v, (-300.,300.),(-300.,300.))

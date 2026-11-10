@@ -4,6 +4,7 @@ Not part of the package; a throwaway script for the explore/fft-backends
 branch. Run with: uv run python scripts_bench_fft.py
 """
 import time
+
 import numpy as np
 
 
@@ -95,7 +96,7 @@ def main():
                 dt, out = bench(a, b, run)
                 results[backend_name] = (dt, out)
                 print(f"  {backend_name:20s} {dt*1000:8.2f} ms")
-            except Exception as e:  # noqa: BLE001 - benchmark script, report and continue
+            except Exception as e:
                 print(f"  {backend_name:20s} FAILED: {e}")
 
         if "scipy.fft" in results:

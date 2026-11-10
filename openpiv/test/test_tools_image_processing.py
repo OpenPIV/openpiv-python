@@ -1,10 +1,12 @@
 """Tests for image processing functions in tools.py"""
 import os
 import tempfile
+
 import numpy as np
 import pytest
 from PIL import Image
-from openpiv.tools import imread, imsave, rgb2gray, convert_16bits_tif
+
+from openpiv.tools import convert_16bits_tif, imread, imsave, rgb2gray
 
 
 def test_imread_grayscale():

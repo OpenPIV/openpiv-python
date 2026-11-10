@@ -1,16 +1,15 @@
 """ Testing validation functions """
 import time
-from typing import Tuple
-import numpy as np
 from importlib.resources import files
+
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.ndimage import generic_filter
 
-from openpiv.pyprocess import extended_search_area_piv as piv
-from openpiv.tools import imread
 from openpiv import validation
+from openpiv.pyprocess import extended_search_area_piv as piv
 from openpiv.settings import PIVSettings
-
+from openpiv.tools import imread
 
 file_a = files('openpiv.data').joinpath('test1/exp1_001_a.bmp')
 file_b = files('openpiv.data').joinpath('test1/exp1_001_b.bmp')
@@ -155,11 +154,9 @@ def test_local_norm_median_validation():
     um = 5 # = (4 + 6) / 2
     vm = 6 # = (5 + 7) / 2
     # Arrays of residuals given by the formula rui = |ui-um| and rvi = |vi-vm|
-    rui = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
-    rvi = np.asarray([[4,3,2],[1,0,1],[2,3,4]])
+    np.asarray([[4,3,2],[1,0,1],[2,3,4]])
+    np.asarray([[4,3,2],[1,0,1],[2,3,4]])
     # Median residuals values (center excluded) must be calculated for ascending arrays:
-    ruiascend = [1, 1, 2, 2, 3, 3, 4, 4]
-    rviascend = [1, 1, 2, 2, 3, 3, 4, 4]
     rum = 2.5 # = (2 + 3) / 2
     rvm = 2.5 # = (2 + 3) / 2
     # Now implement equation 2 from the referenced article:
@@ -185,7 +182,7 @@ def test_global_val():
     """ tests global validation
     """
     N: int = 2
-    U: Tuple[int, int] = (-10, 10)
+    U: tuple[int, int] = (-10, 10)
 
     u = np.random.rand(2*N+1, 2*N+1)
     u[N, N] = U[0]-.2
@@ -407,7 +404,7 @@ def test_local_median_val_matches_generic_filter_and_is_fast():
     rng = np.random.default_rng(0)
     size = 1
     u = rng.random((169, 340)) * 10
-    v = rng.random((169, 340)) * 10
+    rng.random((169, 340)) * 10
 
     reference = generic_filter(
         u, np.nanmedian, mode='constant', cval=np.nan, size=(2 * size + 1, 2 * size + 1)

@@ -31,3 +31,11 @@ crates/**/target/
 dist/
 *.whl
 /piv_explainer
+/.agents
+/.claude
+skills-lock.json
+
+# artifacts written by the tests into the working directory
+/minimized
+/saved_params
+/dummy

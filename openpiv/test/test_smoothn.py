@@ -5,15 +5,8 @@ import numpy.ma as ma
 import pytest
 from scipy.fftpack import dct, idct
 
-from openpiv.smoothn import (
-    smoothn,
-    gcv,
-    RobustWeights,
-    warning,
-    dctND,
-    InitialGuess,
-    peaks
-)
+from openpiv.smoothn import InitialGuess, RobustWeights, dctND, gcv, peaks, smoothn, warning
+
 
 def test_smoothn_basic():
     """Test basic smoothn functionality with 1D data"""
@@ -329,7 +322,6 @@ def test_smoothn_edge_cases():
 
     # Test with all NaN values - skip this test as it's causing issues
     # with the optimization algorithm
-    pass
 
 def test_gcv_function():
     """Test the GCV (Generalized Cross-Validation) function"""
@@ -461,7 +453,7 @@ def test_smoothn_with_negative_weights():
     try:
         y_smooth, _, _, Wtot = smoothn(y_noisy, W=W)
         # If we get here, the test should fail
-        assert False, "smoothn should raise ValueError with negative weights"
+        raise AssertionError("smoothn should raise ValueError with negative weights")
     except ValueError as e:
         # Check that the error message is correct
         assert "Weights must all be >=0" in str(e)

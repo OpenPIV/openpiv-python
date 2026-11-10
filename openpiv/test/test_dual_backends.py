@@ -1,8 +1,10 @@
-import pytest
-import numpy as np
-from pathlib import Path
 from importlib.resources import files
-from openpiv import pyprocess, piv, tools, windef
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from openpiv import piv, pyprocess, tools, windef
 
 openpiv_rust = pytest.importorskip("openpiv_rust")
 

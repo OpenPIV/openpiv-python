@@ -133,8 +133,7 @@ def replace_nans(array, max_iter, tol, kernel_size=2, method="disk"):
         # check if replaced elements are below a certain tolerance
         if np.mean((replaced_new - replaced_old) ** 2) < tol:
             break
-        else:
-            replaced_old = replaced_new
+        replaced_old = replaced_new
 
     return filled
 

@@ -7,7 +7,9 @@ Usage:
     python benchmarks/run_benchmarks.py
 """
 import time
+
 import numpy as np
+
 from openpiv import pyprocess, validation, windef
 from openpiv.settings import PIVSettings
 
