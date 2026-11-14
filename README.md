@@ -190,7 +190,7 @@ These and many additional examples are in another repository: [OpenPIV-Python-Ex
 15. [Yuri Ishizawa](https://github.com/yuriishizawa)
 
 
-Smoothing: `smoothn.py` provides scalar field smoothing for velocity fields (1D, 2D, and N-D) with support for missing data (NaNs) and masked arrays using `scipy.interpolate` and robust penalized spline methods. It is covered under the OpenPIV GPL v3 license. Based on discretized smoothing principles from D. Garcia (2010).
+Copyright statement: `smoothn.py` is a Python version of `smoothn.m` originally created by D. Garcia [https://de.mathworks.com/matlabcentral/fileexchange/25634-smoothn], written by Prof. Lewis and available on Github [https://github.com/profLewis/geogg122/blob/master/Chapter5_Interpolation/python/smoothn.py]. We include a version of it in the `openpiv` folder for convenience and preservation. We are thankful to the original authors for releasing their work as an open source. OpenPIV license does not relate to this code. Please communicate with the authors regarding their license.
 
 ## How to cite this work
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.593157.svg)](https://doi.org/10.5281/zenodo.593157)
