@@ -36,7 +36,7 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 - `tools.py` — I/O and visualization: `imread()`, `save()`, `display_vector_field()`, `transform_coordinates()` (always call before saving/displaying results — raw PIV output coordinates are in image/array convention, not physical/plot convention).
 - `scaling.py` — coordinate scaling and transformation.
 - `preprocess.py` — image preprocessing (background subtraction, masking).
-- `smoothn.py` — robust spline smoothing; a Python port of `smoothn.m` (D. Garcia / Prof. Lewis) bundled for convenience — it is not covered by the OpenPIV license, see README for attribution.
+- `smoothn.py` — robust scalar field smoothing using `scipy.interpolate` and penalized splines for 1D, 2D, and N-D data with missing values (NaNs) and masked arrays.
 - `phase_separation.py` — solid-phase / liquid-tracer separation utilities.
 
 ### Typical call chains
