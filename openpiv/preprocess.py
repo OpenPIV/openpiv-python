@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 
-def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
+def dynamic_masking(image, method="edges", filter_size=7, threshold=None):
     """Dynamically masks out the objects in the PIV images
 
     Parameters
@@ -77,22 +77,40 @@ def dynamic_masking(image, method="edges", filter_size=7, threshold=0.005):
     image = exposure.rescale_intensity(img_as_float(image), in_range='image')
     # blur the image, low-pass
     blurback = img_as_ubyte(gaussian_filter(image, filter_size))
+    if threshold is None:
+        threshold = filters.threshold_otsu(blurback) if blurback.size else 0.0
+
     if method == "edges":
         # identify edges
         edges = filters.sobel(blurback)
         blur_edges = gaussian_filter(edges, 21)
         # create the boolean mask
         mask = blur_edges > threshold
-        mask = img_as_ubyte(binary_fill_holes(mask))
-        imcopy -= blurback
+        mask = binary_fill_holes(mask)
+        imcopy = imcopy.astype(float)
+        imcopy -= blurback.astype(float)
         imcopy[mask] = 0
     elif method == "intensity":
         background = gaussian_filter(median_filter(image, filter_size),
                                      filter_size)
         mask = background > filters.threshold_otsu(background)
+        mask = binary_fill_holes(mask)
+        imcopy = imcopy.astype(float)
+        imcopy[mask] = 0
+    elif method == "combined":
+        edges = filters.sobel(blurback)
+        blur_edges = gaussian_filter(edges, 21)
+        edge_mask = binary_fill_holes(blur_edges > threshold)
+        background = gaussian_filter(median_filter(image, filter_size),
+                                     filter_size)
+        int_mask = binary_fill_holes(background > filters.threshold_otsu(background))
+        mask = np.logical_or(edge_mask, int_mask)
+        imcopy = imcopy.astype(float)
         imcopy[mask] = 0
     else:
         raise ValueError(f"method {method} is not implemented")
+
+    mask = img_as_ubyte(mask)
 
     return imcopy, mask
 
