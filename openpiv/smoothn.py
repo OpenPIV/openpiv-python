@@ -617,6 +617,16 @@ def smoothn(
     if method in ("spline", "scipy"):
         y_arr = np.asarray(y)
         if y_arr.ndim == 2:
+            if axis is not None:
+                axes = np.atleast_1d(axis).ravel()
+                if (
+                    not np.all(np.isin(axes, (-2, -1, 0, 1)))
+                    or set(axes % 2) != {0, 1}
+                ):
+                    raise ValueError(
+                        "The spline method requires smoothing along both axes; "
+                        "use method='dct' for axis-restricted smoothing."
+                    )
             return scipy_smooth2d(
                 y,
                 s=s,
