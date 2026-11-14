@@ -40,7 +40,7 @@ Downloads the code from PyPI and runs the setup for you with installation and Cy
 Use Poetry
 ================
 
-    poetry add openpiv
+    uv add openpiv
 
 
 Bleeding edge development version

@@ -75,7 +75,7 @@ You do not need a Rust compiler installed. Simply install OpenPIV in editable mo
 
 .. code-block:: bash
 
-    poetry install
+    uv sync
     # or: pip install -e .
 
 All core functionality, single-pass, and multi-pass deformation will use the optimized

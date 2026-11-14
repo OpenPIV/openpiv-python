@@ -39,9 +39,9 @@ Use PyPI: <https://pypi.python.org/pypi/OpenPIV>:
 
     pip install openpiv
 
-### Or [Poetry](https://python-poetry.org/)
+### Or with [uv](https://docs.astral.sh/uv/)
 
-    poetry add openpiv
+    uv add openpiv
 
 ### Note on Conda/Anaconda
 

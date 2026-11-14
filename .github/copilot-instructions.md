@@ -8,9 +8,9 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 
 ### Bootstrap and Install Dependencies
 - **Primary method (recommended)**: Use Poetry for development:
-  - Install Poetry: `pip install poetry`
-  - Install dependencies: `poetry install` -- takes ~10 seconds. NEVER CANCEL.
-  - All development commands should use `poetry run <command>`
+  - Install uv: see https://docs.astral.sh/uv/getting-started/installation/
+  - Install dependencies: `uv sync` (or `uv pip install -e .`) -- fast.
+  - Use `uv run <command>` or an activated virtual environment
 
 ### Alternative Installation Methods
 - **From PyPI**: `pip install openpiv` -- takes ~33 seconds. NEVER CANCEL.
@@ -18,21 +18,21 @@ OpenPIV is a Python library for Particle Image Velocimetry (PIV) analysis of flu
 - **Build from source**: `python setup.py build_ext --inplace` -- takes <1 second (no Cython extensions in current setup)
 
 ### Build and Test the Repository
-- **Run tests**: `poetry run pytest openpiv -v` -- takes ~10 seconds, 216 tests pass. NEVER CANCEL. Set timeout to 30+ minutes for safety.
-- **Test import**: `poetry run python -c "import openpiv; print('OpenPIV imported successfully')"`
-- **Test core functionality**: `poetry run python -c "import openpiv.piv as piv; import numpy as np; frame_a = np.random.rand(64, 64); frame_b = np.random.rand(64, 64); result = piv.simple_piv(frame_a, frame_b, plot=False); print('PIV analysis completed, returned:', len(result), 'outputs')"`
+- **Run tests**: `uv run pytest openpiv -v` -- tests should pass quickly. Set appropriate timeout for CI.
+- **Test import**: `uv run python -c "import openpiv; print('OpenPIV imported successfully')"`
+- **Test core functionality**: `uv run python -c "import openpiv.piv as piv; import numpy as np; frame_a = np.random.rand(64, 64); frame_b = np.random.rand(64, 64); result = piv.simple_piv(frame_a, frame_b, plot=False); print('PIV analysis completed, returned:', len(result), 'outputs')"`
 
 ### Run Example Workflows
-- **Tutorial 1**: `poetry run python openpiv/tutorials/tutorial1.py` -- demonstrates complete PIV analysis workflow
+- **Tutorial 1**: `uv run python openpiv/tutorials/tutorial1.py` -- demonstrates complete PIV analysis workflow
 - **Test data location**: `openpiv/data/test1/` contains sample image pairs (`exp1_001_a.bmp`, `exp1_001_b.bmp`)
 
 ## Validation
 
 ### ALWAYS run these validation steps after making changes:
-1. **Import test**: Verify basic import works: `poetry run python -c "import openpiv"`
+1. **Import test**: Verify basic import works: `uv run python -c "import openpiv"`
 2. **Core functionality test**: Run simple PIV analysis to ensure algorithms work
-3. **Full test suite**: `poetry run pytest openpiv -v` -- NEVER CANCEL, takes ~10 seconds but allow 30+ minutes timeout
-4. **Tutorial execution**: Run `poetry run python openpiv/tutorials/tutorial1.py` to test complete workflow
+3. **Full test suite**: `uv run pytest openpiv -v`
+4. **Tutorial execution**: Run `uv run python openpiv/tutorials/tutorial1.py` to test complete workflow
 
 ### Critical User Scenarios to Test
 After making changes, ALWAYS test these scenarios:
@@ -109,19 +109,19 @@ s.num_iterations = 3
 - Uses stdlib `importlib.resources.files()` (NOT the third-party `importlib_resources`) to locate bundled data
 - Test configurations in `openpiv/test/conftest.py` disable matplotlib GUI (uses `Agg` backend, patches `plt.show`)
 - Sample data bundled at `openpiv/data/test1/`; accessed via `files('openpiv.data').joinpath('test1/...')`
-- `pyproject.toml` still uses the deprecated `[tool.poetry.dev-dependencies]` section; this generates a warning but is harmless
+- Project uses `uv` and PEP 621 `pyproject.toml` (`hatchling` build backend).
 - Documentation built with Sphinx (source in `openpiv/docs/`)
 - External examples repository: [OpenPIV-Python-Examples](https://github.com/OpenPIV/openpiv-python-examples)
 
 ### Common Command Reference
 ```bash
 # Development setup
-poetry install                                              # ~10 seconds
-poetry run pytest openpiv -v                               # ~10 seconds, 216 tests pass
+uv sync                                                     # install dependencies
+uv run pytest openpiv -v
 
 # Testing functionality
-poetry run python openpiv/tutorials/tutorial1.py           # Complete PIV workflow
-poetry run python -c "import openpiv.piv as piv; ..."      # API test
+uv run python openpiv/tutorials/tutorial1.py
+uv run python -c "import openpiv.piv as piv; ..."      # API test
 
 # Alternative installs
 pip install openpiv                                         # ~33 seconds

@@ -1,60 +1,64 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "OpenPIV"
 version = "0.26.2"
 description = "OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of a set of PIV image pairs. In addition, a Qt and Tk graphical user interfaces are in development, to ease the use for those users who don't have python skills."
-authors = ["Alex Liberzon"]
-license = "GPLv3"
 readme = "README.md"
-packages = [{include = "openpiv"}]
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-only" }
+authors = [
+  { name = "Alex Liberzon" },
+]
 classifiers = [
-    "Development Status :: 4 - Beta",
-
-    # Sublist of all supported Python versions.
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-
-    # Sublist of all supported platforms and environments.
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX",
-
-    # Miscellaneous metadata.
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering",
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = [
+  "numpy>=2.0.0",
+  "imageio>=2.35.0",
+  "matplotlib>=3.8.0",
+  "scikit-image>=0.23.0",
+  "scipy>=1.11.0",
+  "natsort>=8.4.0",
+  "pyyaml>=6.0",
+  "tqdm>=4.66.0",
+  "pillow>=13.0.0",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.11"
-numpy = ">=2.0.0"
-imageio = ">=2.35.0"
-matplotlib = ">=3.8.0"
-scikit-image = ">=0.23.0"
-scipy = ">=1.11.0"
-natsort = ">=8.4.0"
-pyyaml = ">=6.0"
-tqdm = ">=4.66.0"
-pillow = ">=13.0.0"
-openpiv-rust = { version = ">=0.1.0", optional = true }
+[project.optional-dependencies]
+rust = ["openpiv-rust>=0.1.0"]
 
-[tool.poetry.extras]
-rust = ["openpiv-rust"]
+[project.urls]
+Documentation = "http://openpiv.readthedocs.org"
+Repository = "https://github.com/OpenPIV/openpiv-python"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-maturin = "^1.5.0"
+[dependency-groups]
+dev = [
+  "pytest>=7.4.3",
+  "maturin>=1.5.0",
+]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.hatch.build.targets.wheel]
+packages = ["openpiv"]
 
-[tool.poetry.plugins."pypi.org"]
-OpenPIV = "OpenPIV"
-
-[tool.poetry.urls]
-"Documentation" = "http://openpiv.readthedocs.org"  # Add your documentation URL here
-"Repository" = "https://pypi.python.org/pypi/OpenPIV"  # Add your repository URL here
+[tool.hatch.build.targets.sdist]
+include = [
+  "/openpiv",
+  "/README.md",
+  "/LICENSE.txt",
+  "/pyproject.toml",
+]
