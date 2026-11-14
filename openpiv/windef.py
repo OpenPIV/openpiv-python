@@ -238,7 +238,7 @@ def process_image_pair(args, settings, save_path):
                 v, s=settings.smoothn_p
             )
         if not isinstance(u, np.ma.MaskedArray):
-            raise TypeError("not a masked array anymore")
+            raise ValueError("not a masked array anymore")
 
         if image_mask is not None:
             # grid_mask = preprocess.prepare_mask_on_grid(x, y, mask_coords)
@@ -652,7 +652,7 @@ def multipass_img_deform(
     """
 
     if not isinstance(u_old, np.ma.MaskedArray):
-        raise TypeError("Expected masked array")
+        raise ValueError("Expected masked array")
 
     # calculate the y and y coordinates of the interrogation window centres.
     # Hence, the
