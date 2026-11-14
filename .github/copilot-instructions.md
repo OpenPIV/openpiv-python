@@ -43,7 +43,7 @@ After making changes, ALWAYS test these scenarios:
 
 ### CI/CD Validation
 - The repository has GitHub Actions workflows in `.github/workflows/`:
-  - `testing.yml`: Runs tests on Python 3.10, 3.11, 3.12, 3.13, 3.14 with Poetry
+  - `testing.yml`: Runs tests on Python 3.11, 3.12, 3.13, 3.14 with Poetry
   - `build.yml`: Builds and publishes to PyPI on releases triggered by version tags
 - No linting tools are configured (no black, flake8, etc.)
 
@@ -101,7 +101,7 @@ s.num_iterations = 3
 - **Dependencies**: Managed via Poetry (`pyproject.toml`); fallback setuptools config in `setup.py`
 - **Package name**: `"OpenPIV"` (capital letters on PyPI, lowercase `openpiv` as import)
 - **Version**: `0.25.4` (defined in both `pyproject.toml` and `setup.py`; runtime via `importlib.metadata`)
-- **Python support**: 3.10, 3.11, 3.12, 3.13, 3.14
+- **Python support**: 3.11, 3.12, 3.13, 3.14
 - **Key dependencies**: numpy ≥2.0, scipy ≥1.11, scikit-image ≥0.23, matplotlib ≥3.8, imageio ≥2.35, natsort, tqdm
 
 ### Development Notes

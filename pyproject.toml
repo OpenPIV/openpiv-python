@@ -10,7 +10,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
 
     # Sublist of all supported Python versions.
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -30,7 +29,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.11"
 numpy = ">=2.0.0"
 imageio = ">=2.35.0"
 matplotlib = ">=3.8.0"
@@ -39,6 +38,7 @@ scipy = ">=1.11.0"
 natsort = ">=8.4.0"
 pyyaml = ">=6.0"
 tqdm = ">=4.66.0"
+pillow = ">=13.0.0"
 openpiv-rust = { version = ">=0.1.0", optional = true }
 
 [tool.poetry.extras]
