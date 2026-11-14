@@ -192,6 +192,33 @@ These and many additional examples are in another repository: [OpenPIV-Python-Ex
 
 Smoothing: `smoothn.py` provides scalar field smoothing for velocity fields (1D, 2D, and N-D) with support for missing data (NaNs) and masked arrays using `scipy.interpolate` and robust penalized spline methods. It is covered under the OpenPIV GPL v3 license. Based on discretized smoothing principles from D. Garcia (2010).
 
+## Getting started with PIVSettings (YAML)
+
+You can configure a PIV run with `PIVSettings` and optionally store it in YAML:
+
+```python
+from openpiv import windef
+
+# 1. Create settings in Python
+settings = windef.Settings()
+settings.filepath_images = "./images"
+settings.frame_pattern_a = "frame_a_*.tif"
+settings.frame_pattern_b = "frame_b_*.tif"
+settings.windowsizes = (64, 32, 16)
+settings.overlap = (32, 16, 8)
+
+# Save to YAML for reuse / sharing
+settings.to_yaml("my_settings.yaml")
+
+# Load from YAML later
+settings = windef.Settings.from_yaml("my_settings.yaml")
+
+# Run PIV
+windef.piv(settings)
+```
+
+Without YAML, just instantiate and modify `windef.Settings()` directly, as shown above.
+
 ## How to cite this work
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.593157.svg)](https://doi.org/10.5281/zenodo.593157)
 
