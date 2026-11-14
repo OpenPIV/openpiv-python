@@ -41,7 +41,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i python3.10 python3.11 python3.12 python3.13 --manifest-path crates/openpiv_rust/Cargo.toml
+          args: --release --out dist -i python3.11 python3.12 python3.13 python3.14 --manifest-path crates/openpiv_rust/Cargo.toml
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: auto
       - name: Upload wheels
