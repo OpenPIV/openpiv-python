@@ -1,19 +1,30 @@
-"""Test module for smoothn.py"""
+import sys
 
 import numpy as np
-import numpy.ma as ma
-import pytest
-from scipy.fftpack import dct, idct
+from numpy import ma
+
+try:
+    import pytest
+except ImportError:
+    pytest = None
+
+try:
+    from scipy.fftpack import dct, idct
+except ImportError:
+    from openpiv.smoothn import dct, idct
 
 from openpiv.smoothn import (
-    smoothn,
-    gcv,
-    RobustWeights,
-    warning,
-    dctND,
     InitialGuess,
-    peaks
+    RobustWeights,
+    dctND,
+    gcv,
+    peaks,
+    scipy_smooth2d,
+    smooth_field,
+    smoothn,
+    warning,
 )
+
 
 def test_smoothn_basic():
     """Test basic smoothn functionality with 1D data"""
@@ -27,7 +38,7 @@ def test_smoothn_basic():
     y_smooth, s, exitflag, Wtot = smoothn(y_noisy)
 
     # Check that the smoothed signal is closer to the true signal than the noisy one
-    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
 
     # Check that s is positive (smoothing parameter)
     assert s > 0
@@ -38,19 +49,21 @@ def test_smoothn_basic():
     # Check that weights are all ones for unweighted data
     assert np.all(Wtot == 1)
 
+
 def test_smoothn_2d():
     """Test smoothn with 2D data"""
     # Create a noisy 2D signal
     x, y = np.meshgrid(np.linspace(0, 1, 20), np.linspace(0, 1, 20))
-    z_true = np.sin(2*np.pi*x) * np.cos(2*np.pi*y)
+    z_true = np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y)
     noise = np.random.normal(0, 0.1, z_true.shape)
     z_noisy = z_true + noise
 
     # Apply smoothn
-    z_smooth, s, exitflag, Wtot = smoothn(z_noisy)
+    z_smooth, _s, _exitflag, _Wtot = smoothn(z_noisy)
 
     # Check that the smoothed signal is closer to the true signal than the noisy one
-    assert np.mean((z_smooth - z_true)**2) < np.mean((z_noisy - z_true)**2)
+    assert np.mean((z_smooth - z_true) ** 2) < np.mean((z_noisy - z_true) ** 2)
+
 
 def test_smoothn_with_s():
     """Test smoothn with specified smoothing parameter"""
@@ -62,10 +75,11 @@ def test_smoothn_with_s():
 
     # Apply smoothn with specified s
     s_value = 1.0
-    y_smooth, s, exitflag, Wtot = smoothn(y_noisy, s=s_value)
+    _y_smooth, s, _exitflag, _Wtot = smoothn(y_noisy, s=s_value)
 
     # Check that s is the specified value
     assert s == s_value
+
 
 def test_smoothn_with_weights():
     """Test smoothn with weights"""
@@ -80,17 +94,21 @@ def test_smoothn_with_weights():
     W[40:60] = 2.0  # Higher weights in the middle
 
     # Apply smoothn with weights
-    y_smooth, s, exitflag, Wtot = smoothn(y_noisy, W=W)
+    y_smooth, _s, _exitflag, _Wtot = smoothn(y_noisy, W=W)
 
     # Check that the weighted region has lower error
-    middle_error = np.mean((y_smooth[40:60] - y_true[40:60])**2)
-    outer_error = np.mean(np.concatenate([(y_smooth[:40] - y_true[:40])**2,
-                                         (y_smooth[60:] - y_true[60:])**2]))
+    middle_error = np.mean((y_smooth[40:60] - y_true[40:60]) ** 2)
+    outer_error = np.mean(
+        np.concatenate(
+            [(y_smooth[:40] - y_true[:40]) ** 2, (y_smooth[60:] - y_true[60:]) ** 2]
+        )
+    )
 
     # Due to randomness in the test, we can't always guarantee that middle_error < outer_error
     # Instead, we'll check that the errors are reasonable
     assert middle_error < 0.01
     assert outer_error < 0.01
+
 
 def test_smoothn_with_missing_data():
     """Test smoothn with missing data (NaN values)"""
@@ -104,15 +122,16 @@ def test_smoothn_with_missing_data():
     y_noisy[30:40] = np.nan
 
     # Apply smoothn
-    y_smooth, s, exitflag, Wtot = smoothn(y_noisy)
+    y_smooth, _s, _exitflag, _Wtot = smoothn(y_noisy)
 
     # Check that NaN values have been filled
     assert not np.any(np.isnan(y_smooth))
 
     # Check that the filled values are reasonable (close to true values)
     # We can't expect exact matches, but they should be closer to true values than random
-    filled_error = np.mean((y_smooth[30:40] - y_true[30:40])**2)
+    filled_error = np.mean((y_smooth[30:40] - y_true[30:40]) ** 2)
     assert filled_error < 0.5  # A reasonable threshold
+
 
 def test_smoothn_with_masked_array():
     """Test smoothn with masked array input"""
@@ -128,13 +147,14 @@ def test_smoothn_with_masked_array():
     y_masked = ma.array(y_noisy, mask=mask)
 
     # Apply smoothn
-    y_smooth, s, exitflag, Wtot = smoothn(y_masked)
+    y_smooth, _s, _exitflag, _Wtot = smoothn(y_masked)
 
     # Check that the result is also a masked array
     assert isinstance(y_smooth, ma.MaskedArray)
 
     # Check that the mask is preserved
     assert np.all(y_smooth.mask == mask)
+
 
 def test_smoothn_with_standard_deviation():
     """Test smoothn with standard deviation input"""
@@ -149,17 +169,21 @@ def test_smoothn_with_standard_deviation():
     sd[40:60] = 0.2  # Higher uncertainty in the middle
 
     # Apply smoothn with standard deviation
-    y_smooth, s, exitflag, Wtot = smoothn(y_noisy, sd=sd)
+    y_smooth, _s, _exitflag, _Wtot = smoothn(y_noisy, sd=sd)
 
     # The middle region should be smoothed more due to higher uncertainty
     middle_smoothing = np.mean(np.abs(y_smooth[40:60] - y_noisy[40:60]))
-    outer_smoothing = np.mean(np.concatenate([np.abs(y_smooth[:40] - y_noisy[:40]),
-                                             np.abs(y_smooth[60:] - y_noisy[60:])]))
+    outer_smoothing = np.mean(
+        np.concatenate(
+            [np.abs(y_smooth[:40] - y_noisy[:40]), np.abs(y_smooth[60:] - y_noisy[60:])]
+        )
+    )
 
     # Due to randomness in the test, we can't always guarantee that middle_smoothing > outer_smoothing
     # Instead, we'll check that the smoothing is happening in general
     assert middle_smoothing > 0.01
     assert outer_smoothing > 0.01
+
 
 def test_smoothn_robust():
     """Test robust smoothn with outliers"""
@@ -175,10 +199,10 @@ def test_smoothn_robust():
     y_noisy[75] = 5.0
 
     # Apply regular smoothn
-    y_smooth, s1, _, _ = smoothn(y_noisy)
+    y_smooth, _s1, _, _ = smoothn(y_noisy)
 
     # Apply robust smoothn
-    y_robust, s2, _, _ = smoothn(y_noisy, isrobust=True)
+    y_robust, _s2, _, _ = smoothn(y_noisy, isrobust=True)
 
     # The robust version should be less affected by outliers
     # Check at the outlier points
@@ -188,6 +212,7 @@ def test_smoothn_robust():
 
     # The robust version should have lower error at outlier points
     assert robust_error < regular_error
+
 
 def test_smoothn_with_initial_guess():
     """Test smoothn with initial guess"""
@@ -201,20 +226,21 @@ def test_smoothn_with_initial_guess():
     z0 = np.sin(x - 0.5)
 
     # Apply smoothn with initial guess
-    y_smooth, s, exitflag, Wtot = smoothn(y_noisy, z0=z0)
+    y_smooth, _s, _exitflag, _Wtot = smoothn(y_noisy, z0=z0)
 
     # The result should be closer to the true signal than to the initial guess
-    error_to_true = np.mean((y_smooth - y_true)**2)
-    error_to_guess = np.mean((y_smooth - z0)**2)
+    error_to_true = np.mean((y_smooth - y_true) ** 2)
+    error_to_guess = np.mean((y_smooth - z0) ** 2)
 
     assert error_to_true < error_to_guess
+
 
 def test_smoothn_with_axis():
     """Test smoothn with axis parameter"""
     # Create a 2D array where we want to smooth only along one axis
     x = np.linspace(0, 10, 20)
     y = np.linspace(0, 5, 10)
-    X, Y = np.meshgrid(x, y)
+    X, _Y = np.meshgrid(x, y)
 
     # Create a signal that varies smoothly along x but has noise along y
     Z_true = np.sin(X)
@@ -251,6 +277,7 @@ def test_smoothn_with_axis():
     assert total_variation_x < total_variation_original
     assert total_variation_both < total_variation_original
 
+
 def test_smoothn_with_different_smoothing_orders():
     """Test smoothn with different smoothing orders"""
     # Create a noisy 1D signal
@@ -281,6 +308,7 @@ def test_smoothn_with_different_smoothing_orders():
     assert var_d2_y2 < 0.01
     assert var_d2_y3 < 0.01
 
+
 def test_smoothn_with_different_weight_strings():
     """Test smoothn with different weight strings for robust smoothing"""
     # Create a 1D signal with outliers
@@ -295,7 +323,9 @@ def test_smoothn_with_different_weight_strings():
     y_noisy[75] = 5.0
 
     # Apply robust smoothn with different weight strings
-    y_bisquare, _, _, _ = smoothn(y_noisy, isrobust=True, weightstr="bisquare")  # Default
+    y_bisquare, _, _, _ = smoothn(
+        y_noisy, isrobust=True, weightstr="bisquare"
+    )  # Default
     y_cauchy, _, _, _ = smoothn(y_noisy, isrobust=True, weightstr="cauchy")
     y_talworth, _, _, _ = smoothn(y_noisy, isrobust=True, weightstr="talworth")
 
@@ -304,21 +334,28 @@ def test_smoothn_with_different_weight_strings():
 
     # Check at the outlier points
     outlier_points = [25, 50, 75]
-    nonrobust_error = np.mean(np.abs(y_nonrobust[outlier_points] - y_true[outlier_points]))
-    bisquare_error = np.mean(np.abs(y_bisquare[outlier_points] - y_true[outlier_points]))
+    nonrobust_error = np.mean(
+        np.abs(y_nonrobust[outlier_points] - y_true[outlier_points])
+    )
+    bisquare_error = np.mean(
+        np.abs(y_bisquare[outlier_points] - y_true[outlier_points])
+    )
     cauchy_error = np.mean(np.abs(y_cauchy[outlier_points] - y_true[outlier_points]))
-    talworth_error = np.mean(np.abs(y_talworth[outlier_points] - y_true[outlier_points]))
+    talworth_error = np.mean(
+        np.abs(y_talworth[outlier_points] - y_true[outlier_points])
+    )
 
     # All robust methods should be better than non-robust
     assert bisquare_error < nonrobust_error
     assert cauchy_error < nonrobust_error
     assert talworth_error < nonrobust_error
 
+
 def test_smoothn_edge_cases():
     """Test smoothn with edge cases"""
     # Test with a single element array
     y_single = np.array([5.0])
-    z_single, s, exitflag, Wtot = smoothn(y_single)
+    z_single, _s, exitflag, _Wtot = smoothn(y_single)
     assert z_single == y_single
     assert exitflag == 0
 
@@ -329,7 +366,7 @@ def test_smoothn_edge_cases():
 
     # Test with all NaN values - skip this test as it's causing issues
     # with the optimization algorithm
-    pass
+
 
 def test_gcv_function():
     """Test the GCV (Generalized Cross-Validation) function"""
@@ -340,8 +377,10 @@ def test_gcv_function():
     y_noisy = y_true + noise
 
     # Get DCTy and other parameters needed for GCV
-    DCTy = dct(y_noisy, type=2, norm='ortho')
-    Lambda = -2.0 * (1 - np.cos(np.pi * (np.arange(1, len(y_noisy) + 1) - 1.0) / len(y_noisy)))
+    DCTy = dct(y_noisy, type=2, norm="ortho")
+    Lambda = -2.0 * (
+        1 - np.cos(np.pi * (np.arange(1, len(y_noisy) + 1) - 1.0) / len(y_noisy))
+    )
     IsFinite = np.isfinite(y_noisy)
     Wtot = np.ones_like(y_noisy)
     nof = np.sum(IsFinite)
@@ -360,6 +399,7 @@ def test_gcv_function():
 
     # Higher smoothing parameter should give different score
     assert score1 != score2
+
 
 def test_robust_weights():
     """Test the RobustWeights function"""
@@ -394,10 +434,10 @@ def test_robust_weights():
     assert np.all(w_cauchy >= 0) and np.all(w_cauchy <= 1)
     assert np.all(w_talworth >= 0) and np.all(w_talworth <= 1)
 
+
 def test_dctND():
     """Test the dctND function"""
     # Import the dctND function from the module
-    from openpiv.smoothn import dctND
 
     # Create a simple 1D array
     x = np.array([1.0, 2.0, 3.0, 4.0])
@@ -423,6 +463,7 @@ def test_dctND():
     # Check that the reconstructed signal matches the original
     assert np.allclose(y, y_reconstructed)
 
+
 def test_warning_function():
     """Test the warning function (just for coverage)"""
     # This is a simple function that just prints warnings
@@ -444,6 +485,7 @@ def test_warning_function():
     output = captured_output.getvalue()
     assert "Warning type" in output
     assert "Warning message" in output
+
 
 def test_smoothn_with_negative_weights():
     """Test smoothn with negative weights (should raise a warning)"""
@@ -474,7 +516,8 @@ def test_smoothn_with_negative_weights():
     assert np.all(Wtot[40:60] == 0)
 
     # Check that the smoothed signal is still reasonable
-    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
+
 
 def test_initial_guess_function():
     """Test the InitialGuess function"""
@@ -503,11 +546,12 @@ def test_initial_guess_function():
     assert isinstance(z, ma.MaskedArray)
     assert np.array_equal(z.mask, mask)
 
+
 def test_peaks_function():
     """Test the peaks function"""
     # Create a signal with peaks
     x = np.linspace(0, 10, 100)
-    y = np.sin(x) + 0.5 * np.sin(2*x)
+    y = np.sin(x) + 0.5 * np.sin(2 * x)
 
     # Find peaks
     idx = peaks(y)
@@ -518,17 +562,16 @@ def test_peaks_function():
     # Check that the identified points are actually peaks
     for i in idx:
         if i > 0 and i < len(y) - 1:
-            assert y[i] > y[i-1] and y[i] > y[i+1]
+            assert y[i] > y[i - 1] and y[i] > y[i + 1]
+
 
 def test_smoothn_3d():
     """Test smoothn with 3D data"""
     # Create a noisy 3D signal
     x, y, z = np.meshgrid(
-        np.linspace(0, 1, 10),
-        np.linspace(0, 1, 10),
-        np.linspace(0, 1, 10)
+        np.linspace(0, 1, 10), np.linspace(0, 1, 10), np.linspace(0, 1, 10)
     )
-    data_true = np.sin(2*np.pi*x) * np.cos(2*np.pi*y) * np.sin(2*np.pi*z)
+    data_true = np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y) * np.sin(2 * np.pi * z)
     noise = np.random.normal(0, 0.1, data_true.shape)
     data_noisy = data_true + noise
 
@@ -536,13 +579,16 @@ def test_smoothn_3d():
     data_smooth, s, exitflag, _ = smoothn(data_noisy)
 
     # Check that the smoothed signal is closer to the true signal than the noisy one
-    assert np.mean((data_smooth - data_true)**2) < np.mean((data_noisy - data_true)**2)
+    assert np.mean((data_smooth - data_true) ** 2) < np.mean(
+        (data_noisy - data_true) ** 2
+    )
 
     # Check that s is positive (smoothing parameter)
     assert s > 0
 
     # Check that exitflag is 1 (convergence)
     assert exitflag == 1
+
 
 def test_smoothn_with_verbose():
     """Test smoothn with verbose output"""
@@ -555,6 +601,7 @@ def test_smoothn_with_verbose():
     # Capture stdout to check for verbose output
     import io
     import sys
+
     captured_output = io.StringIO()
     sys.stdout = captured_output
 
@@ -569,7 +616,8 @@ def test_smoothn_with_verbose():
     assert "tol" in output.lower() or "nit" in output.lower()
 
     # Check that the smoothed signal is reasonable
-    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
+
 
 def test_smoothn_with_max_iter():
     """Test smoothn with maximum iterations"""
@@ -586,7 +634,8 @@ def test_smoothn_with_max_iter():
     assert exitflag == 0
 
     # Check that the smoothed signal is still reasonable
-    assert np.mean((y_smooth - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
+
 
 def test_smoothn_with_tolerance():
     """Test smoothn with different tolerance values"""
@@ -607,5 +656,105 @@ def test_smoothn_with_tolerance():
     assert exitflag2 == 1
 
     # Check that both smoothed signals are reasonable
-    assert np.mean((y_smooth_high_tol - y_true)**2) < np.mean((y_noisy - y_true)**2)
-    assert np.mean((y_smooth_low_tol - y_true)**2) < np.mean((y_noisy - y_true)**2)
+    assert np.mean((y_smooth_high_tol - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
+    assert np.mean((y_smooth_low_tol - y_true) ** 2) < np.mean((y_noisy - y_true) ** 2)
+
+
+def test_scipy_smooth2d_basic():
+    """Test modern 2D scalar field smoothing"""
+    np.random.seed(0)
+    x, y = np.meshgrid(np.linspace(0, 1, 20), np.linspace(0, 1, 20))
+    z_true = np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y)
+    z_noisy = z_true + np.random.normal(0, 0.05, z_true.shape)
+
+    z_smooth, _s, exitflag, _Wtot = scipy_smooth2d(z_noisy, s=0.5)
+    assert exitflag == 1
+    assert np.mean((z_smooth - z_true) ** 2) < np.mean((z_noisy - z_true) ** 2)
+
+
+def test_scipy_smooth2d_with_gaps():
+    """Test 2D smoothing over missing values / gaps (NaNs)"""
+    np.random.seed(0)
+    x, y = np.meshgrid(np.linspace(0, 1, 20), np.linspace(0, 1, 20))
+    z_true = np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y)
+    z_noisy = z_true + np.random.normal(0, 0.05, z_true.shape)
+    z_noisy[6:12, 6:12] = np.nan
+
+    z_smooth, _, exitflag, _ = scipy_smooth2d(z_noisy, s=0.5)
+    assert exitflag == 1
+    assert not np.any(np.isnan(z_smooth))
+    assert np.mean((z_smooth[6:12, 6:12] - z_true[6:12, 6:12]) ** 2) < 0.2
+
+
+def test_scipy_smooth2d_masked_array():
+    """Test 2D smoothing preserving masked array mask"""
+    x, y = np.meshgrid(np.linspace(0, 1, 20), np.linspace(0, 1, 20))
+    z_true = np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y)
+    z_noisy = z_true + np.random.normal(0, 0.05, z_true.shape)
+    mask = np.zeros_like(z_noisy, dtype=bool)
+    mask[5:10, 5:10] = True
+    z_masked = ma.array(z_noisy, mask=mask)
+
+    z_smooth, _, _exitflag, _ = scipy_smooth2d(z_masked, s=0.5)
+    assert isinstance(z_smooth, ma.MaskedArray)
+    assert np.all(z_smooth.mask == mask)
+
+
+def test_scipy_smooth2d_robust():
+    """Test 2D robust smoothing with outliers"""
+    np.random.seed(0)
+    x, _y = np.meshgrid(np.linspace(0, 1, 15), np.linspace(0, 1, 15))
+    z_true = np.sin(2 * np.pi * x)
+    z_noisy = z_true + np.random.normal(0, 0.05, z_true.shape)
+    z_noisy[5, 5] = 5.0
+    z_noisy[10, 10] = -5.0
+
+    z_smooth_reg, _, _, _ = scipy_smooth2d(z_noisy, isrobust=False)
+    z_smooth_rob, _, _, _ = scipy_smooth2d(z_noisy, isrobust=True)
+
+    err_reg = abs(z_smooth_reg[5, 5] - z_true[5, 5]) + abs(
+        z_smooth_reg[10, 10] - z_true[10, 10]
+    )
+    err_rob = abs(z_smooth_rob[5, 5] - z_true[5, 5]) + abs(
+        z_smooth_rob[10, 10] - z_true[10, 10]
+    )
+    assert err_rob < err_reg
+
+
+def test_smooth_field_spline_method():
+    """Test smooth_field with method='spline'"""
+    np.random.seed(0)
+    x, _y = np.meshgrid(np.linspace(0, 1, 15), np.linspace(0, 1, 15))
+    z_true = np.sin(2 * np.pi * x)
+    z_noisy = z_true + np.random.normal(0, 0.05, z_true.shape)
+
+    z_smooth, _, exitflag, _ = smooth_field(z_noisy, s=0.5, method="spline")
+    assert exitflag == 1
+    assert np.mean((z_smooth - z_true) ** 2) < np.mean((z_noisy - z_true) ** 2)
+
+
+if __name__ == "__main__":
+    if pytest is not None:
+        sys.exit(pytest.main(["-v", __file__]))
+    else:
+        import inspect
+
+        current_module = sys.modules[__name__]
+        test_funcs = [
+            obj
+            for name, obj in inspect.getmembers(current_module)
+            if name.startswith("test_") and inspect.isfunction(obj)
+        ]
+        passed = 0
+        failed = 0
+        for func in test_funcs:
+            try:
+                func()
+                print(f"PASS: {func.__name__}")
+                passed += 1
+            except Exception as e:  # noqa: BLE001
+                print(f"FAIL: {func.__name__} - {e}")
+                failed += 1
+        print(f"\nSummary: {passed} passed, {failed} failed.")
+        if failed > 0:
+            sys.exit(1)
