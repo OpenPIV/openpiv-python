@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "OpenPIV"
-version = "0.26.2"
+version = "0.26.3"
 description = "OpenPIV consists in a Python and Cython modules for scripting and executing the analysis of a set of PIV image pairs. In addition, a Qt and Tk graphical user interfaces are in development, to ease the use for those users who don't have python skills."
 readme = "README.md"
 requires-python = ">=3.11"
