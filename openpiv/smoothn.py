@@ -144,6 +144,8 @@ def RobustWeights(
     if MAD == 0:
         MAD = np.mean(np.abs(r_val - med))
     denom = 1.4826 * MAD * np.sqrt(max(1e-12, 1.0 - h))
+    if denom <= 0 or not np.isfinite(denom):
+        return np.ones_like(r)
     u = np.abs(r / denom)
     wstr = str(wstr).lower()
 
@@ -311,10 +313,13 @@ def _normalized_conv2d(y: np.ndarray, weights: np.ndarray, sigma: float) -> np.n
     w_clean = np.where(valid, w, 0.0)
     data = np.where(valid, y, 0.0)
 
+    def _conv_same(m: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+        full = np.convolve(m, kernel, mode="full")
+        start = (full.shape[0] - m.shape[0]) // 2
+        return full[start : start + m.shape[0]]
+
     def conv1d_axis(arr: np.ndarray, axis: int) -> np.ndarray:
-        return np.apply_along_axis(
-            lambda m: np.convolve(m, k1d, mode="same"), axis, arr
-        )
+        return np.apply_along_axis(lambda m: _conv_same(m, k1d), axis, arr)
 
     smooth_data = conv1d_axis(conv1d_axis(data * w_clean, 0), 1)
     smooth_w = conv1d_axis(conv1d_axis(w_clean, 0), 1)
@@ -521,8 +526,11 @@ def scipy_smooth1d(
             k1d = np.exp(-0.5 * (ax / sigma) ** 2)
             k1d /= k1d.sum()
             data = np.where(valid, y_arr, 0.0)
-            sm_data = np.convolve(data * Wtot, k1d, mode="same")
-            sm_w = np.convolve(Wtot, k1d, mode="same")
+            _sm_data_full = np.convolve(data * Wtot, k1d, mode="full")
+            _sm_w_full = np.convolve(Wtot, k1d, mode="full")
+            _start = (_sm_data_full.shape[0] - data.shape[0]) // 2
+            sm_data = _sm_data_full[_start : _start + data.shape[0]]
+            sm_w = _sm_w_full[_start : _start + data.shape[0]]
             z_smooth = np.where(sm_w > 1e-6, sm_data / np.maximum(sm_w, 1e-12), 0.0)
 
         if isrobust and step < max_iter - 1:
