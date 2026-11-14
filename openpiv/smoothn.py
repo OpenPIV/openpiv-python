@@ -423,7 +423,11 @@ def scipy_smooth2d(
                 spline = SmoothBivariateSpline(
                     r_val, c_val, z_val, w=w_val, s=s_val, kx=kx, ky=ky
                 )
-                z_smooth = spline(np.arange(H), np.arange(W_cols))
+                _zs = spline(np.arange(H), np.arange(W_cols))
+                if not np.all(np.isfinite(_zs)):
+                    z_smooth = None
+                else:
+                    z_smooth = _zs
             except Exception:  # noqa: BLE001
                 z_smooth = None
 
@@ -502,7 +506,11 @@ def scipy_smooth1d(
         if HAS_SCIPY_INTERPOLATE and k >= 1 and nof > k + 1:
             try:
                 spline = UnivariateSpline(x_val, z_val, w=w_val, s=s_val, k=k)
-                z_smooth = spline(x)
+                _zs = spline(x)
+                if not np.all(np.isfinite(_zs)):
+                    z_smooth = None
+                else:
+                    z_smooth = _zs
             except Exception:  # noqa: BLE001
                 z_smooth = None
 
