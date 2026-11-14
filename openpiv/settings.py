@@ -197,7 +197,7 @@ class PIVSettings:
             if "path" in key.lower() and isinstance(value, str):
                 try:
                     value = pathlib.Path(value)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
             setattr(obj, key, value)
         return obj
